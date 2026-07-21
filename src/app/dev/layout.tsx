@@ -31,6 +31,7 @@ const NODES: TreeNodeData[] = [
   { id: '__basics', label: '기초', children: [
     { id: '/dev/tokens', label: '토큰' },
     { id: '/shell', label: '셸' },
+    { id: '/dev/preview', label: '반응형 프리뷰' },
   ] },
   { id: '__parts', label: `부품 (${CATALOG.length})`, children: PART_NODES },
   { id: '__demos', label: '데모', children: [

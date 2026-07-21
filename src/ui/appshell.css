@@ -26,6 +26,35 @@
 }
 .erp-profile-trigger:hover { background: var(--bg-secondary); }
 
+/* 태블릿 아이콘 레일(72px) 메뉴 항목 — 세로 타일(아이콘+라벨). 하단탭 tile()을 재사용하되 세로 스택.
+   활성 = 은은한 톤 배경 + 좌측 짧은 강조 막대(브랜드 토큰색). 아이콘·라벨 색은 AppShell이 역할 prop으로 이미 구분. */
+.erp-rail-item {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  padding: 8px 0;
+  border-radius: var(--mantine-radius-md);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.erp-rail-item:hover { background: var(--bg-secondary); }
+.erp-rail-item[data-active='true'] { background: var(--bg-secondary); }
+.erp-rail-item[data-active='true']::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  border-radius: 0 2px 2px 0;
+  background: var(--mantine-color-primary-6);
+}
+
 /* 하단 탭 내비(모바일) — footer 슬롯 안의 바. 골격(flex 균등 분배·safe-area)은 여기 raw CSS(명시 예외),
    타일 콘텐츠는 AppShell이 우리 Stack/Icon/Text로 조립한다. 색·여백은 전부 토큰(raw hex/px 우회 없음). */
 .erp-bottomnav {

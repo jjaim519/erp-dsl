@@ -853,6 +853,7 @@ export function Demo({ name }: { name: string }) {
         />
       </Stack>
     ),
+    AppShell: <Anchor href="/dev/preview">→ /dev/preview 에서 3티어 라이브 (데스크탑 넷바 / 태블릿 아이콘 레일 / 폰 하단탭)</Anchor>,
     ListPage: <Anchor href="/customers">→ /customers 에서 라이브 (스키마 구동 목록)</Anchor>,
     DetailPage: <Anchor href="/customers">→ /customers/[id] 에서 라이브 (정보+폼 2분할)</Anchor>,
     Combobox: (

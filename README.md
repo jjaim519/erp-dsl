@@ -162,7 +162,7 @@ type FieldSpec = {
 - **DataTable** `columns` `rows` `status: loading|empty|ready` · controlled 정렬·페이징 · `onRowClick`
 - **EmptyState** `icon` `title` `description` `action?`
 - **PageHeader** `title` `description?` `actions?` · **DescriptionList** `items` `columns: 1|2|3`
-- **AppShell** `logo` `menuItems` `activePath` `onNavigate` `profile` `notification` · children=콘텐츠 · 반응형(데스크탑 넷바 ↔ 모바일 하단 탭, 자동)
+- **AppShell** `logo` `menuItems` `activePath` `onNavigate` `profile` `notification` · children=콘텐츠 · **3티어 반응형(자동)**: 데스크탑 ≥1280 풀 넷바(로고+메뉴+하단 유틸리티) / 태블릿 768–1279 아이콘 레일(로고 없음) / 폰 <768 하단탭+슬림 상단바. 상단바는 폰만(데스크탑·태블릿 해체 — 알림·프로필은 넷바 하단)
 - **Timeline** `events: TimelineEvent[]` · **Calendar** `month` `events: CalendarEvent[]`(월 뷰 단일)
 - **Tree** `nodes` controlled 선택·펼침 · `editable`(쓰기 게이트)
 - **FieldGrid** `columns` `rows: FieldGridCell[][]`(셀=`label?`|`field?`|`image?`|`node?`, `colSpan?` `rowSpan?` `align?`) `fields: FieldSpec[]` `mode: edit|read` `size: sm|md|lg`(기본 md — 타이포·행 단위·세로패딩 한 세트, 행 높이는 타이포 따라 동적) `values` `onChange` `errors?` — 테두리 셀 격자(장표/帳票). 작성·확인 양용·**같은 기하**(셀 박스 불변, read=같은 입력 원자 inert 재사용). `node`=비표준 컨트롤 통째 슬롯(4종 배타·mode 무관). 머리표(라벨:값)·명세표(헤더+값 행)·대분류 밴드 다 같은 모델
