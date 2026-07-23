@@ -36,6 +36,7 @@ const NODES: TreeNodeData[] = [
   { id: '__parts', label: `부품 (${CATALOG.length})`, children: PART_NODES },
   { id: '__demos', label: '데모', children: [
     { id: '/dev/grid', label: '위젯 그리드 시범' },
+    { id: '/dev/authoring', label: '구성 모델 저작(조립 증명)' },
     { id: '/customers', label: '고객 관리' },
     { id: '/dev/import', label: '초기 등록 (엑셀)' },
     { id: '/playground', label: 'SummaryCard 편집기' },
