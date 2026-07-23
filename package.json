@@ -1,10 +1,10 @@
 {
-  "name": "@byeongjunkim-jjaim/erp-dsl",
+  "name": "@jjaim519/erp-dsl",
   "version": "0.47.0",
   "description": "ERP No-Code 빌더 — 닫힌 부품 DSL(원자·분자·유기체·템플릿) + 스키마 층(Zod).",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/byeongjunkim-jjaim/erp-dsl.git"
+    "url": "git+https://github.com/jjaim519/erp-dsl.git"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"

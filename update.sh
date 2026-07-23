@@ -85,4 +85,4 @@ git push origin main --follow-tags
 npm publish
 
 echo
-echo "🎉 발행 완료. 소비자: npm install @byeongjunkim-jjaim/erp-dsl@latest"
+echo "🎉 발행 완료. 소비자: npm install @jjaim519/erp-dsl@latest"

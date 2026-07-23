@@ -1,4 +1,4 @@
-# @byeongjunkim-jjaim/erp-dsl
+# @jjaim519/erp-dsl
 
 > **이 문서는 LLM(조립 컴파일러)을 위한 사용 설명서다.** 작업 전 컨텍스트에 넣는다.
 > ERP No-Code 빌더의 닫힌 부품 DSL — 원자·분자·유기체·템플릿 + 스키마 층(Zod).
@@ -24,8 +24,8 @@
 2. **열린 값 금지.** 임의 hex(`#3B82F6`)·임의 px(`13`)·임의 스타일 문자열을 넣을 길이 없다. 오직 **토큰 이름**(3절)과 **닫힌 enum**만 쓴다.
 3. **import는 단 두 경로뿐.**
    ```ts
-   import { Button, FormSection, /* 부품 */ } from '@byeongjunkim-jjaim/erp-dsl';
-   import { buildZodSchema, type FieldSpec } from '@byeongjunkim-jjaim/erp-dsl/schema';
+   import { Button, FormSection, /* 부품 */ } from '@jjaim519/erp-dsl';
+   import { buildZodSchema, type FieldSpec } from '@jjaim519/erp-dsl/schema';
    ```
    `@mantine/*`를 직접 import하면 린트 에러(헌법 7). Mantine은 라이브러리 내부에 격리돼 있다.
 4. **`className`·`style`은 어떤 부품에도 못 넘긴다.** (토큰 우회 통로라 노출 안 함.) 색·간격·정렬은 전부 닫힌 prop으로 표현한다.
@@ -38,8 +38,8 @@
 
 | 경로 | 내용 |
 |---|---|
-| `@byeongjunkim-jjaim/erp-dsl` | 부품(원자·분자·유기체·템플릿) + `Providers`·`notify` 배선 |
-| `@byeongjunkim-jjaim/erp-dsl/schema` | `FieldSpec`·`FieldType`·`buildZodSchema`·`isFilled` (데이터 세계) |
+| `@jjaim519/erp-dsl` | 부품(원자·분자·유기체·템플릿) + `Providers`·`notify` 배선 |
+| `@jjaim519/erp-dsl/schema` | `FieldSpec`·`FieldType`·`buildZodSchema`·`isFilled` (데이터 세계) |
 
 ---
 
@@ -207,8 +207,8 @@ type FieldSpec = {
 ## 7. 완성 예제 (조립의 논리)
 
 ```tsx
-import { FormSection } from '@byeongjunkim-jjaim/erp-dsl';
-import { buildZodSchema, type FieldSpec } from '@byeongjunkim-jjaim/erp-dsl/schema';
+import { FormSection } from '@jjaim519/erp-dsl';
+import { buildZodSchema, type FieldSpec } from '@jjaim519/erp-dsl/schema';
 
 // 1) 자연어 "업체명(필수)·등급·전화" → FieldSpec[]
 const fields: FieldSpec[] = [
@@ -236,12 +236,12 @@ const schema = buildZodSchema(fields);
 
 ```ini
 # 소비 레포 루트 .npmrc
-@byeongjunkim-jjaim:registry=https://npm.pkg.github.com
+@jjaim519:registry=https://npm.pkg.github.com
 //npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
 ```
 
 ```bash
-npm i @byeongjunkim-jjaim/erp-dsl
+npm i @jjaim519/erp-dsl
 # peer 의존성(소비 앱이 직접 설치) — React 19+, Mantine v8, zod v4, TipTap v3(리치 에디터 Editor/RichText용)
 npm i @mantine/core @mantine/dates @mantine/hooks @mantine/notifications dayjs zod react react-dom
 npm i @tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-image @tiptap/extension-table @tiptap/extension-placeholder
@@ -249,12 +249,12 @@ npm i @tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-image @tipt
 
 ```ts
 // next.config.ts — 필수
-export default { transpilePackages: ['@byeongjunkim-jjaim/erp-dsl'] };
+export default { transpilePackages: ['@jjaim519/erp-dsl'] };
 ```
 
 ```tsx
 // 루트 레이아웃: Providers로 감싼다 (테마·토스트·폰트 자동)
-import { Providers, ColorSchemeScript, mantineHtmlProps } from '@byeongjunkim-jjaim/erp-dsl';
+import { Providers, ColorSchemeScript, mantineHtmlProps } from '@jjaim519/erp-dsl';
 // <html {...mantineHtmlProps}> … <head><ColorSchemeScript/></head> … <Providers>{children}</Providers>
 ```
 
@@ -277,5 +277,5 @@ import { Providers, ColorSchemeScript, mantineHtmlProps } from '@byeongjunkim-jj
 ## 경계 (헌법 요약)
 
 - 소비 앱은 이 패키지를 **수정하지 않는다.** 카탈로그 확장은 본 라이브러리 레포에서 사람이 큐레이션으로만(헌법 4).
-- `@mantine/*` 직접 import 금지 — `@byeongjunkim-jjaim/erp-dsl` 배럴만 사용(헌법 7).
+- `@mantine/*` 직접 import 금지 — `@jjaim519/erp-dsl` 배럴만 사용(헌법 7).
 - 강제 규칙(린트)은 특정 레포 설정이 아니라 **이 DSL의 일부**다 — 어느 프로젝트에 올라가든 따라간다.
