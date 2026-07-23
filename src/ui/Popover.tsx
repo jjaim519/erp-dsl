@@ -70,7 +70,9 @@ export function Popover({
           {children}
         </span>
       </M.Target>
-      <M.Dropdown p="md">{content}</M.Dropdown>
+      {/* 반응형 상한 — 좁은 뷰포트에선 토큰 폭을 넘지 않고 화면에 맞춰 줄어든다(모바일 화면별 튜닝 0).
+          폭-적응 부품 원리와 동형: 소비처·개별 화면은 모르고, 프리미티브가 뷰포트를 흡수한다. */}
+      <M.Dropdown p="md" style={{ maxWidth: 'calc(100vw - 2rem)' }}>{content}</M.Dropdown>
     </M>
   );
 }

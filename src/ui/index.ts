@@ -41,6 +41,7 @@ export { Radio } from './Radio';
 export { Card } from './Card';
 export { Divider } from './Divider';
 export { Container } from './Container';
+export { Page } from './Page';   // 페이지 폭 규율(1200 캡+중앙) — AppShell 아래 모든 화면 공통 래퍼
 
 // 배치 프리미티브
 export { Stack } from './Stack';
@@ -83,6 +84,13 @@ export { Stepper } from './Stepper';
 export { Transfer } from './Transfer';
 export { ToastHost } from './ToastHost';
 export { DataTable } from './DataTable';
+export { ListWidget, type ListColumn, type ListRow } from './ListWidget';  // TanStack 흡수 목록 위젯(ListPage 대체 MVP)
+export { NotificationPanel, type NotifItem, type NotifTone } from './NotificationPanel';  // 알림 벨 Popover 슬롯 위젯
+export { Repeater } from './Repeater';  // 저작 툴킷 척추 — 가변 레코드 목록(추가/삭제/펼침)
+export { InheritedValueField, type RefOption } from './InheritedValueField';  // 참조+상속+override 봉인(§4.1)
+export { ExpressionField, type ExprVariable, type ExprFunction } from './ExpressionField';  // 닫힌 DSL 수식 편집기
+export { KeyValueField, type KVKey } from './KeyValueField';  // 닫힌 키 맵 편집(dim_adjustments 류)
+export { AssignPicker, type AssignTemplate } from './AssignPicker';  // 옵션세트 kind별 배정 + 재적용 경고
 export { LineItemList, type LineItem } from './LineItemList';
 export { EmptyState } from './EmptyState';
 export { PageHeader } from './PageHeader';

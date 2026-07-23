@@ -1,7 +1,7 @@
 'use client';
 // DetailPage (템플릿) — ERP 상세 페이지 골격. PageHeader + 좌(정보) / 우(폼) 2분할. 도메인 0줄.
 // 좌 = DescriptionList(읽기), 우 = FormSection(입력). 도메인은 info·form(데이터)로만.
-import { Container } from './Container';
+import { Page } from './Page';
 import { Stack } from './Stack';
 import { Grid } from './Grid';
 import { Card } from './Card';
@@ -35,9 +35,9 @@ type Props = {
 
 export function DetailPage({ title, description, actions, info, form }: Props) {
   return (
-    <Container maxWidth="wide">
+    <Page>
       <Stack gap="lg">
-        <PageHeader title={title} description={description} actions={actions} />
+        <PageHeader title={title} meta={description ? [{ kind: 'text', label: description }] : undefined} actions={actions} />
         <Grid columns={2} gap="lg">
           <Grid.Col span={1}>
             <Card variant="elevated" padding="lg">
@@ -71,6 +71,6 @@ export function DetailPage({ title, description, actions, info, form }: Props) {
           )}
         </Grid>
       </Stack>
-    </Container>
+    </Page>
   );
 }

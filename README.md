@@ -271,6 +271,7 @@ import { Providers, ColorSchemeScript, mantineHtmlProps } from '@byeongjunkim-jj
 - [`docs/02_토큰과구현.md`](docs/02_토큰과구현.md) — 토큰 값·전체 부품 prop 규격·스키마 층·패키지/배포
 - [`docs/03_로드맵과미해결.md`](docs/03_로드맵과미해결.md) — 진행 상황·미해결 지점
 - [`docs/04_확장전략과청사진.md`](docs/04_확장전략과청사진.md) — 위젯 확장(v0.11) · 청사진 수확 → DSL 조립 · json-render/A2UI 활용 여지 · 정형화 백로그
+- [`docs/05_레이아웃과위젯.md`](docs/05_레이아웃과위젯.md) — Page·Bento·Widget 설계 · LayoutSpec 계약(명시 좌표·닫힌 footprint) · 편집기/런타임 (설계, 구현 전)
 ---
 
 ## 경계 (헌법 요약)

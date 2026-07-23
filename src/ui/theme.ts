@@ -21,26 +21,31 @@ const neutral: MantineColorsTuple = [
   '#6E7480', '#4F545E', '#383C44', '#24272D', '#16181C',
 ];
 
-// 상태색(불변). Tailwind의 대비 검증된 사다리를 출발점으로.
+// 상태색 — "A-deep(jewel-tone)" 개정(2026-07). Tailwind 기본 스케일이 곧 "AI/부트스트랩 어디서나 본 그 색"
+// = 바이브 코딩 냄새의 주범이라, 각 색을 미묘한 사촌으로 옮기고 한 단계 깊게(heritage/premium). index 6 = 메인 솔리드.
+//  · success  : 순green → forest jade(초록에 청록기 — cool 팔레트 정합)
+//  · warning  : 순yellow → deep amber/honey(순노랑이 최대 tell이라 폐기. 예전 "더 노란 yellow" 결정을 뒤집음)
+//  · danger   : 순red(소방차) → garnet(청색기 도는 깊은 로즈레드)
+//  · info     : 순blue → deep indigo(네이비 primary와 근접하되 구분 — 남색 계열로 "한 식구")
+// 값은 라이트 앵커 기반 10단계(대비 검증). 다크는 resolver가 text 역할에서 인덱스 낮춰 매핑(아래 semantic).
 const success: MantineColorsTuple = [
-  '#F0FDF4', '#DCFCE7', '#BBF7D0', '#86EFAC', '#4ADE80',
-  '#22C55E', '#16A34A', '#15803D', '#166534', '#14532D',
+  '#E7F4EF', '#C6E8DD', '#97D5C4', '#5FBFA6', '#2AA085',
+  '#10896C', '#0B7357', '#0A5B45', '#084636', '#06342A',
 ];
 
-// warning = amber(갈색기) 대신 더 노란 yellow 계열.
 const warning: MantineColorsTuple = [
-  '#FEFCE8', '#FEF9C3', '#FEF08A', '#FDE047', '#FACC15',
-  '#EAB308', '#CA8A04', '#A16207', '#854D0E', '#713F12',
+  '#FAF0D8', '#F4E0AC', '#EAC873', '#DBAB3C', '#C08E1A',
+  '#B07C10', '#A5700D', '#7A4E06', '#5A3A05', '#412A05',
 ];
 
 const danger: MantineColorsTuple = [
-  '#FEF2F2', '#FEE2E2', '#FECACA', '#FCA5A5', '#F87171',
-  '#EF4444', '#DC2626', '#B91C1C', '#991B1B', '#7F1D1D',
+  '#F9E6EB', '#F2C6D1', '#E79BAD', '#D96A87', '#C93F63',
+  '#BE3352', '#B62E4A', '#8C1B38', '#691329', '#4C0D1E',
 ];
 
 const info: MantineColorsTuple = [
-  '#EFF6FF', '#DBEAFE', '#BFDBFE', '#93C5FD', '#60A5FA',
-  '#3B82F6', '#2563EB', '#1D4ED8', '#1E40AF', '#1E3A8A',
+  '#EBEDF9', '#D3D6F2', '#AEB4E7', '#8189D8', '#5A63C5',
+  '#454FB6', '#3A46AE', '#2A3388', '#1F2666', '#161B49',
 ];
 
 // ── 시맨틱 역할 (텍스트·배경·보더) — 모드 분기가 일어나는 "유일한" 층 ──────
@@ -110,6 +115,13 @@ const iconBaselineShift = '-0.125em'; // 아이콘 광학정렬 보정(폰트 �
 // 미지원 브라우저(Safari/Firefox)는 무시 → 평범한 둥근 모서리로 graceful fallback.
 // 값은 화면 검증에서 조정(더 부드럽게=superellipse(1.8) 등). 컴포넌트엔 prop으로 안 연다(헌법 5).
 const cornerShape = 'superellipse(2)';
+
+// 페이지 콘텐츠 폭 천장 — AppShell 아래 "모든" 화면의 유일한 폭 캡(중앙정렬은 Page 원자가 소유).
+// 1200 = 앱/정보형 정석 대역(Mesh 1200 · Tailwind max-w-7xl 1280 · Bootstrap xxl 1320 의 하단) +
+//        Bento 12열 × ~85px 눈금(1200 − 열간격 ≈ 1024 ÷ 12)과 정합. 콘텐츠는 260 넷바 옆에 캡되므로
+//        전체 설계폭 ≈1460(24" 모니터급). ≥1280 기준선에선 안 걸리고 넓은 화면에서만 캡+중앙정렬.
+// 값은 화면 검증(/dev/preview 폭 스윕)에서 미세조정할 잠정치 — Page는 var(--page-max)만 참조.
+const pageMaxWidth = '1200px';
 
 // ─────────────────────────────────────────────────────────────
 export const theme = createTheme({
@@ -197,6 +209,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--border-width':        borderWidth,
       '--icon-baseline-shift': iconBaselineShift,
       '--corner-shape':        cornerShape,
+      '--page-max':            pageMaxWidth,   // 페이지 콘텐츠 폭 캡(Page 원자 전용)
       '--elevation-raised':    elevation.raised,   // surface.raised 와 짝
       '--elevation-overlay':   elevation.overlay,  // surface.overlay 와 짝
       ...typoVars,

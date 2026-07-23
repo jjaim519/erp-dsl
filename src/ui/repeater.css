@@ -1,0 +1,31 @@
+/* Repeater — 가변 레코드 목록 크롬. 색·간격·radius 전부 토큰. 무테(보더 대신 inset hairline). */
+.erpRep { display: flex; flex-direction: column; gap: var(--mantine-spacing-xs); }
+.erpRep-empty { padding: var(--mantine-spacing-md); }
+
+/* 레코드 — 얕은 nested 표면(inset hairline으로 구획, 그림자 0) */
+.erpRep-rec {
+  background: var(--bg-primary);
+  border-radius: var(--mantine-radius-sm); corner-shape: var(--corner-shape);
+  box-shadow: inset 0 0 0 1px var(--border-default);
+  overflow: hidden;
+}
+
+/* 접이 헤더 — [chevron][도메인 헤더 1fr][삭제] */
+.erpRep-head {
+  display: grid; grid-template-columns: 16px 1fr auto; align-items: center;
+  gap: var(--mantine-spacing-xs); padding: 9px 10px; cursor: pointer;
+}
+.erpRep-head:hover { background: var(--bg-secondary); }
+.erpRep-head:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.erpRep-chev { display: inline-flex; transition: transform 0.15s ease; }
+.erpRep-chev[data-open] { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .erpRep-chev { transition: none; } }
+.erpRep-htitle { min-width: 0; display: flex; align-items: center; }
+.erpRep-del { display: inline-flex; flex: none; }
+
+/* 접이 본문 */
+.erpRep-body { padding: 2px 12px 14px; }
+
+/* 평면 모드 — 본문 상시 + 우측 삭제 */
+.erpRep-flat { display: flex; align-items: flex-start; gap: var(--mantine-spacing-xs); padding: 10px 12px; }
+.erpRep-flatbody { flex: 1; min-width: 0; }

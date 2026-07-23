@@ -7,7 +7,7 @@
 //    (Calendar 7열·Modal raw flex 동류, 헌법 명시 예외). 공지/필독 솔리드 배지는 Badge 원자(light)가 못 내
 //    템플릿 전용 span(01 4-D "전용이면 소유"). 색·간격 전부 토큰.
 import { Badge } from './Badge';
-import { Container } from './Container';
+import { Page } from './Page';
 import { PageHeader } from './PageHeader';
 import { SegmentedControl } from './SegmentedControl';
 import { TextInput } from './TextInput';
@@ -99,11 +99,11 @@ export function BoardList({
   }
 
   return (
-    <Container maxWidth="wide">
+    <Page>
       <div className="board">
         <PageHeader
           title={title}
-          description={description}
+          meta={description ? [{ kind: 'text', label: description }] : undefined}
           actions={onCreate ? [{ label: createLabel, variant: 'primary', icon: 'plus', onClick: onCreate }] : undefined}
         />
 
@@ -154,6 +154,6 @@ export function BoardList({
           )}
         </div>
       </div>
-    </Container>
+    </Page>
   );
 }

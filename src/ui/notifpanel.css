@@ -1,0 +1,89 @@
+/* NotificationPanel — 알림 벨 Popover 슬롯 위젯(시안 A). 색·간격·radius 전부 토큰.
+   표면/그림자/폭은 Popover가 소유. 여기선 안쪽 구성만. 무테(보더 대신 톤·divider) + 축 예약. */
+
+/* Popover.Dropdown이 p="md"로 감싸므로 음수 마진으로 가장자리까지 채운다(행·divider가 폭 전체). */
+.erpNotif {
+  display: flex; flex-direction: column;
+  margin: calc(var(--mantine-spacing-md) * -1);
+  font-size: var(--typo-body-size);
+}
+
+/* 헤더 — 높이 고정(축 예약: 우측 액션 유무와 무관하게 밴드 안 흔들림) */
+.erpNotif-head {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-xs);
+  height: 48px; padding: 0 var(--mantine-spacing-md); flex: none;
+}
+.erpNotif-title { display: inline-flex; align-items: center; gap: var(--mantine-spacing-xs); }
+.erpNotif-act {
+  border: none; background: none; cursor: pointer; font: inherit;
+  font-size: var(--typo-caption-size); font-weight: 500; color: var(--mantine-color-primary-6);
+  padding: 4px 6px; border-radius: var(--mantine-radius-xs); corner-shape: var(--corner-shape);
+}
+.erpNotif-act:hover:not(:disabled) { background: var(--bg-secondary); }
+.erpNotif-act:disabled { color: var(--text-disabled); cursor: default; }
+
+/* 탭 */
+.erpNotif-seg { padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-xs); flex: none; }
+
+/* 본문 — 높이 예약 + 내부 스크롤 */
+.erpNotif-list { max-height: 360px; overflow-y: auto; }
+
+/* 시간/분류 그룹 라벨 */
+.erpNotif-group {
+  font-size: var(--typo-caption-size); font-weight: 600; letter-spacing: 0.02em;
+  color: var(--text-disabled); padding: var(--mantine-spacing-xs) var(--mantine-spacing-md) 4px;
+}
+
+/* 행 — [아이콘원 32] [본문] [읽음점 예약 10]. button 리셋. */
+.erpNotif-row {
+  display: grid; grid-template-columns: 32px 1fr 10px; gap: 10px; align-items: start;
+  width: 100%; text-align: left; border: none; background: none; cursor: pointer; font: inherit;
+  padding: 10px var(--mantine-spacing-md); position: relative;
+}
+.erpNotif-row:hover { background: var(--bg-secondary); }
+.erpNotif-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+/* 인접 행 사이 divider(아이콘 너비만큼 들여쓴 hairline) — 그룹 라벨 뒤 첫 행엔 안 붙음(무테) */
+.erpNotif-row + .erpNotif-row::before {
+  content: ""; position: absolute; top: 0;
+  left: calc(var(--mantine-spacing-md) + 32px + 10px); right: var(--mantine-spacing-md);
+  height: 1px; background: var(--border-default);
+}
+/* 미읽음 강조 — 옅은 primary 틴트(무테: 배경 톤으로 구분) */
+.erpNotif-row[data-unread] { background: color-mix(in srgb, var(--mantine-color-primary-6) 5%, transparent); }
+.erpNotif-row[data-unread]:hover { background: color-mix(in srgb, var(--mantine-color-primary-6) 8%, transparent); }
+
+/* 아이콘 원 — tone 틴트(jewel-tone 상태색) */
+.erpNotif-ico {
+  width: 32px; height: 32px; border-radius: var(--mantine-radius-sm); corner-shape: var(--corner-shape);
+  display: inline-flex; align-items: center; justify-content: center; flex: none;
+}
+.erpNotif-ico[data-tone="info"]    { color: var(--mantine-color-info-6);    background: color-mix(in srgb, var(--mantine-color-info-6)    13%, transparent); }
+.erpNotif-ico[data-tone="success"] { color: var(--mantine-color-success-6); background: color-mix(in srgb, var(--mantine-color-success-6) 13%, transparent); }
+.erpNotif-ico[data-tone="warning"] { color: var(--mantine-color-warning-6); background: color-mix(in srgb, var(--mantine-color-warning-6) 15%, transparent); }
+.erpNotif-ico[data-tone="danger"]  { color: var(--mantine-color-danger-6);  background: color-mix(in srgb, var(--mantine-color-danger-6)  13%, transparent); }
+
+.erpNotif-rbody { min-width: 0; display: flex; flex-direction: column; }
+.erpNotif-rtitle {
+  font-size: var(--typo-body-size); color: var(--text-primary); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.erpNotif-row[data-unread] .erpNotif-rtitle { font-weight: 600; }
+.erpNotif-rmeta { font-size: var(--typo-caption-size); color: var(--text-secondary); margin-top: 2px; }
+
+/* 읽음점 — 예약 컬럼(읽으면 숨김, 자리는 유지 → reflow 0) */
+.erpNotif-dot {
+  width: 8px; height: 8px; border-radius: var(--mantine-radius-full);
+  background: var(--mantine-color-primary-6); margin-top: 5px;
+}
+.erpNotif-row:not([data-unread]) .erpNotif-dot { visibility: hidden; }
+
+.erpNotif-empty { padding: var(--mantine-spacing-lg) var(--mantine-spacing-md); }
+
+/* 푸터 — 상단 divider + 중앙 링크(전체 폭 클릭) */
+.erpNotif-foot {
+  border: none; background: none; cursor: pointer; font: inherit; width: 100%; flex: none;
+  padding: 10px var(--mantine-spacing-md); text-align: center;
+  font-size: var(--typo-caption-size); font-weight: 500; color: var(--mantine-color-primary-6);
+  box-shadow: inset 0 1px 0 var(--border-default);
+}
+.erpNotif-foot:hover { background: var(--bg-secondary); }

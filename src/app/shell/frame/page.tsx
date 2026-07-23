@@ -10,7 +10,8 @@
 import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
-  AppShell, PageHeader, Card, Title, Text, Stack, Grid, SummaryCard, DescriptionList,
+  AppShell, Page, PageHeader, Card, Title, Text, Stack, Grid, SummaryCard, DescriptionList,
+  NotificationPanel, type NotifItem,
 } from '@/ui';
 import { Demo } from '@/ui/_dev';
 
@@ -26,11 +27,21 @@ const MENU = [
   { label: '설정', icon: 'settings', path: '/settings', group: '관리' },
 ] as const;
 
+// 셸 알림 샘플 — 도메인-제네릭 ERP 알림(특정 프로덕트 아님). tone·title·actor·time·group만(패키지 도메인 무지).
+const NOTIFS: NotifItem[] = [
+  { id: '1', tone: 'success', title: '발주 #1024 승인 요청이 도착했습니다', actor: '이수연', time: '5분 전', group: '오늘' },
+  { id: '2', tone: 'warning', title: '경첩 35mm 재고가 안전재고 이하로 떨어졌습니다', actor: '시스템', time: '22분 전', group: '오늘' },
+  { id: '3', tone: 'info', title: '6월 정산 마감이 내일입니다', actor: '시스템', time: '1시간 전', group: '오늘' },
+  { id: '4', tone: 'success', title: 'A현장 납품이 완료 처리되었습니다', actor: '김병준', time: '3시간 전', read: true, group: '이번 주' },
+  { id: '5', tone: 'danger', title: '발주 #1019가 반려되었습니다', actor: '박준호', time: '어제', read: true, group: '이번 주' },
+];
+
 // 경량 조립 샘플 — PageHeader + KPI 그리드(4) + 정보 카드 그리드(2). 티어별 밀도·리플로우를 한눈에.
 function HomePage() {
   return (
-    <Stack gap="lg">
-      <PageHeader title="대시보드" description="이번 달 개요" />
+    <Page>
+      <Stack gap="lg">
+      <PageHeader title="대시보드" meta={[{ kind: 'text', label: '이번 달 개요' }]} />
       <Grid columns={4} gap="md">
         <Grid.Col span={1}><SummaryCard label="신규 주문" icon="upload" tone="info" count={128} /></Grid.Col>
         <Grid.Col span={1}><SummaryCard label="승인 대기" icon="clock" tone="warning" count={12} /></Grid.Col>
@@ -64,7 +75,8 @@ function HomePage() {
           </Card>
         </Grid.Col>
       </Grid>
-    </Stack>
+      </Stack>
+    </Page>
   );
 }
 
@@ -92,7 +104,7 @@ function FrameInner() {
           { label: '로그아웃', icon: 'logout', variant: 'danger', onClick: () => {} },
         ],
       }}
-      notification={{ hasUnread: true, onClick: () => {} }}
+      notification={{ hasUnread: true, content: <NotificationPanel items={NOTIFS} onMarkAllRead={() => {}} onViewAll={() => {}} /> }}
     >
       {body}
     </AppShell>

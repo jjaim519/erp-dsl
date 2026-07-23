@@ -44,7 +44,7 @@ import { MultiSelect } from './MultiSelect';
 import { DateRangeField } from './DateRangeField';
 import { InputGroup } from './InputGroup';
 import { FileUploader, type FileItem } from './FileUploader';
-import { fmtCurrency } from './_cells';
+import { fmtCurrency, type BadgeColor } from './_cells';
 import { Pagination } from './Pagination';
 import { IconButton } from './IconButton';
 import { Callout } from './Callout';
@@ -87,6 +87,13 @@ import { Progress } from './Progress';
 import { TimePicker } from './TimePicker';
 import { Stat } from './Stat';
 import { Stepper } from './Stepper';
+import { ListWidget, type ListColumn, type ListRow } from './ListWidget';
+import { NotificationPanel, type NotifItem } from './NotificationPanel';
+import { Repeater } from './Repeater';
+import { InheritedValueField } from './InheritedValueField';
+import { ExpressionField, type ExprVariable } from './ExpressionField';
+import { KeyValueField } from './KeyValueField';
+import { AssignPicker } from './AssignPicker';
 import { Transfer } from './Transfer';
 import { TreeSelect } from './TreeSelect';
 import { Cascader } from './Cascader';
@@ -233,6 +240,74 @@ const IMG_SRC =
 //  ※ 단위는 *데이터 층*에서 단가 뒤에 합성("₩3,200 / 개") — 한 칸 차지할 값이 아니다. ObjectCard(DSL)는 단위를
 //    모른다(완성된 텍스트만 받음). 그래서 type:'text'. 단가 합성은 fmtCurrency로 통화 포맷 단일출처 유지.
 const won = (n: number, unit: string) => `${fmtCurrency(n)} / ${unit}`;
+
+// ListWidget 데모 데이터 — 제네릭(도메인 무관). 정렬·검색·facet(상태)·페이징·선택·행버튼(actions)·align override(코드=center) 검증.
+const LW_STATUS: Record<string, BadgeColor> = { 진행중: 'info', 대기: 'warning', 완료: 'success', 보류: 'neutral' };
+const LW_COLUMNS: ListColumn[] = [
+  { key: 'name', label: '항목명', type: 'text', sortable: true },
+  { key: 'status', label: '상태', type: 'badge', filter: 'facet', badgeColors: LW_STATUS },
+  { key: 'owner', label: '담당자', type: 'user' },
+  { key: 'code', label: '코드', type: 'text', align: 'center' },
+  { key: 'amount', label: '금액', type: 'currency', sortable: true },
+  { key: 'progress', label: '진행률', type: 'percent' },
+  { key: 'updatedAt', label: '갱신일', type: 'date', sortable: true },
+  { key: 'tags', label: '태그', type: 'tags' },
+  { key: 'act', label: '', type: 'actions' },
+];
+const LW_OWNERS = ['정민수', '한지영', '오세라', '김도현', '이보람'];
+const LW_STATES = ['진행중', '대기', '완료', '보류'];
+const LW_TAGSETS = [['우선'], ['재검토'], ['우선', '방문'], [], ['보류중']];
+const LW_ROWS: ListRow[] = Array.from({ length: 23 }, (_, i) => ({
+  id: String(1000 + i),
+  name: `레코드 A-${1042 - i}`,
+  status: LW_STATES[i % LW_STATES.length],
+  owner: { name: LW_OWNERS[i % LW_OWNERS.length] },
+  code: `C${String((i * 7) % 100).padStart(2, '0')}`,
+  amount: 1_000_000 + (i * 731_000) % 14_000_000,
+  progress: (i * 17) % 101,
+  updatedAt: `2026-07-${String(28 - (i % 20)).padStart(2, '0')}`,
+  tags: LW_TAGSETS[i % LW_TAGSETS.length],
+  act: [
+    { label: '보기', variant: 'ghost', icon: 'external-link', iconOnly: true, onClick: () => notify.info('보기') },
+    { label: '삭제', variant: 'ghost', icon: 'trash', iconOnly: true, onClick: () => notify.danger('삭제 요청') },
+  ],
+}));
+// 알림 패널 데모 — 도메인-제네릭 ERP 알림. tone·title·actor·time·group만(패키지 도메인 무지).
+const NOTIF_ITEMS: NotifItem[] = [
+  { id: '1', tone: 'success', title: '발주 #1024 승인 요청이 도착했습니다', actor: '이수연', time: '5분 전', group: '오늘' },
+  { id: '2', tone: 'warning', title: '경첩 35mm 재고가 안전재고 이하로 떨어졌습니다', actor: '시스템', time: '22분 전', group: '오늘' },
+  { id: '3', tone: 'info', title: '6월 정산 마감이 내일입니다', actor: '시스템', time: '1시간 전', group: '오늘' },
+  { id: '4', tone: 'success', title: 'A현장 납품이 완료 처리되었습니다', actor: '김병준', time: '3시간 전', read: true, group: '이번 주' },
+  { id: '5', tone: 'danger', title: '발주 #1019가 반려되었습니다', actor: '박준호', time: '어제', read: true, group: '이번 주' },
+];
+// Repeater 데모 — 도메인-제네릭 레코드(부품은 '옵션'을 모름 · 소비처 주입 예시).
+const REP_DEMO: { variable: string; label: string; kind: string; tone: BadgeColor }[] = [
+  { variable: 'hinge', label: '경첩', kind: 'appliance', tone: 'info' },
+  { variable: 'door_spec', label: '도어', kind: 'required · 특수', tone: 'warning' },
+  { variable: 'handle', label: '손잡이', kind: 'optional', tone: 'neutral' },
+];
+// InheritedValueField 데모 — SSOT 아이템(도메인-제네릭 부자재 단가).
+const IVF_REFS = [
+  { id: 'i1', label: '일반 힌지 3인치', price: 1800, unit: 'EA' },
+  { id: 'i2', label: '소프트힌지 3인치', price: 3200, unit: 'EA' },
+  { id: 'i3', label: '수납형 힌지', price: 5400, unit: 'EA' },
+];
+// ExpressionField 데모 — 변수(소비처 주입) + 코드 리터럴 대조용 values. 상태 있어 타이핑·팔레트 삽입·검증 라이브.
+const EXPR_VARS: ExprVariable[] = [
+  { path: 'dimensions.width_mm', group: '치수' },
+  { path: 'dimensions.height_mm', group: '치수' },
+  { path: 'options.hinge', group: '옵션', values: [{ code: 'soft', label: '소프트클로징' }, { code: 'std', label: '일반' }] },
+];
+function ExprFieldDemo() {
+  const [v, setV] = useState("CEIL(dimensions.width_mm / 600) * IF(options.hinge == 'soft', 2, 1)");
+  return <div style={{ maxWidth: 520 }}><ExpressionField value={v} onChange={setV} variables={EXPR_VARS} /></div>;
+}
+// KeyValueField 데모 — 품목 dimensions 변수집합에서 키 주입. 값은 부호 있는 델타.
+const KV_KEYS = [{ key: 'width_mm' }, { key: 'height_mm' }, { key: 'depth_mm' }];
+function KVFieldDemo() {
+  const [v, setV] = useState<Record<string, number>>({ width_mm: 30, height_mm: -12 });
+  return <div style={{ maxWidth: 420 }}><KeyValueField keys={KV_KEYS} value={v} onChange={setV} valueType="number" addLabel="보정 추가" /></div>;
+}
 // 중첩 트리에 자식 노드 추가 / id로 경로(브레드크럼) 찾기 — 데모의 분류 추가·검색 결과 경로용(순수 헬퍼).
 function addChildNode(nodes: TreeNodeData[], parentId: string, child: TreeNodeData): TreeNodeData[] {
   return nodes.map((n) =>
@@ -768,6 +843,90 @@ export function Demo({ name }: { name: string }) {
         status="ready"
       />
     ),
+    ListWidget: (
+      // TanStack 흡수 목록 위젯(ListPage 대체). 툴바가 표면 안 · align 자동/override · actions 셀=행 버튼.
+      <ListWidget
+        title="레코드"
+        columns={LW_COLUMNS}
+        data={LW_ROWS}
+        search={{ fields: ['name'], placeholder: '항목명 검색' }}
+        selectable
+        bulkActions={[
+          { label: '내보내기', variant: 'secondary', icon: 'download', onClick: () => notify.info('내보내기') },
+          { label: '삭제', variant: 'danger', icon: 'trash', onClick: () => notify.danger('일괄 삭제') },
+        ]}
+        pageSize={8}
+        onRowClick={(r) => notify.info(`행 클릭: ${String(r.name)}`)}
+        emptyState={{ icon: 'search', title: '결과 없음', description: '검색·필터를 조정하세요.' }}
+      />
+    ),
+    Repeater: (
+      // 저작 툴킷 척추 — 접이 레코드 + 헤더/본문 슬롯. 실제론 소비처가 renderItem에 도메인 필드를 조립.
+      //  여기선 defaultOpen으로 슬롯 내용을 보인다(add/remove는 토스트 — 박물관은 상태 없음).
+      <div style={{ maxWidth: 560 }}>
+        <Repeater
+          items={REP_DEMO}
+          addLabel="옵션 추가"
+          defaultOpen
+          onAdd={() => notify.info('레코드 추가')}
+          onRemove={() => notify.info('레코드 삭제')}
+          renderHeader={(it) => (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>{it.variable}</span>
+              <Text variant="body-strong">{it.label}</Text>
+              <Badge color={it.tone}>{it.kind}</Badge>
+            </span>
+          )}
+          renderItem={(it) => (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--mantine-spacing-sm)' }}>
+              <FormField label="variable_name"><TextInput value={it.variable} onChange={() => {}} /></FormField>
+              <FormField label="label"><TextInput value={it.label} onChange={() => {}} /></FormField>
+            </div>
+          )}
+        />
+      </div>
+    ),
+    ExpressionField: <ExprFieldDemo />,
+    KeyValueField: <KVFieldDemo />,
+    AssignPicker: (
+      // kind='appliance' 필터 → 같은 kind 템플릿만(빈 템플릿 비활성). 선택 시 재적용 경고 Modal.
+      <AssignPicker
+        templates={[
+          { id: 't1', label: '기본 경첩 세트', kind: 'appliance', itemCount: 4 },
+          { id: 't2', label: '프리미엄 힌지', kind: 'appliance', itemCount: 7 },
+          { id: 't3', label: '빈 템플릿', kind: 'appliance', itemCount: 0 },
+          { id: 't4', label: '도어 규격(다른 kind)', kind: 'required', itemCount: 5 },
+        ]}
+        kind="appliance"
+        onAssign={(id) => notify.info(`배정: ${id}`)}
+        confirmReapply
+      />
+    ),
+    InheritedValueField: (
+      // §4.1 봉인 — 참조(SSOT) 상속가 vs override, ×배율. override 0이면 item 상속(출처 칩=상속).
+      <div style={{ maxWidth: 520 }}>
+        <InheritedValueField
+          refOptions={IVF_REFS}
+          refId="i2"
+          onRefChange={() => {}}
+          override={0}
+          onOverrideChange={() => {}}
+          ratio={1}
+          onRatioChange={() => {}}
+        />
+      </div>
+    ),
+    NotificationPanel: (
+      // 알림 벨 Popover 슬롯 위젯 — 실제론 AppShell notifControl Popover(width lg=360, p=md)가 감싼다.
+      // 박물관에선 그 팝오버 표면을 흉내 낸 상자(360·padding md·raised·overlay)에 담아 단독으로 보여준다.
+      <div style={{ width: 360, padding: 'var(--mantine-spacing-md)', background: 'var(--surface-raised)', boxShadow: 'var(--elevation-overlay)', borderRadius: 'var(--mantine-radius-md)' }}>
+        <NotificationPanel
+          items={NOTIF_ITEMS}
+          onMarkAllRead={() => notify.info('모두 읽음')}
+          onViewAll={() => notify.info('전체 알림 페이지로 이동')}
+        />
+      </div>
+    ),
     Skeleton: (
       // 정형화 비교 — 기존: 로딩 시 점 하나(Spinner)로 레이아웃 붕괴. 수정안: 실제 행 구조를 흉내낸 Skeleton(레이아웃 유지).
       <BeforeAfter
@@ -799,7 +958,7 @@ export function Demo({ name }: { name: string }) {
       </div>
     ),
     EmptyState: <EmptyState icon="box" title="등록된 발주가 없습니다" description="신규 발주를 만들어 시작하세요." action={{ label: '신규 발주', variant: 'primary', onClick: () => {} }} />,
-    PageHeader: <PageHeader title="고객 관리" description="유입경로 · 2026-05-02 등록" status={{ label: '활성', tone: 'success' }} actions={[{ label: '신규 고객', variant: 'primary', icon: 'user', onClick: () => {} }]} />,
+    PageHeader: <PageHeader title="고객 관리" meta={[{ kind: 'badge', label: '활성', tone: 'success' }, { kind: 'text', label: '유입경로 · 2026-05-02 등록' }]} actions={[{ label: '신규 고객', variant: 'primary', icon: 'user', onClick: () => {} }]} />,
     DescriptionList: <DescriptionList columns={2} items={[{ label: '거래처명', value: '가구상사', type: 'text' }, { label: '상태', value: '확정', type: 'badge', badgeColors: { 확정: 'success' } }, { label: '담당자', value: '김병준', type: 'text' }, { label: '계약일', value: '2026-05-02', type: 'date' }]} />,
     Timeline: <Timeline events={[{ id: '1', timestamp: '2026-06-15T09:00:00', actor: { name: '김병준' }, category: { label: '발주', tone: 'info' }, title: '발주서 생성', body: '#1024 생성됨' }, { id: '2', timestamp: '2026-06-16T14:30:00', actor: { name: '이수연' }, category: { label: '승인', tone: 'success' }, title: '승인 완료' }]} />,
     Calendar: <Calendar month={month} onMonthChange={setMonth} events={[{ id: '1', date: '2026-06-10', label: 'A현장 납품', tone: 'info' }, { id: '2', date: '2026-06-18', label: 'B현장 시공', tone: 'success' }]} />,

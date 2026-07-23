@@ -11,13 +11,13 @@
 //  · 불변식: 제품은 정확히 한 디렉토리 / 직속만(하위 끌어올림 없음) / 단일 트리·단일 스코프.
 import type { ReactNode } from 'react';
 import { Card } from './Card';
-import { Container } from './Container';
+import { Page } from './Page';
 import { Stack } from './Stack';
 import { Group } from './Group';
 import { Text } from './Text';
 import { EmptyState } from './EmptyState';
 import { SectionHeader } from './SectionHeader';
-import { PageHeader } from './PageHeader';
+import { PageHeader, type HeaderMeta } from './PageHeader';
 import { Breadcrumb } from './Breadcrumb';
 import { Tree, type TreeNodeData } from './Tree';
 import type { ObjectField } from './ObjectCard';
@@ -246,11 +246,15 @@ export function HierarchyExplorer(props: Props) {
     );
   };
 
+  const headerMeta: HeaderMeta[] = [];
+  if (status) headerMeta.push({ kind: 'badge', label: status.label, tone: status.tone });
+  if (description) headerMeta.push({ kind: 'text', label: description });
+
   return (
-    // 페이지 템플릿: Container wide + 고정 PageHeader + 단일 elevated 카드(좌/우 구획).
-    <Container maxWidth="wide">
+    // 페이지 템플릿: Page(1200 캡) + 고정 PageHeader + 단일 elevated 카드(좌/우 구획).
+    <Page>
       <Stack gap="lg">
-        <PageHeader title={title} description={description} status={status} actions={actions} />
+        <PageHeader title={title} meta={headerMeta} actions={actions} />
         <Card variant="elevated" padding="none">
           <div style={{ display: 'flex', alignItems: 'stretch', height: EXPLORER_HEIGHT }}>
             {/* 좌: 고정폭 트리 패널, 내부 스크롤. 검색 바는 Tree의 '분류' 헤더 아래(toolbar 슬롯)에 들어간다.
@@ -271,6 +275,6 @@ export function HierarchyExplorer(props: Props) {
           </div>
         </Card>
       </Stack>
-    </Container>
+    </Page>
   );
 }

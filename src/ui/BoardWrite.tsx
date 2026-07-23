@@ -7,6 +7,7 @@
 //  · 라벨은 FormField(분자)가 소유. 수신자 칩/드릴·게시옵션 레이아웃은 board 전용(board.css, 01 4-D). 색=토큰.
 import { useState } from 'react';
 import { Container } from './Container';
+import { Page } from './Page';
 import { PageHeader } from './PageHeader';
 import { FormField } from './FormField';
 import { Select } from './Select';
@@ -116,7 +117,8 @@ export function BoardWrite({
   }
 
   return (
-    <Container maxWidth="default">
+    <Page>
+      <Container maxWidth="default">
       <div className="bw">
         <PageHeader title={pageTitle} />
 
@@ -208,6 +210,7 @@ export function BoardWrite({
           </Group>
         </div>
       </div>
-    </Container>
+      </Container>
+    </Page>
   );
 }

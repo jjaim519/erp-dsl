@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef, type ReactNode, type CSSProperties } from 'react';
 import dayjs from 'dayjs';
 import { PageHeader } from './PageHeader';
+import { Page } from './Page';
 import { SegmentedControl } from './SegmentedControl';
 import { IconButton } from './IconButton';
 import { Button } from './Button';
@@ -364,8 +365,9 @@ export function CalendarPage({ title, description, events, encoding, annotations
   const rangeOptions = [{ label: '1주', value: 'week' }, { label: '2주', value: 'biweek' }, { label: '월', value: 'month' }];
 
   return (
-    <div className="cal">
-      <PageHeader title={title} description={description}
+    <Page>
+      <div className="cal">
+      <PageHeader title={title} meta={description ? [{ kind: 'text', label: description }] : undefined}
         actions={onCreate ? [{ label: createLabel, variant: 'primary', icon: 'plus', onClick: onCreate }] : undefined} />
       <div className="cal-card">
         <div className="cal-toolbar">
@@ -452,6 +454,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
         actions={[{ label: '편집', variant: 'primary', icon: 'edit', onClick: () => {} }, { label: '삭제', variant: 'danger', icon: 'trash', onClick: () => {} }]}>
         {evSel && (renderEventDetail ? renderEventDetail(evSel) : eventDetailDefault(evSel))}
       </Drawer>
-    </div>
+      </div>
+    </Page>
   );
 }

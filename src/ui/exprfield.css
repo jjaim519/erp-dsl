@@ -1,0 +1,57 @@
+/* ExpressionField — 닫힌 DSL 수식 편집기. 오버레이 하이라이트 + 팔레트 + 검증. 색 전부 토큰. */
+.erpExpr { display: flex; flex-direction: column; gap: var(--mantine-spacing-xs); }
+
+/* 오버레이 래퍼 — <pre>(색)와 <textarea>(편집)가 동일 지오메트리로 겹친다. */
+.erpExpr-wrap {
+  position: relative;
+  background: var(--bg-primary);
+  border-radius: var(--mantine-radius-sm); corner-shape: var(--corner-shape);
+  box-shadow: inset 0 0 0 1px var(--border-default);
+}
+.erpExpr-wrap:focus-within { box-shadow: inset 0 0 0 1px var(--border-focus); }
+.erpExpr-wrap[data-error] { box-shadow: inset 0 0 0 1px var(--mantine-color-danger-6); }
+
+/* pre·textarea 는 폰트 지오메트리가 정확히 같아야 겹친다(오버레이 정합의 핵심). */
+.erpExpr-hl, .erpExpr-ta {
+  margin: 0;
+  font-family: "JetBrains Mono","SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  font-size: var(--typo-body-size); line-height: 1.7;
+  padding: 10px 12px;
+  white-space: pre-wrap; word-break: break-word; overflow-wrap: break-word;
+  tab-size: 2;
+}
+.erpExpr-hl { min-height: 42px; color: var(--text-primary); pointer-events: none; }
+.erpExpr-ta {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  background: transparent; color: transparent; caret-color: var(--text-primary);
+  border: none; outline: none; resize: none; overflow: hidden;
+}
+.erpExpr-ta::placeholder { color: var(--text-disabled); }
+.erpExpr-ta::selection { background: color-mix(in srgb, var(--mantine-color-primary-6) 24%, transparent); }
+
+/* 토큰 색 */
+.tk-var { color: var(--mantine-color-info-6); }
+.tk-fn  { color: var(--mantine-color-primary-6); font-weight: 600; }
+.tk-op  { color: var(--text-disabled); }
+.tk-num { color: var(--mantine-color-warning-6); }
+.tk-str { color: var(--mantine-color-success-6); }
+.tk-bad { color: var(--mantine-color-danger-6); text-decoration: wavy underline; text-underline-offset: 3px; }
+
+/* 검증 메시지 */
+.erpExpr-msgs { display: flex; flex-direction: column; gap: 3px; }
+.erpExpr-msg { display: flex; align-items: center; gap: 6px; font-size: var(--typo-caption-size); }
+.erpExpr-msg.ok { color: var(--mantine-color-success-6); }
+.erpExpr-msg.bad { color: var(--mantine-color-danger-6); }
+
+/* 삽입 팔레트 */
+.erpExpr-palette { display: flex; flex-direction: column; gap: 6px; }
+.erpExpr-palrow { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.erpExpr-pallbl { font-size: var(--typo-caption-size); font-weight: 700; color: var(--text-disabled); min-width: 40px; flex: none; }
+.erpExpr-tok {
+  font-family: "JetBrains Mono","SFMono-Regular",Consolas,monospace; font-size: var(--typo-caption-size);
+  border: none; cursor: pointer; padding: 3px 8px;
+  border-radius: var(--mantine-radius-sm); corner-shape: var(--corner-shape);
+}
+.erpExpr-tok.var { color: var(--mantine-color-info-6); background: color-mix(in srgb, var(--mantine-color-info-6) 10%, transparent); }
+.erpExpr-tok.fn  { color: var(--mantine-color-primary-6); background: var(--mantine-color-primary-0); }
+.erpExpr-tok:hover { filter: brightness(0.96); }

@@ -6,6 +6,7 @@
 //    (01 4-D "전용이면 소유"). 분리는 surface 톤·구분선만(무테). 색·간격 전부 토큰.
 import type { ReactNode } from 'react';
 import { Container } from './Container';
+import { Page } from './Page';
 import { Title } from './Title';
 import { Text } from './Text';
 import { Avatar } from './Avatar';
@@ -62,7 +63,8 @@ export function BoardView({
   const pct = readState && readState.total > 0 ? Math.round((readState.read / readState.total) * 100) : 0;
 
   return (
-    <Container maxWidth="default">
+    <Page>
+      <Container maxWidth="default">
       <div className="boardview">
         {/* 상단 액션 — 좌 목록 / 우 수정·인쇄·삭제 */}
         <div className="boardview-actions">
@@ -183,6 +185,7 @@ export function BoardView({
           </section>
         )}
       </div>
-    </Container>
+      </Container>
+    </Page>
   );
 }

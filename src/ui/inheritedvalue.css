@@ -1,0 +1,24 @@
+/* InheritedValueField — 참조+상속+override+배율 봉인 부품. 색·간격 전부 토큰. */
+.erpIVF { display: flex; flex-direction: column; gap: var(--mantine-spacing-xs); }
+
+/* 입력 줄 — 참조(grow) · override(고정) · 배율(좁게). 배율 없으면 2열. */
+.erpIVF-grid { display: grid; grid-template-columns: 1fr 150px; gap: var(--mantine-spacing-sm); align-items: end; }
+.erpIVF-grid[data-ratio] { grid-template-columns: 1fr 150px 88px; }
+.erpIVF-field { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.erpIVF-lbl { font-size: var(--typo-caption-size); font-weight: 600; color: var(--text-secondary); }
+
+/* 유효값 줄 — 규칙 결과 + 출처 칩(무테 틴트) */
+.erpIVF-eff {
+  display: flex; align-items: baseline; gap: var(--mantine-spacing-xs);
+  padding: 8px 10px; background: var(--bg-secondary);
+  border-radius: var(--mantine-radius-sm); corner-shape: var(--corner-shape);
+}
+.erpIVF-eff-lbl { font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.erpIVF-eff-val { font-size: var(--typo-body-size); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.erpIVF-src {
+  margin-left: auto; font-size: var(--typo-caption-size); font-weight: 700;
+  padding: 2px 8px; border-radius: var(--mantine-radius-full); corner-shape: var(--corner-shape);
+}
+.erpIVF-src[data-src="inherit"]  { color: var(--mantine-color-info-6);    background: color-mix(in srgb, var(--mantine-color-info-6)    12%, transparent); }
+.erpIVF-src[data-src="override"] { color: var(--mantine-color-warning-6); background: color-mix(in srgb, var(--mantine-color-warning-6) 14%, transparent); }
+.erpIVF-src[data-src="none"]     { color: var(--text-disabled);           background: var(--bg-tertiary); }

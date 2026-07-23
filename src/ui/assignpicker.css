@@ -1,0 +1,20 @@
+/* AssignPicker — 템플릿 배정 리스트(Popover content). 색·간격 토큰. */
+.erpAP-list { display: flex; flex-direction: column; gap: 2px; }
+.erpAP-row {
+  display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-xs);
+  width: 100%; text-align: left; border: none; background: none; font: inherit; cursor: pointer;
+  padding: 8px 10px; border-radius: var(--mantine-radius-xs); corner-shape: var(--corner-shape);
+}
+.erpAP-row:hover:not(:disabled) { background: var(--bg-secondary); }
+.erpAP-row:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.erpAP-row:disabled { cursor: default; opacity: 0.45; }
+.erpAP-label {
+  font-size: var(--typo-body-size); color: var(--text-primary);
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.erpAP-count {
+  flex: none; font-size: var(--typo-caption-size); font-weight: 700; color: var(--text-secondary);
+  background: var(--bg-tertiary); border-radius: var(--mantine-radius-full); corner-shape: var(--corner-shape);
+  padding: 1px 8px;
+}
+.erpAP-empty { padding: 10px; }

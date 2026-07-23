@@ -2,7 +2,7 @@
 // DataTable 유기체 — 도메인 무관 표 껍데기. columns(표현 enum)·rows(데이터) 주입, "고객" 모름.
 // 정렬·페이징 상태만 들고 실제 수행은 바깥(controlled). Pagination·EmptyState 조합.
 import { Table, Group as MGroup, Center } from '@mantine/core';
-import { renderCell, renderAction, type CellType, type BadgeColor, type Action } from './_cells';
+import { renderCell, renderAction, HEAD_CELL, cellAlign as textAlignOf, cellJustify as justifyOf, CELL_CLIP as CLIP, type CellType, type BadgeColor, type Action } from './_cells';
 import { Text } from './Text';
 import { Icon } from './Icon';
 import { Spinner } from './Spinner';
@@ -47,12 +47,7 @@ type Props = {
   bulkActions?: Action[];                     // 선택된 행 대상(선택>0일 때 상단 툴바). 선택 무관 액션은 ListPage 몫.
 };
 
-const RIGHT = new Set<CellType>(['number', 'currency', 'actions', 'menu', 'percent']);
-const CENTER = new Set<CellType>(['boolean', 'thumbnail', 'chevron']); // boolean(체크/대시)·썸네일·디스클로저(›)는 가운데.
-// 헤더 셀 공통 — 회색 밴드 + 하단 divider(inset boxShadow라 sticky로 핀돼도 그려진다; thead/tr 배경·보더는 sticky에서 페인트 안 됨).
-const HEAD_CELL = { background: 'var(--bg-secondary)', boxShadow: 'inset 0 -1px 0 var(--border-default)' } as const;
-const textAlignOf = (t: CellType): 'right' | 'center' | 'left' => (RIGHT.has(t) ? 'right' : CENTER.has(t) ? 'center' : 'left');
-const justifyOf = (t: CellType): 'flex-end' | 'center' | 'flex-start' => (RIGHT.has(t) ? 'flex-end' : CENTER.has(t) ? 'center' : 'flex-start');
+// 정렬·헤더밴드·클립은 _cells 단일 출처(ListWidget과 공유 — 두 곳 드리프트 차단). 위 import 별칭으로 사용.
 
 export function DataTable({
   columns, rows, status = 'ready', sort, onSortChange,
@@ -63,7 +58,6 @@ export function DataTable({
   //  · grow 열: width:100% + **max-width:0** → 남은 폭만 먹고(형제에게 공간 양보) 길면 … 말줄임. max-width:0이 없으면 형제를 min-content 이하로 짓눌러(배지가 자기 폭보다 작게 잘림) 버린다.
   //  · 나머지 열: nowrap → 내용 자연폭 유지(grow가 공간을 다 가져가도 안 줄어듦). 헤더도 한 줄.
   //  · maxWidth 열: 셀 내부 div가 상한(td의 max-width는 auto 레이아웃에서 무시) — 상한 안에서 자연폭, 넘으면 말줄임.
-  const CLIP = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const };
   const hasGrow = columns.some((c) => c.grow);
   const cellStyle = (c: DataTableColumn) =>
     c.grow ? { width: '100%' as const, maxWidth: 0, ...CLIP }

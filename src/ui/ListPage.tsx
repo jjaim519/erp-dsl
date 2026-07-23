@@ -6,7 +6,7 @@
 //  · Pagination은 목록의 표준 구성요소(자리는 규격이 보장). 단 실제 표시는 totalPages 데이터가 결정한다
 //    (렌더러가 데이터 없이 멋대로 만들지 않음 — 헌법/철학). filterable 슬롯과 같은 논리.
 import { Stack } from './Stack';
-import { Container } from './Container';
+import { Page } from './Page';
 import { Card } from './Card';
 import { PageHeader } from './PageHeader';
 import { SegmentedControl } from './SegmentedControl';
@@ -59,11 +59,11 @@ export function ListPage({
   const segment = schema.toolbar?.segment;
 
   return (
-    <Container maxWidth="wide">
+    <Page>
       <Stack gap="lg">
         <PageHeader
           title={schema.title}
-          description={schema.description}
+          meta={schema.description ? [{ kind: 'text', label: schema.description }] : undefined}
           actions={headerActions.length > 0 ? headerActions : undefined}
         />
         {/* 툴바(헤더↔표 사이) — 유형 세그먼트. 닫힌 스키마, controlled. */}
@@ -87,6 +87,6 @@ export function ListPage({
           />
         </Card>
       </Stack>
-    </Container>
+    </Page>
   );
 }

@@ -8,12 +8,12 @@
 //   ④ 드릴(detail)    — 행 클릭 → Drawer(우측 슬라이드) 라인 상세. content=도메인 슬롯(Drawer children 계약과 동일).
 //  · KPI 개수는 1~4열로 자동(초과는 다음 행). 합계·페이지네이션·빈상태는 데이터 유무로 결정(토글 prop 아님).
 import type { ReactNode } from 'react';
-import { Container } from './Container';
+import { Page } from './Page';
 import { Stack } from './Stack';
 import { Group } from './Group';
 import { Card } from './Card';
 import { Grid } from './Grid';
-import { PageHeader } from './PageHeader';
+import { PageHeader, type HeaderMeta } from './PageHeader';
 import { PeriodNavigator } from './PeriodNavigator';
 import { SegmentedControl } from './SegmentedControl';
 import { Stat } from './Stat';
@@ -83,10 +83,14 @@ export function LedgerPage({ title, description, status, actions, period, metric
       ? <Stat key={i} label={m.label} value={m.value} trend={m.trend} delta={m.delta} icon={m.icon} />
       : <SummaryCard key={i} label={m.label} icon={m.icon} tone={m.tone} count={m.count} amount={m.amount} />;
 
+  const headerMeta: HeaderMeta[] = [];
+  if (status) headerMeta.push({ kind: 'badge', label: status.label, tone: status.tone });
+  if (description) headerMeta.push({ kind: 'text', label: description });
+
   return (
-    <Container maxWidth="wide">
+    <Page>
       <Stack gap="lg">
-        <PageHeader title={title} description={description} status={status} actions={actions} />
+        <PageHeader title={title} meta={headerMeta} actions={actions} />
 
         {/* ① 기간 — 중앙 스트립(이 달의 정산 등 기간 진술). */}
         {period && (
@@ -136,6 +140,6 @@ export function LedgerPage({ title, description, status, actions, period, metric
           {detail.content}
         </Drawer>
       )}
-    </Container>
+    </Page>
   );
 }

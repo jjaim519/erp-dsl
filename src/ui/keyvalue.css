@@ -1,0 +1,4 @@
+/* KeyValueField — 닫힌 키 맵 편집. [키 Select][값][삭제] 행 + 추가. 색·간격 토큰. */
+.erpKV { display: flex; flex-direction: column; gap: 6px; }
+.erpKV-row { display: grid; grid-template-columns: 1fr 120px 28px; gap: 6px; align-items: center; }
+.erpKV-del { display: inline-flex; flex: none; }

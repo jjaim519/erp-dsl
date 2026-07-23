@@ -8,7 +8,7 @@
 //    못 닫아 이 면의 "컴팩트·무테" 요구를 못 맞춘다. 공유 부품(NumberStepper·LineItemList)은 그대로 재사용.
 //  · 카트 카탈로그 토글은 브라우즈와 *독립*(담을 때만 동기화). 반응형 강등(narrow→스택)은 부품이 소유.
 import { Fragment, useState } from 'react';
-import { Container } from './Container';
+import { Page } from './Page';
 import { Stack } from './Stack';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
@@ -101,9 +101,9 @@ export function HierarchyCollector({
   const grandAmt = cart.reduce((s, i) => s + (i.unitAmount ?? 0) * i.quantity, 0);
 
   return (
-    <Container maxWidth="wide">
+    <Page>
       <Stack gap="md">
-        <PageHeader title={title} description={description} />
+        <PageHeader title={title} meta={description ? [{ kind: 'text', label: description }] : undefined} />
 
         <div className="erpCollectorWidget">
           <div className="erpCollectorBody">
@@ -233,6 +233,6 @@ export function HierarchyCollector({
           )}
         </div>
       </Stack>
-    </Container>
+    </Page>
   );
 }

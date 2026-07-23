@@ -133,8 +133,10 @@ export function AppShell({
       </span>
     );
     return hasContent ? (
+      // 키 큰 알림 패널은 옆(right)으로 흘릴 때 하단정렬(align=end) — 넷바 하단 앵커에서 위로 부풀지 않고
+      //  넷바 오른쪽으로 빠져나오는 플라이아웃(좌측 넷바 문법). 폰(bottom)만 중앙정렬로 드롭.
       <Popover opened={notifOpen} onChange={(o) => (o ? notifH.open() : notifH.close())}
-        position={position} width="md" content={notification.content}>
+        position={position} align={position === 'right' ? 'end' : 'center'} width="lg" content={notification.content}>
         {trigger}
       </Popover>
     ) : trigger;
@@ -265,7 +267,7 @@ export function AppShell({
                 {tier === 'desktop' ? (
                   <MGroup gap="xs" justify="space-between" align="center" wrap="nowrap">
                     {profileControl('top', 'full')}
-                    {notifControl('top', 'icon')}
+                    {notifControl('right', 'icon')}
                   </MGroup>
                 ) : (
                   <MStack gap="xxs" align="center">

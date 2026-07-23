@@ -34,6 +34,20 @@ export type Action = {
 };
 export type BadgeColor = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
 
+// ── 표 셀 정렬·헤더밴드·클립 — DataTable·ListWidget 공유(단일 출처, 두 곳 드리프트 차단) ──
+// 셀 타입 → 정렬(관습): 숫자·돈·액션·퍼센트=우측 / boolean·썸네일·디스클로저=가운데 / 그 외=좌측.
+export type CellAlign = 'left' | 'center' | 'right';
+const CELL_RIGHT = new Set<CellType>(['number', 'currency', 'actions', 'menu', 'percent']);
+const CELL_CENTER = new Set<CellType>(['boolean', 'thumbnail', 'chevron']);
+export const cellAlign = (t: CellType): CellAlign => (CELL_RIGHT.has(t) ? 'right' : CELL_CENTER.has(t) ? 'center' : 'left');
+export const alignToFlex = (a: CellAlign): 'flex-end' | 'center' | 'flex-start' =>
+  (a === 'right' ? 'flex-end' : a === 'center' ? 'center' : 'flex-start');
+export const cellJustify = (t: CellType) => alignToFlex(cellAlign(t));
+// 헤더 셀 밴드 — 회색 + 하단 1px divider(inset boxShadow라 sticky로 핀돼도 그려진다; thead/tr 배경·보더는 sticky서 페인트 안 됨).
+export const HEAD_CELL = { background: 'var(--bg-secondary)', boxShadow: 'inset 0 -1px 0 var(--border-default)' } as const;
+// 셀 말줄임(넘치면 …).
+export const CELL_CLIP = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const };
+
 // 액션 1개 렌더 — 모든 호출처(표·PageHeader·Modal·EmptyState·DetailPage) 공유.
 //  iconOnly+icon → IconButton / icon+label → Button leftIcon / 그 외 → 텍스트 Button.
 export function renderAction(a: Action, key: number | string, size: 'sm' | 'md' = 'md') {

@@ -3,7 +3,7 @@
 //  · 로고 형태 전환기: 텍스트가 아닌 실제 이미지 로고(가로/세로/정사각/원형)가 슬롯에 들어갔을 때의 거동 검증용.
 //    슬롯 규칙(appshell.css): 로고 박스에 종횡비대로 최대 적합 — 형태별로 폭/높이가 박스를 채우고 절대 찌그러지지 않음.
 import { useState } from 'react';
-import { AppShell, PageHeader, Card, Title, Text, Stack, SegmentedControl, Anchor } from '@/ui';
+import { AppShell, PageHeader, Card, Title, Text, Stack, SegmentedControl, Anchor, NotificationPanel } from '@/ui';
 
 // 실제 로고를 흉내낸 data-URI SVG — intrinsic 크기를 크게 잡아 "최대로 박았을 때" 슬롯이 어떻게 캡하는지 본다.
 const svg = (w: number, h: number, inner: string) =>
@@ -60,10 +60,21 @@ export default function ShellDemo() {
           { label: '로그아웃', icon: 'logout', variant: 'danger', onClick: () => {} },
         ],
       }}
-      notification={{ hasUnread: true, onClick: () => {} }}
+      notification={{ hasUnread: true, content: (
+        <NotificationPanel
+          items={[
+            { id: '1', tone: 'success', title: '발주 #1024 승인 요청이 도착했습니다', actor: '이수연', time: '5분 전', group: '오늘' },
+            { id: '2', tone: 'warning', title: '경첩 35mm 재고가 안전재고 이하로 떨어졌습니다', actor: '시스템', time: '22분 전', group: '오늘' },
+            { id: '3', tone: 'info', title: '6월 정산 마감이 내일입니다', actor: '시스템', time: '1시간 전', group: '오늘' },
+            { id: '4', tone: 'danger', title: '발주 #1019가 반려되었습니다', actor: '박준호', time: '어제', read: true, group: '이번 주' },
+          ]}
+          onMarkAllRead={() => {}}
+          onViewAll={() => {}}
+        />
+      ) }}
     >
       <Stack gap="lg">
-        <PageHeader title="AppShell 데모" description={`활성 경로: ${active}`} />
+        <PageHeader title="AppShell 데모" meta={[{ kind: 'text', label: `활성 경로: ${active}` }]} />
         <Card variant="outlined" padding="lg">
           <Stack gap="sm">
             <Text variant="body-strong">로고 형태 전환 — 좌상단 로고 슬롯이 어떻게 잡는지 본다</Text>
