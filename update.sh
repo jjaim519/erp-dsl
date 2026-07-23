@@ -77,12 +77,12 @@ if [[ "$PUBLISH" != "--publish" ]]; then
 fi
 
 # --- 5. 발행 ---
-echo "=== 커밋 → $BUMP 버전업 → push → publish ==="
+echo "=== 커밋 → $BUMP 버전업 → push(태그) → CI publish ==="
 git add -A
 git commit -m "sync: 웹 최신본 반영"
 npm version "$BUMP" -m "release: %s"
-git push origin main --follow-tags
-npm publish
+git push origin main --follow-tags   # v* 태그 push → .github/workflows/publish.yml 이 npm publish 수행
 
 echo
-echo "🎉 발행 완료. 소비자: npm install @jjaim519/erp-dsl@latest"
+echo "🎉 태그 push 완료 → GitHub Actions(publish.yml)가 자동 발행. Actions 탭에서 결과 확인."
+echo "   소비자: npm install @jjaim519/erp-dsl@latest"
