@@ -1055,7 +1055,9 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'readState', kind: '기능', values: '{ read, total, acknowledged?, onAcknowledge? } — 필독 읽음확인(Progress + CTA, mustRead일 때만)' },
       { name: 'actions / onBack', kind: '기능', values: '우상단 수정·인쇄·삭제(Action[]) / 목록으로' },
       { name: 'prev / next', kind: '기능', values: '{ title, date?, onClick? } — 이전·다음글 네비' },
-      { name: 'comments / commentsAllowed / onCommentSubmit / onReply', kind: '기능', values: 'BoardComment[](1단 답글) + 작성(controlled) + 허용 토글' },
+      { name: 'comments / commentsAllowed', kind: '기능', values: 'BoardComment[] = { id, author, date, body, isAuthor?, parentId? } — parentId 있으면 부모 아래 1단 답글(들여쓰기) + 허용 토글' },
+      { name: 'commentValue / onCommentChange / onCommentSubmit', kind: '기능', values: '하단 작성란 = *새 댓글* 전용(controlled)' },
+      { name: 'onReplySubmit', kind: '기능', values: '(parentId, body) => void — 주면 최상위 댓글에 답글 버튼 + 중첩 인라인 폼. 대상·초안은 부품이 내부 수집' },
     ],
     composition: {
       토큰: ['surface/elevation', '6역할 팔레트(공지·필독·읽음 Progress)', 'board 전용 레이아웃(board.css — 01 4-D 소유)'],

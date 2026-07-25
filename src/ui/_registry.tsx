@@ -415,7 +415,7 @@ function BoardListDemo() {
 // BoardView 데모 — 본문(content)은 소비처가 DSL 부품으로 조립(도그푸드). 댓글·읽음확인은 상태.
 const BOARD_COMMENTS: BoardComment[] = [
   { id: 'c1', author: { name: '박상우', dept: '구매' }, date: '06.24 15:02', body: '반차도 이 기간에 같이 신청해야 하나요? 아니면 평소처럼 수시 신청이 가능한가요?' },
-  { id: 'c2', author: { name: '김서연', dept: '인사' }, date: '06.24 15:20', body: '반차는 본 하계 휴가와 무관하게 평소처럼 수시 신청 가능합니다. 본 공지는 연차(종일) 일정 취합용입니다.', isAuthor: true, reply: true },
+  { id: 'c2', author: { name: '김서연', dept: '인사' }, date: '06.24 15:20', body: '반차는 본 하계 휴가와 무관하게 평소처럼 수시 신청 가능합니다. 본 공지는 연차(종일) 일정 취합용입니다.', isAuthor: true, parentId: 'c1' },
   { id: 'c3', author: { name: '정민호', dept: '물류' }, date: '06.24 16:40', body: '확인했습니다. 창고 인원 일정 조율해서 팀 취합 후 제출하겠습니다.' },
 ];
 // 작성물(HTML) — 작성(Editor)→저장→보기(RichText) 한 짝의 산출물 예시.
@@ -426,9 +426,11 @@ const POST_HTML = `
 <blockquote>기한 내 미신청 시 부서별 기본 휴가 일정으로 자동 배정됩니다.</blockquote>
 <p>문의: 인사팀(내선 1234).</p>
 `;
+// 답글 저작 데모 — 부품이 대상·초안을 인라인 수집해 (parentId, body)로 넘기고, *소비처(여기)*가 목록을 관리(도메인 무지).
 function BoardViewDemo() {
   const [ack, setAck] = useState(false);
   const [comment, setComment] = useState('');
+  const [cmts, setCmts] = useState<BoardComment[]>(BOARD_COMMENTS);
   return (
     <BoardView
       notice
@@ -452,11 +454,18 @@ function BoardViewDemo() {
       onBack={() => {}}
       prev={{ title: '사내 보안 정책 개정 — VPN 2차 인증 의무화 (8/1 시행)', date: '06.20', onClick: () => {} }}
       next={{ title: '2026년 거래처 단가표 v3 배포 (엑셀 첨부)', date: '06.25', onClick: () => {} }}
-      comments={BOARD_COMMENTS}
+      comments={cmts}
       commentValue={comment}
       onCommentChange={setComment}
-      onCommentSubmit={() => setComment('')}
-      onReply={() => {}}
+      onCommentSubmit={() => {
+        const body = comment.trim();
+        if (!body) return;
+        setCmts((p) => [...p, { id: 'n' + p.length, author: { name: '옥성훈', dept: '대표' }, date: '방금', body }]);
+        setComment('');
+      }}
+      onReplySubmit={(parentId, body) =>
+        setCmts((p) => [...p, { id: 'r' + p.length, author: { name: '옥성훈', dept: '대표' }, date: '방금', body, parentId }])
+      }
     />
   );
 }

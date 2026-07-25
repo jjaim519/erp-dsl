@@ -4,7 +4,7 @@
 //  · 본문(content)은 도메인 콘텐츠 → raw ReactNode 슬롯(Modal children 동형). 소비처가 조립(에디터 산출/DSL 조합).
 //  · 공지/필독 솔리드 배지(board.css 공유) + 필독바·첨부 well·읽음 CTA·이전다음·댓글 레이아웃은 board 전용
 //    (01 4-D "전용이면 소유"). 분리는 surface 톤·구분선만(무테). 색·간격 전부 토큰.
-import type { ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Container } from './Container';
 import { Page } from './Page';
 import { Title } from './Title';
@@ -27,7 +27,9 @@ export type BoardComment = {
   date: string;
   body: string;
   isAuthor?: boolean;        // '작성자' 표시
-  reply?: boolean;           // 1단 답글(들여쓰기) — 얕은 스레드
+  parentId?: string;         // 부모 댓글 id — 있으면 1단 답글(부모 아래 들여쓰기). 없으면 최상위.
+                             //  v0.49.0에 boolean `reply`에서 교체: 부모 링크가 없으면 답글을 *새로 만들 때*
+                             //  어디 끼울지 배열 순서로 추정해야 해 깨진다(표시만 할 땐 안 드러났던 결함).
 };
 
 type Props = {
@@ -48,19 +50,56 @@ type Props = {
   next?: { title: string; date?: string; onClick?: () => void };
   comments?: BoardComment[];
   commentsAllowed?: boolean;
-  commentValue?: string;
+  commentValue?: string;              // 하단 작성란 = *새 댓글* 전용(controlled). 답글과 다른 행위라 별개 폼.
   onCommentChange?: (v: string) => void;
   onCommentSubmit?: () => void;
-  onReply?: (commentId: string) => void;
+  // 답글 = 중첩 인라인 폼(업계 표준: 답글 폼은 그 댓글 안, 새 댓글 폼은 목록 뒤 — Semantic UI 구분).
+  //  주면 최상위 댓글에 '답글' 버튼 노출. 대상·초안은 이 부품이 내부 소유하고 제출만 상향
+  //  (CalendarPage가 태그 라벨·색을 인라인 수집해 onTagRange로 넘기는 것과 동형).
+  onReplySubmit?: (parentId: string, body: string) => void;
 };
 
 export function BoardView({
   category, notice, mustRead, title, author, date, views, content, attachments,
   readState, actions, onBack, backLabel = '목록', prev, next,
-  comments, commentsAllowed = true, commentValue, onCommentChange, onCommentSubmit, onReply,
+  comments, commentsAllowed = true, commentValue, onCommentChange, onCommentSubmit, onReplySubmit,
 }: Props) {
   const initial = author.dept ?? author.name.slice(0, 2);
   const pct = readState && readState.total > 0 ? Math.round((readState.read / readState.total) * 100) : 0;
+
+  // 답글 저작 상태 — 템플릿이 자기 저작 상태를 소유(CalendarPage naming/tagLabel과 같은 층위).
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyDraft, setReplyDraft] = useState('');
+  const closeReply = () => { setReplyTo(null); setReplyDraft(''); };
+  const submitReply = () => {
+    const body = replyDraft.trim();
+    if (!replyTo || !body) return;
+    onReplySubmit?.(replyTo, body);
+    closeReply();
+  };
+
+  // parentId로 부모 아래 묶는다 — 배열 순서 암묵 가정 제거. 최상위는 주어진 순서 유지.
+  const roots = comments?.filter((c) => !c.parentId) ?? [];
+  const repliesOf = (id: string) => comments?.filter((c) => c.parentId === id) ?? [];
+
+  const commentRow = (c: BoardComment, isReply: boolean) => (
+    <div key={c.id} className={`boardview-comment${isReply ? ' reply' : ''}`}>
+      <Avatar size="sm">{c.author.dept ?? c.author.name.slice(0, 2)}</Avatar>
+      <div className="body">
+        <div>
+          <span className="who">{c.author.name}<span>· {c.author.dept}{c.isAuthor ? ' · 작성자' : ''}</span></span>
+          <span className="when">{c.date}</span>
+        </div>
+        <div className="text">{c.body}</div>
+        {/* 1단 답글(얕은 스레드) — 답글에는 답글 버튼 없음 */}
+        {onReplySubmit && !isReply && (
+          <button type="button" className="boardview-reply" onClick={() => { setReplyTo(c.id); setReplyDraft(''); }}>
+            <Icon name="arrow-back-up" size="sm" />답글
+          </button>
+        )}
+      </div>
+    </div>
+  );
 
   return (
     <Page>
@@ -161,22 +200,30 @@ export function BoardView({
         {commentsAllowed && (
           <section className="boardview-comments">
             <div className="hd">댓글 <span>{comments?.length ?? 0}</span></div>
-            {comments?.map((c) => (
-              <div key={c.id} className={`boardview-comment${c.reply ? ' reply' : ''}`}>
-                <Avatar size="sm">{c.author.dept ?? c.author.name.slice(0, 2)}</Avatar>
-                <div className="body">
-                  <div>
-                    <span className="who">{c.author.name}<span>· {c.author.dept}{c.isAuthor ? ' · 작성자' : ''}</span></span>
-                    <span className="when">{c.date}</span>
+            {roots.map((c) => (
+              <Fragment key={c.id}>
+                {commentRow(c, false)}
+                {repliesOf(c.id).map((r) => commentRow(r, true))}
+                {/* 인라인 답글 폼 — 그 댓글의 답글들 *뒤*(= 새 답글이 실제로 생길 자리)에 열린다.
+                    들여쓰기는 답글 행과 동일해 위치 자체가 "어디 달리는지"를 말한다. */}
+                {replyTo === c.id && (
+                  <div className="boardview-replyform">
+                    <div className="tgt">
+                      <Icon name="arrow-back-up" size="sm" />
+                      <span>{c.author.name}님에게 답글</span>
+                      <button type="button" className="x" aria-label="답글 취소" onClick={closeReply}>
+                        <Icon name="x" size="sm" />
+                      </button>
+                    </div>
+                    <div className="row">
+                      <div className="field">
+                        <Textarea value={replyDraft} onChange={setReplyDraft} placeholder="답글을 입력하세요" autosize />
+                      </div>
+                      <Button variant="primary" size="sm" onClick={submitReply}>등록</Button>
+                    </div>
                   </div>
-                  <div className="text">{c.body}</div>
-                  {onReply && !c.reply && (
-                    <button type="button" className="boardview-reply" onClick={() => onReply(c.id)}>
-                      <Icon name="arrow-back-up" size="sm" />답글
-                    </button>
-                  )}
-                </div>
-              </div>
+                )}
+              </Fragment>
             ))}
             <div className="boardview-writer">
               <div className="field"><Textarea value={commentValue ?? ''} onChange={onCommentChange ?? (() => {})} placeholder="댓글을 입력하세요" autosize /></div>

@@ -148,6 +148,20 @@
   color: var(--text-secondary); display: inline-flex; align-items: center; gap: 5px; line-height: 1.4;
   border-radius: var(--mantine-radius-full); }
 .boardview-reply:hover { background: var(--mantine-color-primary-0); color: var(--mantine-color-primary-7); }
+/* 인라인 답글 폼 — 답글 행과 같은 들여쓰기(46px)로 "답글이 생길 자리"에 열린다.
+   하단 작성란(새 댓글)과 역할이 달라 별개 폼이다(경쟁 경로 아님). 대상 칩이 수신자를 확정. */
+.boardview-replyform { margin-left: 46px; padding: var(--mantine-spacing-sm) 0;
+  display: flex; flex-direction: column; gap: var(--mantine-spacing-xs); }
+.boardview-replyform .tgt { display: flex; align-items: center; gap: 5px;
+  font-size: var(--typo-caption-size); font-weight: var(--typo-body-strong-weight); color: var(--text-secondary); }
+.boardview-replyform .tgt .x { display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; margin-left: var(--mantine-spacing-xxs);
+  border: none; background: none; cursor: pointer; color: var(--text-disabled);
+  border-radius: var(--mantine-radius-full); }
+.boardview-replyform .tgt .x:hover { background: var(--bg-secondary); color: var(--text-secondary); }
+.boardview-replyform .row { display: flex; gap: var(--mantine-spacing-sm); align-items: flex-end; }
+.boardview-replyform .field { flex: 1; }
+
 .boardview-writer { display: flex; gap: var(--mantine-spacing-sm); align-items: flex-end;
   margin-top: var(--mantine-spacing-md); padding-top: var(--mantine-spacing-md);
   border-top: var(--border-width) solid var(--border-default); }
