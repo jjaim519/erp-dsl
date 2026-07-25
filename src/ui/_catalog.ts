@@ -516,7 +516,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'trigger', kind: '콘텐츠', values: 'ReactNode (보통 IconButton)' },
       { name: 'items', kind: '기능', values: 'Action[] (클릭 시 닫고 onClick)' },
       { name: 'header', kind: '콘텐츠', values: 'ReactNode (선택 — 신원/제목, 구분선 자동)' },
-      { name: 'width / position', kind: '값', values: "'sm'|'md'|'lg' / 4방향" },
+      { name: 'width / position / align', kind: '값', values: "'sm'|'md'|'lg' / 4방향 / 'start'|'center'|'end'(축 위 정렬, 기본 center)" },
     ],
     composition: {
       토큰: ['hover bg(controls.css)', 'gap', 'danger 색(variant)'],

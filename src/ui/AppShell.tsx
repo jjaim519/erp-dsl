@@ -133,8 +133,10 @@ export function AppShell({
       </span>
     );
     return hasContent ? (
-      // 키 큰 알림 패널은 옆(right)으로 흘릴 때 하단정렬(align=end) — 넷바 하단 앵커에서 위로 부풀지 않고
-      //  넷바 오른쪽으로 빠져나오는 플라이아웃(좌측 넷바 문법). 폰(bottom)만 중앙정렬로 드롭.
+      // 데스크탑(top)=넷바 하단 앵커에서 위로 솟는 패널 — 프로필 메뉴와 방향 통일(좌하단 유틸리티 문법).
+      //  벨 중앙 정렬(align center): 벨이 넷바 우측 끝이라 우변 flush(end)면 좌변이 화면 밖으로 계산돼 shift 보정에 의존.
+      //  폭은 셋 다 lg — 알림은 목록·본문이 들어가 넷바 폭(260)으로 좁히면 옹색(패널 구성이 lg 전제).
+      //  태블릿(right)=레일 오른쪽 플라이아웃, 하단정렬(end)로 위로 안 부풂 / 폰(bottom)=상단바에서 중앙 드롭.
       <Popover opened={notifOpen} onChange={(o) => (o ? notifH.open() : notifH.close())}
         position={position} align={position === 'right' ? 'end' : 'center'} width="lg" content={notification.content}>
         {trigger}
@@ -170,8 +172,12 @@ export function AppShell({
     );
     // 'full': justify space-between 컨테이너 안에서 아바타 카드는 자연폭(좌측 앵커), 알림 벨은 우측 끝으로 밀림.
     const style = kind === 'full' ? { display: 'flex', alignItems: 'center', gap: 'var(--mantine-spacing-sm)', minWidth: 0 } : undefined;
+    // 데스크탑 'full'(넷바 하단 프로필)만 넷바폭 메뉴가 좌변 flush로 위로 솟음(좌하단 프로필 관습·알림과 통일).
+    //  레일/상단바의 아바타-only는 기본(좁게·중앙 정렬) 유지.
+    const menuWidth = kind === 'full' ? 'md' : 'sm';
+    const menuAlign: 'start' | 'center' = kind === 'full' ? 'start' : 'center';
     return profile.menu && profile.menu.length > 0 ? (
-      <Menu trigger={<span className={cls} style={style}>{inner}</span>} items={profile.menu} position={position} header={menuHeader} />
+      <Menu trigger={<span className={cls} style={style}>{inner}</span>} items={profile.menu} position={position} width={menuWidth} align={menuAlign} header={menuHeader} />
     ) : (
       <span className={cls} role="button" tabIndex={0} style={style}
         onClick={profile.onMenuClick}
@@ -267,7 +273,7 @@ export function AppShell({
                 {tier === 'desktop' ? (
                   <MGroup gap="xs" justify="space-between" align="center" wrap="nowrap">
                     {profileControl('top', 'full')}
-                    {notifControl('right', 'icon')}
+                    {notifControl('top', 'icon')}
                   </MGroup>
                 ) : (
                   <MStack gap="xxs" align="center">
