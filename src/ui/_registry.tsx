@@ -404,6 +404,7 @@ function OptionSetPickerDemo() {
         quantity={{ value: qty, onChange: setQty }}
         groups={PIZZA_SET}
         selection={sel}
+        display={{ g1: 'input' }}  // 표현 override 예시 — 크기(number)를 스테퍼 대신 타이핑으로. 도우(2개)는 자동 chips.
         onPick={(gid, code) => setSel((s) => togglePick(s, gid, code))}
         onQty={(cid, n) => setSel((s) => ({ ...s, qty: { ...s.qty, [cid]: n } }))}
         onNum={(k, v) => setSel((s) => ({ ...s, nums: { ...s.nums, [k]: v } }))}
@@ -494,11 +495,12 @@ function CompositionDemo() {
       <div style={{ flex: '1 1 58%', minWidth: 0 }}>{picker}</div>
       <div style={{ flex: '1 1 42%', minWidth: 0 }}>
         <CompositionOutline
+          addLabel="구성 추가"
           sections={[
-            { id: 'pizza', label: '피자', badge: '구성형', addLabel: '피자 추가',
+            { id: 'pizza', label: '피자', badge: '구성형',
               active: left.stage === 'pick' || (left.stage === 'config' && left.section === 'pizza'),
               lines: lines.filter((l) => l.section === 'pizza').map(toLine) },
-            { id: 'drink', label: '음료', badge: '단품', addLabel: '음료 추가',
+            { id: 'drink', label: '음료', badge: '단품',
               active: left.stage === 'config' && left.section === 'drink',
               lines: lines.filter((l) => l.section === 'drink').map(toLine) },
           ]}

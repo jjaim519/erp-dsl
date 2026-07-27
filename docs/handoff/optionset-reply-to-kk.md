@@ -67,6 +67,37 @@ erp-dsl 방침 변경(신설 부품은 page 위 widget만, 템플릿 층 동결)
 - `lineSpecs`의 `SpecChip[]` → `CompositionLine.sublabel` 문자열 결합(' · ')로 접힘 — 부록 B 정정대로 칩 슬롯 없음.
 - tsc·eslint·프로덕션 빌드·SSR 렌더 통과. 금칙어(9어) 부품 파일 0건.
 
+---
+
+# 추기 (2026-07-27, 0.55.0) — 실화면 피드백 반영
+
+kk 조립 화면(quote-builder) 실물 검토에서 나온 3건. **콜백·타입 계약은 불변** — kk 코드 수정 없이 새 동작을 받고, 원하면 `display`만 추가.
+
+### A. CompositionOutline — "후보 메뉴" → "작성물 카드 스택" (§3-7 핵심 요구 반전)
+
+빈 섹션 상시 노출을 폐기한다. 섹션이 다수인 실화면에서 우측이 "아직 아무것도 아닌 것들"로 도배되어 작성물이 파묻혔다. 새 동작:
+- 카드는 **라인이 있거나 지금 작성 중(active)인 섹션만**. `active`인 빈 섹션은 "작성 중…" 카드로 표시.
+- 추가 진입점은 상단 **단일 버튼 + 섹션 선택 메뉴**(부품 소유 Popover, 라벨+badge) → 기존 `onAddToSection(sectionId)` 그대로 발화. `sections`는 지금처럼 전체를 주입하면 된다(전체=메뉴 후보).
+- 신규 prop: `addLabel?`(전역 버튼 라벨, 기본 '추가') · `emptyHint?`(작성물 0건 안내). `CompositionSection.addLabel`은 **지원 중단(무시)** — 타입엔 남아 있어 컴파일은 깨지지 않는다.
+
+### B. OptionSetPicker — 표현 어휘 신설 (자동 도출 + 닫힌 override)
+
+selection당 1표현 고정을 폐기하고 닫힌 표현 집합을 도입:
+
+| selection | 자동 도출 | override 가능 값 |
+|---|---|---|
+| single | 후보 ≤5 → `chips` / 6~10 → `grid`(2열) / 그 외 → `list` | `list` `chips` `grid` `segmented` `select` |
+| quantity | `stepper` (>8개면 `grid`) | `stepper` `grid` |
+| number | 범위 넓거나(스텝 40칸 초과) 무한 → `input`(타이핑, blur에 min/max 스냅) / 좁으면 `stepper` | `stepper` `input` |
+
+- override는 configure 모드의 신규 prop: `display?: Record<groupId, OptionGroupDisplay>`. **§1 타입 불변** — 표현은 데이터가 아니다. kk는 margin_exempt처럼 자기 소유 맵으로 관리하면 된다.
+- **치수류는 자동으로 `input`(타이핑)이 된다** — 2700㎜을 스테퍼로 미는 문제 해소. 아무것도 안 해도 적용됨.
+- 행 밀도 전반 압축(행 32px, 헤더·소헤더 슬림) — 선택지 10+ 그룹의 세로 길이 체감 절반.
+
+### C. 백로그 등재 (kk 의견 요망)
+
+- **스와치/카드형 선택**(재질·색상 이미지) — `Choice`에 이미지 필드가 없어 §1 확장 필요. 실수요 있으면 회신에 포함할 것.
+
 ## §6 kk가 답해줘야 할 것
 
 1. **`Choice` 저작 필드 5종(§2) 승인** — §1은 kk와의 계약이라 통보가 아니라 확인을 구한다. 거부 시 대안은 "편집 채널 별도 콜백"인데 §2-5의 "모든 쓰기는 onChange 하나" 원칙이 깨진다(비권장).
