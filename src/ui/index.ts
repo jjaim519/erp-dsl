@@ -95,7 +95,7 @@ export { LineItemList, type LineItem } from './LineItemList';
 export { EmptyState } from './EmptyState';
 export { PageHeader } from './PageHeader';
 export { DescriptionList } from './DescriptionList';
-export { AppShell } from './AppShell';
+export { AppShell, APPSHELL_MIN_WIDTH } from './AppShell';   // 지원 하한(768) — 소비처가 같은 값으로 모바일 라우팅을 판정
 // 모바일 계열 — AppShell 계열의 형제(축소판 아님). 면·그림자를 안 쓰고 헤어라인으로만 나눈다.
 //  Mobile* 접두가 곧 경계다: 데스크탑 부품과 시각 체계가 정반대라 섞어 쓰면 안 된다.
 export { MobileShell, type MobileTab } from './MobileShell';
@@ -105,7 +105,10 @@ export { MobileListRow } from './MobileListRow';
 export { MobileStatRow, type MobileStatItem } from './MobileStatRow';
 export { MobileDisclosure } from './MobileDisclosure';
 export { MobilePhotoPicker } from './MobilePhotoPicker';
-export { MobileCalendar } from './MobileCalendar';   // 데스크탑 CalendarPage와 events/encoding/annotations 타입 공유
+export { MobileCalendar } from './MobileCalendar';
+export { MobileComment } from './MobileComment';
+export { MobileComposer } from './MobileComposer';
+export { MobileFileRow } from './MobileFileRow';   // 데스크탑 CalendarPage와 events/encoding/annotations 타입 공유
 //  입력은 모바일 전용 부품을 두지 않는다 — FormField(라벨·별표·에러·--field-border 통로)를 그대로 쓰고,
 //  타이포는 셸의 모바일 스코프가, 44pt 터치타깃은 mobileshell.css의 --input-height-* 가 처리한다.
 export { Timeline } from './Timeline';

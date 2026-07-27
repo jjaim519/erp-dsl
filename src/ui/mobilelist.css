@@ -101,13 +101,15 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mst-sub[data-tone='danger']  { color: var(--text-danger); }
 
 /* ── MobileTop ── */
-/* 화면 제목 영역 — 아래 내용과의 간격은 여기서 주고, 경계선은 두지 않는다(다음 섹션이 자기 선을 갖는다). */
+/* 화면 제목 영역 — 아래 내용과의 간격은 여기서 주고, 경계선은 두지 않는다(다음 섹션이 자기 선을 갖는다).
+   진입 액션은 제목과 *같은 줄* 우측에 얹는다(전용 행을 만들지 않는다 — 진입 하나에 한 행은 낭비). */
 .mtop {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
   padding: var(--mantine-spacing-lg) var(--mantine-spacing-md) var(--mantine-spacing-sm);
 }
+.mtop-action { margin-left: auto; flex: none; }
 
 /* ── MobilePhotoPicker ── */
 /* 정사각 썸네일 격자 — 칸 수는 폭이 정한다(minmax + auto-fill). 카드 면 없이 이미지 자체가 면이다. */
@@ -287,3 +289,82 @@ button.mst-item:active { background: var(--bg-secondary); }
 
 .mcal-more { pointer-events: none; }
 .mcal-morecell { text-align: center; font-size: var(--typo-caption-size); line-height: 16px; color: var(--text-secondary); }
+
+/* ── MobileComment ── */
+/* 댓글 행 — 아래 헤어라인 하나로 구분. 답글은 아바타 폭만큼 들여쓴다(부모와 시각적으로 물리게). */
+.mcmt {
+  display: flex; gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-md);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+.mcmt.reply { padding-left: calc(var(--mantine-spacing-md) + 34px); background: var(--bg-secondary); }
+.mcmt-body { flex: 1; min-width: 0; }
+.mcmt-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+.mcmt-who { font-size: var(--typo-caption-size); font-weight: var(--typo-body-strong-weight); }
+.mcmt-dept { font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mcmt-tag {
+  font-size: var(--typo-caption-size); color: var(--mantine-color-primary-7);
+  background: var(--mantine-color-primary-0); border-radius: var(--mantine-radius-full); padding: 0 6px;
+}
+.mcmt-when { margin-left: auto; font-size: var(--typo-caption-size); color: var(--text-disabled); }
+.mcmt-text { margin-top: 5px; font-size: var(--typo-body-size); line-height: 1.55; word-break: break-word; }
+/* 답글 = 가벼운 텍스트 액션. 평소 무테, 누르면 톤(폰은 hover가 없다). */
+.mcmt-reply {
+  margin-top: 6px; margin-left: -8px; padding: 4px 8px;
+  border: none; background: none; font-family: inherit; cursor: pointer;
+  font-size: var(--typo-caption-size); font-weight: var(--typo-body-strong-weight);
+  color: var(--text-secondary); display: inline-flex; align-items: center; gap: 4px;
+  border-radius: var(--mantine-radius-full); -webkit-tap-highlight-color: transparent;
+}
+.mcmt-reply:active { background: var(--mantine-color-primary-0); color: var(--mantine-color-primary-7); }
+
+/* ── MobileComposer ── */
+/* 하단 고정 입력 바 — 셸 bottom 슬롯에 산다. 자기 패딩을 갖는다(슬롯은 선만 준다). */
+.mcps { padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm); background: var(--bg-primary); }
+/* 답글 대상 칩 — 어디에 다는지가 입력 *옆*에 있어야 한다(폰은 위치로 말할 수 없다). */
+.mcps-target {
+  display: flex; align-items: center; gap: 4px;
+  padding: 2px 4px 6px;
+  font-size: var(--typo-caption-size); font-weight: var(--typo-body-strong-weight); color: var(--text-secondary);
+}
+.mcps-target .t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mcps-target .x {
+  margin-left: auto; flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border: none; background: none; cursor: pointer;
+  color: var(--text-disabled); border-radius: var(--mantine-radius-full);
+}
+.mcps-row { display: flex; align-items: flex-end; gap: var(--mantine-spacing-xs); }
+/* 입력 — 테두리 없는 알약. 필드 규격(테두리·라벨)과 다른 물건이라 raw textarea를 격리해 쓴다. */
+.mcps-input {
+  flex: 1; min-width: 0;
+  resize: none; overflow-y: auto;
+  border: none; outline: none;
+  background: var(--bg-secondary);
+  border-radius: var(--mantine-radius-md);
+  padding: 10px var(--mantine-spacing-sm);
+  font-family: inherit; line-height: 1.45; color: var(--text-primary);
+  /* iOS 자동 확대 봉인(셸 규칙과 동일 — 16px 하한) */
+  font-size: max(16px, var(--typo-body-size));
+}
+.mcps-input::placeholder { color: var(--text-disabled); }
+
+/* ── MobileFileRow ── */
+.mfr {
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  width: 100%; min-height: 44px; box-sizing: border-box;
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  border: none; border-bottom: var(--border-width) solid var(--border-default);
+  background: none; text-align: left; font-family: inherit; color: var(--text-primary);
+}
+button.mfr { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.mfr:active { background: var(--bg-secondary); }
+.mfr-ico, .mfr-dl { flex: none; display: inline-flex; }
+/* 확장자가 끝에 있으므로 말줄임을 왼쪽에서 낸다(direction 반전 + 표시 방향 복구). */
+.mfr-name {
+  flex: 1; min-width: 0;
+  font-size: var(--typo-body-size);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  direction: rtl; text-align: left;
+}
+.mfr-size { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }

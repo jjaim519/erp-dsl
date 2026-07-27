@@ -26,8 +26,10 @@
 }
 .erp-profile-trigger:hover { background: var(--bg-secondary); }
 
-/* 태블릿 아이콘 레일(72px) 메뉴 항목 — 세로 타일(아이콘+라벨). 하단탭 tile()을 재사용하되 세로 스택.
-   활성 = 은은한 톤 배경 + 좌측 짧은 강조 막대(브랜드 토큰색). 아이콘·라벨 색은 AppShell이 역할 prop으로 이미 구분. */
+/* 태블릿 아이콘 레일(72px) 메뉴 항목 — 세로 타일(아이콘+라벨).
+   활성 = **primary 틴트 배경**만. 좌측 강조 막대를 두지 않는다: 활성 타일은 이미 배경·아이콘색·라벨색
+   세 신호를 갖고 있어 막대가 네 번째 중복이고, 넷바 패딩(8px) 때문에 가장자리에 못 닿아 떠 보였다.
+   대신 배경을 중립 회색 → primary 틴트로 올려 색 이야기를 하나로 통일한다(무테 지향: 윤곽 대신 톤). */
 .erp-rail-item {
   position: relative;
   width: 100%;
@@ -42,96 +44,4 @@
   -webkit-tap-highlight-color: transparent;
 }
 .erp-rail-item:hover { background: var(--bg-secondary); }
-.erp-rail-item[data-active='true'] { background: var(--bg-secondary); }
-.erp-rail-item[data-active='true']::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 20px;
-  border-radius: 0 2px 2px 0;
-  background: var(--mantine-color-primary-6);
-}
-
-/* 하단 탭 내비(모바일) — footer 슬롯 안의 바. 골격(flex 균등 분배·safe-area)은 여기 raw CSS(명시 예외),
-   타일 콘텐츠는 AppShell이 우리 Stack/Icon/Text로 조립한다. 색·여백은 전부 토큰(raw hex/px 우회 없음). */
-.erp-bottomnav {
-  display: flex;
-  height: 100%;
-  box-sizing: border-box;
-  /* footer 총높이 = 56 + safe-area. 탭 콘텐츠는 위 56에 두고, 인셋(아이폰 홈 인디케이터)만큼 아래를 비운다. */
-  padding-bottom: env(safe-area-inset-bottom);
-  background: var(--bg-primary);
-}
-
-/* 균등 분배는 바의 *직접 자식* 전체에 건다 — '더보기' 탭은 Popover의 target span으로 감싸여
-   직접 자식이 그 span이 되므로, .erp-tab에만 flex를 주면 더보기 칸만 좁아진다. */
-.erp-bottomnav > * {
-  flex: 1;
-  min-width: 0;
-}
-
-/* 탭 한 칸 — 버튼 리셋 + 칸을 꽉 채움. 내부 타일(아이콘+라벨)은 AppShell의 Stack이 그린다. */
-.erp-tab {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* 활성 탭 — 상단 짧은 인디케이터 막대(브랜드 토큰색). 아이콘·라벨 색은 AppShell이 역할 prop으로 이미 구분. */
-.erp-tab[data-active='true']::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 2px;
-  border-radius: 0 0 2px 2px;
-  background: var(--mantine-color-primary-6);
-}
-
-/* '더보기' Popover 안의 메뉴 행 — 행 클릭 대상. 콘텐츠(아이콘+라벨)는 AppShell의 Group이 그린다. */
-.erp-more-row {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: none;
-  background: none;
-  padding: 6px 8px;
-  border-radius: var(--mantine-radius-md);
-  cursor: pointer;
-}
-.erp-more-row:hover,
-.erp-more-row[data-active='true'] { background: var(--bg-secondary); }
-
-/* 모바일(< sm=48em) 네이티브 앱 스크롤 — 데스크탑 무관(미디어쿼리 밖). em은 브라우저 기본 16px 기준이라
-   font-scale(html font-size)에 안 흔들리고 Mantine breakpoint sm과 정합.
-   ① 페이지(body) 스크롤 잠금 → 화면 끝 고무줄 바운스·뒤배경 노출 차단.
-   ② 본문(.erp-appshell-main)만 고정 헤더·하단탭 사이에서 내부 스크롤 — 짧으면 스크롤 0(딱 한 화면),
-      길면 그만큼만(끝에서 바운스 없이 멈춤). 인라인 minHeight:100vh를 무효화해 잉여 스크롤 제거. */
-@media (max-width: 47.99em) {
-  html, body {
-    height: 100%;
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-  .erp-appshell-main {
-    height: 100vh !important;    /* 구형 폴백 */
-    height: 100dvh !important;   /* 동적 뷰포트(주소창 수축 반영). Mantine이 헤더·하단탭 높이만큼 패딩으로 오프셋. */
-    min-height: 0 !important;    /* 인라인 minHeight:100vh 무효화 → 잉여 스크롤 제거 */
-    overflow-y: auto;
-    overscroll-behavior: none;   /* 끝에서 바운스 없이 멈춤 + 부모 전파 차단 */
-  }
-}
+.erp-rail-item[data-active='true'] { background: var(--mantine-color-primary-0); }

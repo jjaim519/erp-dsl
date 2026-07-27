@@ -839,11 +839,11 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Grid', 'Stack'],
       공유: ['_cells(셀 type enum)'],
     } },
-  { name: 'AppShell', layer: '유기체', role: '페이지 전체 골격 — 3티어 반응형(데스크탑 260 풀 넷바 / 태블릿 72 아이콘 레일 / 폰 하단탭). 상단바 해체(데스크탑·태블릿), 유틸리티(알림·프로필)는 넷바 하단. 폰만 슬림 상단바.',
+  { name: 'AppShell', layer: '유기체', role: '페이지 전체 골격 — **2티어**(데스크탑 260 풀 넷바 / 태블릿 72 아이콘 레일). 상단바 없음, 유틸리티(알림·프로필)는 넷바 하단. **모바일은 범위 밖**(MobileShell이 받는다) — 하한 APPSHELL_MIN_WIDTH(768) 아래는 가로 스크롤로 예측 가능하게 무너진다.',
     props: [
-      { name: 'logo / onLogoClick', kind: '콘텐츠', values: 'ReactNode, () => void (데스크탑 넷바 최상단 / 폰 상단바 좌측. 태블릿 레일엔 로고 없음)' },
-      { name: 'menuItems / activePath / onNavigate', kind: '기능', values: '{ label, icon, path, group, count?: number }[] (count=미처리 건수 → CountBadge, 어느 티어에서도 보임)' },
-      { name: 'profile', kind: '콘텐츠', values: '{ name, role, email, menu?: Action[] } (넷바 하단 확장행 / 폰·레일 아바타-only)' },
+      { name: 'logo / onLogoClick', kind: '콘텐츠', values: 'ReactNode, () => void (데스크탑 넷바 최상단. 태블릿 레일엔 로고 없음 — 72px엔 정사각 마크만 들어가 부실)' },
+      { name: 'menuItems / activePath / onNavigate', kind: '기능', values: '{ label, icon, path, group, count?: number }[] (count=미처리 건수 → CountBadge, 두 티어 모두에서 보임)' },
+      { name: 'profile', kind: '콘텐츠', values: '{ name, role, email, menu?: Action[] } (넷바 하단 확장행 / 레일 아바타-only)' },
       { name: 'notification', kind: '기능', values: '{ hasUnread?, onClick?, content? }' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (콘텐츠 영역)' },
     ],
@@ -859,7 +859,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'title / onBack / backLabel', kind: '콘텐츠', values: 'Navigation — 2뎁스에서 "여기가 어디인지" + 뒤로. 최상위 화면은 생략(본문 Top이 제목을 가짐)' },
       { name: 'actions', kind: '기능', values: 'Action[] — 우측 아이콘 액션(icon 필수). 텍스트 CTA 자리가 아니다' },
       { name: 'tabs / activePath / onNavigate', kind: '기능', values: 'MobileTab[] = { label, icon, path, count? } — 3~5개(HIG). 오버플로(더보기) 없음: HIG가 "숨은 탭은 도달·인지가 어렵다"며 말리는 패턴이라 소비처가 추려서 준다' },
-      { name: 'cta', kind: '기능', values: 'Action (선택) — 탭 위 하단 고정. GW 부분집합이라 지양하되, 나중에 셸을 다시 뜯지 않도록 자리만 열어둠. 없으면 렌더 0' },
+      { name: 'bottom', kind: '콘텐츠', values: 'ReactNode (선택) — 탭 위 고정 한 칸. CTA 버튼이든 입력 바(MobileComposer)든 여기 들어간다. 자리를 하나로 둔 이유: 둘 다 "탭 위 고정"이라 슬롯을 나누면 같은 자리를 두 경로가 다툰다. 없으면 렌더 0' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (유일한 스크롤 영역)' },
     ],
     composition: {
@@ -889,9 +889,10 @@ export const CATALOG: CatalogEntry[] = [
     } },
   { name: 'MobileTop', layer: '분자', role: '모바일 화면 제목 영역 — 데스크탑 PageHeader에서 *우측 CTA를 뗀* 자리. 셸이 아니라 화면이 소유(TDS의 Navigation/Top 2층 구분).',
     props: [
-      { name: 'title', kind: '콘텐츠', values: '제목. **보조 설명·액션 슬롯 없음** — 설명은 본문 섹션이, 행동은 셸의 하단 고정 CTA가 받는다' },
+      { name: 'title', kind: '콘텐츠', values: '제목. **보조 설명 슬롯 없음** — 설명이 필요하면 본문 섹션이 갖는다' },
+      { name: 'action', kind: '기능', values: "Action(선택) — 제목과 *같은 줄* 우측의 **진입** 액션('글쓰기'처럼 다른 화면으로). 화면의 **커밋** 액션(등록·요청)은 여전히 셸 하단 고정이 받는다 — 역할이 달라 경쟁 경로가 아니다. 전용 행을 만들지 않는 이유: 진입 하나에 한 행은 낭비" },
     ],
-    composition: { 토큰: ['heading(모바일 28px)', 'spacing'], '의미 원자': ['Title'], 공유: ['mobilelist.css'] } },
+    composition: { 토큰: ['heading(모바일 28px)', 'spacing'], '의미 원자': ['Title'], 공유: ['_cells(renderAction)', 'mobilelist.css'] } },
   { name: 'MobileStatRow', layer: '분자', role: '모바일 KPI 행 — 지표 2~4개 균등 분할 + 항목 사이 세로 헤어라인. 데스크탑 Stat·SummaryCard는 카드 면 위 물건이라 모바일 체계에 못 쓴다.',
     props: [
       { name: 'items', kind: '기능', values: 'MobileStatItem[] = { label, value(포맷된 문자열 — 숫자 포맷은 소비처), sub?(델타·보조), tone?(sub 색), onClick?(그 칸만 눌림 — 보통 걸러진 목록으로) }' },
@@ -929,6 +930,30 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['**_calendarLanes.packLanes — CalendarPage와 한 벌**(복제하면 적층 순서가 갈려 같은 데이터가 두 화면에서 다르게 쌓인다)', 'CalendarPage 타입', 'raw 7열 CSS grid(우리 Grid는 12의 약수만 — 명시 예외)', 'dayjs'],
     } },
+  { name: 'MobileComment', layer: '분자', role: '댓글 한 줄 — 1단 답글(parentId)까지 들여쓰기. 데스크탑 BoardView와 같은 BoardComment 타입을 쓴다(소비처가 한 벌을 두 화면에).',
+    props: [
+      { name: 'comment', kind: '기능', values: 'BoardComment = { id, author, date, body, isAuthor?, parentId? } — 부모 링크는 parentId(배열 순서에 기대지 않음)' },
+      { name: 'authorLabel', kind: '콘텐츠', values: "글쓴이 표시 문구(기본 '작성자') — 부품이 호칭을 지어내지 않는다" },
+      { name: 'onReply', kind: '기능', values: '(id) => void — 있으면 답글 버튼. 답글엔 안 붙는다(1단 스레드). *작성은 여기 없다* — 폰은 입력이 하단 고정이라 MobileComposer가 받는다(데스크탑 BoardView의 중첩 인라인 폼과 갈리는 지점)' },
+    ],
+    composition: { 토큰: ['--border-default', 'primary-0(작성자 태그)', 'bg-secondary(답글 배경)'], '의미 원자': ['Avatar', 'Icon'], 공유: ['BoardComment(BoardView)', 'mobilelist.css'] } },
+  { name: 'MobileComposer', layer: '분자', role: '화면 하단 고정 입력 바 — 셸 bottom 슬롯에 꽂는다. 폰에서 긴 스크롤 끝의 입력창은 손이 안 닿아 하단에 붙는다.',
+    props: [
+      { name: 'value / onChange / onSubmit', kind: '기능', values: 'controlled — 값의 주인은 소비처' },
+      { name: 'replyTo', kind: '콘텐츠', values: '{ label, onCancel } — 있으면 입력 위 대상 칩. 폰은 입력이 하단 고정이라 "위치"로 대상을 말할 수 없어 태깅이 정답(데스크탑은 중첩 폼으로 위치가 말한다 — 같은 행위, 다른 매체)' },
+      { name: 'placeholder / disabled', kind: '스타일', values: 'string / boolean' },
+    ],
+    composition: {
+      토큰: ['bg-secondary(입력 알약)', 'font-size max(16px) — iOS 자동 확대 봉인'],
+      분자: ['IconButton'],
+      공유: ['격리 raw textarea(자동 높이·무테 — 필드 규격과 다른 물건. Tree 인라인편집 선례)', 'mobilelist.css'],
+    } },
+  { name: 'MobileFileRow', layer: '분자', role: '첨부 파일 한 줄(읽기) — 아이콘·이름·크기·내려받기. MobileListRow(누르면 다른 화면)와 행동이 달라 별개 부품(§11-3).',
+    props: [
+      { name: 'name / size', kind: '콘텐츠', values: '파일명 + 크기 문자열(바이트 포맷은 소비처 — 로케일/도메인)' },
+      { name: 'onDownload', kind: '기능', values: '있으면 행 전체가 눌린다' },
+    ],
+    composition: { 토큰: ['--border-default', 'min-height 44px'], '의미 원자': ['Icon'], 공유: ['말줄임을 왼쪽에서(확장자가 끝에 있어 direction 반전)', 'mobilelist.css'] } },
   { name: 'Timeline', layer: '유기체', role: '시간순 누적 이벤트(시각·작성자·구분·내용 말풍선).',
     props: [
       { name: 'events', kind: '기능', values: 'TimelineEvent[]' },

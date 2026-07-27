@@ -3,12 +3,13 @@
 //  · 이 파일은 *소비처* 역할이다(패키지 아님). 셸이 내주는 슬롯에 화면을 조립해본다.
 //  · 1차 추출 완료: 여기 인라인으로 짰던 "행"과 "묶음"이 MobileListRow·MobileSection으로 올라갔다.
 //    남은 인라인(본문 문단 등)은 아직 세 번 반복되지 않아 부품으로 올리지 않는다(rule of three).
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import {
   MobileShell, MobileTop, MobileSection, MobileListRow, MobileStatRow,
   MobileDisclosure, MobilePhotoPicker, MobileCalendar,
-  FormField, TextInput, Select, Text, Title, Badge,
-  type MobileTab, type FileItem,
+  MobileComment, MobileComposer, MobileFileRow,
+  FormField, TextInput, Select, Textarea, Switch, Button, Text, Title, Badge, RichText,
+  type MobileTab, type FileItem, type BoardComment,
   type CalendarEvent, type CalendarEncoding, type CalendarAnnotation,
 } from '@/ui';
 
@@ -18,6 +19,15 @@ const TABS: MobileTab[] = [
   { path: '/sites', label: '현장', icon: 'building' },
   { path: '/my', label: '내정보', icon: 'user' },
 ];
+
+const COMMENTS: BoardComment[] = [
+  { id: 'c1', author: { name: '박상우', dept: '구매' }, date: '06.24 15:02', body: '반차도 이 기간에 같이 신청해야 하나요?' },
+  { id: 'c2', author: { name: '김서연', dept: '인사' }, date: '06.24 15:20', isAuthor: true, parentId: 'c1',
+    body: '반차는 본 휴가와 무관하게 평소처럼 수시 신청 가능합니다.' },
+  { id: 'c3', author: { name: '정민호', dept: '물류' }, date: '06.24 16:40', body: '확인했습니다. 창고 인원 조율해서 제출하겠습니다.' },
+];
+
+const POST_HTML = `<h2>1. 신청 기간</h2><p>신청 기간은 <strong>7월 1일 ~ 7월 15일 18:00</strong>까지입니다. 전자결재 &gt; 휴가신청서로 제출해 주세요.</p><ul><li>승인: 팀장 1차 → 인사팀 최종</li><li>반차·반반차는 휴가신청서에서 선택</li></ul>`;
 
 const POSTS = [
   { id: 'p1', cat: '공지', title: '2026년 하계 휴가 신청 및 근태 처리 안내', who: '김서연 · 인사팀', when: '06.24', must: true },
@@ -67,6 +77,28 @@ export default function MobileShellDemo() {
   const [day, setDay] = useState('2026-07-27');
   const [dayOpen, setDayOpen] = useState<string | null>(null);
   const [openEvent, setOpenEvent] = useState<string | null>(null);
+  const [cmts, setCmts] = useState<BoardComment[]>(COMMENTS);
+  const [draft, setDraft] = useState('');
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [writing, setWriting] = useState(false);
+  const [wTitle, setWTitle] = useState('');
+  const [wCat, setWCat] = useState<string | null>('notice');
+  const [wBody, setWBody] = useState('');
+  const [wNotice, setWNotice] = useState(false);
+  const [wFiles, setWFiles] = useState<FileItem[]>([]);
+
+  const submitComment = () => {
+    const body = draft.trim();
+    if (!body) return;
+    setCmts((p) => [...p, {
+      id: 'n' + p.length, author: { name: '옥성훈', dept: '대표' }, date: '방금', body,
+      ...(replyTo ? { parentId: replyTo } : {}),
+    }]);
+    setDraft(''); setReplyTo(null);
+  };
+  // parentId로 부모 아래 묶는다(배열 순서에 기대지 않음 — BoardView와 같은 규칙).
+  const roots = cmts.filter((c) => !c.parentId);
+  const repliesOf = (id: string) => cmts.filter((c) => c.parentId === id);
   const post = POSTS.find((p) => p.id === open);
 
   // '현장' 탭 — 달력이 화면 전체를 갖는다(3뎁스: 달력 → 그날 일정 목록 → 일정 상세).
@@ -141,7 +173,9 @@ export default function MobileShellDemo() {
   if (tab === '/orders') {
     return (
       <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}
-        cta={{ label: '발주 요청', onClick: () => {} }}>
+        bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
+          <Button variant="primary" fullWidth onClick={() => {}}>발주 요청</Button>
+        </div>}>
         <MobileTop title="발주" />
         <MobileSection flush>
           <MobileStatRow items={[
@@ -167,7 +201,46 @@ export default function MobileShellDemo() {
     );
   }
 
-  // 2뎁스(상세) — Navigation이 뒤로+제목을 갖는다. 최상위는 제목 없이 본문 Top이 갖는다.
+  // ── 게시판 쓰기 ──
+  if (writing) {
+    return (
+      <MobileShell title="글쓰기" onBack={() => setWriting(false)}
+        tabs={TABS} activePath={tab} onNavigate={(p) => { setWriting(false); setTab(p); }}
+        bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
+          <Button variant="primary" fullWidth onClick={() => setWriting(false)}>등록</Button>
+        </div>}>
+        <MobileSection>
+          <FormField label="분류" withAsterisk>
+            <Select options={[{ value: 'notice', label: '공지' }, { value: 'work', label: '업무' }]}
+              value={wCat} onChange={setWCat} placeholder="분류 선택" />
+          </FormField>
+          <div style={{ height: 'var(--mantine-spacing-md)' }} />
+          <FormField label="제목" withAsterisk>
+            <TextInput value={wTitle} onChange={setWTitle} placeholder="제목을 입력하세요" />
+          </FormField>
+          <div style={{ height: 'var(--mantine-spacing-md)' }} />
+          {/* 본문은 Editor(툴바 8개)가 아니라 Textarea — 폰에서 리치 툴바는 화면을 먹고 손도 안 닿는다. */}
+          <FormField label="본문" withAsterisk>
+            <Textarea value={wBody} onChange={setWBody} placeholder="내용을 입력하세요" autosize />
+          </FormField>
+        </MobileSection>
+
+        <MobileSection title="첨부">
+          <MobilePhotoPicker value={wFiles} onChange={setWFiles} max={4} />
+        </MobileSection>
+
+        {/* 게시옵션 — 새 부품 없이 MobileListRow의 trailing 슬롯에 Switch를 꽂는다(onClick 없으면 정적 행). */}
+        <MobileSection title="게시 옵션" flush>
+          <MobileListRow title="상단 고정(공지)" meta="목록 최상단에 고정됩니다"
+            trailing={<Switch checked={wNotice} onChange={setWNotice} />} />
+          <MobileListRow title="댓글 허용" meta="끄면 댓글을 달 수 없습니다"
+            trailing={<Switch checked onChange={() => {}} />} />
+        </MobileSection>
+      </MobileShell>
+    );
+  }
+
+  // ── 게시판 읽기 (2뎁스) — 댓글 입력은 셸 하단 고정 ──
   if (post) {
     return (
       <MobileShell
@@ -175,25 +248,43 @@ export default function MobileShellDemo() {
         onBack={() => setOpen(null)}
         actions={[{ label: '더보기', icon: 'dots-vertical', iconOnly: true, onClick: () => {} }]}
         tabs={TABS} activePath={tab} onNavigate={(p) => { setOpen(null); setTab(p); }}
+        bottom={
+          <MobileComposer
+            value={draft} onChange={setDraft} onSubmit={submitComment}
+            placeholder="댓글을 입력하세요"
+            replyTo={replyTo
+              ? { label: `${cmts.find((c) => c.id === replyTo)?.author.name}님에게 답글`, onCancel: () => setReplyTo(null) }
+              : undefined}
+          />
+        }
       >
         <MobileSection>
+          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
+            <Badge color="info">{post.cat}</Badge>
+            {post.must && <Badge color="danger">필독</Badge>}
+          </div>
           <Title variant="subheading">{post.title}</Title>
           <div style={{ marginTop: 8 }}>
             <Text variant="caption" color="secondary">{post.who} · {post.when}</Text>
           </div>
         </MobileSection>
 
-        {/* 자유 슬롯 — 본문. 텍스트든 배지든 소비처가 조립한다. */}
         <MobileSection>
-          <Text variant="body">
-            안녕하세요, 인사팀입니다. 아래 내용을 안내드립니다. 신청 기간은 7월 1일부터 7월 15일 18시까지이며,
-            전자결재 &gt; 휴가신청서로 제출해 주세요. 기한 내 미신청 시 부서별 기본 일정으로 자동 배정됩니다.
-          </Text>
+          <RichText html={POST_HTML} />
         </MobileSection>
 
-        {/* 라벨-값 나열도 지금은 자유 슬롯으로 — 세 번째 반복이 나오면 그때 행 부품으로 추출한다. */}
-        <MobileSection title="문의">
-          <Text variant="body">인사팀 · 내선 1234</Text>
+        <MobileSection title="첨부파일 2" flush>
+          <MobileFileRow name="2026_하계휴가_신청서.xlsx" size="24 KB" onDownload={() => {}} />
+          <MobileFileRow name="휴가규정_개정본.pdf" size="180 KB" onDownload={() => {}} />
+        </MobileSection>
+
+        <MobileSection title={`댓글 ${cmts.length}`} flush>
+          {roots.map((c) => (
+            <Fragment key={c.id}>
+              <MobileComment comment={c} onReply={setReplyTo} />
+              {repliesOf(c.id).map((r) => <MobileComment key={r.id} comment={r} />)}
+            </Fragment>
+          ))}
         </MobileSection>
       </MobileShell>
     );
@@ -201,7 +292,8 @@ export default function MobileShellDemo() {
 
   return (
     <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}>
-      <MobileTop title="게시판" />
+      <MobileTop title="게시판"
+        action={{ label: '글쓰기', variant: 'primary', onClick: () => setWriting(true) }} />
 
       <MobileSection flush>
         {POSTS.map((p) => (

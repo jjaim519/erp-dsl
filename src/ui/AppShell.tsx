@@ -1,21 +1,24 @@
 'use client';
 // AppShell 유기체 — ERP 공통 셸(모든 페이지 상속). 셸 크롬만 소유. 3티어 반응형.
 //  · 경계: AppShell은 children만 받는다 — PageHeader는 페이지 템플릿이 소유(셸 비소유).
-//  · 3티어: 폰 <768(하단탭) / 태블릿 768–1023(72px 아이콘 레일) / 데스크탑 ≥1024(260px 풀 넷바).
-//    Mantine breakpoint는 sm(768) 하나로 폰↔(태블릿·데스크탑) collapse만 맡고, 태블릿↔데스크탑은
-//    JS 티어가 넷바 width·내용을 스왑한다(둘 다 sm 이상이라 넷바는 뜨고 폭/렌더만 다름).
-//  · 상단바 해체(데스크탑·태블릿): header.collapsed=tier!=='phone' → 0으로 접혀 세로공간 반환.
+//  · **2티어**: 태블릿 768–1279(72px 아이콘 레일) / 데스크탑 ≥1280(260px 풀 넷바). JS 티어가 넷바 width·내용을 스왑.
+//  · **모바일은 이 셸이 안 맡는다** — 잊은 게 아니라 의도적으로 범위 밖이다(v0.51.0에서 `MobileShell`로 분리).
+//    분리 이유: 데스크탑 전제로 만든 page 템플릿을 폭만 좁혀 넣으면 성립하지 않는다(면·PageHeader·bento).
+//    셸만 반응형으로 만들어도 안쪽 어휘가 안 따라오므로 층 전체를 갈랐다. 폰 티어(상단바·하단탭·더보기
+//    오버플로·문서 스크롤 잠금)는 git 이력에 있고, 대응물은 MobileShell 계열이 갖고 있다.
+//  · 하한 = MIN_WIDTH(768). 그 아래는 *지원 범위 밖*이라 가로 스크롤로 예측 가능하게 무너진다(레이아웃이
+//    깨지는 대신). 소비처는 이 상수를 import해 같은 값으로 모바일 라우팅을 판정해야 틈이 안 생긴다.
+//  · 상단바 없음: 유틸리티(알림·프로필)는 넷바 하단 존이 갖는다.
 //    근거: 헌법상 상단바 좌측은 비고(넷바가 전체 경로 제공)·정체성은 PageHeader 소유 → 상단바에 남은
 //    책임이 유틸리티(알림·프로필)뿐이라 해체하고, 그 둘을 넷바 하단 유틸리티 존으로 이관.
-//    폰만 슬림 상단바 유지(좌 로고 + 우 [알림][아바타]) — 좌측 레일이 없어 유틸리티를 담을 데가 상단바뿐.
 //  · 유틸리티 존(알림+프로필)은 티어마다 같은 데이터·다른 배치(menuItems가 넷바↔탭 재배치되는 것과 동형).
-//    데스크탑=넷바 하단 [프로필 확장행 + 알림], 태블릿=레일 하단 [알림·아바타 아이콘], 폰=상단바 우측.
-//  · 로고: 데스크탑 넷바 최상단 / 폰 상단바 좌측. 태블릿 레일(72px)엔 로고 없음 — 그 폭엔 정사각 마크만
-//    들어가 부실해서 밴드 제거(메뉴부터 시작). 즉 logo는 데스크탑·폰만 쓴다.
+//    데스크탑=넷바 하단 [프로필 확장행 + 알림], 태블릿=레일 하단 [알림·아바타 아이콘].
+//  · 로고: 데스크탑 넷바 최상단. 태블릿 레일(72px)엔 로고 없음 — 그 폭엔 정사각 마크만 들어가 부실해서
+//    밴드 제거(메뉴부터 시작). 즉 logo는 데스크탑만 쓴다.
 //  · 셸 골격(M.Header/Navbar/Main/Footer 슬롯·바 정렬·safe-area)은 우리 콘텐츠 프리미티브가 노출 안 한
 //    탈출구라 격리 구역 내 raw Mantine/CSS(헌법 7) — Modal raw flex·Calendar raw grid와 같은 명시 예외.
 //    단 슬롯 *안의 콘텐츠*(탭 타일·메뉴 행·유틸리티)는 우리 Stack/Group/Icon/Text로 조립(도그푸드).
-import { AppShell as M, NavLink, Box, Group as MGroup, Stack as MStack } from '@mantine/core';
+import { AppShell as M, NavLink, Group as MGroup, Stack as MStack } from '@mantine/core';
 import { useDisclosure, useMediaQuery } from '@mantine/hooks';
 import type { ReactNode } from 'react';
 import { Icon, type IconName } from './Icon';
@@ -46,23 +49,19 @@ type Props = {
 };
 
 // 셸 치수(px) — 시중 표준 참조로 확정.
-//  HEADER_HEIGHT     : 슬림 상단바 높이 64 (폰 전용 — 데스크탑·태블릿은 상단바 해체). Material toolbar 56~64.
 //  NAV_WIDTH_DESKTOP : 데스크탑 풀 넷바 260 (표준 240~300).
 //  NAV_WIDTH_RAIL    : 태블릿 아이콘 레일 72 (아이콘+짧은 라벨 세로 타일; 하단탭과 같은 tile()).
 //  LOGO_BAND/SLOT    : 데스크탑 넷바 최상단 정체성 블록 88 / 로고 박스 56(밴드를 거의 채움, 종횡비 최대 적합).
-//  MOBILE_LOGO_HEIGHT: 폰 상단바 좌측 로고 박스 40.
-//  BOTTOM_NAV_HEIGHT : 폰 하단 탭바 콘텐츠 56 (Material bottom nav; 탭당 ≥48 터치타깃). + env(safe-area).
-//  MAX_TABS          : 하단 탭 최대 5(모바일 관습). 초과 시 앞 4 + '더보기'(나머지 Popover). 옵션 쌓기 금지(§11-3).
-// 브레이크포인트: 폰 <48em(768) · 태블릿 48–79.99em(768–1279) · 데스크탑 ≥80em(1280). em=브라우저 16px 기준(font-scale 무관·Mantine sm 정합).
+//  MIN_WIDTH         : 지원 하한 768 — 그 아래는 모바일(MobileShell)이 받는다. 소비처가 같은 값을 써야 틈이 없다.
+// 브레이크포인트: 태블릿 48–79.99em(768–1279) · 데스크탑 ≥80em(1280). em=브라우저 16px 기준(font-scale 무관).
 //  1280 경계 근거: iPad 가로(≤Pro11 1194)를 태블릿 레일에 담기(결정 2). 값은 프리뷰 갤러리에서 튜닝 가능.
-const HEADER_HEIGHT = 64;
 const NAV_WIDTH_DESKTOP = 260;
 const NAV_WIDTH_RAIL = 72;
 const LOGO_BAND = 88;
 const LOGO_SLOT_HEIGHT = 56;
-const MOBILE_LOGO_HEIGHT = 40;
-const BOTTOM_NAV_HEIGHT = 56;
-const MAX_TABS = 5;
+/** 셸이 지원하는 최소 뷰포트 폭(px). 이 아래는 모바일 전용 화면(MobileShell)이 받는다.
+ *  소비처는 이 상수를 import해 같은 값으로 판정할 것 — 각자 숫자를 들면 언젠가 반드시 어긋난다. */
+export const APPSHELL_MIN_WIDTH = 768;
 
 function groupItems(items: MenuItem[]): Array<{ group?: string; items: MenuItem[] }> {
   const out: Array<{ group?: string; items: MenuItem[] }> = [];
@@ -78,22 +77,14 @@ export function AppShell({
   logo, onLogoClick, menuItems, activePath, onNavigate, profile, notification, children,
 }: Props) {
   const [notifOpen, notifH] = useDisclosure();
-  const [moreOpen, moreH] = useDisclosure();
-  // 티어 감지 — 데스크탑↔태블릿은 JS로 가른다(Mantine breakpoint 하나로는 3티어 불가).
-  //  기본값: 데스크탑(SSR/첫 렌더 안정) → 마운트 후 실제 뷰포트 반영.
-  //  경계 1280(80em): iPad 가로(≤Pro11 1194)를 태블릿 레일에 담기 위함(결정 2 — 패드는 가로 얇은 레일).
+  // 티어 감지 — 데스크탑↔태블릿을 JS로 가른다. 기본값 데스크탑(SSR/첫 렌더 안정) → 마운트 후 실제 뷰포트 반영.
+  //  경계 1280(80em): iPad 가로(≤Pro11 1194)를 태블릿 레일에 담기 위함(패드는 가로 얇은 레일).
+  //  하한(768) 아래는 이 셸의 범위가 아니다 — 소비처가 APPSHELL_MIN_WIDTH로 모바일 화면에 라우팅한다.
   const isDesktop = useMediaQuery('(min-width: 80em)', true);
-  const isTablet = useMediaQuery('(min-width: 48em) and (max-width: 79.99em)', false);
-  const tier: 'phone' | 'tablet' | 'desktop' = isDesktop ? 'desktop' : isTablet ? 'tablet' : 'phone';
+  const tier: 'tablet' | 'desktop' = isDesktop ? 'desktop' : 'tablet';
   const groups = groupItems(menuItems);
 
-  // 하단 탭 분배(폰): 5개 이하면 전부, 초과면 앞 4개 + '더보기'(나머지는 Popover 목록).
-  const overflow = menuItems.length > MAX_TABS;
-  const tabItems = overflow ? menuItems.slice(0, MAX_TABS - 1) : menuItems;
-  const moreItems = overflow ? menuItems.slice(MAX_TABS - 1) : [];
-  const moreActive = moreItems.some((it) => it.path === activePath);
-
-  // 타일(아이콘 위 라벨) — 하단탭·레일 공용. 활성은 색 역할(primary) vs secondary.
+  // 타일(아이콘 위 라벨) — 레일 전용. 활성은 색 역할(primary) vs secondary.
   const tile = (icon: IconName, label: string, active: boolean, count?: number) => (
     <Stack gap="xxs" align="center">
       <span style={{ position: 'relative', display: 'inline-flex' }}>
@@ -116,8 +107,8 @@ export function AppShell({
       }} />
     ) : null;
 
-  // 알림 — kind 'icon'(상단바·넷바 하단) / 'tile'(레일). content 있으면 Popover, 없으면 onClick 폴백.
-  const notifControl = (position: 'bottom' | 'top' | 'right', kind: 'icon' | 'tile') => {
+  // 알림 — kind 'icon'(넷바 하단) / 'tile'(레일). content 있으면 Popover, 없으면 onClick 폴백.
+  const notifControl = (position: 'top' | 'right', kind: 'icon' | 'tile') => {
     if (!notification) return null;
     const hasContent = Boolean(notification.content);
     const trigger = kind === 'tile' ? (
@@ -136,7 +127,7 @@ export function AppShell({
       // 데스크탑(top)=넷바 하단 앵커에서 위로 솟는 패널 — 프로필 메뉴와 방향 통일(좌하단 유틸리티 문법).
       //  벨 중앙 정렬(align center): 벨이 넷바 우측 끝이라 우변 flush(end)면 좌변이 화면 밖으로 계산돼 shift 보정에 의존.
       //  폭은 셋 다 lg — 알림은 목록·본문이 들어가 넷바 폭(260)으로 좁히면 옹색(패널 구성이 lg 전제).
-      //  태블릿(right)=레일 오른쪽 플라이아웃, 하단정렬(end)로 위로 안 부풂 / 폰(bottom)=상단바에서 중앙 드롭.
+      //  태블릿(right)=레일 오른쪽 플라이아웃, 하단정렬(end)로 위로 안 부풂.
       <Popover opened={notifOpen} onChange={(o) => (o ? notifH.open() : notifH.close())}
         position={position} align={position === 'right' ? 'end' : 'center'} width="lg" content={notification.content}>
         {trigger}
@@ -144,8 +135,8 @@ export function AppShell({
     ) : trigger;
   };
 
-  // 프로필 — kind 'full'(넷바 하단, 아바타+이름·직책+caret) / 'avatar'(상단바·레일, 아바타-only).
-  const profileControl = (position: 'bottom' | 'top' | 'right', kind: 'full' | 'avatar' | 'rail') => {
+  // 프로필 — kind 'full'(넷바 하단, 아바타+이름·직책+caret) / 'rail'(레일, 아바타-only).
+  const profileControl = (position: 'top' | 'right', kind: 'full' | 'rail') => {
     if (!profile) return null;
     const avatar = <Avatar src={profile.avatarSrc} size="md">{profile.name.slice(0, 1)}</Avatar>;
     const inner = kind === 'full' ? (
@@ -192,32 +183,16 @@ export function AppShell({
   return (
     <M
       layout="alt"
-      header={{ height: HEADER_HEIGHT, collapsed: tier !== 'phone' }}
-      navbar={{ width: tier === 'desktop' ? NAV_WIDTH_DESKTOP : NAV_WIDTH_RAIL, breakpoint: 'sm', collapsed: { mobile: tier === 'phone', desktop: false } }}
-      footer={{ height: `calc(${BOTTOM_NAV_HEIGHT}px + env(safe-area-inset-bottom))`, collapsed: tier !== 'phone' }}
+      navbar={{ width: tier === 'desktop' ? NAV_WIDTH_DESKTOP : NAV_WIDTH_RAIL, breakpoint: 'sm', collapsed: { mobile: false, desktop: false } }}
       padding="lg"
+      // 지원 하한 — 그 아래는 레이아웃이 깨지는 대신 가로 스크롤로 *예측 가능하게* 무너진다.
+      //  정상 경로에선 보이지 않는다(소비처가 이 폭 아래를 모바일 화면으로 보내므로). 안전망이다.
+      style={{ minWidth: APPSHELL_MIN_WIDTH }}
     >
-      {/* 슬림 상단바 — 폰 전용(데스크탑·태블릿은 collapsed로 해체). 좌 로고 + 우 밀착 [알림][아바타]. */}
-      {tier === 'phone' && (
-        <M.Header style={{ boxShadow: '0 1px 2px rgba(11, 26, 53, 0.08)', borderBottom: 'none', zIndex: 1 }}>
-          <MGroup h="100%" px="lg" align="center" wrap="nowrap">
-            <Box className="erp-logo-slot" onClick={onLogoClick}
-              style={{ height: MOBILE_LOGO_HEIGHT, display: 'flex', alignItems: 'center', cursor: onLogoClick ? 'pointer' : 'default' }}>
-              {logo}
-            </Box>
-            <MGroup gap="sm" align="center" wrap="nowrap" style={{ marginLeft: 'auto' }}>
-              {notifControl('bottom', 'icon')}
-              {profileControl('bottom', 'avatar')}
-            </MGroup>
-          </MGroup>
-        </M.Header>
-      )}
-
       {/* 넷바 — 데스크탑(풀 260)·태블릿(레일 72). 3존: 로고(위) · 메뉴(grow) · 유틸리티(아래).
-          모바일에선 collapsed.mobile로 완전 숨김(하단 탭이 대체). 우측 그림자로 "떠 있는 패널". */}
+          우측 그림자로 "떠 있는 패널". */}
       <M.Navbar p={tier === 'tablet' ? 'xs' : 'md'} style={{ boxShadow: '2px 0 8px rgba(11, 26, 53, 0.08)', borderRight: 'none', zIndex: 2 }}>
-        {tier !== 'phone' && (
-          <>
+        <>
             {/* 로고 — 데스크탑 넷바 최상단(a형). 밴드 하단 구분선이 정체성 블록을 드러냄.
                 태블릿 레일(72px)은 로고 밴드 없음 — 그 폭엔 정사각 마크만 들어가 부실해서 제거(메뉴부터 시작). */}
             {tier === 'desktop' && (
@@ -283,56 +258,14 @@ export function AppShell({
                 )}
               </M.Section>
             )}
-          </>
-        )}
+        </>
       </M.Navbar>
 
-      {/* 데스크탑·태블릿: 문서 스크롤. 폰: appshell.css가 본문만 내부 스크롤(고정 헤더·하단탭 사이). */}
+      {/* 문서 스크롤(데스크탑·태블릿 공통). */}
       <M.Main className="erp-appshell-main" style={{ background: 'var(--bg-tertiary)', minHeight: '100vh' }}>
         {children}
       </M.Main>
 
-      {/* 하단 탭 내비 — 폰 전용(collapsed로 데스크탑·태블릿 숨김). 골격 raw(명시 예외), 타일은 우리 부품. */}
-      {tier === 'phone' && (
-        <M.Footer className="erp-appshell-footer">
-          <nav className="erp-bottomnav" aria-label="주 메뉴">
-            {tabItems.map((it) => {
-              const active = activePath === it.path;
-              return (
-                <button key={it.path} type="button" className="erp-tab" data-active={active}
-                  aria-current={active ? 'page' : undefined} onClick={() => onNavigate(it.path)}>
-                  {tile(it.icon, it.label, active, it.count)}
-                </button>
-              );
-            })}
-            {overflow && (
-              <Popover opened={moreOpen} onChange={(o) => (o ? moreH.open() : moreH.close())}
-                position="top" width="sm"
-                content={
-                  <Stack gap="xxs">
-                    {moreItems.map((it) => {
-                      const active = activePath === it.path;
-                      return (
-                        <button key={it.path} type="button" className="erp-more-row" data-active={active}
-                          onClick={() => { onNavigate(it.path); moreH.close(); }}>
-                          <Group gap="sm" align="center">
-                            <Icon name={it.icon} size="sm" color={active ? 'primary' : 'secondary'} />
-                            <Text variant="body" color={active ? 'primary' : 'secondary'}>{it.label}</Text>
-                            {it.count != null && it.count > 0 && <CountBadge count={it.count} />}
-                          </Group>
-                        </button>
-                      );
-                    })}
-                  </Stack>
-                }>
-                <span className="erp-tab" data-active={moreActive}>
-                  {tile('menu', '더보기', moreActive)}
-                </span>
-              </Popover>
-            )}
-          </nav>
-        </M.Footer>
-      )}
     </M>
   );
 }

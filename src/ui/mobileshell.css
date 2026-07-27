@@ -81,10 +81,10 @@ html.erp-mobile-lock body {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 하단 고정 CTA — 탭 위. 상단 헤어라인으로 본문과 분리(면·그림자 없음). */
-.ms-cta {
+/* 하단 고정 영역 — 탭 위. 상단 헤어라인으로 본문과 분리(면·그림자 없음).
+   여백은 자식이 정한다(버튼은 여백이 필요하고, 입력 바는 자기 패딩을 갖는다). */
+.ms-bottom {
   flex: none;
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
   border-top: var(--border-width) solid var(--border-default);
 }
 

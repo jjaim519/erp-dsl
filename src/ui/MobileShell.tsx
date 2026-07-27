@@ -21,7 +21,6 @@ import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { CountBadge } from './CountBadge';
 import { IconButton } from './IconButton';
-import { Button } from './Button';
 import { Stack } from './Stack';
 import { type Action } from './_cells';
 import './mobileshell.css';
@@ -40,15 +39,16 @@ type Props = {
   onNavigate: (path: string) => void;
   // ── 본문 ──
   children: ReactNode;
-  // ── 하단 고정 CTA(선택) ──
-  //  이 셸은 GW의 *부분집합*(주로 조회·가벼운 상호작용)이라 CTA는 지양한다. 다만 화면 하나가 행동을
-  //  요구할 때 셸을 다시 뜯지 않도록 자리만 열어둔다. 주지 않으면 렌더 0(높이도 0).
-  cta?: Action;
+  // ── 하단 고정 영역(선택) ──
+  //  탭 위에 고정되는 한 칸. 행동 버튼(CTA)이든 입력 바(MobileComposer)든 여기 들어간다.
+  //  자리를 하나로 둔 이유: 둘 다 "탭 위 고정"이라 슬롯을 나누면 같은 자리를 두 경로가 다투게 된다.
+  //  주지 않으면 렌더 0(높이도 0). 이 셸은 조회 중심이라 CTA는 지양하되, 자리는 열어둔다.
+  bottom?: ReactNode;
 };
 
 export function MobileShell({
   title, onBack, backLabel = '뒤로', actions,
-  tabs, activePath, onNavigate, children, cta,
+  tabs, activePath, onNavigate, children, bottom,
 }: Props) {
   // 문서 스크롤·고무줄 바운스 잠금 — 이 셸은 정의상 *화면 전체*라 문서가 따로 스크롤될 이유가 없다.
   //  CSS로 무조건 걸면 전역 부작용이 되므로, 마운트 동안만 걸고 언마운트에 되돌린다(부품이 자기 뒷정리를 한다).
@@ -83,14 +83,8 @@ export function MobileShell({
       {/* 본문 — 유일한 스크롤 영역. 배경은 단일 평면(--bg-primary), 구분은 안쪽 부품의 헤어라인이 맡는다. */}
       <main className="ms-body">{children}</main>
 
-      {/* 하단 고정 CTA — 탭 위. 지양하되 자리는 있다. */}
-      {cta && (
-        <div className="ms-cta">
-          <Button variant={cta.variant === 'danger' ? 'danger' : 'primary'} fullWidth onClick={cta.onClick}>
-            {cta.label}
-          </Button>
-        </div>
-      )}
+      {/* 하단 고정 영역 — 탭 위. CTA 버튼이든 입력 바든 이 한 칸을 쓴다. */}
+      {bottom && <div className="ms-bottom">{bottom}</div>}
 
       {/* 탭 — 균등 분배. 활성은 색 역할(primary) vs secondary. safe-area만큼 아래를 비운다. */}
       <nav className="ms-tabs" aria-label="주 메뉴">
