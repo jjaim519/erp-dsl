@@ -93,6 +93,10 @@ import { Repeater } from './Repeater';
 import { InheritedValueField } from './InheritedValueField';
 import { ExpressionField, type ExprVariable } from './ExpressionField';
 import { KeyValueField } from './KeyValueField';
+import { OptionSetEditor } from './OptionSetEditor';
+import { OptionSetPicker } from './OptionSetPicker';
+import { CompositionOutline } from './CompositionOutline';
+import type { OptionGroup, OptionSelection } from './optionset';
 import { AssignPicker } from './AssignPicker';
 import { Transfer } from './Transfer';
 import { TreeSelect } from './TreeSelect';
@@ -308,6 +312,211 @@ function KVFieldDemo() {
   const [v, setV] = useState<Record<string, number>>({ width_mm: 30, height_mm: -12 });
   return <div style={{ maxWidth: 420 }}><KeyValueField keys={KV_KEYS} value={v} onChange={setV} valueType="number" addLabel="보정 추가" /></div>;
 }
+// ── OptionSet 계열 데모 — §5 제2 도메인 시험(피자 주문). 이 데이터로 서면 도메인 무지 통과가 상시 증명된다.
+const PIZZA_SET: OptionGroup[] = [
+  { id: 'g1', label: '크기', section: '기본', selection: 'number',
+    fields: [{ key: 'inch', label: '지름', value: 12, unit: 'in', min: 9, max: 18 }] },
+  { id: 'g2', label: '도우', section: '기본', selection: 'single', required: true,
+    choices: [
+      { id: 'c1', code: 'thin', label: '씬', amount: 0 },
+      { id: 'c2', code: 'pan', label: '팬', amount: 2000 },
+    ] },
+  { id: 'g3', label: '토핑', section: '추가', selection: 'quantity',
+    choices: [
+      { id: 'c3', code: 'pep', label: '페퍼로니', group: '육류', amount: 1500 },
+      { id: 'c5', code: 'bacon', label: '베이컨', group: '육류', amount: 1800 },
+      { id: 'c4', code: 'olive', label: '올리브', group: '채소', amount: 800 },
+      { id: 'c6', code: 'mush', label: '양송이', group: '채소', amount: 700 },
+    ] },
+];
+const DRINK_SET: OptionGroup[] = [
+  { id: 'gd', label: '음료', selection: 'quantity',
+    choices: [
+      { id: 'dc1', code: 'cola', label: '콜라 1.25L', amount: 3000 },
+      { id: 'dc2', code: 'cider', label: '사이다 1.25L', amount: 3000 },
+      { id: 'dc3', code: 'ade', label: '레몬에이드', amount: 4000 },
+    ] },
+];
+const PIZZA_PRODUCTS = [
+  { id: 'p1', label: '마르게리타', sublabel: '토마토 소스 · 바질', base: 12000 },
+  { id: 'p2', label: '페퍼로니', sublabel: '더블 페퍼로니', base: 14000 },
+];
+const EMPTY_SEL: OptionSelection = { picked: {}, qty: {}, nums: {} };
+// 데모 금액 파이프라인 — 부품은 계산하지 않으므로 *여기(소비처 역할)*가 계산해 주입한다(§6).
+function optAmount(groups: OptionGroup[], sel: OptionSelection): number {
+  let sum = 0;
+  for (const g of groups) {
+    if (g.selection === 'single') sum += g.choices?.find((c) => c.code === sel.picked[g.id])?.amount ?? 0;
+    if (g.selection === 'quantity') for (const c of g.choices ?? []) sum += (c.amount ?? 0) * (sel.qty[c.id] ?? 0);
+  }
+  return sum;
+}
+// 라인 요약(SpecChip[]→sublabel 접힘과 동형) — 선택값들을 ' · '로 결합.
+function optSummary(groups: OptionGroup[], sel: OptionSelection): string | undefined {
+  const parts: string[] = [];
+  for (const g of groups) {
+    if (g.selection === 'single') { const c = g.choices?.find((x) => x.code === sel.picked[g.id]); if (c) parts.push(c.label); }
+    if (g.selection === 'quantity') for (const c of g.choices ?? []) { const n = sel.qty[c.id] ?? 0; if (n > 0) parts.push(`${c.label} ${n}`); }
+    if (g.selection === 'number') for (const f of g.fields ?? []) { const v = sel.nums[f.key]; if (v != null) parts.push(`${f.label} ${v}${f.unit ?? ''}`); }
+  }
+  return parts.length ? parts.join(' · ') : undefined;
+}
+const togglePick = (s: OptionSelection, gid: string, code: string): OptionSelection => {
+  const picked = { ...s.picked };
+  if (picked[gid] === code) delete picked[gid]; else picked[gid] = code;
+  return { ...s, picked };
+};
+
+function OptionSetEditorDemo() {
+  const [groups, setGroups] = useState<OptionGroup[]>(PIZZA_SET);
+  return (
+    <div style={{ maxWidth: 760 }}>
+      <OptionSetEditor
+        groups={groups}
+        onChange={setGroups}
+        sections={[
+          { key: '기본', label: '기본', description: '모든 주문이 반드시 정하는 값' },
+          { key: '추가', label: '추가', note: '선택 사항' },
+        ]}
+        refOptions={[
+          { id: 'r1', label: '수제 도우 원가', price: 1200, unit: '판' },
+          { id: 'r2', label: '토핑 원가 A', price: 600 },
+          { id: 'r3', label: '토핑 원가 B', price: 900 },
+        ]}
+        exprVariables={[{ path: 'nums.inch', group: '수치' }]}
+        adjustKeys={[{ key: 'inch', label: '지름' }]}
+        sectionActions={(k) => (k === '추가' ? <Button variant="ghost" size="sm">가져오기</Button> : undefined)}
+        emptyState={{ title: '그룹이 없습니다', description: '그룹 추가로 시작하세요.' }}
+      />
+    </div>
+  );
+}
+
+function OptionSetPickerDemo() {
+  const [sel, setSel] = useState<OptionSelection>({ picked: {}, qty: { c3: 2, c4: 1 }, nums: { inch: 14 } });
+  const [qty, setQty] = useState(1);
+  return (
+    <div style={{ maxWidth: 420, height: 540 }}>
+      <OptionSetPicker
+        mode="configure"
+        title="마르게리타"
+        meta="토마토 소스 · 바질"
+        quantity={{ value: qty, onChange: setQty }}
+        groups={PIZZA_SET}
+        selection={sel}
+        onPick={(gid, code) => setSel((s) => togglePick(s, gid, code))}
+        onQty={(cid, n) => setSel((s) => ({ ...s, qty: { ...s.qty, [cid]: n } }))}
+        onNum={(k, v) => setSel((s) => ({ ...s, nums: { ...s.nums, [k]: v } }))}
+        subtotal={(12000 + optAmount(PIZZA_SET, sel)) * qty}
+        primary={{ label: '담기', onClick: () => notify.info('담기') }}
+        secondary={{ label: '초기화', onClick: () => setSel(EMPTY_SEL) }}
+        blockedHint="도우를 선택해야 담을 수 있습니다"
+      />
+    </div>
+  );
+}
+
+// 2-pane 조작면 데모 — kk 합의 검증 기준: 지속 2-pane + 양방향 활성 동기화(우측 라인 클릭→좌측 진입 /
+// 좌측 편집→우측 실시간 / 빈 섹션 ＋→좌측 진입점). 피자=3단(pick 경유), 음료=2단(§5: 개체 층 유무가 같은 부품).
+type ComposeLine = { id: string; section: 'pizza' | 'drink'; label: string; base: number; sel: OptionSelection; qty: number };
+type ComposeLeft =
+  | { stage: 'idle' }
+  | { stage: 'pick' }
+  | { stage: 'config'; section: 'pizza' | 'drink'; label: string; sublabel?: string; base: number; lineId?: string };
+
+function CompositionDemo() {
+  const [lines, setLines] = useState<ComposeLine[]>([]);
+  const [left, setLeft] = useState<ComposeLeft>({ stage: 'idle' });
+  const [draft, setDraft] = useState<OptionSelection>(EMPTY_SEL);
+  const [draftQty, setDraftQty] = useState(1);
+  const [seq, setSeq] = useState(1);
+
+  const groupsOf = (sec: 'pizza' | 'drink') => (sec === 'pizza' ? PIZZA_SET : DRINK_SET);
+  const lineAmount = (l: ComposeLine) => (l.base + optAmount(groupsOf(l.section), l.sel)) * l.qty;
+
+  const openConfig = (cfg: ComposeLeft, sel: OptionSelection, qty: number) => { setLeft(cfg); setDraft(sel); setDraftQty(qty); };
+  const addTo = (sectionId: string) => {
+    if (sectionId === 'pizza') setLeft({ stage: 'pick' });
+    else openConfig({ stage: 'config', section: 'drink', label: '음료', base: 0 }, EMPTY_SEL, 1);
+  };
+  const pickProduct = (pid: string) => {
+    const p = PIZZA_PRODUCTS.find((x) => x.id === pid)!;
+    openConfig({ stage: 'config', section: 'pizza', label: p.label, sublabel: p.sublabel, base: p.base }, { picked: {}, qty: {}, nums: { inch: 12 } }, 1);
+  };
+  const selectLine = (lineId: string) => {
+    const l = lines.find((x) => x.id === lineId);
+    if (l) openConfig({ stage: 'config', section: l.section, label: l.label, base: l.base, lineId }, l.sel, l.qty);
+  };
+  const commit = () => {
+    if (left.stage !== 'config') return;
+    if (left.lineId) {
+      const id = left.lineId;
+      setLines((ls) => ls.map((l) => (l.id === id ? { ...l, sel: draft, qty: draftQty } : l)));
+    } else {
+      setLines((ls) => [...ls, { id: `L${seq}`, section: left.section, label: left.label, base: left.base, sel: draft, qty: draftQty }]);
+      setSeq((n) => n + 1);
+    }
+    setLeft({ stage: 'idle' });
+  };
+
+  const toLine = (l: ComposeLine) => ({
+    id: l.id, label: l.label, sublabel: optSummary(groupsOf(l.section), l.sel),
+    quantity: l.qty, amount: lineAmount(l),
+    active: left.stage === 'config' && left.lineId === l.id,
+  });
+  const total = lines.reduce((s, l) => s + lineAmount(l), 0);
+  const tip = lines.length ? 3000 : 0;
+
+  const picker = left.stage === 'idle' ? (
+    <OptionSetPicker mode="idle" placeholder="오른쪽 목차에서 추가할 항목을 고르세요" />
+  ) : left.stage === 'pick' ? (
+    <OptionSetPicker mode="pick" title="피자 선택" items={PIZZA_PRODUCTS} onPick={pickProduct} />
+  ) : (
+    <OptionSetPicker
+      mode="configure"
+      title={left.label}
+      meta={left.sublabel}
+      quantity={{ value: draftQty, onChange: setDraftQty }}
+      groups={groupsOf(left.section)}
+      selection={draft}
+      onPick={(gid, code) => setDraft((s) => togglePick(s, gid, code))}
+      onQty={(cid, n) => setDraft((s) => ({ ...s, qty: { ...s.qty, [cid]: n } }))}
+      onNum={(k, v) => setDraft((s) => ({ ...s, nums: { ...s.nums, [k]: v } }))}
+      subtotal={(left.base + optAmount(groupsOf(left.section), draft)) * draftQty}
+      primary={{ label: left.lineId ? '수정 반영' : '담기', onClick: commit }}
+      secondary={{ label: '취소', onClick: () => setLeft({ stage: 'idle' }) }}
+      blockedHint="필수 그룹을 채워야 담을 수 있습니다"
+    />
+  );
+
+  return (
+    <div style={{ display: 'flex', gap: 16, height: 560, alignItems: 'stretch' }}>
+      <div style={{ flex: '1 1 58%', minWidth: 0 }}>{picker}</div>
+      <div style={{ flex: '1 1 42%', minWidth: 0 }}>
+        <CompositionOutline
+          sections={[
+            { id: 'pizza', label: '피자', badge: '구성형', addLabel: '피자 추가',
+              active: left.stage === 'pick' || (left.stage === 'config' && left.section === 'pizza'),
+              lines: lines.filter((l) => l.section === 'pizza').map(toLine) },
+            { id: 'drink', label: '음료', badge: '단품', addLabel: '음료 추가',
+              active: left.stage === 'config' && left.section === 'drink',
+              lines: lines.filter((l) => l.section === 'drink').map(toLine) },
+          ]}
+          summary={[
+            { label: '소계', value: fmtCurrency(total), tone: 'muted' },
+            { label: '배달팁', value: fmtCurrency(tip), tone: 'muted', action: { label: '변경', onClick: () => notify.info('배달팁 변경') } },
+            { label: '합계', value: fmtCurrency(total + tip), tone: 'grand' },
+          ]}
+          footer={<Button variant="primary" size="sm" fullWidth onClick={() => notify.info('주문서 저장')}>주문서 저장</Button>}
+          onAddToSection={addTo}
+          onSelectLine={selectLine}
+          onDeleteLine={(id) => setLines((ls) => ls.filter((l) => l.id !== id))}
+        />
+      </div>
+    </div>
+  );
+}
+
 // 중첩 트리에 자식 노드 추가 / id로 경로(브레드크럼) 찾기 — 데모의 분류 추가·검색 결과 경로용(순수 헬퍼).
 function addChildNode(nodes: TreeNodeData[], parentId: string, child: TreeNodeData): TreeNodeData[] {
   return nodes.map((n) =>
@@ -897,6 +1106,9 @@ export function Demo({ name }: { name: string }) {
     ),
     ExpressionField: <ExprFieldDemo />,
     KeyValueField: <KVFieldDemo />,
+    OptionSetEditor: <OptionSetEditorDemo />,
+    OptionSetPicker: <OptionSetPickerDemo />,
+    CompositionOutline: <CompositionDemo />,
     AssignPicker: (
       // kind='appliance' 필터 → 같은 kind 템플릿만(빈 템플릿 비활성). 선택 시 재적용 경고 Modal.
       <AssignPicker

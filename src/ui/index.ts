@@ -91,6 +91,11 @@ export { InheritedValueField, type RefOption } from './InheritedValueField';  //
 export { ExpressionField, type ExprVariable, type ExprFunction } from './ExpressionField';  // 닫힌 DSL 수식 편집기
 export { KeyValueField, type KVKey } from './KeyValueField';  // 닫힌 키 맵 편집(dim_adjustments 류)
 export { AssignPicker, type AssignTemplate } from './AssignPicker';  // 옵션세트 kind별 배정 + 재적용 경고
+// OptionSet 계열 — 저작 면이 "쓰고" 선택 면이 "읽는" 같은 타입(optionset.ts 단일 계약, 변환 계층 금지)
+export { OptionSetEditor, type OptionSetSection } from './OptionSetEditor';  // 선택지 묶음 정의 편집기
+export { OptionSetPicker, type OptionSetPickerProps } from './OptionSetPicker';  // 3모드(idle/pick/configure) 선택 면
+export { CompositionOutline, type CompositionLine, type CompositionSection, type SummaryRow } from './CompositionOutline';  // 우측 문서 목차(조작면)
+export type { Choice, NumberField, OptionGroup, OptionSet, OptionSelection } from './optionset';
 export { LineItemList, type LineItem } from './LineItemList';
 export { EmptyState } from './EmptyState';
 export { PageHeader } from './PageHeader';
