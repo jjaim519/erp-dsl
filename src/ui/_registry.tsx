@@ -485,7 +485,7 @@ function BoardWriteDemo() {
   const [cat, setCat] = useState<string | null>('work');
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('<p>안녕하세요, 인사팀입니다. 아래 내용을 안내드립니다.</p>');
-  const [aud, setAud] = useState<string[]>(['design', 'design.ui']);
+  const [aud, setAud] = useState<string[]>(['design']);   // 'design.ui'는 design에 포섭 — 중복 토큰 금지
   const [files, setFiles] = useState<FileItem[]>([]);
   const [notice, setNotice] = useState(false);
   const [must, setMust] = useState(false);

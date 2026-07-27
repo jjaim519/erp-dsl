@@ -177,14 +177,28 @@
 .bw-body textarea { min-height: 220px; }
 
 /* 수신자(안 C) */
-.bw-aud { display: flex; flex-direction: column; gap: var(--mantine-spacing-sm); }
+.bw-aud { display: flex; flex-direction: column; gap: var(--mantine-spacing-xs); }
 .bw-aud-chips { display: flex; flex-wrap: wrap; gap: var(--mantine-spacing-xs); }
-.bw-drillbtn { align-self: flex-start; display: inline-flex; align-items: center; gap: var(--mantine-spacing-xxs);
+
+/* 수신자 필드 — 값(input chip)이 사는 표면. 테두리는 다른 입력칸과 같은 통로(fieldBorder 인라인)로 받아
+   분류·제목 필드와 한 몸으로 읽힌다. 값이 필드 안에 있으므로 별도 소제목이 필요 없다(라벨 중복 제거). */
+.bw-aud-field { border: var(--border-width) solid var(--border-default); border-radius: var(--mantine-radius-sm);
+  background: var(--surface-default); padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  display: flex; flex-direction: column; gap: var(--mantine-spacing-xs); }
+.bw-aud-vals { display: flex; flex-wrap: wrap; gap: var(--mantine-spacing-xs); align-items: center; min-height: 30px; }
+.bw-aud-vals .ph { font-size: var(--typo-body-size); color: var(--text-disabled); }
+.bw-aud-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-sm); }
+.bw-aud-foot .cnt { font-size: var(--typo-caption-size); color: var(--text-secondary); margin-left: auto; }
+
+/* 빠른 추가(suggestion) — 값보다 한 단계 낮은 위계. 라벨은 caption, 칩은 아웃라인(Chip variant=suggest). */
+.bw-aud-quick { display: flex; align-items: center; gap: var(--mantine-spacing-sm); flex-wrap: wrap; }
+
+.bw-drillbtn { display: inline-flex; align-items: center; gap: var(--mantine-spacing-xxs);
   font-family: inherit; font-size: var(--typo-caption-size); font-weight: var(--typo-body-strong-weight);
   color: var(--mantine-color-primary-7); background: none; cursor: pointer;
-  border: var(--border-width) dashed var(--border-strong); border-radius: var(--mantine-radius-sm);
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm); }
-.bw-drillbtn:hover { border-color: var(--mantine-color-primary-3); background: var(--mantine-color-primary-0); }
+  border: none; border-radius: var(--mantine-radius-sm);
+  padding: var(--mantine-spacing-xxs) var(--mantine-spacing-xxs); margin-left: calc(var(--mantine-spacing-xxs) * -1); }
+.bw-drillbtn:hover { background: var(--mantine-color-primary-0); }
 
 /* 조직도 드릴 트리 */
 .bw-tree { background: var(--surface-sunken); border-radius: var(--mantine-radius-sm); padding: var(--mantine-spacing-xs); }
@@ -198,12 +212,16 @@
 .bw-tnode .box { width: 16px; height: 16px; flex: none; border-radius: var(--mantine-radius-xs);
   border: var(--border-width) solid var(--border-strong); display: inline-flex; align-items: center; justify-content: center; color: #fff; }
 .bw-tnode .box svg { display: none; }
-.bw-tnode.sel .box { background: var(--mantine-color-primary-6); border-color: var(--mantine-color-primary-6); }
-.bw-tnode.sel .box svg { display: block; }
+/* 담을 수 없는 두 상태 — 선택 '상태'가 아니라 *가용성* 표시. 해제는 필드의 ✕ 하나뿐.
+   added   = 직접 담김(체크 채움)
+   covered = 조상 그룹에 포함돼 이미 수신자(체크는 윤곽만 — "내가 고른 건 아니지만 들어가 있다") */
+.bw-tnode.added, .bw-tnode.covered { cursor: default; color: var(--text-disabled); }
+.bw-tnode.added:hover, .bw-tnode.covered:hover { background: none; }
+.bw-tnode.added .box { background: var(--mantine-color-neutral-4); border-color: var(--mantine-color-neutral-4); }
+.bw-tnode.added .box svg { display: block; }
+.bw-tnode.covered .box { background: none; border-color: var(--mantine-color-neutral-4); color: var(--mantine-color-neutral-5); }
+.bw-tnode.covered .box svg { display: block; }
 
-/* 지정된 대상 */
-.bw-picked { display: flex; flex-direction: column; gap: var(--mantine-spacing-xxs); }
-.bw-picked-chips { display: flex; flex-wrap: wrap; gap: var(--mantine-spacing-xs); }
 
 /* 게시 옵션 */
 .bw-opts { border-top: var(--border-width) solid var(--border-default); padding-top: var(--mantine-spacing-md); }

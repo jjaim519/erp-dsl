@@ -79,10 +79,11 @@ export const CATALOG: CatalogEntry[] = [
     ] },
   { name: 'Chip', layer: '의미 원자', role: '행동 있는 알약(선택/삭제). controlled.',
     props: [
-      { name: 'color', kind: '스타일', values: BADGE + ' + neutral' },
+      { name: 'color', kind: '스타일', values: BADGE + ' + neutral + primary' },
       { name: 'selected', kind: '기능', values: 'boolean (controlled)' },
       { name: 'onChange', kind: '기능', values: '() => void (클릭 신호)' },
       { name: 'onRemove', kind: '기능', values: '() => void (있으면 X 노출)' },
+      { name: 'variant', kind: '스타일', values: "'value'(기본 — 사용자가 넣은 값, 채움·✕, 필드 안에 산다) | 'suggest'(제품이 내민 빠른 길, 아웃라인·가벼움). M3 input/suggestion chip 구분 — 둘이 한 화면에 있으면 형태로 갈라야 '같은 게 두 번'으로 안 읽힌다" },
       { name: 'children', kind: '콘텐츠', values: 'string' },
     ] },
   { name: 'Text', layer: '의미 원자', role: '본문 텍스트(3단계). 색 역할 노출(에러·보조 실수요).',
@@ -1070,7 +1071,7 @@ export const CATALOG: CatalogEntry[] = [
     props: [
       { name: 'categories / category / onCategoryChange', kind: '기능', values: '{value,label}[] 분류(말머리) Select' },
       { name: 'postTitle / body / bodyFeatures', kind: '기능', values: '제목 TextInput · 본문 Editor(리치, HTML) · 본문 기능 세트(닫힘, 소비처 선택)' },
-      { name: 'audiences / selectedAudiences / onAudiencesChange', kind: '기능', values: 'AudienceNode[]{id,label,exclusive?,children?,members?} — 칩 프리셋 + 직접 지정 조직도 드릴(안 C). exclusive=배타. 안 주면 수신자 섹션 미노출' },
+      { name: 'audiences / selectedAudiences / onAudiencesChange', kind: '기능', values: 'AudienceNode[]{id,label,exclusive?,children?,members?} — 값은 필드 표면 안 input chip(primary·✕)이 단일 진실, 그 아래 "빠른 추가"는 아직 안 담긴 것만 보이는 suggestion chip. 담기=add 한 경로 / 해제=✕ 한 경로. exclusive=배타. 안 주면 수신자 섹션 미노출' },
       { name: 'files / onFilesChange', kind: '기능', values: 'FileItem[] — FileUploader(첨부)' },
       { name: 'notice / mustRead / commentsAllowed', kind: '기능', values: '게시 옵션 — 상단 고정→필독 노출 · 댓글 허용 (누구 축은 수신자로 통일 — 공개 범위 제거)' },
       { name: 'onCancel / onSaveDraft / onSubmit / submitLabel', kind: '기능', values: '취소 · 임시저장 · 등록' },
