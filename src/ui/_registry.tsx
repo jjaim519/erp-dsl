@@ -536,12 +536,12 @@ const CAL_ENCODING: CalendarEncoding = {
     confirmed: { emphasis: 'solid', label: '확정' },
     requested: { emphasis: 'dashed', label: '요청' },
   } },
-  person: { attr: 'designer', values: {
-    kim:  { initial: '김', label: '김지수', color: 'primary' },
-    lee:  { initial: '이', label: '이도윤', color: 'success' },
-    park: { initial: '박', label: '박서연', color: 'danger' },
-    choi: { initial: '최', label: '최민준', color: 'warning' },
-    jung: { initial: '정', label: '정유진', color: 'info' },
+  mark: { attr: 'designer', label: '담당', values: {
+    kim:  { glyph: '김', label: '김지수', color: 'primary' },
+    lee:  { glyph: '이', label: '이도윤', color: 'success' },
+    park: { glyph: '박', label: '박서연', color: 'danger' },
+    choi: { glyph: '최', label: '최민준', color: 'warning' },
+    jung: { glyph: '정', label: '정유진', color: 'info' },
   } },
   rowAxes: [{ attr: 'designer', label: '담당자' }, { attr: 'type', label: '타입' }, { attr: 'status', label: '상태' }],
 };
@@ -1022,6 +1022,14 @@ export function Demo({ name }: { name: string }) {
       </Stack>
     ),
     AppShell: <Anchor href="/dev/preview">→ /dev/preview 에서 3티어 라이브 (데스크탑 넷바 / 태블릿 아이콘 레일 / 폰 하단탭)</Anchor>,
+    MobileShell: <Anchor href="/shell/mobile">→ /shell/mobile 에서 폰 베젤 라이브 (Navigation · 본문 스크롤 · 하단 탭)</Anchor>,
+    MobileSection: <Anchor href="/shell/mobile">→ /shell/mobile 에서 라이브 (제목 + 자유 슬롯 + 헤어라인 경계)</Anchor>,
+    MobileTop: <Anchor href="/shell/mobile">→ /shell/mobile 에서 라이브 (화면 제목 — 보조 설명·액션 슬롯 없음)</Anchor>,
+    MobileListRow: <Anchor href="/shell/mobile">→ /shell/mobile 에서 라이브 (배지·제목·메타 + chevron 탐색 행)</Anchor>,
+    MobileStatRow: <Anchor href="/shell/mobile">→ /shell/mobile ‘발주’ 탭에서 라이브 (KPI 3칸 + 세로 헤어라인)</Anchor>,
+    MobileDisclosure: <Anchor href="/shell/mobile">→ /shell/mobile ‘현장’ 탭에서 라이브 (펼침 행 — chevron 회전)</Anchor>,
+    MobilePhotoPicker: <Anchor href="/shell/mobile">→ /shell/mobile ‘현장’ 탭에서 라이브 (썸네일 격자 + 추가 타일)</Anchor>,
+    MobileCalendar: <Anchor href="/shell/mobile">→ /shell/mobile ‘현장’ 탭에서 라이브 (월 그리드 + 점 표식)</Anchor>,
     ListPage: <Anchor href="/customers">→ /customers 에서 라이브 (스키마 구동 목록)</Anchor>,
     DetailPage: <Anchor href="/customers">→ /customers/[id] 에서 라이브 (정보+폼 2분할)</Anchor>,
     Combobox: (

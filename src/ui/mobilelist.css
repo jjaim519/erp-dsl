@@ -1,0 +1,289 @@
+/* 모바일 목록 계열(MobileSection · MobileListRow) — 격리 구역 내 raw CSS.
+   시각 규칙: 면(surface)·그림자(elevation) 미사용. 묶음과 구분은 전부 헤어라인(--border-default).
+   근거는 MobileShell.tsx 헤더 주석(iOS HIG inset grouped 경고 / TDS Border·ListRow 어휘) 참조. */
+
+/* ── MobileSection ── */
+/* 섹션 사이는 위쪽 헤어라인 하나로 나뉜다. 연속된 섹션이 선을 두 개 긋지 않도록 첫 섹션만 선을 지운다. */
+.mls { border-top: var(--border-width) solid var(--border-default); }
+.mls:first-child { border-top: none; }
+
+.mls-hd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-lg) var(--mantine-spacing-md) var(--mantine-spacing-xs);
+}
+.mls-hd-t {
+  font-size: var(--typo-caption-size);
+  font-weight: var(--typo-body-strong-weight);
+  color: var(--text-secondary);
+  letter-spacing: .02em;
+}
+.mls-hd-a { margin-left: auto; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+
+/* 본문 — 기본은 사방 여백(자유 콘텐츠). 상단도 반드시 준다: 제목 없는 섹션이 기본이라
+   상단만 비우면 내용이 위 경계선(또는 내비바)에 그대로 붙는다. */
+.mls-body { padding: var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-lg); }
+/* 단, 제목이 바로 위에 있으면 헤더의 아래 여백이 이미 간격을 줬으므로 이중으로 벌리지 않는다. */
+.mls-hd + .mls-body { padding-top: 0; }
+/* flush면 행이 좌우 끝까지 닿아야 하므로 사방 0(행이 자기 패딩을 갖는다). 위 두 규칙보다 뒤에 온다. */
+.mls-body.flush { padding: 0; }
+
+/* 섹션 안 *마지막* 행의 하단 선은 지운다 — 섹션 경계선과 겹쳐 2px로 보이는 걸 막는다. */
+.mls-body.flush > .mlr:last-child { border-bottom: none; }
+
+/* ── MobileListRow ── */
+.mlr {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  width: 100%;
+  min-height: 44px;              /* Apple HIG 최소 터치타깃 44×44pt (하한 — 실제 높이는 내용이 만든다) */
+  box-sizing: border-box;
+  padding: var(--mantine-spacing-md);
+  border: none;
+  border-bottom: var(--border-width) solid var(--border-default);
+  background: none;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-primary);
+}
+button.mlr { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.mlr:active { background: var(--bg-secondary); }   /* 폰은 hover가 없다 — 눌림만 표현 */
+
+.mlr-lead { flex: none; display: inline-flex; align-items: center; }
+.mlr-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.mlr-badges { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 1px; }
+.mlr-title {
+  font-size: var(--typo-body-size);
+  font-weight: var(--typo-body-strong-weight);
+  line-height: 1.4;
+}
+.mlr-meta { font-size: var(--typo-caption-size); color: var(--text-secondary); line-height: 1.4; }
+.mlr-trail { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mlr-chev { flex: none; display: inline-flex; }
+
+/* ── MobileStatRow ── */
+/* KPI 행 — 균등 분할 + 항목 사이 *세로* 헤어라인. 카드 면을 쓰지 않으므로 묶음은 선이 만든다. */
+.mst { display: flex; align-items: stretch; }
+.mst-item {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-sm);
+  border: none;
+  background: none;
+  text-align: left;
+  font-family: inherit;
+  color: var(--text-primary);
+}
+/* 첫 칸 빼고 좌측 선 — 항목 수가 몇이든 사이에만 선이 생긴다. */
+.mst-item + .mst-item { border-left: var(--border-width) solid var(--border-default); }
+button.mst-item { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.mst-item:active { background: var(--bg-secondary); }
+
+.mst-label { font-size: var(--typo-caption-size); color: var(--text-secondary); line-height: 1.3; }
+/* 값은 KPI의 주인공 — subheading 단계(모바일 20px)를 쓴다. 숫자라 행간은 좁게. */
+.mst-value {
+  font-size: var(--typo-subheading-size);
+  font-weight: var(--typo-display-weight);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mst-sub { font-size: var(--typo-caption-size); line-height: 1.3; }
+.mst-sub[data-tone='neutral'] { color: var(--text-secondary); }
+.mst-sub[data-tone='success'] { color: var(--mantine-color-success-7); }
+.mst-sub[data-tone='warning'] { color: var(--mantine-color-warning-7); }
+.mst-sub[data-tone='danger']  { color: var(--text-danger); }
+
+/* ── MobileTop ── */
+/* 화면 제목 영역 — 아래 내용과의 간격은 여기서 주고, 경계선은 두지 않는다(다음 섹션이 자기 선을 갖는다). */
+.mtop {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--mantine-spacing-lg) var(--mantine-spacing-md) var(--mantine-spacing-sm);
+}
+
+/* ── MobilePhotoPicker ── */
+/* 정사각 썸네일 격자 — 칸 수는 폭이 정한다(minmax + auto-fill). 카드 면 없이 이미지 자체가 면이다. */
+.mpp {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: var(--mantine-spacing-xs);
+}
+.mpp-cell, .mpp-add {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--mantine-radius-sm);
+  overflow: hidden;
+}
+.mpp-cell { background: var(--bg-secondary); }
+.mpp-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* 진행·실패 베일 — 썸네일 위에 얹는다(별도 행을 만들지 않는다: 격자가 흐트러짐). */
+.mpp-veil {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(11, 26, 53, 0.55); color: var(--mantine-color-white);
+}
+.mpp-veil[data-tone='error'] { background: var(--mantine-color-danger-6); }
+
+/* 삭제 ✕ — 44pt를 다 주면 썸네일을 덮으므로 시각 크기는 26px로 두고,
+   ::before로 히트박스만 넓힌다(작은 표적의 표준 절충). */
+.mpp-del {
+  position: absolute; top: 4px; right: 4px;
+  width: 26px; height: 26px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: var(--mantine-radius-full);
+  background: rgba(11, 26, 53, 0.6); color: var(--mantine-color-white);
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.mpp-del::before { content: ''; position: absolute; inset: -7px; }
+
+/* 추가 타일 — 점선 윤곽. 여기서만 파선을 쓴다(헤어라인 체계의 예외: "아직 비어 있음"을 뜻함). */
+.mpp-add {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  border: var(--border-width) dashed var(--border-strong);
+  background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.mpp-add:active { background: var(--bg-secondary); }
+.mpp-count { font-size: var(--typo-caption-size); color: var(--text-secondary); }
+
+/* ── MobileDisclosure ── */
+/* 헤더는 MobileListRow와 같은 리듬(높이·패딩)을 쓰되, chevron이 아래를 향하고 열리면 회전한다. */
+.mdis { border-bottom: var(--border-width) solid var(--border-default); }
+.mdis-hd {
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  width: 100%; min-height: 44px; box-sizing: border-box;
+  padding: var(--mantine-spacing-md);
+  border: none; background: none; text-align: left;
+  font-family: inherit; color: var(--text-primary); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mdis-hd:active { background: var(--bg-secondary); }
+.mdis-title { flex: 1; min-width: 0; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight); }
+.mdis-meta { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mdis-chev { flex: none; display: inline-flex; transition: transform 150ms ease; }
+.mdis[data-open] .mdis-chev { transform: rotate(180deg); }
+/* 본문은 헤더보다 안쪽으로 들여쓰지 않는다 — 들여쓰면 헤어라인 좌변이 어긋나 격자가 깨진다. */
+.mdis-body { padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md); }
+
+/* ── MobileCalendar ── */
+/* 스팬 바 달력. fill 모드는 셸 본문 높이를 전부 차지하고, 주 행이 *필요한 만큼 basis*를 갖되
+   남는 높이는 flex-grow로 모든 주가 균등히 나눠 갖는다(바쁜 주는 커지고 한산한 주가 자리를 내준다).
+   바가 여러 칸을 가로지르려면 셀과 같은 7열 격자를 공유해야 하므로 절대배치 레이어로 얹는다. */
+.mcal { display: flex; flex-direction: column; }
+.mcal.fill { height: 100%; }
+
+.mcal-hd {
+  flex: none;
+  display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+}
+.mcal-title { font-size: var(--typo-subheading-size); font-weight: var(--typo-display-weight); }
+
+/* 분류 칩 줄 — 가로 스크롤(줄바꿈 금지). 스크롤바는 숨기고 손가락으로 민다. */
+.mcal-kinds {
+  flex: none;
+  display: flex; flex-wrap: nowrap; gap: var(--mantine-spacing-xxs);
+  overflow-x: auto; scrollbar-width: none;
+  padding: 0 var(--mantine-spacing-sm) var(--mantine-spacing-xs);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+.mcal-kinds::-webkit-scrollbar { display: none; }
+.mcal-kinds > * { flex: none; }
+/* 축 구분 — 이벤트 분류 / 태그. 같은 줄에 두되 성격이 다르다는 걸 선 하나로 말한다. */
+.mcal-kinds-sep {
+  width: var(--border-width); align-self: stretch;
+  background: var(--border-default); margin: 3px var(--mantine-spacing-sm);
+}
+
+/* 요일 줄 — 위아래 선 사이에서 대칭이어야 한다(위 12 / 아래 4로 어긋나 있었다). */
+.mcal-week { flex: none; display: grid; grid-template-columns: repeat(7, 1fr);
+  padding: var(--mantine-spacing-xs) 2px var(--mantine-spacing-xs); }
+.mcal-wd { text-align: center; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mcal-wd[data-weekend='sat'] { color: var(--mantine-color-info-6); }
+.mcal-wd[data-weekend='sun'] { color: var(--text-danger); }
+
+/* 주들이 사는 곳 — fill이면 남은 높이를 여기서 나눈다. 극단적으로 바쁜 달만 스크롤(정상적으론 안 생김). */
+.mcal-body { display: flex; flex-direction: column; }
+.mcal.fill .mcal-body { flex: 1; min-height: 0; overflow-y: auto; }
+
+.mcal-wk {
+  position: relative;
+  flex: 1 0 auto;                 /* basis=그 주가 필요한 높이, 남는 건 균등 분배 */
+  border-top: var(--border-width) solid var(--border-default);
+}
+.mcal-grid { display: grid; grid-template-columns: repeat(7, 1fr); height: 100%; }
+
+.mcal-cell {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 4px 0 0;
+  border: none; background: none; cursor: pointer; font-family: inherit;
+  color: var(--text-primary); -webkit-tap-highlight-color: transparent;
+}
+.mcal-cell[data-outside] { color: var(--text-disabled); }
+.mcal-cell[data-holiday] .mcal-num { color: var(--text-danger); }
+/* 날짜는 크게 — 갇힌 달력에서 caption(13)이라 안 읽혔다. body(17) 대역. */
+.mcal-num {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: var(--mantine-radius-full);
+  font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight); line-height: 1;
+}
+.mcal-cell[data-today] .mcal-num { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-5); }
+.mcal-cell[data-selected] .mcal-num {
+  background: var(--mantine-color-primary-6); color: var(--mantine-color-white);
+}
+
+/* 겹치는 레이어 — 셀 격자와 같은 7열을 공유한다. */
+.mcal-banners, .mcal-bars, .mcal-more {
+  position: absolute; left: 0; right: 0;
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  padding: 0 2px;
+}
+/* top은 인라인(NUM_ROW)이 준다 — 여기 px을 박으면 TSX 상수와 갈라져 배너·바 사이에 틈이 생긴다. */
+.mcal-banners { gap: 4px; pointer-events: none; }
+.mcal-banner {
+  height: 22px; border-radius: 4px; padding: 0 6px;
+  font-size: var(--typo-caption-size); line-height: 22px; color: var(--mantine-color-white);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mcal-bars { gap: 4px 2px; grid-auto-rows: 22px; }
+.mcal-bar {
+  height: 22px; border-radius: 4px; padding: 0 6px;
+  border: none; text-align: left; font-family: inherit; overflow: hidden;
+  display: flex; align-items: center;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.mcal-bar:disabled { cursor: default; }
+/* 연속 표시 — 주 경계에서 잘린 쪽을 삼각형으로 깎는다. 데스크탑 CalendarPage와 같은 신호·같은 clip-path 기법
+   (폭만 10px → 8px로 축소). 깎인 쪽엔 패딩을 더 줘 라벨이 삼각형 안으로 들어가지 않게 한다. */
+.mcal-bar.cont-l { padding-left: 11px; border-left: none !important; }
+.mcal-bar.cont-r { padding-right: 11px; border-right: none !important; }
+.mcal-bar.cont-r:not(.cont-l) { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%); }
+.mcal-bar.cont-l:not(.cont-r) { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%); }
+.mcal-bar.cont-l.cont-r { clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 0 100%, 8px 50%); }
+.mcal-bar:not(:disabled):active { filter: brightness(0.88); }
+/* 라벨은 시작 칸에만 — 이어지는 칸까지 반복하면 같은 일정이 여러 개로 읽힌다. */
+/* 바·배너 글자는 caption 토큰을 쓴다 — 하드코딩 px은 모바일 타이포 스코프도 폰트 스케일(전역 줌)도 안 탄다
+   (CountBadge를 rem화한 것과 같은 이유). */
+.mcal-bartxt {
+  flex: 1; min-width: 0; display: block; font-size: var(--typo-caption-size); line-height: 22px; color: inherit; font-weight: 500;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* 바 안 표식 — 라운드 사각(중립 형태. 원은 "사람"을 함의한다). 라벨이 먼저 줄고 이건 남는다. */
+.mcal-mark {
+  flex: none; width: 15px; height: 15px; margin-left: 4px;
+  border-radius: var(--mantine-radius-xs);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 9.5px; font-weight: 700; color: var(--mantine-color-white);
+  background: var(--mantine-color-neutral-5);
+}
+
+.mcal-more { pointer-events: none; }
+.mcal-morecell { text-align: center; font-size: var(--typo-caption-size); line-height: 16px; color: var(--text-secondary); }

@@ -24,6 +24,8 @@ export type FileItem = {
   progress?: number; // 0~100
   error?: string;
   file?: File; // 원본 바이트 — pending에 실린다. 소비처가 FormData(file)로 실제 업로드. 검증 실패엔 없음.
+  url?: string; // 표시용 주소(이미지 썸네일 등). 업로드 완료분은 소비처가 서버 URL을 넣고,
+                //  새로 고른 건 부품이 objectURL을 채운다. 파일 목록형(FileUploader)은 안 쓰고 썸네일형이 쓴다.
 };
 
 type Props = {

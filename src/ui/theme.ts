@@ -106,6 +106,30 @@ const typography: Record<TypographyStep, { fontSize: string; fontWeight: number;
   caption:       { fontSize: '0.75rem',  fontWeight: 400, lineHeight: 1.4 },
 };
 
+// 모바일 타이포 스케일 — 데스크탑과 *다른 값*을 갖는다(같은 역할 이름, 다른 크기).
+//  왜: 데스크탑 body 14px는 폰에서 심각하게 작다. iOS Dynamic Type(Large 기본)의 Body는 **17pt**이고
+//  Toss도 이 대역이다. 데스크탑 스케일을 그대로 쓰면 21% 작아 답답해 보인다(화면 검증에서 확인).
+//  적용 방식: 역할 변수 통로를 그대로 쓴다 — MobileShell 루트에 이 변수를 깔면 Text·Title·Badge 등
+//  *모든* 자손이 자동으로 따라온다(원자는 여전히 크기를 모른다). 색·타이포가 같은 구조라 새 기제 0.
+//  ※ 포털(Popover/Modal)은 DOM상 셸 밖이라 이 스코프를 안 탄다 — 모바일에서 포털 부품을 쓰게 되면 그때 확장.
+const typographyMobile: Record<TypographyStep, { fontSize: string; fontWeight: number; lineHeight: number }> = {
+  display:       { fontSize: '2.125rem',  fontWeight: 700, lineHeight: 1.2 },  // iOS Large Title 34
+  heading:       { fontSize: '1.75rem',   fontWeight: 700, lineHeight: 1.25 }, // iOS Title1 28
+  subheading:    { fontSize: '1.25rem',   fontWeight: 600, lineHeight: 1.35 }, // iOS Title3 20
+  body:          { fontSize: '1.0625rem', fontWeight: 400, lineHeight: 1.55 }, // iOS Body 17 (한글이라 행간 넉넉히)
+  'body-strong': { fontSize: '1.0625rem', fontWeight: 600, lineHeight: 1.45 }, // iOS Headline 17 semibold
+  caption:       { fontSize: '0.8125rem', fontWeight: 400, lineHeight: 1.4 },  // iOS Footnote 13
+};
+
+// 모바일 스코프에 깔 CSS 변수 묶음 — MobileShell이 루트 style로 적용한다(단일 출처는 여기).
+export const mobileTypoVars: Record<string, string> = Object.fromEntries(
+  Object.entries(typographyMobile).flatMap(([step, spec]) => [
+    [`--typo-${step}-size`, spec.fontSize],
+    [`--typo-${step}-weight`, String(spec.fontWeight)],
+    [`--typo-${step}-lh`, String(spec.lineHeight)],
+  ]),
+);
+
 const borderWidth = '1px';            // 보더 굵기 1종
 const iconBaselineShift = '-0.125em'; // 아이콘 광학정렬 보정(폰트 크기 비례 토큰, 1/8 룰)
 

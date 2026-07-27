@@ -1,6 +1,6 @@
 /* BoardList (템플릿) — 사내 게시판 목록. 밀도형 행(스캔 우선) + 상단 고정 공지 밴드(무테 tonal).
    board 고유 6열 행은 Grid 프리미티브(12의 약수)로 못 짜 raw CSS grid 격리 예외(Calendar 7열·Modal raw flex 동류).
-   색·간격 전부 토큰. 솔리드 배지 위 흰 글자 #fff만(calendarpage.css .cal-ava 선례). */
+   색·간격 전부 토큰. 솔리드 배지 위 흰 글자 #fff만(calendarpage.css .cal-mark 선례). */
 
 .board { display: flex; flex-direction: column; gap: var(--mantine-spacing-md); }
 

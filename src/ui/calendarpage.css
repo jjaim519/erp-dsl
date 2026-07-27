@@ -30,11 +30,12 @@
 .cal-chip.off { opacity: .4; text-decoration: line-through; }
 .cal-sw { width: 0.7em; height: 0.7em; border-radius: var(--mantine-radius-xs); flex: none; }
 
-/* 아바타(이니셜) */
-.cal-ava { width: 16px; height: 16px; border-radius: var(--mantine-radius-full); flex: none;
+/* 표식(glyph) — 두 번째 범주 축. *원이 아니다*: 원은 "사람"을 함의해서 시공 종류·자재 코드가 들어가면
+   모양이 거짓말을 한다. 라운드 사각이 사람·사물·코드를 다 담는 중립 형태다. */
+.cal-mark { width: 16px; height: 16px; border-radius: var(--mantine-radius-xs); flex: none;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 9.5px; font-weight: 700; color: #fff; background: var(--mantine-color-neutral-5); }
-.cal-ava.lg { width: 20px; height: 20px; font-size: 11px; }
+.cal-mark.lg { width: 20px; height: 20px; font-size: 11px; }
 
 /* 공통 바 */
 .cal-bar { position: relative; height: 21px; display: flex; align-items: center; gap: 0.35em;

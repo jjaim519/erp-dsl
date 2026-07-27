@@ -20,6 +20,7 @@ import { Stack } from './Stack';
 import { Group } from './Group';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
+import { packLanes } from './_calendarLanes';   // 레인 패킹은 MobileCalendar와 공유(단일 출처)
 import './calendarpage.css';
 
 export type CalendarColorRole = 'primary' | 'neutral' | 'success' | 'warning' | 'danger' | 'info';
@@ -44,7 +45,10 @@ export type CalendarAnnotation = {
 export type CalendarEncoding = {
   anchor: { attr: string; values: Record<string, { color: CalendarColorRole; icon?: IconName; label: string }> };
   status?: { attr: string; values: Record<string, { emphasis: 'solid' | 'dashed'; label: string }> };
-  person?: { attr: string; values: Record<string, { initial: string; label: string; color?: CalendarColorRole }> };
+  // 두 번째 범주 축 — 바 안의 *표식 슬롯*. 부품은 이게 사람인지 시공 종류인지 자재인지 모른다:
+  //  glyph(1~2자)·색·라벨을 소비처가 주고, 부품은 "짧은 표식을 우측에 놓는다"까지만 안다(헌법 1).
+  //  label = 그 축의 이름(‘담당’·‘시공 종류’ 등) — 부품이 이름을 지어내지 않는다.
+  mark?: { attr: string; label: string; values: Record<string, { glyph: string; label: string; color?: CalendarColorRole }> };
   rowAxes?: { attr: string; label: string }[];
 };
 type Props = {
@@ -74,20 +78,12 @@ const tint = (role: CalendarColorRole) => `color-mix(in srgb, ${cvar(role, 6)} 1
 function barCss(role: CalendarColorRole, emphasis: 'solid' | 'dashed'): CSSProperties {
   return emphasis === 'dashed'
     ? { background: cvar(role, 0), border: `1.4px dashed ${cvar(role, 5)}`, color: cvar(role, 6), opacity: 0.7 }
-    : { background: cvar(role, 2), borderLeft: `3px solid ${cvar(role, 6)}`, color: cvar(role, 7) };
-}
-function packLanes<T extends { a: number; b: number; ai: number; si: number }>(items: T[]) {
-  const lanes: T[][] = []; const out: (T & { lane: number })[] = [];
-  for (const it of [...items].sort((x, y) => (x.ai - y.ai) || (x.si - y.si) || (x.a - y.a))) {
-    let i = 0; while (lanes[i] && lanes[i].some((r) => !(it.b < r.a || it.a > r.b))) i++;
-    (lanes[i] = lanes[i] || []).push(it); out.push({ ...it, lane: i });
-  }
-  return { out, laneCount: lanes.length };
+    : { background: cvar(role, 2), color: cvar(role, 8) };   // 좌측 강조선 없음 — 분류는 톤 배경이 이미 말한다(중복 신호 제거, 범례 칩과 같은 형태)
 }
 
 export function CalendarPage({ title, description, events, encoding, annotations = [], holidays, createLabel = '새 일정', onCreate, onSelectEvent, renderEventDetail, rowMiniBar = true, onTagRange, onCreateRange, viewToggle = false }: Props) {
   const [range, setRange] = useState<Range>('month');
-  const rowAxisOpts = encoding.rowAxes ?? (encoding.person ? [{ attr: encoding.person.attr, label: '담당' }] : []);
+  const rowAxisOpts = encoding.rowAxes ?? (encoding.mark ? [{ attr: encoding.mark.attr, label: encoding.mark.label }] : []);
   const [rowAxis, setRowAxis] = useState(rowAxisOpts[0]?.attr ?? encoding.anchor.attr);
   const [anchor, setAnchor] = useState(() => dayjs());
   const [daySel, setDaySel] = useState<string | null>(null);
@@ -136,12 +132,12 @@ export function CalendarPage({ title, description, events, encoding, annotations
   const tipText = (an: CalendarAnnotation) => `${an.label} · ${anStart(an).format('M/D')}–${anEnd(an).format('M/D')}`;
 
   // ── 이벤트 바 ──
-  function bar(ev: CalendarEvent, a: number, b: number, lane: number, opts: { contL?: boolean; contR?: boolean; avatar?: boolean }) {
+  function bar(ev: CalendarEvent, a: number, b: number, lane: number, opts: { contL?: boolean; contR?: boolean; mark?: boolean }) {
     const av = ev.attrs?.[encoding.anchor.attr]; const aspec = av ? encoding.anchor.values[av] : undefined;
     const role = aspec?.color ?? 'neutral';
     const sv = encoding.status ? ev.attrs?.[encoding.status.attr] : undefined;
     const emphasis = (sv ? encoding.status?.values[sv]?.emphasis : undefined) ?? 'solid';
-    const pv = encoding.person ? ev.attrs?.[encoding.person.attr] : undefined; const pspec = pv ? encoding.person?.values[pv] : undefined;
+    const pv = encoding.mark ? ev.attrs?.[encoding.mark.attr] : undefined; const pspec = pv ? encoding.mark?.values[pv] : undefined;
     const cls = ['cal-bar', opts.contL ? 'cont-l' : '', opts.contR ? 'cont-r' : ''].filter(Boolean).join(' ');
     return (
       <div key={ev.id} className={cls}
@@ -149,13 +145,13 @@ export function CalendarPage({ title, description, events, encoding, annotations
         onClick={(e) => { e.stopPropagation(); openEvent(ev); }}>
         {aspec?.icon && <span className="gly"><Icon name={aspec.icon} size="sm" /></span>}
         <span className="ttl">{ev.label}</span>
-        {opts.avatar && pspec && <span className="cal-ava" style={pspec.color ? { background: cvar(pspec.color, 6) } : undefined}>{pspec.initial}</span>}
+        {opts.mark && pspec && <span className="cal-mark" style={pspec.color ? { background: cvar(pspec.color, 6) } : undefined}>{pspec.glyph}</span>}
       </div>
     );
   }
 
   function rowHeaderMain(val: string): ReactNode {
-    if (rowAxis === encoding.person?.attr) { const p = encoding.person.values[val]; return <><span className="cal-ava lg" style={p?.color ? { background: cvar(p.color, 6) } : undefined}>{p?.initial ?? val.slice(0, 1)}</span>{p?.label ?? val}</>; }
+    if (rowAxis === encoding.mark?.attr) { const p = encoding.mark.values[val]; return <><span className="cal-mark lg" style={p?.color ? { background: cvar(p.color, 6) } : undefined}>{p?.glyph ?? val.slice(0, 1)}</span>{p?.label ?? val}</>; }
     if (rowAxis === encoding.anchor.attr) { const a = encoding.anchor.values[val]; return <><span className="cal-sw" style={{ background: cvar(a?.color ?? 'neutral', 6) }} />{a?.icon && <Icon name={a.icon} size="sm" color="secondary" />}{a?.label ?? val}</>; }
     if (rowAxis === encoding.status?.attr) { const s = encoding.status.values[val]; return <>{s?.label ?? val}</>; }
     return <>{val}</>;
@@ -189,10 +185,10 @@ export function CalendarPage({ title, description, events, encoding, annotations
     const cols = `repeat(${days}, minmax(0, 1fr))`; const colTpl = `${NAME_COL}px ${cols}`;
     const known = rowAxis === encoding.anchor.attr ? encoding.anchor.values
       : rowAxis === encoding.status?.attr ? encoding.status.values
-      : rowAxis === encoding.person?.attr ? encoding.person.values : null;
+      : rowAxis === encoding.mark?.attr ? encoding.mark.values : null;
     const vals = known ? Object.keys(known) : [...new Set(visible.map((e) => e.attrs?.[rowAxis]).filter(Boolean) as string[])];
     const inWin = (e: CalendarEvent) => !(evEnd(e).isBefore(winStart, 'day') || evStart(e).isAfter(winEnd, 'day'));
-    const showAvatar = rowAxis !== encoding.person?.attr;
+    const showMark = rowAxis !== encoding.mark?.attr;
     const colLeft = (i: number) => `calc(${NAME_COL}px + ${i} * (100% - ${NAME_COL}px) / ${days})`;
     const colWidth = (n: number) => `calc(${n} * (100% - ${NAME_COL}px) / ${days})`;
     const colBody = (i: number) => `calc(${i} * 100% / ${days})`;
@@ -246,7 +242,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
                   {rowBrief(rowEvents)}
                 </div>
                 <div className="cal-tl-track" style={{ gridTemplateColumns: cols, backgroundSize: `${100 / days}% 100%`, minHeight: Math.max(1, laneCount) * 27 + 8 }}>
-                  {out.map((it) => bar(it.e, it.a, it.b, it.lane, { contL: it.contL, contR: it.contR, avatar: showAvatar }))}
+                  {out.map((it) => bar(it.e, it.a, it.b, it.lane, { contL: it.contL, contR: it.contR, mark: showMark }))}
                 </div>
               </div>
             );
@@ -296,7 +292,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
                 })}
               </div>
               <div className="cal-mbars" style={{ top: banners.length ? 52 : 32 }}>
-                {out.map((it) => bar(it.e, it.a, it.b, it.lane, { contL: !it.isStart, contR: !it.isEnd, avatar: true }))}
+                {out.map((it) => bar(it.e, it.a, it.b, it.lane, { contL: !it.isStart, contR: !it.isEnd, mark: true }))}
               </div>
               {banners.length > 0 && (
                 <div className="cal-mbanners">
@@ -332,7 +328,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
   function dayRow(ev: CalendarEvent) {
     const av = ev.attrs?.[encoding.anchor.attr]; const a = av ? encoding.anchor.values[av] : undefined;
     const sv = encoding.status ? ev.attrs?.[encoding.status.attr] : undefined; const s = sv ? encoding.status?.values[sv] : undefined;
-    const pv = encoding.person ? ev.attrs?.[encoding.person.attr] : undefined; const p = pv ? encoding.person?.values[pv] : undefined;
+    const pv = encoding.mark ? ev.attrs?.[encoding.mark.attr] : undefined; const p = pv ? encoding.mark?.values[pv] : undefined;
     return (
       <div key={ev.id} onClick={() => openEvent(ev)} style={{ display: 'flex', alignItems: 'center', gap: 'var(--mantine-spacing-xs)', padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-sm)', border: 'var(--border-width) solid var(--border-default)', borderRadius: 'var(--mantine-radius-sm)', cursor: 'pointer' }}>
         <span className="cal-sw" style={{ background: cvar(a?.color ?? 'neutral', 6) }} />
@@ -340,7 +336,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
           <Text variant="body">{ev.label}</Text>
           <Text variant="caption" color="secondary">{[a?.label, s?.label, p?.label].filter(Boolean).join(' · ')}</Text>
         </div>
-        {p && <span className="cal-ava" style={p.color ? { background: cvar(p.color, 6) } : undefined}>{p.initial}</span>}
+        {p && <span className="cal-mark" style={p.color ? { background: cvar(p.color, 6) } : undefined}>{p.glyph}</span>}
       </div>
     );
   }
@@ -348,7 +344,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
   function eventDetailDefault(ev: CalendarEvent): ReactNode {
     const av = ev.attrs?.[encoding.anchor.attr]; const a = av ? encoding.anchor.values[av] : undefined;
     const sv = encoding.status ? ev.attrs?.[encoding.status.attr] : undefined; const s = sv ? encoding.status?.values[sv] : undefined;
-    const pv = encoding.person ? ev.attrs?.[encoding.person.attr] : undefined; const p = pv ? encoding.person?.values[pv] : undefined;
+    const pv = encoding.mark ? ev.attrs?.[encoding.mark.attr] : undefined; const p = pv ? encoding.mark?.values[pv] : undefined;
     const row = (k: string, v: ReactNode) => <Group gap="md" align="start"><div style={{ width: 64, flex: 'none' }}><Text variant="caption" color="secondary">{k}</Text></div><div>{v}</div></Group>;
     const period = ev.end && ev.end !== ev.start ? `${dayjs(ev.start).format('M월 D일')} – ${dayjs(ev.end).format('M월 D일')}` : dayjs(ev.start).format('M월 D일');
     return (
@@ -356,7 +352,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
         {row('현장', <Text variant="body">{ev.label}</Text>)}
         {a && row('분류', <Group gap="xs" align="center">{a.icon && <Icon name={a.icon} size="sm" color="secondary" />}<Text variant="body">{a.label}</Text></Group>)}
         {s && row('상태', <Text variant="body">{s.label}</Text>)}
-        {p && row('담당', <Group gap="xs" align="center"><span className="cal-ava" style={p.color ? { background: cvar(p.color, 6) } : undefined}>{p.initial}</span><Text variant="body">{p.label}</Text></Group>)}
+        {p && encoding.mark && row(encoding.mark.label, <Group gap="xs" align="center"><span className="cal-mark" style={p.color ? { background: cvar(p.color, 6) } : undefined}>{p.glyph}</span><Text variant="body">{p.label}</Text></Group>)}
         {row('기간', <Text variant="body">{period}</Text>)}
       </Stack>
     );
