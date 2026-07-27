@@ -863,7 +863,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (유일한 스크롤 영역)' },
     ],
     composition: {
-      토큰: ['--bg-primary(단일 평면)', '--border-default(헤어라인 — surface/elevation 미사용)', 'primary(탭 활성)', 'safe-area-inset-bottom'],
+      토큰: ['--bg-primary(단일 평면)', '--border-default(헤어라인 — surface/elevation 미사용)', '--mantine-color-primary-light(탭 활성 틴트 알약 — 태블릿 레일과 같은 어휘, 모드별 반투명이라 다크 안전)', 'safe-area-inset-bottom'],
       '의미 원자': ['Icon', 'Text', 'CountBadge', 'Button'],
       '배치 프리미티브': ['Stack'],
       분자: ['IconButton'],

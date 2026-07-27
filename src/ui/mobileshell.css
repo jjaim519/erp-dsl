@@ -115,10 +115,32 @@ html.erp-mobile-lock body {
 .ms-tabs .ms-tab { font-size: 0.6875rem; }
 .ms-tabs .ms-tab * { font-size: inherit; }
 
-/* 활성 표시는 색 역할만 — 상단 인디케이터 막대를 두지 않는다(헤어라인 체계에 선이 하나 더 끼면 소음). */
+/* 활성 표시 — 아이콘 뒤 primary 틴트 알약. 태블릿 레일(.erp-rail-item[data-active])과 같은 어휘다:
+   두 셸이 "활성 = primary 틴트 배경 + 아이콘색 + 라벨색"이라는 하나의 이야기를 한다(새 토큰 0).
+   ① 왜 색 위계만으론 안 됐나: 활성/비활성이 --text-primary vs --text-secondary(검정 vs 회색)뿐이라
+      16px 글리프에선 안 읽혔다. 잘 만든 앱들의 주력 채널은 hue가 아니라 **채워짐**인데(iOS=filled 심볼,
+      카톡·인스타는 활·비활성 *같은 색*에 fill 대비만) 우리 아이콘 세트는 outline 전용이라 그 채널이
+      통째로 닫혀 있다. M3의 active indicator 알약이 outline 세트로 fill의 무게를 내는 정공법이다.
+   ② 상단 인디케이터 막대는 여전히 두지 않는다 — 알약은 선이 아니라 톤이라 헤어라인 체계와 안 다툰다.
+   ③ 색은 primary-0(태블릿) 대신 --mantine-color-primary-light: 같은 navy 사다리에서 Mantine이
+      *모드별로* 내주는 반투명 틴트(라이트 .1 / 다크 .15)라 다크에서도 배경 위에 뜬다.
+      (태블릿의 불투명 primary-0은 다크에서 흰 아이콘이 밝은 면에 얹혀 안 보인다 — 별건으로 정리 필요)
+   ④ 기하: padding이 아니라 의사요소로 깐다. .ms-tab-ico에 padding을 주면 그 안에 절대배치된 카운트
+      배지(left:100%)가 활성일 때만 바깥으로 밀려 자리가 튄다. ::before는 기하를 안 건드려 활·비활성
+      레이아웃이 동일하다. .ms-tab의 isolation은 z-index:-1이 셸 배경(.ms) 뒤로 새지 않게 문맥을 가둔다.
+   ⑤ 치수: 16px 아이콘 기준 42×22 — M3의 24dp 아이콘 : 64×32dp 비율을 그대로 축소. */
+.ms-tab { isolation: isolate; }
 .ms-tab-ico {
   position: relative;
   display: inline-flex;
+}
+.ms-tab[data-active='true'] .ms-tab-ico::before {
+  content: '';
+  position: absolute;
+  inset: -3px -13px;
+  z-index: -1;
+  border-radius: var(--mantine-radius-full);
+  background: var(--mantine-color-primary-light);
 }
 .ms-tab-badge {
   position: absolute;

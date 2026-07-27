@@ -86,14 +86,17 @@ export function MobileShell({
       {/* 하단 고정 영역 — 탭 위. CTA 버튼이든 입력 바든 이 한 칸을 쓴다. */}
       {bottom && <div className="ms-bottom">{bottom}</div>}
 
-      {/* 탭 — 균등 분배. 활성은 색 역할(primary) vs secondary. safe-area만큼 아래를 비운다. */}
+      {/* 탭 — 균등 분배. 활성은 색 역할(primary) vs secondary **+ 아이콘 뒤 틴트 알약**(mobileshell.css).
+          색 위계만으론 16px 글리프에서 안 읽혀서, 태블릿 레일과 같은 어휘로 배경 채널을 하나 더 준다.
+          간격이 xxs가 아니라 xs인 이유: 알약이 아이콘 위아래로 3px 삐져나오므로 라벨과의 거리는
+          아이콘이 아니라 *알약 가장자리*에서 재야 한다(M3도 인디케이터 가장자리 기준). safe-area는 CSS. */}
       <nav className="ms-tabs" aria-label="주 메뉴">
         {tabs.map((t) => {
           const active = t.path === activePath;
           return (
             <button key={t.path} type="button" className="ms-tab" data-active={active}
               aria-current={active ? 'page' : undefined} onClick={() => onNavigate(t.path)}>
-              <Stack gap="xxs" align="center">
+              <Stack gap="xs" align="center">
                 <span className="ms-tab-ico">
                   <Icon name={t.icon} size="sm" color={active ? 'primary' : 'secondary'} />
                   {t.count != null && t.count > 0 && (
