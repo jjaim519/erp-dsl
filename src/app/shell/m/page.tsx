@@ -44,15 +44,20 @@ const SITE_ENCODING: CalendarEncoding = {
     delivery: { color: 'success', label: '납품' },
     issue:    { color: 'danger',  label: '이슈' },
   } },
+  // 두 번째 범주 축 — 부품은 이게 무엇인지 모른다(여기선 담당이지만 시공 종류·자재여도 코드는 동일).
+  mark: { attr: 'owner', label: '담당', values: {
+    ok:  { glyph: '옥', label: '옥성훈', color: 'primary' },
+    kim: { glyph: '김', label: '김민지', color: 'success' },
+  } },
 };
 const SITE_EVENTS: CalendarEvent[] = [
-  { id: 'e1', start: '2026-07-06', end: '2026-07-10', label: '대명물산 시공', attrs: { kind: 'install' } },
-  { id: 'e2', start: '2026-07-09', end: '2026-07-09', label: '한빛산업 실측', attrs: { kind: 'measure' } },
-  { id: 'e3', start: '2026-07-13', end: '2026-07-24', label: '세종테크 시공', attrs: { kind: 'install' } },
-  { id: 'e4', start: '2026-07-16', end: '2026-07-17', label: '자재 납품', attrs: { kind: 'delivery' } },
+  { id: 'e1', start: '2026-07-06', end: '2026-07-10', label: '대명물산 시공', attrs: { kind: 'install', owner: 'ok' } },
+  { id: 'e2', start: '2026-07-09', end: '2026-07-09', label: '한빛산업 실측', attrs: { kind: 'measure', owner: 'kim' } },
+  { id: 'e3', start: '2026-07-13', end: '2026-07-24', label: '세종테크 시공', attrs: { kind: 'install', owner: 'kim' } },
+  { id: 'e4', start: '2026-07-16', end: '2026-07-17', label: '자재 납품', attrs: { kind: 'delivery', owner: 'ok' } },
   { id: 'e5', start: '2026-07-22', end: '2026-07-23', label: '누수 이슈', attrs: { kind: 'issue' } },
-  { id: 'e6', start: '2026-07-27', end: '2026-07-31', label: '대명물산 2차', attrs: { kind: 'install' } },
-  { id: 'e7', start: '2026-07-27', end: '2026-07-28', label: '실측 재방문', attrs: { kind: 'measure' } },
+  { id: 'e6', start: '2026-07-27', end: '2026-07-31', label: '대명물산 2차', attrs: { kind: 'install', owner: 'ok' } },
+  { id: 'e7', start: '2026-07-27', end: '2026-07-28', label: '실측 재방문', attrs: { kind: 'measure', owner: 'kim' } },
   { id: 'e8', start: '2026-07-27', end: '2026-07-29', label: '추가 납품', attrs: { kind: 'delivery' } },
   { id: 'e9', start: '2026-07-27', end: '2026-07-27', label: '하자 점검', attrs: { kind: 'issue' } },
 ];
