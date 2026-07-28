@@ -329,12 +329,22 @@ const PIZZA_SET: OptionGroup[] = [
       { id: 'c6', code: 'mush', label: '양송이', group: '채소', amount: 700 },
     ] },
 ];
+// 음료 = §5의 "quantity 그룹 하나"(2단 — 개체 층 없음). 값 12개 + 값묶음 → collect 표현 자동 발동(E-1 골라 담는 면).
 const DRINK_SET: OptionGroup[] = [
   { id: 'gd', label: '음료', selection: 'quantity',
     choices: [
-      { id: 'dc1', code: 'cola', label: '콜라 1.25L', amount: 3000 },
-      { id: 'dc2', code: 'cider', label: '사이다 1.25L', amount: 3000 },
-      { id: 'dc3', code: 'ade', label: '레몬에이드', amount: 4000 },
+      { id: 'dc1', code: 'cola', label: '콜라 1.25L', group: '탄산', amount: 3000, unit: '병' },
+      { id: 'dc2', code: 'cider', label: '사이다 1.25L', group: '탄산', amount: 3000, unit: '병' },
+      { id: 'dc3', code: 'zero', label: '제로콜라 1.25L', group: '탄산', amount: 3200, unit: '병' },
+      { id: 'dc4', code: 'sparkw', label: '탄산수 500ml', group: '탄산', amount: 1800, unit: '병' },
+      { id: 'dc5', code: 'lemon', label: '레몬에이드', group: '에이드', amount: 4000, unit: '잔' },
+      { id: 'dc6', code: 'grape', label: '청포도에이드', group: '에이드', amount: 4200, unit: '잔' },
+      { id: 'dc7', code: 'mojito', label: '무알콜 모히토', group: '에이드', amount: 4800, unit: '잔' },
+      { id: 'dc8', code: 'orange', label: '오렌지주스', group: '주스', amount: 3500, unit: '잔' },
+      { id: 'dc9', code: 'apple', label: '사과주스', group: '주스', amount: 3500, unit: '잔' },
+      { id: 'dc10', code: 'tomato', label: '토마토주스', group: '주스', amount: 3800, unit: '잔' },
+      { id: 'dc11', code: 'milkis', label: '밀키스 500ml', group: '탄산', amount: 2200, unit: '병' },
+      { id: 'dc12', code: 'water', label: '생수 500ml', group: '주스', amount: 1000, unit: '병' },
     ] },
 ];
 const PIZZA_PRODUCTS = [
@@ -418,11 +428,10 @@ function OptionSetPickerDemo() {
 }
 
 // 2-pane 조작면 데모 — kk 합의 검증 기준: 지속 2-pane + 양방향 활성 동기화(우측 라인 클릭→좌측 진입 /
-// 좌측 편집→우측 실시간 / 빈 섹션 ＋→좌측 진입점). 피자=3단(pick 경유), 음료=2단(§5: 개체 층 유무가 같은 부품).
+// 좌측 편집→우측 실시간). 피자=계층 추가 메뉴에서 하위(개체)까지 선택→곧장 구성 면 / 음료=골라 담는 면(collect 자동).
 type ComposeLine = { id: string; section: 'pizza' | 'drink'; label: string; base: number; sel: OptionSelection; qty: number };
 type ComposeLeft =
   | { stage: 'idle' }
-  | { stage: 'pick' }
   | { stage: 'config'; section: 'pizza' | 'drink'; label: string; sublabel?: string; base: number; lineId?: string };
 
 function CompositionDemo() {
@@ -436,13 +445,14 @@ function CompositionDemo() {
   const lineAmount = (l: ComposeLine) => (l.base + optAmount(groupsOf(l.section), l.sel)) * l.qty;
 
   const openConfig = (cfg: ComposeLeft, sel: OptionSelection, qty: number) => { setLeft(cfg); setDraft(sel); setDraftQty(qty); };
-  const addTo = (sectionId: string) => {
-    if (sectionId === 'pizza') setLeft({ stage: 'pick' });
-    else openConfig({ stage: 'config', section: 'drink', label: '음료', base: 0 }, EMPTY_SEL, 1);
-  };
-  const pickProduct = (pid: string) => {
-    const p = PIZZA_PRODUCTS.find((x) => x.id === pid)!;
-    openConfig({ stage: 'config', section: 'pizza', label: p.label, sublabel: p.sublabel, base: p.base }, { picked: {}, qty: {}, nums: { inch: 12 } }, 1);
+  // 계층 추가 메뉴 — items 있는 섹션(피자)은 itemId까지 받아 곧장 구성 면, 없는 섹션(음료)은 골라 담는 면.
+  const addTo = (sectionId: string, itemId?: string) => {
+    if (sectionId === 'pizza') {
+      const p = PIZZA_PRODUCTS.find((x) => x.id === itemId) ?? PIZZA_PRODUCTS[0];
+      openConfig({ stage: 'config', section: 'pizza', label: p.label, sublabel: p.sublabel, base: p.base }, { picked: {}, qty: {}, nums: { inch: 12 } }, 1);
+    } else {
+      openConfig({ stage: 'config', section: 'drink', label: '음료', base: 0 }, EMPTY_SEL, 1);
+    }
   };
   const selectLine = (lineId: string) => {
     const l = lines.find((x) => x.id === lineId);
@@ -469,15 +479,14 @@ function CompositionDemo() {
   const tip = lines.length ? 3000 : 0;
 
   const picker = left.stage === 'idle' ? (
-    <OptionSetPicker mode="idle" placeholder="오른쪽 목차에서 추가할 항목을 고르세요" />
-  ) : left.stage === 'pick' ? (
-    <OptionSetPicker mode="pick" title="피자 선택" items={PIZZA_PRODUCTS} onPick={pickProduct} />
+    <OptionSetPicker mode="idle" placeholder="오른쪽 추가 버튼으로 시작하세요" />
   ) : (
     <OptionSetPicker
       mode="configure"
       title={left.label}
+      path={left.section === 'pizza' ? ['피자', left.label] : undefined}
       meta={left.sublabel}
-      quantity={{ value: draftQty, onChange: setDraftQty }}
+      quantity={left.section === 'pizza' ? { value: draftQty, onChange: setDraftQty } : undefined}  // 담기 면은 헤더 스테퍼 미노출(소비처 선택)
       groups={groupsOf(left.section)}
       selection={draft}
       onPick={(gid, code) => setDraft((s) => togglePick(s, gid, code))}
@@ -498,9 +507,10 @@ function CompositionDemo() {
           addLabel="구성 추가"
           sections={[
             { id: 'pizza', label: '피자', badge: '구성형',
-              active: left.stage === 'pick' || (left.stage === 'config' && left.section === 'pizza'),
+              items: PIZZA_PRODUCTS.map((p) => ({ id: p.id, label: p.label, sublabel: p.sublabel })),  // 계층 추가 메뉴 드릴
+              active: left.stage === 'config' && left.section === 'pizza',
               lines: lines.filter((l) => l.section === 'pizza').map(toLine) },
-            { id: 'drink', label: '음료', badge: '단품',
+            { id: 'drink', label: '음료', badge: '담기형',
               active: left.stage === 'config' && left.section === 'drink',
               lines: lines.filter((l) => l.section === 'drink').map(toLine) },
           ]}

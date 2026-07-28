@@ -21,6 +21,10 @@ type Props = {
   onSelect: (id: string) => void;
   onToggle: (id: string) => void;
   title?: string;
+  /** false = 헤더 미렌더(title·onAddRoot 무시) — 소비처가 자체 sticky 헤더를 소유할 때(R2 §6-4). 기본 true. */
+  header?: boolean;
+  /** true = 위젯 자체 내부 패딩(md) — 라운드+overflow:hidden 컨테이너에 단독으로 넣을 때(R2 §6-2). 기본 false(행동 보존). */
+  padded?: boolean;
   editable?: boolean;
   onAddRoot?: (label: string) => void;   // 최상위(level1) 디렉토리만 — 헤더 ＋. 하위(분류) 추가는 Tree 밖(예: HierarchyExplorer 우측 ＋ 드롭다운).
   onRename?: (id: string, label: string) => void;
@@ -35,7 +39,7 @@ const ROW_H = 36;
 
 export function Tree({
   nodes, selectedId, expandedIds, onSelect, onToggle,
-  title, editable = false, onAddRoot, onRename, onDelete, toolbar,
+  title, header = true, padded = false, editable = false, onAddRoot, onRename, onDelete, toolbar,
 }: Props) {
   const expanded = new Set(expandedIds);
   const [editing, setEditing] = useState<{ mode: 'rename' | 'addRoot'; id?: string } | null>(null);
@@ -156,14 +160,17 @@ export function Tree({
       );
     });
 
-  return (
+  const body = (
     <Stack gap="xs">
-      {(title || editable) && (
-        <SectionHeader
-          title={title ?? '디렉토리'}
-          divider
-          actions={editable ? [{ label: '최상위 디렉토리 추가', icon: 'plus', iconOnly: true, onClick: startAddRoot }] : undefined}
-        />
+      {header && (title || editable) && (
+        // 헤더 제목을 노드 라벨 x축(행 패딩 8 + 꺽쇠칸 16 + 여백 4 = 28)에 정렬 — 소비처 NBSP 땜질 제거(R2 §6-3)
+        <div style={{ paddingLeft: 28 }}>
+          <SectionHeader
+            title={title ?? '디렉토리'}
+            divider
+            actions={editable ? [{ label: '최상위 디렉토리 추가', icon: 'plus', iconOnly: true, onClick: startAddRoot }] : undefined}
+          />
+        </div>
       )}
       {/* 헤더 바로 아래 슬롯(검색 바 등) — 헤더와 노드 사이. */}
       {toolbar}
@@ -175,4 +182,6 @@ export function Tree({
       </div>
     </Stack>
   );
+  // padded — 라운드+overflow:hidden 컨테이너 단독 배치용 내부 여백(R2 §6-2: 모서리 클리핑 방지). 기본 off(행동 보존).
+  return padded ? <div style={{ padding: 'var(--mantine-spacing-md)' }}>{body}</div> : body;
 }

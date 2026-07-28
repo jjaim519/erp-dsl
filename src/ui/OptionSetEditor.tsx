@@ -42,10 +42,11 @@ type Props = {
 
 const SEL_OPTIONS = [
   { value: 'single', label: '택1 — 하나만 고른다' },
+  { value: 'multi', label: '복수 택 — 여러 개 고른다(수량 없음)' },
   { value: 'quantity', label: '수량 — 값마다 개수' },
   { value: 'number', label: '수치 — 숫자를 입력' },
 ];
-const SEL_LABEL: Record<OptionGroup['selection'], string> = { single: '택1', quantity: '수량', number: '수치' };
+const SEL_LABEL: Record<OptionGroup['selection'], string> = { single: '택1', multi: '복수', quantity: '수량', number: '수치' };
 
 const uid = () => 'os' + Math.random().toString(36).slice(2, 9);
 const toNum = (v: number | string, fallback: number): number => {
@@ -83,6 +84,9 @@ export function OptionSetEditor({
         <FormField label="코드"><TextInput size="sm" value={c.code} onChange={(v) => setChoice(g.id, c.id, { code: v })} disabled={readOnly} /></FormField>
         <FormField label="보조 라벨"><TextInput size="sm" value={c.sublabel ?? ''} onChange={(v) => setChoice(g.id, c.id, { sublabel: v || undefined })} disabled={readOnly} /></FormField>
         <FormField label="값 묶음"><TextInput size="sm" value={c.group ?? ''} placeholder="없음" onChange={(v) => setChoice(g.id, c.id, { group: v || undefined })} disabled={readOnly} /></FormField>
+        {g.selection === 'quantity' && (
+          <FormField label="단위"><TextInput size="sm" value={c.unit ?? ''} placeholder="EA" onChange={(v) => setChoice(g.id, c.id, { unit: v || undefined })} disabled={readOnly} /></FormField>
+        )}
       </div>
       {refOptions ? (
         <InheritedValueField
@@ -141,8 +145,8 @@ export function OptionSetEditor({
         </FormField>
         <FormField label="부가 표기"><TextInput size="sm" value={g.note ?? ''} placeholder="헤더 우측(단위 등)" onChange={(v) => setGroup(g.id, { note: v || undefined })} disabled={readOnly} /></FormField>
       </div>
-      {g.selection === 'single' && (
-        <Checkbox label="필수 — 미선택 시 담기 잠금" checked={!!g.required} disabled={readOnly}
+      {g.selection !== 'number' && (
+        <Checkbox label="필수 — 선택 0건이면 담기 잠금" checked={!!g.required} disabled={readOnly}
           onChange={(c) => setGroup(g.id, { required: c || undefined })} />
       )}
       {g.selection !== 'number' && (

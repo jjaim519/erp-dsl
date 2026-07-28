@@ -3,7 +3,7 @@
    board.css 동형의 가족 파일. 색·간격·radius 전부 토큰(격리 구역 보조 CSS — collector.css 동류 명시 예외).
    공통 골격: 위젯 전체만 raised(그림자 1개), 내부 flush. 스크롤은 패널 내부(§6-4) — 바깥 상자 크기 불변,
    scrollbar-gutter로 스크롤바 폭 변동 차단. 반응형 기준은 뷰포트가 아니라 위젯 자기 폭(@container).
-   Picker 행 밀도는 소비처 실화면(그룹 다수·선택지 10+) 검증으로 압축한 값 — 저작 면보다 촘촘한 게 정상.
+   밀도·배치는 목업 v6 실검토로 확정된 값(행 30px대·컴팩트 스테퍼·가격은 표현별 위치).
    ───────────────────────────────────────────────────────────── */
 
 /* ── 공통 위젯 껍데기 ── */
@@ -24,24 +24,20 @@
   padding: var(--mantine-spacing-md) var(--mantine-spacing-lg) var(--mantine-spacing-lg);
   display: flex; flex-direction: column; gap: var(--mantine-spacing-xl);
 }
-/* readOnly — 입력 계열 부품이 disabled 통로를 안 가져 표면 단위로 잠근다(저작 면 전용의 실용 잠금). */
 .erpOSE[data-readonly] .erpOSE-scroll { pointer-events: none; opacity: 0.72; }
 
 /* 섹션 헤더 우측(note + sectionActions) — 베이스라인 정렬: 캡션과 버튼 라벨은 크기가 달라
-   박스 중앙정렬로는 글줄이 어긋난다. 버튼은 flex 아이템으로서 라벨 첫 줄 베이스라인을 낸다. */
+   박스 중앙정렬로는 글줄이 어긋난다(실측). */
 .erpOSE-secCtl { display: inline-flex; align-items: baseline; gap: var(--mantine-spacing-sm); }
 
-/* 접이 그룹 헤더 조각(Repeater renderHeader 슬롯 안) */
 .erpOSE-ghead { display: flex; align-items: center; gap: var(--mantine-spacing-xs); min-width: 0; }
 .erpOSE-gmeta { font-size: var(--typo-caption-size); color: var(--text-secondary); white-space: nowrap; }
 
-/* 그룹 배율 1줄(펼친 그룹 상단) */
 .erpOSE-ratio { display: flex; align-items: center; gap: var(--mantine-spacing-sm); }
 .erpOSE-ratioLbl { font-size: var(--typo-caption-size); font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
 .erpOSE-ratioInput { width: 96px; }
 .erpOSE-ratioNote { font-size: var(--typo-caption-size); color: var(--text-secondary); opacity: 0.8; }
 
-/* 값 행 내부 그리드 — ≤900px(위젯 폭)에서 4열 → 2×2 접힘(§2-8) */
 .erpOSE-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mantine-spacing-sm); }
 .erpOSE-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--mantine-spacing-sm); }
 @container (max-width: 900px) {
@@ -54,7 +50,7 @@
   flex: none; display: flex; align-items: center; gap: var(--mantine-spacing-md);
   padding: 10px var(--mantine-spacing-md);
   border-bottom: var(--border-width) solid var(--border-default);
-  min-height: 50px;   /* 수량 스테퍼 유무로 헤더가 안 흔들리게 — 가장 큰 상태로 예약 */
+  min-height: 50px;
 }
 .erpOSP-headInfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
@@ -65,42 +61,63 @@
 }
 .erpOSP-searchInput::placeholder { color: var(--text-secondary); }
 
-.erpOSP-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; }
+.erpOSP-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; position: relative; }
 
-/* 섹션 헤더 — 등장 순서대로, 의미 부여 없음(§1-(d)-3) */
+/* 섹션 헤더 — 등장 순서대로, 의미 부여 없음(§1-(d)-3). sticky는 그룹만(2단 sticky 과함 — R2 C-4 판단). */
 .erpOSP-sectionHd {
   display: flex; align-items: baseline; gap: var(--mantine-spacing-sm);
   padding: 10px var(--mantine-spacing-md) 3px;
 }
-.erpOSP-sectionLbl { font-size: var(--typo-caption-size); font-weight: 700; color: var(--text-secondary); }
-.erpOSP-sectionNote { font-size: var(--typo-caption-size); color: var(--text-secondary); opacity: 0.8; }
+.erpOSP-sectionLbl { font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); }
 
-/* 그룹 — 접이 헤더 + 행 목록. 필수 미충족 CTA 탭 시 스크롤+강조(flash) 착지점. */
-.erpOSP-group { border-top: var(--border-width) solid var(--border-default); }
-.erpOSP-group:first-of-type, .erpOSP-sectionHd + .erpOSP-group { border-top: 0; }
-.erpOSP-group[data-flash] { animation: erpOSPFlash 1.4s ease-out; }
+/* 그룹 — 랜드마크 헤더(sticky) + 본문. flash = CTA·펼침·다음의 착지 강조. */
+.erpOSP-group { border-bottom: var(--border-width) solid var(--border-default); }
+.erpOSP-group:last-child { border-bottom: 0; }
+.erpOSP-group[data-flash] .erpOSP-ghead, .erpOSP-group[data-flash] .erpOSP-gbd { animation: erpOSPFlash 1.4s ease-out; }
 @keyframes erpOSPFlash { 0%, 45% { background: var(--mantine-color-primary-0); } 100% { background: transparent; } }
-@media (prefers-reduced-motion: reduce) { .erpOSP-group[data-flash] { animation: none; background: var(--mantine-color-primary-0); } }
+@media (prefers-reduced-motion: reduce) {
+  .erpOSP-group[data-flash] .erpOSP-ghead, .erpOSP-group[data-flash] .erpOSP-gbd { animation: none; background: var(--mantine-color-primary-0); }
+}
 
+/* 그룹 헤더 sticky(C-4) — 긴 그룹 스크롤 중 "지금 어디" 유지. 행 전체가 토글, 쉐브론은 우측 보조 표시. */
 .erpOSP-ghead {
+  position: sticky; top: 0; z-index: 2; background: var(--surface-raised);
   display: flex; align-items: center; gap: var(--mantine-spacing-xs);
-  padding: 7px var(--mantine-spacing-md); cursor: pointer; min-width: 0;
+  padding: 8px var(--mantine-spacing-md); cursor: pointer; min-width: 0; min-height: 38px;
 }
 .erpOSP-ghead:hover { background: var(--bg-secondary); }
 .erpOSP-ghead:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
-.erpOSP-chev { display: inline-flex; flex: none; transition: transform 0.15s ease; }
-.erpOSP-chev[data-open] { transform: rotate(90deg); }
+.erpOSP-ghead[aria-expanded='true'] { box-shadow: inset 0 -1px 0 var(--border-default); }
+.erpOSP-chev { display: inline-flex; flex: none; margin-left: 2px; color: var(--text-secondary); transition: transform 0.15s ease; }
+.erpOSP-chev[data-open] { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { .erpOSP-chev { transition: none; } }
 .erpOSP-gtitle { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erpOSP-star { color: var(--text-danger); font-weight: 700; margin-left: 1px; }  /* 필수 = 라벨 별표(FormField 어휘) */
 .erpOSP-gnote { font-size: var(--typo-caption-size); color: var(--text-secondary); white-space: nowrap; }
-.erpOSP-gstate { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 4px; }
-/* 충족 전환 배지 — "필수" Badge 대신 체크+선택 요약(진행 안내를 헤더 한 자리에서) */
-.erpOSP-done { display: inline-flex; align-items: center; gap: 4px; font-size: var(--typo-caption-size); color: var(--mantine-color-success-6); }
+.erpOSP-gstate { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.erpOSP-done { display: inline-flex; align-items: center; gap: 4px; font-size: var(--typo-caption-size); font-weight: 600; color: var(--mantine-color-success-6); }
+.erpOSP-gbd { padding: 2px 0 8px; }
 
-/* 값 행 — [마크][라벨·보조][우측: 금액/스테퍼]. 밀도 압축(소비처 실화면 검증). */
+/* "다음" — 접힘은 값 선택의 부작용이 아니라 진행 액션의 결과(횡단 비교 보존 + 정리 리듬) */
+.erpOSP-next { display: flex; justify-content: flex-end; padding: 5px var(--mantine-spacing-md) 2px; }
+.erpOSP-next button {
+  display: inline-flex; align-items: center; gap: 3px; border: 0; cursor: pointer;
+  font: inherit; font-size: var(--typo-caption-size); font-weight: 650; color: var(--mantine-color-primary-6);
+  padding: 4px 11px; border-radius: var(--mantine-radius-full); background: var(--mantine-color-primary-0);
+}
+.erpOSP-next button:hover { background: var(--mantine-color-primary-1); }
+.erpOSP-next button:focus-visible { outline: 2px solid var(--border-focus); }
+
+/* 값묶음 소헤더(list·grid) — 비인터랙티브 인라인 라벨(접기 없음 — 실검토 확정) */
+.erpOSP-subhead {
+  padding: 6px var(--mantine-spacing-md) 1px calc(var(--mantine-spacing-md) + 22px);
+  font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.04em; color: var(--text-secondary);
+}
+
+/* 값 행 — [마크][본문][금액][스테퍼][단위]. 밀도 압축(목업 실검토 확정). */
 .erpOSP-row {
   display: flex; align-items: center; gap: var(--mantine-spacing-sm);
-  padding: 4px var(--mantine-spacing-md) 4px calc(var(--mantine-spacing-md) + 20px);
+  padding: 3px var(--mantine-spacing-md) 3px calc(var(--mantine-spacing-md) + 22px);
   min-height: 32px;
 }
 .erpOSP-row[role='button'] { cursor: pointer; }
@@ -113,38 +130,49 @@
   box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--mantine-color-white);
 }
+.erpOSP-mark[data-multi] { border-radius: var(--mantine-radius-xs); }   /* multi = 사각(복수 택 어포던스) */
 .erpOSP-mark[data-on] { background: var(--mantine-color-primary-6); box-shadow: none; }
 .erpOSP-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .erpOSP-lbl { font-size: var(--typo-body-size); line-height: 1.35; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .erpOSP-row[data-on] .erpOSP-lbl { font-weight: var(--typo-body-strong-weight, 600); }
 .erpOSP-sub { font-size: var(--typo-caption-size); line-height: 1.3; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.erpOSP-amt { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.erpOSP-unit { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); min-width: 24px; }
-.erpOSP-range { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); opacity: 0.7; }
+.erpOSP-gtag { font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.erpOSP-amt { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.erpOSP-amt[data-strong] { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); }  /* 행 소계 */
+.erpOSP-unit { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); min-width: 20px; }
+.erpOSP-range { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); opacity: 0.7; font-variant-numeric: tabular-nums; }
+.erpOSP-none { padding: var(--mantine-spacing-lg); text-align: center; font-size: var(--typo-body-size); color: var(--text-secondary); }
 
-/* 값 묶음(Choice.group) 소헤더 — 자기 행 최소화(인라인 라벨 수준). list·grid에서만 쓰인다. */
-.erpOSP-subhead {
-  display: flex; align-items: center; gap: 4px;
-  padding: 3px var(--mantine-spacing-md) 1px calc(var(--mantine-spacing-md) + 2px);
-  cursor: pointer; font-size: var(--typo-caption-size); font-weight: 600; color: var(--text-secondary);
-}
-.erpOSP-subhead:hover { color: var(--text-primary); }
-
-/* 표현 어휘 컨테이너 — chips(칩 나열) / grid2(2열) / inlineCtl(segmented·select 한 줄) */
-.erpOSP-chips {
-  display: flex; flex-wrap: wrap; gap: 6px;
-  padding: 2px var(--mantine-spacing-md) 8px calc(var(--mantine-spacing-md) + 20px);
-}
+/* 표현: chips / 2열 grid / 한 줄 컨트롤 */
+.erpOSP-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px var(--mantine-spacing-md) 6px calc(var(--mantine-spacing-md) + 22px); }
 .erpOSP-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.erpOSP-grid2 > div { min-width: 0; }
 .erpOSP-grid2 .erpOSP-row { padding-left: var(--mantine-spacing-md); }
 .erpOSP-grid2 .erpOSP-subhead { grid-column: 1 / -1; }
 @container (max-width: 560px) { .erpOSP-grid2 { grid-template-columns: minmax(0, 1fr); } }
-.erpOSP-inlineCtl {
-  padding: 2px var(--mantine-spacing-md) 8px calc(var(--mantine-spacing-md) + 20px);
-  max-width: 480px;
+.erpOSP-inlineCtl { padding: 4px var(--mantine-spacing-md) 6px calc(var(--mantine-spacing-md) + 22px); max-width: 480px; }
+
+/* 표현: 값묶음 필터 칩(C-3 — filtered·collect 공용). 접기 두 겹 대신 "한 묶음만 보기". */
+.erpOSP-fchips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px var(--mantine-spacing-md) 6px; }
+.erpOSP-fchip {
+  border: 0; cursor: pointer; border-radius: var(--mantine-radius-full);
+  padding: 4px 12px; font: inherit; font-size: var(--typo-caption-size); font-weight: 600;
+  background: var(--bg-secondary); color: var(--text-secondary);
+}
+.erpOSP-fchip:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); }
+.erpOSP-fchip[data-on] { background: var(--mantine-color-primary-6); color: var(--mantine-color-white); }
+.erpOSP-fchip .n { font-size: 0.9em; opacity: 0.7; margin-left: 3px; font-variant-numeric: tabular-nums; }
+.erpOSP-fchip:focus-visible { outline: 2px solid var(--border-focus); }
+
+/* 표현: collect(C-1·C-2) — 담긴 행 상단 소구획 고정 */
+.erpOSP-pin { border-bottom: var(--border-width) solid var(--border-default); padding-bottom: 4px; margin-bottom: 2px; }
+.erpOSP-pinLbl {
+  display: flex; align-items: center; gap: 4px;
+  padding: 6px var(--mantine-spacing-md) 2px;
+  font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.04em; color: var(--mantine-color-success-6);
 }
 
-/* 풋터 — 고정(§3-4). 잠금 사유는 상시 노출, CTA는 잠금 스타일이되 탭은 받는다(첫 미충족 그룹 스크롤). */
+/* 풋터 — 고정(§3-4). 잠금 사유 상시, CTA는 잠금 스타일이되 탭 수신(첫 미충족 스크롤). */
 .erpOSP-foot {
   flex: none; display: flex; flex-direction: column; gap: var(--mantine-spacing-xs);
   padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
@@ -154,10 +182,10 @@
 .erpOSP-footRow { display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-md); }
 .erpOSP-subtl { display: inline-flex; align-items: baseline; gap: var(--mantine-spacing-xs); min-width: 0; }
 .erpOSP-subtl .lbl { font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.erpOSP-subtl .amt { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); }
+.erpOSP-subtl .amt { font-size: var(--typo-subheading-size, 1rem); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .erpOSP-cta[data-locked] { opacity: 0.55; }
 
-/* idle / pick 모드 */
+/* idle / pick */
 .erpOSP-idle {
   flex: 1; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: var(--mantine-spacing-sm); padding: var(--mantine-spacing-xl); text-align: center;
@@ -173,19 +201,19 @@
 .erpOSP-pickrow:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 
 /* ═══ CompositionOutline — 작성물 카드 스택 ═══ */
-/* 추가 진입점 — 단일 버튼(상단 고정) + 섹션 선택 Popover 메뉴. 빈 섹션 상시 노출은 폐기(소비처 실화면:
-   섹션 다수면 우측이 "후보 메뉴"로 도배되어 작성물이 파묻힌다). */
-.erpOSO-addBar {
-  flex: none; padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
-  border-bottom: var(--border-width) solid var(--border-default);
-}
-.erpOSO-menu { display: flex; flex-direction: column; gap: 2px; min-width: 180px; }
+/* 추가 진입점 — 단일 버튼 + 섹션 선택 메뉴(items 있는 섹션은 하위 드릴 — 계층 추가 메뉴). */
+.erpOSO-addBar { flex: none; padding: var(--mantine-spacing-sm) var(--mantine-spacing-md); border-bottom: var(--border-width) solid var(--border-default); }
+.erpOSO-menu { display: flex; flex-direction: column; gap: 2px; min-width: 200px; }
 .erpOSO-menuItem {
-  border: 0; background: transparent; display: flex; align-items: center; justify-content: space-between;
-  gap: var(--mantine-spacing-md); padding: 8px 10px; border-radius: var(--mantine-radius-xs);
-  font: inherit; font-size: var(--typo-body-size); color: var(--text-primary); cursor: pointer; white-space: nowrap;
+  border: 0; background: transparent; display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  padding: 8px 10px; border-radius: var(--mantine-radius-xs); cursor: pointer;
+  font: inherit; font-size: var(--typo-body-size); color: var(--text-primary); white-space: nowrap; text-align: left;
 }
 .erpOSO-menuItem:hover { background: var(--bg-secondary); }
+.erpOSO-menuItem .end { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.erpOSO-menuItem .drill { display: inline-flex; color: var(--text-secondary); transform: rotate(-90deg); }
+.erpOSO-menuItem[data-back] { color: var(--text-secondary); font-size: var(--typo-caption-size); font-weight: 600; }
+.erpOSO-menuSub { font-size: var(--typo-caption-size); color: var(--text-secondary); }
 
 .erpOSO-body {
   flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable;
@@ -194,40 +222,46 @@
 }
 .erpOSO-none { padding: var(--mantine-spacing-xl); text-align: center; font-size: var(--typo-body-size); color: var(--text-secondary); }
 
-/* 섹션 카드 — 라인이 있거나 지금 작성 중(active)인 섹션만 카드가 된다(작성물 스택). */
+/* 섹션 카드 — 라인이 있거나 작성 중(active)인 섹션만. flex:none(압착 버그 수정 — R2 §6-1).
+   선 최소화: 카드 링 하나만, 라인 사이 구분선 없음(간격이 구분 — 실검토 확정). */
 .erpOSO-sec {
+  flex: none;
   background: var(--bg-primary);
   border-radius: var(--mantine-radius-sm); corner-shape: var(--corner-shape);
   box-shadow: inset 0 0 0 1px var(--border-default);
   overflow: hidden;
+  padding: 8px 4px 5px;
 }
 .erpOSO-sec[data-active] { box-shadow: inset 0 0 0 1px var(--mantine-color-primary-4); }
-.erpOSO-secHd { display: flex; align-items: center; gap: var(--mantine-spacing-xs); padding: 8px 10px; min-width: 0; }
-.erpOSO-secLbl { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 오버라인 캡션이 섹션, 라인이 주인공 — 위계를 라인 라벨·금액에 몰아준다. 카운트 뱃지 없음(중복 신호 금지). */
+.erpOSO-secHd { display: flex; align-items: center; gap: 7px; padding: 0 10px 5px; min-width: 0; }
+.erpOSO-secLbl { font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .erpOSO-badge {
   flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary);
   background: var(--bg-secondary); border-radius: var(--mantine-radius-full); padding: 1px 8px;
 }
-.erpOSO-cnt { margin-left: auto; flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
-/* 작성 중인데 라인이 아직 없는 섹션 — 카드 자리는 잡아주되 안내 한 줄만 */
-.erpOSO-hint { padding: 2px 10px 8px; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.erpOSO-hint { padding: 2px 10px 6px; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 
-/* 라인 — 클릭=좌측 재진입(조작면). active=tint+링(좌측 강조선 금지). 삭제는 hover 노출. */
+/* 라인 — 클릭=좌측 재진입(조작면). active = 은은한 채움 *한 겹* + "편집 중" 마이크로 라벨(윤곽 중첩 금지 — 실검토). */
 .erpOSO-line {
   display: flex; align-items: flex-start; gap: var(--mantine-spacing-sm);
-  padding: 7px 10px; cursor: pointer;
-  border-top: var(--border-width) solid var(--border-default);
+  padding: 6px 10px; cursor: pointer; border-radius: var(--mantine-radius-xs);
 }
 .erpOSO-line:hover { background: var(--bg-secondary); }
 .erpOSO-line:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
-.erpOSO-line[data-active] { background: var(--mantine-color-primary-0); box-shadow: inset 0 0 0 1px var(--mantine-color-primary-3); }
+.erpOSO-line[data-active] { background: var(--mantine-color-primary-0); }
+.erpOSO-line[data-active]:hover { background: var(--mantine-color-primary-1); }
 .erpOSO-lineMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.erpOSO-lineLbl { font-size: var(--typo-body-size); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.erpOSO-line[data-active] .erpOSO-lineLbl { font-weight: var(--typo-body-strong-weight, 600); }
+.erpOSO-lineLbl { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); display: flex; align-items: center; gap: 6px; min-width: 0; }
+.erpOSO-lineLbl .txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erpOSO-editing {
+  flex: none; font-size: 10px; font-weight: 700; color: var(--mantine-color-primary-6);
+  background: var(--bg-primary); border-radius: var(--mantine-radius-full); padding: 1px 7px;
+}
 .erpOSO-lineSub { font-size: var(--typo-caption-size); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .erpOSO-lineSide { flex: none; display: inline-flex; align-items: center; gap: var(--mantine-spacing-xs); }
-.erpOSO-qty { font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.erpOSO-amt { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); }
+.erpOSO-qty { font-size: var(--typo-caption-size); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.erpOSO-amt { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .erpOSO-x { display: inline-flex; opacity: 0; transition: opacity 0.1s ease; }
 .erpOSO-line:hover .erpOSO-x, .erpOSO-line:focus-within .erpOSO-x { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .erpOSO-x { transition: none; } }
@@ -247,7 +281,7 @@
   font-weight: var(--typo-body-strong-weight, 600);
 }
 .erpOSO-sumLbl { display: inline-flex; align-items: center; gap: var(--mantine-spacing-xs); min-width: 0; }
-.erpOSO-sumVal { flex: none; }
+.erpOSO-sumVal { flex: none; font-variant-numeric: tabular-nums; }
 .erpOSO-sumAct {
   border: 0; background: var(--bg-secondary); border-radius: var(--mantine-radius-full);
   padding: 1px 8px; font: inherit; font-size: var(--typo-caption-size); color: var(--text-secondary); cursor: pointer;
