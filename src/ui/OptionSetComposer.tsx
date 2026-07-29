@@ -12,7 +12,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { OptionGroup, OptionNode, OptionSelection } from './optionset';
 import { OptionSetPicker } from './OptionSetPicker';
-import { DotsGlyph, MarkGlyph, PlusGlyph, TreeRow, TypeIcon, usePopDismiss, useRowDrag } from './optionset-shared';
+import { DotsGlyph, MarkGlyph, PlusGlyph, TreeRow, usePopDismiss, useRowDrag } from './optionset-shared';
 import './optionset.css';
 
 type Props = {
@@ -210,7 +210,6 @@ export function OptionSetComposer({
         return (
           <button key={g.id} type="button" className="erpOS-popIt plain" disabled={on}
             onClick={() => { patchNode(cur.id, { attach: [...cur.attach, g.id] }); setPop(null); }}>
-            <TypeIcon sel={g.selection} />
             <span className={g.label ? '' : 'erpOSC-ph'}>{g.label || '이름 없는 옵션'}</span>
             <span className="erpOSC-end">{on ? <span className="erpOSC-atton">부착됨</span>
               : use.length ? <span className="erpOSC-usechip">공용 {use.length}</span> : null}</span>
@@ -238,7 +237,6 @@ export function OptionSetComposer({
             onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onEditOption?.(g.id); } }}
             onDragOver={dnd.over((d) => d.t === 'g', g.id)} onDrop={dropOnAttach(g.id)}>
             <span className="erpOSE-grip" draggable onDragStart={dnd.start('g', g.id)} onDragEnd={dnd.end} title="끌어서 노출 순서 변경">⠿</span>
-            <TypeIcon sel={g.selection} />
             <span className={'erpOSC-aname' + (g.label ? '' : ' ph')}>{g.label || '이름 없는 옵션'}</span>
             {g.required && <span className="erpOSC-req">필수</span>}
             {use.length > 1 && <span className="erpOSC-usechip">공용 {use.length}</span>}

@@ -443,7 +443,6 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly, refO
             <TreeRow id={g.id} depth={0} selected={optId === g.id && !bandKey}
               chevron={hasKids ? (open ? 'open' : 'closed') : null}
               onChevron={() => setClosed((s) => ({ ...s, [g.id]: !s[g.id] }))}
-              icon={<TypeIcon sel={g.selection} />}
               label={g.label} placeholder="이름 없는 옵션"
               onSelect={() => selectOpt(g)}
               onPlus={listy(g.selection) && !readOnly ? () => addBand(g, false) : undefined} plusTitle="묶음 추가"
