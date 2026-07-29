@@ -94,9 +94,10 @@ import { InheritedValueField } from './InheritedValueField';
 import { ExpressionField, type ExprVariable } from './ExpressionField';
 import { KeyValueField } from './KeyValueField';
 import { OptionSetEditor } from './OptionSetEditor';
+import { OptionSetComposer } from './OptionSetComposer';
 import { OptionSetPicker } from './OptionSetPicker';
 import { CompositionOutline } from './CompositionOutline';
-import type { OptionGroup, OptionSelection } from './optionset';
+import type { OptionGroup, OptionSelection, OptionNode } from './optionset';
 import { AssignPicker } from './AssignPicker';
 import { Transfer } from './Transfer';
 import { TreeSelect } from './TreeSelect';
@@ -377,27 +378,51 @@ const togglePick = (s: OptionSelection, gid: string, code: string): OptionSelect
   return { ...s, picked };
 };
 
+// Editor v2 데모 — §5 도메인 무지 재증명: 피자 데이터에 문구(text)·복수 입력칸(number)·값묶음·hidden까지 전 케이스.
+//  usage는 소비처가 부착 데이터에서 계산해 주입하는 사용처 라벨(공용 편집 사고 방지 — 카드에 상시 표시).
+const EDITOR_SET: OptionGroup[] = [
+  ...PIZZA_SET,
+  {
+    id: 'eg-size', label: '화덕 굽기', selection: 'number',
+    fields: [
+      { key: 'ek-temp', label: '온도', value: 420, unit: '°C', min: 380, max: 480, step: 10 },
+      { key: 'ek-min', label: '시간', value: 90, unit: '초', min: 60, max: 180, step: 10 },
+    ],
+  },
+  {
+    id: 'eg-note', label: '박스 문구', selection: 'text',
+    texts: [
+      { key: 'et-front', label: '앞면 문구', placeholder: '예: HAPPY BIRTHDAY' },
+      { key: 'et-side', label: '옆면 문구', placeholder: '비우면 생략' },
+    ],
+  },
+];
 function OptionSetEditorDemo() {
-  const [groups, setGroups] = useState<OptionGroup[]>(PIZZA_SET);
+  const [groups, setGroups] = useState<OptionGroup[]>(EDITOR_SET);
+  const usage: Record<string, string[]> = {};
+  for (const g of EDITOR_SET) usage[g.id] = g.id === 'eg-note' ? [] : g.id.startsWith('eg') ? ['포장 주문'] : ['클래식 피자', '씬 피자'];
   return (
-    <div style={{ maxWidth: 760 }}>
-      <OptionSetEditor
-        groups={groups}
-        onChange={setGroups}
-        sections={[
-          { key: '기본', label: '기본', description: '모든 주문이 반드시 정하는 값' },
-          { key: '추가', label: '추가', note: '선택 사항' },
-        ]}
-        refOptions={[
-          { id: 'r1', label: '수제 도우 원가', price: 1200, unit: '판' },
-          { id: 'r2', label: '토핑 원가 A', price: 600 },
-          { id: 'r3', label: '토핑 원가 B', price: 900 },
-        ]}
-        exprVariables={[{ path: 'nums.inch', group: '수치' }]}
-        adjustKeys={[{ key: 'inch', label: '지름' }]}
-        sectionActions={(k) => (k === '추가' ? <Button variant="ghost" size="sm">가져오기</Button> : undefined)}
-        emptyState={{ title: '그룹이 없습니다', description: '그룹 추가로 시작하세요.' }}
-      />
+    <div style={{ maxWidth: 760, height: 640 }}>
+      <OptionSetEditor groups={groups} onChange={setGroups} usage={usage} title="옵션" />
+    </div>
+  );
+}
+// Composer 데모 — 동형 2-pane 검증: 트리 저작(그룹/대상)+부착·순서+Picker 내장 조립 미리보기.
+//  '클래식/씬'이 '화덕 굽기'를 공용 부착 — 공용 배지·부착 팝오버 표시 확인. 편집 ↗은 소비처 라우팅 몫(데모=무동작).
+const COMPOSER_NODES: OptionNode[] = [
+  { id: 'nd-pz', label: '피자', kind: 'branch', attach: [], children: [
+    { id: 'nd-classic', label: '클래식', kind: 'leaf', attach: ['g2', 'g3', 'eg-size'], children: [] },
+    { id: 'nd-thin', label: '씬', kind: 'leaf', attach: ['g2', 'eg-size'], children: [] },
+  ] },
+  { id: 'nd-drink', label: '음료', kind: 'leaf', attach: ['gd'], children: [] },
+];
+function OptionSetComposerDemo() {
+  const [nodes, setNodes] = useState<OptionNode[]>(COMPOSER_NODES);
+  return (
+    <div style={{ maxWidth: 980, height: 640 }}>
+      <OptionSetComposer nodes={nodes} onNodesChange={setNodes} library={EDITOR_SET}
+        onEditOption={() => { /* 소비처 라우팅 몫 — 데모 무동작 */ }} title="구성"
+        labels={{ branch: '분류', leaf: '대상' }} />
     </div>
   );
 }
@@ -408,6 +433,7 @@ function OptionSetPickerDemo() {
   return (
     <div style={{ maxWidth: 420, height: 540 }}>
       <OptionSetPicker
+        defaultCollapsed="none"   /* 박물관=시각 디버그 — 전부 펼침(실전 기본은 sequential) */
         mode="configure"
         title="마르게리타"
         meta="토마토 소스 · 바질"
@@ -1119,6 +1145,7 @@ export function Demo({ name }: { name: string }) {
     ExpressionField: <ExprFieldDemo />,
     KeyValueField: <KVFieldDemo />,
     OptionSetEditor: <OptionSetEditorDemo />,
+    OptionSetComposer: <OptionSetComposerDemo />,
     OptionSetPicker: <OptionSetPickerDemo />,
     CompositionOutline: <CompositionDemo />,
     AssignPicker: (

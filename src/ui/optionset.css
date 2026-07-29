@@ -1,9 +1,8 @@
 /* ─────────────────────────────────────────────────────────────
    OptionSet 계열 — OptionSetEditor(.erpOSE) · OptionSetPicker(.erpOSP) · CompositionOutline(.erpOSO).
    board.css 동형의 가족 파일. 색·간격·radius 전부 토큰(격리 구역 보조 CSS — collector.css 동류 명시 예외).
-   공통 골격: 위젯 전체만 raised(그림자 1개), 내부 flush. 스크롤은 패널 내부(§6-4) — 바깥 상자 크기 불변,
-   scrollbar-gutter로 스크롤바 폭 변동 차단. 반응형 기준은 뷰포트가 아니라 위젯 자기 폭(@container).
-   밀도·배치는 목업 v6 실검토로 확정된 값(행 30px대·컴팩트 스테퍼·가격은 표현별 위치).
+   공통 골격: 위젯 전체만 raised(그림자 1개), 내부 flush. 스크롤은 패널 내부(§6-4), scrollbar-gutter.
+   행 규율(목업 v8.8 실검토 확정): 상태는 기하를 못 바꾼다 — 고정 행높이·상시 예약 슬롯·틴트 대신 마크+weight.
    ───────────────────────────────────────────────────────────── */
 
 /* ── 공통 위젯 껍데기 ── */
@@ -14,38 +13,318 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  height: 100%;               /* fill 타일에선 타일을 채우고, 흐름에선 내용 높이(부모 auto)로 자연 강등 */
+  height: 100%;
   container-type: inline-size;
 }
 
-/* ═══ OptionSetEditor — 저작 면 ═══ */
+/* ═══ erpOS-* — 가족 공용(두 편집기 동형 골격: 2-pane·트리·헤더 존·팝오버·미니 스위치) ═══
+   헤더는 height 56 고정(min 금지 — 좌우 divider y 정렬). 트리: 깊이=들여쓰기·소속 가이드=1px 중성(브랜드색 금지). */
+.erpOS-2p { display: flex; flex-direction: row; gap: 14px; background: none; box-shadow: none; border-radius: 0; overflow: visible; }
+.erpOS-tpane { flex: none; width: 236px; background: var(--surface-raised); border-radius: var(--mantine-radius-md); box-shadow: var(--elevation-raised); overflow: hidden; display: flex; flex-direction: column; }
+.erpOS-mpane { flex: 1; min-width: 0; position: relative; background: var(--surface-raised); border-radius: var(--mantine-radius-md); box-shadow: var(--elevation-raised); overflow: hidden; display: flex; flex-direction: column; }
+.erpOS-phd { flex: none; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: var(--border-width) solid var(--border-default); height: 56px; }
+.erpOS-phd .grow, .erpOS-2p .grow { flex: 1; min-width: 0; }
+.erpOS-title { font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); }
+.erpOS-hdiv { flex: none; width: 1px; height: 22px; background: var(--border-default); margin: 0 2px; }
+.erpOS-seg { display: inline-flex; background: var(--bg-secondary); border-radius: 8px; padding: 2px; flex: none; }
+.erpOS-seg button { font: inherit; border: 0; cursor: pointer; background: none; color: var(--text-secondary); font-size: 0.78125rem; font-weight: 600; padding: 5px 12px; border-radius: 6px; }
+.erpOS-seg button[data-on] { background: var(--bg-primary); color: var(--text-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.12); }
+.erpOS-tico { flex: none; width: 18px; height: 14px; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); }
+.erpOS-tcv.gl { visibility: visible; display: inline-flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: default; }
+.erpOS-tcv.gl:hover { background: none; }
+.erpOS-tbody { flex: 1; min-height: 0; overflow-y: auto; padding: 10px 8px; }
+.erpOS-trow { position: relative; display: flex; align-items: center; gap: 4px; min-height: 34px; border-radius: 7px; padding-right: 6px; cursor: pointer; }
+.erpOS-trow:hover { background: var(--bg-secondary); }
+.erpOS-trow.on { background: var(--mantine-color-primary-0); }
+.erpOS-trow.on .erpOS-tlbl { color: var(--mantine-color-primary-6); font-weight: 650; }
+.erpOS-trow.on .erpOS-tico { color: var(--mantine-color-primary-6); }
+.erpOS-trow[data-ind], .erpOS-trow.guide[data-ind] { box-shadow: 0 -2px 0 var(--mantine-color-primary-3); }
+.erpOS-trow.guide::before { content: ''; position: absolute; left: 33px; top: 0; bottom: 0; width: 1px; background: var(--border-default); }
+.erpOS-tgrip { flex: none; width: 14px; color: var(--text-secondary); opacity: 0; font-size: 0.75rem; letter-spacing: -2px; cursor: grab; user-select: none; }
+.erpOS-trow:hover .erpOS-tgrip { opacity: 0.55; }
+.erpOS-tcv { flex: none; width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: 0.5625rem; color: var(--text-secondary); opacity: 0.7; border: 0; background: none; cursor: pointer; border-radius: 4px; font: inherit; }
+.erpOS-tcv:hover { background: var(--mantine-color-neutral-2); opacity: 1; }
+.erpOS-tcv.sp { visibility: hidden; }
+.erpOS-tlbl { font-size: 0.84375rem; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erpOS-tlbl.ph { color: var(--text-secondary); opacity: 0.6; }
+.erpOS-tin { flex: 1; min-width: 40px; font: inherit; font-size: 0.84375rem; color: var(--text-primary); background: none; border: 0; outline: none; border-bottom: 1px solid var(--mantine-color-primary-6); padding: 1px 2px; }
+.erpOS-tgrow { flex: 1; min-width: 0; }
+.erpOS-tplus, .erpOS-tdots { flex: none; width: 22px; height: 22px; border: 0; background: none; cursor: pointer; border-radius: 5px; color: var(--text-secondary); display: none; align-items: center; justify-content: center; }
+.erpOS-trow:hover .erpOS-tplus, .erpOS-trow:hover .erpOS-tdots, .erpOS-tdots[data-keep] { display: inline-flex; }
+.erpOS-tplus:hover, .erpOS-tdots:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); }
+.erpOS-taddrow { display: flex; gap: 6px; margin-top: 10px; }
+.erpOS-tadd { display: flex; align-items: center; justify-content: center; gap: 6px; flex: 1; font: inherit; font-size: 0.84375rem; font-weight: 650; color: var(--text-secondary); background: none; border: 0; cursor: pointer; box-shadow: inset 0 0 0 1px var(--border-default); border-radius: 8px; padding: 8px 10px; }
+.erpOS-tadd:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.erpOS-pop { position: absolute; z-index: 30; background: var(--bg-primary); border-radius: 10px; box-shadow: var(--elevation-overlay), 0 0 0 1px var(--border-default); padding: 6px; min-width: 230px; }
+.erpOS-npop { left: 26px; top: calc(100% - 2px); min-width: 150px; }
+.erpOS-popIt { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; border-radius: 7px; padding: 7px 10px; font: inherit; color: var(--text-primary); }
+.erpOS-popIt:hover { background: var(--bg-secondary); }
+.erpOS-popIt[data-on] { background: var(--mantine-color-primary-0); }
+.erpOS-popIt .q { font-size: 0.8125rem; font-weight: 650; display: flex; align-items: center; gap: 7px; }
+.erpOS-popIt[data-on] .q { color: var(--mantine-color-primary-6); }
+.erpOS-popIt .d { font-size: 0.71875rem; color: var(--text-secondary); }
+.erpOS-popIt.plain { flex-direction: row; align-items: center; font-size: 0.8125rem; font-weight: 600; gap: 8px; }
+.erpOS-popIt.plain.danger { color: var(--text-danger); }
+.erpOS-confirm { padding: 8px 10px 9px; display: flex; flex-direction: column; gap: 3px; }
+.erpOS-confirm .q { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+.erpOS-confirm .d { font-size: 0.71875rem; color: var(--text-secondary); }
+.erpOS-confirm .btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+.erpOS-confirm .btns button { font: inherit; font-size: 0.78125rem; font-weight: 650; border: 0; cursor: pointer; border-radius: 7px; padding: 5px 12px; background: var(--bg-secondary); color: var(--text-primary); }
+.erpOS-confirm .btns button:hover { background: var(--mantine-color-neutral-2); }
+.erpOS-confirm .btns button.danger { background: var(--text-danger); color: var(--mantine-color-white); }
+.erpOS-swt { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; user-select: none; }
+.erpOS-swt .tr { width: 30px; height: 18px; border-radius: var(--mantine-radius-full); background: var(--border-default); position: relative; transition: background 0.12s ease; }
+.erpOS-swt .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.2); transition: left 0.12s ease; }
+.erpOS-swt[data-on][data-tone='danger'] { color: var(--text-danger); }
+.erpOS-swt[data-on][data-tone='danger'] .tr { background: var(--text-danger); }
+.erpOS-swt[data-on][data-tone='primary'] { color: var(--mantine-color-primary-6); }
+.erpOS-swt[data-on][data-tone='primary'] .tr { background: var(--mantine-color-primary-6); }
+.erpOS-swt[data-on] .tr::after { left: 14px; }
+@media (prefers-reduced-motion: reduce) { .erpOS-swt .tr, .erpOS-swt .tr::after { transition: none; } }
+
+/* ═══ OptionSetComposer — 부착 상위 면(트리 저작 + 부착 행 + Picker 내장 미리보기) ═══ */
+.erpOSC-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding: 14px 14px 20px; }
+.erpOSC-arow { display: flex; align-items: center; gap: 9px; min-height: 46px; background: var(--bg-primary); border: var(--border-width) solid var(--border-default); border-radius: 9px; margin-bottom: 8px; padding: 0 12px; cursor: pointer; }
+.erpOSC-arow:hover { background: var(--bg-secondary); }
+.erpOSC-arow[data-ind] { box-shadow: 0 -2px 0 var(--mantine-color-primary-3); }
+.erpOSC-aname { font-size: 0.875rem; font-weight: 650; letter-spacing: -0.01em; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erpOSC-aname.ph, .erpOSC-ph { color: var(--text-secondary); opacity: 0.6; font-weight: 500; }
+.erpOSC-req { flex: none; font-size: 0.6875rem; font-weight: 650; color: var(--text-danger); background: var(--mantine-color-danger-0); border-radius: 5px; padding: 2px 7px; }
+.erpOSC-usechip { flex: none; font-size: 0.75rem; color: var(--text-secondary); opacity: 0.85; box-shadow: inset 0 0 0 1px var(--border-default); border-radius: 6px; padding: 2px 8px; white-space: nowrap; }
+.erpOSC-atton { font-size: 0.6875rem; font-weight: 650; color: var(--mantine-color-success-6, var(--text-secondary)); }
+.erpOSC-end { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.erpOSC-aacts { flex: none; display: inline-flex; align-items: center; gap: 2px; opacity: 0; }
+.erpOSC-arow:hover .erpOSC-aacts, .erpOSC-arow:focus-within .erpOSC-aacts { opacity: 1; }
+.erpOSC-aacts button { height: 26px; border: 0; background: none; cursor: pointer; font: inherit; border-radius: 6px; color: var(--text-secondary); font-size: 0.75rem; font-weight: 600; padding: 0 8px; display: inline-flex; align-items: center; gap: 4px; }
+.erpOSC-aacts button:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); }
+.erpOSC-attwrap { position: relative; }
+.erpOSC-attbtn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px; font: inherit; font-size: 0.84375rem; font-weight: 650; color: var(--mantine-color-primary-6); background: var(--mantine-color-primary-0); border: 0; cursor: pointer; border-radius: 10px; padding: 12px; margin-top: 2px; }
+.erpOSC-attbtn:hover { background: var(--mantine-color-primary-1); }
+.erpOSC-attpop { left: 0; right: 0; bottom: calc(100% + 6px); top: auto; }
+.erpOSC-attpop .erpOS-popIt[disabled] { cursor: default; color: var(--text-secondary); opacity: 0.7; }
+.erpOSC-attpop .erpOS-popIt[disabled]:hover { background: none; }
+.erpOSC-popsep { height: 1px; background: var(--border-default); margin: 5px 4px; }
+.erpOSC-path .pth { color: var(--text-secondary); opacity: 0.8; font-weight: 600; }
+.erpOSC-pv { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.erpOSC-pv .erpOSP { box-shadow: none; border-radius: 0; }   /* pane 안 pane 금지 — Picker 껍데기 평탄화 */
+
+/* ═══ OptionSetEditor v2 — 정의 저작 면(그룹 카드 스택 + FieldGrid식 표. 목업 v4 = 시각 정본) ═══
+   전사 규율: 기하는 목업 px 그대로, 타이포는 목업 px의 rem 환산(폰트 스케일 접근성 — 기본 배율에서 픽셀 동일).
+   입력은 위젯 소유 native input — 셀의 전 속성을 클래스에 명시(리셋 의존·특이도 전쟁 금지).
+   강조: 캐럿 + 활성 셀 밑변 1px 착색만(행 워시·셀 링 금지). 상태는 기하를 못 바꾼다(행 36px 고정). */
+.erpOSE { position: relative; }
+.erpOSE-head {
+  flex: none; display: flex; align-items: center; gap: var(--mantine-spacing-md);
+  padding: 11px var(--mantine-spacing-md); border-bottom: var(--border-width) solid var(--border-default); min-height: 54px;
+}
+.erpOSE-title { font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); }
+.erpOSE-meta { font-size: 0.75rem; color: var(--text-secondary); margin-top: 1px; }
 .erpOSE-scroll {
   flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable;
-  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg) var(--mantine-spacing-lg);
-  display: flex; flex-direction: column; gap: var(--mantine-spacing-xl);
+  padding: 14px 14px 20px;
 }
 .erpOSE[data-readonly] .erpOSE-scroll { pointer-events: none; opacity: 0.72; }
+.erpOSE .grow { flex: 1; min-width: 0; }
 
-/* 섹션 헤더 우측(note + sectionActions) — 베이스라인 정렬: 캡션과 버튼 라벨은 크기가 달라
-   박스 중앙정렬로는 글줄이 어긋난다(실측). */
-.erpOSE-secCtl { display: inline-flex; align-items: baseline; gap: var(--mantine-spacing-sm); }
-
-.erpOSE-ghead { display: flex; align-items: center; gap: var(--mantine-spacing-xs); min-width: 0; }
-.erpOSE-gmeta { font-size: var(--typo-caption-size); color: var(--text-secondary); white-space: nowrap; }
-
-.erpOSE-ratio { display: flex; align-items: center; gap: var(--mantine-spacing-sm); }
-.erpOSE-ratioLbl { font-size: var(--typo-caption-size); font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
-.erpOSE-ratioInput { width: 96px; }
-.erpOSE-ratioNote { font-size: var(--typo-caption-size); color: var(--text-secondary); opacity: 0.8; }
-
-.erpOSE-grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--mantine-spacing-sm); }
-.erpOSE-grid4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--mantine-spacing-sm); }
-@container (max-width: 900px) {
-  .erpOSE-grid3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .erpOSE-grid4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* ── 카드 ── */
+.erpOSE-card { background: var(--bg-primary); border: var(--border-width) solid var(--border-default); border-radius: 10px; margin-bottom: 10px; }
+.erpOSE-card.closed { cursor: pointer; }
+.erpOSE-card.closed:hover { background: var(--bg-secondary); }
+.erpOSE-card[data-open] { box-shadow: var(--elevation-overlay); }
+.erpOSE-cardHd { position: relative; display: flex; align-items: center; gap: 9px; padding: 11px 14px; min-height: 46px; }
+/* 3층 위계: 옵션 이름(15/700 — 접힘/펼침 동일) > 묶음 캡션(11.5/700 띠) > 값 행(13.5/400 셀) */
+.erpOSE-cname { font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em; color: var(--text-primary); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.erpOSE-cname.ph { color: var(--text-secondary); opacity: 0.7; font-weight: 500; }
+.erpOSE-name {
+  flex: 1; min-width: 80px; font: inherit; font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.01em;
+  color: var(--text-primary); background: none; border: 0; outline: none; padding: 3px 2px; border-radius: 0;
+  border-bottom: 1px solid transparent;
 }
+.erpOSE-name:hover { border-bottom-color: var(--border-default); }
+.erpOSE-name:focus { border-bottom-color: var(--mantine-color-primary-6); }
+.erpOSE-name::placeholder { color: var(--text-secondary); opacity: 0.6; font-weight: 500; }
+.erpOSE-tchip { flex: none; font-size: 0.6875rem; font-weight: 650; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 5px; padding: 2px 7px; }
+.erpOSE-req { flex: none; font-size: 0.6875rem; font-weight: 650; color: var(--text-danger); background: var(--mantine-color-danger-0); border-radius: 5px; padding: 2px 7px; }
+.erpOSE-use { flex: none; font-size: 0.6875rem; color: var(--text-secondary); opacity: 0.75; }
+.erpOSE-chev { flex: none; color: var(--text-secondary); opacity: 0.65; font-size: 0.75rem; }
+.erpOSE-sum { display: flex; flex-wrap: wrap; gap: 5px; padding: 0 14px 12px 15px; }
+.erpOSE-chip { font-size: 0.75rem; color: var(--text-primary); background: var(--bg-secondary); border-radius: 6px; padding: 2.5px 8px; white-space: nowrap; }
+.erpOSE-chip b { font-weight: 600; color: var(--text-secondary); margin-left: 4px; font-variant-numeric: tabular-nums; }
+.erpOSE-chip.more { color: var(--text-secondary); }
+.erpOSE-chip.off { color: var(--text-secondary); opacity: 0.8; background: none; box-shadow: inset 0 0 0 1px var(--border-default); }
+.erpOSE-sumTxt { font-size: 0.78125rem; color: var(--text-secondary); }
+
+/* ── 헤더 컨트롤: 자연어 유형 버튼 · 미니 스위치 · ⋯ (전부 위젯 소유 — 정본 충실) ── */
+.erpOSE-typebtn {
+  flex: none; display: inline-flex; align-items: center; gap: 6px; font: inherit; font-size: 0.78125rem; font-weight: 600;
+  color: var(--text-primary); background: var(--bg-secondary); border: 0; border-radius: 7px; padding: 6px 10px; cursor: pointer;
+}
+.erpOSE-typebtn:hover { background: var(--mantine-color-neutral-2); }
+.erpOSE-typebtn .cv { color: var(--text-secondary); opacity: 0.7; font-size: 0.625rem; }
+.erpOSE-swt { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; user-select: none; }
+.erpOSE-swt .tr { width: 30px; height: 18px; border-radius: var(--mantine-radius-full); background: var(--border-default); position: relative; transition: background 0.12s ease; }
+.erpOSE-swt .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.2); transition: left 0.12s ease; }
+.erpOSE-swt[data-on] { color: var(--text-danger); }
+.erpOSE-swt[data-on] .tr { background: var(--text-danger); }
+.erpOSE-swt[data-on] .tr::after { left: 14px; }
+.erpOSE-swt.adv[data-on] { color: var(--mantine-color-primary-6); }
+.erpOSE-swt.adv[data-on] .tr { background: var(--mantine-color-primary-6); }
+.erpOSE-dots { flex: none; width: 26px; height: 26px; border: 0; background: none; cursor: pointer; border-radius: 6px; color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; font: inherit; font-weight: 700; }
+.erpOSE-dots:hover { background: var(--bg-secondary); }
+
+/* ── 팝오버(위젯 소유 absolute — 목업 오프셋 그대로) ── */
+.erpOSE-pop { position: absolute; z-index: 30; background: var(--bg-primary); border-radius: 10px; box-shadow: var(--elevation-overlay), 0 0 0 1px var(--border-default); padding: 6px; min-width: 230px; }
+.erpOSE-typepop { top: calc(100% - 6px); right: 44px; }
+.erpOSE-menupop { top: calc(100% - 6px); right: 10px; min-width: 170px; }
+.erpOSE-popIt { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; border-radius: 7px; padding: 7px 10px; font: inherit; color: var(--text-primary); }
+.erpOSE-popIt:hover { background: var(--bg-secondary); }
+.erpOSE-popIt[data-on] { background: var(--mantine-color-primary-0); }
+.erpOSE-popIt .q { font-size: 0.8125rem; font-weight: 650; display: flex; align-items: center; gap: 7px; }
+.erpOSE-popIt .q .erpOSE-tchip { background: var(--bg-primary); box-shadow: inset 0 0 0 1px var(--border-default); }
+.erpOSE-popIt[data-on] .q { color: var(--mantine-color-primary-6); }
+.erpOSE-popIt .d { font-size: 0.71875rem; color: var(--text-secondary); }
+.erpOSE-popIt.plain { flex-direction: row; align-items: center; font-size: 0.8125rem; font-weight: 600; gap: 8px; }
+.erpOSE-popIt.plain.danger { color: var(--text-danger); }
+.erpOSE-confirm { padding: 8px 10px 9px; display: flex; flex-direction: column; gap: 3px; }
+.erpOSE-confirm .q { font-size: 0.8125rem; font-weight: 700; color: var(--text-primary); }
+.erpOSE-confirm .d { font-size: 0.71875rem; color: var(--text-secondary); }
+.erpOSE-confirm .btns { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+.erpOSE-confirm .btns button { font: inherit; font-size: 0.78125rem; font-weight: 650; border: 0; cursor: pointer; border-radius: 7px; padding: 5px 12px; background: var(--bg-secondary); color: var(--text-primary); }
+.erpOSE-confirm .btns button:hover { background: var(--mantine-color-neutral-2); }
+.erpOSE-confirm .btns button.danger { background: var(--text-danger); color: var(--mantine-color-white); }
+
+/* ── 값/입력칸 표(FieldGrid식): 행·열 hairline + 상설 헤더, 행 36px 고정 ── */
+.erpOSE-vlist { padding: 2px 14px 0; }
+.erpOSE-vlist > :last-child { border-bottom: var(--border-width) solid var(--border-default); }
+.erpOSE-vhead { display: flex; align-items: center; gap: 8px; padding: 0 2px 4px 26px; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.85; }
+.erpOSE-vhead .ha { flex: none; width: 110px; text-align: right; padding-right: 8px; }
+.erpOSE-vhead .h70 { flex: none; width: 70px; text-align: right; padding-right: 8px; }
+.erpOSE-vhead .h60 { flex: none; width: 60px; text-align: right; padding-right: 8px; }
+.erpOSE-vhead .h56 { flex: none; width: 56px; padding-left: 8px; }
+.erpOSE-vhead .hph { flex: 1.1; min-width: 0; padding-left: 8px; }
+.erpOSE-vhead .hf { flex: none; width: 26px; }
+.erpOSE-vhead .hsp { flex: none; width: 54px; }
+.erpOSE-row { position: relative; display: flex; align-items: center; gap: 8px; height: 36px; padding: 0 2px; border-top: var(--border-width) solid var(--border-default); }
+.erpOSE-row:hover { background: var(--bg-secondary); }   /* hover=행 액션 발견용. 작성(focus) 워시 없음 — 캐럿이 말한다 */
+.erpOSE-row[data-ind], .erpOSE-rowB[data-ind] { box-shadow: 0 -2px 0 var(--mantine-color-primary-3); }
+/* 셀 — 전 속성 명시(native input 소유). 포커스 = 셀이 이미 가진 밑변 선의 잉크만 1px 착색 */
+.erpOSE-cell, .erpOSE-amt, .erpOSE-cfg, .erpOSE-phcell, .erpOSE-bcell {
+  font: inherit; color: var(--text-primary); background: none; border: 0; outline: none; height: 100%; box-sizing: border-box;
+}
+.erpOSE-cell:focus, .erpOSE-amt:focus, .erpOSE-cfg:focus, .erpOSE-phcell:focus, .erpOSE-bcell:focus { box-shadow: inset 0 -1px 0 var(--mantine-color-primary-6); }
+.erpOSE-cell::placeholder, .erpOSE-amt::placeholder, .erpOSE-cfg::placeholder, .erpOSE-phcell::placeholder, .erpOSE-bcell::placeholder { color: var(--text-secondary); opacity: 0.55; }
+.erpOSE-cell { flex: 1; min-width: 60px; font-size: 0.84375rem; padding: 0 4px; }
+.erpOSE-amt { flex: none; width: 110px; text-align: right; font-size: 0.8125rem; font-variant-numeric: tabular-nums; padding: 0 8px; border-left: var(--border-width) solid var(--border-default); }
+.erpOSE-amt::placeholder { font-variant-numeric: normal; }
+.erpOSE-cfg { flex: none; width: 70px; text-align: right; font-size: 0.8125rem; font-variant-numeric: tabular-nums; padding: 0 8px; border-left: var(--border-width) solid var(--border-default); }
+.erpOSE-cfg.w60 { width: 60px; }
+.erpOSE-cfg.unit { width: 56px; text-align: left; font-variant-numeric: normal; }
+.erpOSE-phcell { flex: 1.1; min-width: 0; font-size: 0.8125rem; padding: 0 8px; border-left: var(--border-width) solid var(--border-default); color: var(--text-secondary); }
+.erpOSE-row[data-hidden] .erpOSE-cell, .erpOSE-row[data-hidden] .erpOSE-amt { color: var(--text-secondary); opacity: 0.75; }
+.erpOSE-row[data-hidden] .erpOSE-cell { text-decoration: line-through; }
+.erpOSE-offtag { flex: none; font-size: 0.6875rem; font-weight: 600; color: var(--text-secondary); opacity: 0.8; box-shadow: inset 0 0 0 1px var(--border-default); border-radius: 5px; padding: 1.5px 6px; }
+/* 묶음 소속 = 들여쓰기 + 세로 가이드(잉크-온리). 금액 열은 우측 고정폭 — 경계선 x 전 행 동일 */
+.erpOSE-row.inB { padding-left: 26px; }
+.erpOSE-row.inB::before { content: ''; position: absolute; left: 11px; top: 0; bottom: 0; width: 2px; background: var(--mantine-color-primary-1); }
+.erpOSE-rowB { position: relative; display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 2px; border-top: var(--border-width) solid var(--border-default); background: var(--bg-secondary); }
+.erpOSE-bcell { flex: 1; min-width: 60px; font-size: 0.71875rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); padding: 0 4px; }
+.erpOSE-bcell::placeholder { font-weight: 600; }
+.erpOSE-grip { flex: none; color: var(--text-secondary); opacity: 0.55; font-size: 0.8125rem; letter-spacing: -2px; cursor: grab; padding: 2px 2px 2px 0; user-select: none; }
+.erpOSE-grip:active { cursor: grabbing; }
+.erpOSE-rowB .erpOSE-grip { font-size: 0.75rem; }
+.erpOSE-ghost .erpOSE-grip { visibility: hidden; }
+.erpOSE-fxsp { flex: none; width: 26px; }
+.erpOSE-fxbtn { flex: none; width: 26px; height: 26px; border: 0; background: none; cursor: pointer; border-radius: 6px; color: var(--text-secondary); opacity: 0.8; font: inherit; font-size: 0.71875rem; font-weight: 700; font-style: italic; display: inline-flex; align-items: center; justify-content: center; }
+.erpOSE-fxbtn:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); opacity: 1; }
+.erpOSE-fxbtn[data-set] { color: var(--mantine-color-primary-6); background: var(--mantine-color-primary-0); opacity: 1; }
+.erpOSE-acts { flex: none; width: 54px; display: inline-flex; justify-content: flex-end; gap: 2px; opacity: 0; }
+.erpOSE-row:hover .erpOSE-acts, .erpOSE-row:focus-within .erpOSE-acts,
+.erpOSE-rowB:hover .erpOSE-acts, .erpOSE-rowB:focus-within .erpOSE-acts { opacity: 1; }
+.erpOSE-acts button { width: 25px; height: 25px; border: 0; background: none; cursor: pointer; border-radius: 6px; color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; font: inherit; font-size: 0.75rem; }
+.erpOSE-acts button:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); }
+.erpOSE-tblft { padding: 5px 14px 0 30px; }
+.erpOSE-bandadd { font: inherit; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border: 0; background: none; cursor: pointer; padding: 3px 9px; border-radius: 6px; }
+.erpOSE-bandadd:hover { background: var(--bg-secondary); color: var(--text-primary); }
+.erpOSE-fxpop { top: 34px; right: 44px; width: 270px; padding: 10px 12px 12px; cursor: default; }
+.erpOSE-fxpop h4 { font-size: 0.75rem; font-weight: 700; margin: 0 0 2px; color: var(--text-primary); }
+.erpOSE-fxpop .hint { font-size: 0.6875rem; color: var(--text-secondary); opacity: 0.8; margin-bottom: 8px; }
+.erpOSE-fxpop label { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); padding: 4px 0; }
+.erpOSE-fxpop label span { flex: none; width: 52px; font-weight: 600; }
+.erpOSE-fxpop input { flex: 1; font: inherit; font-size: 0.78125rem; color: var(--text-primary); border: 0; outline: none; background: var(--bg-secondary); border-radius: 6px; padding: 5px 8px; box-shadow: inset 0 0 0 1px var(--border-default); }
+.erpOSE-fxpop input:focus { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
+.erpOSE-stash { margin: 8px 16px 0 30px; font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 7px; padding: 7px 10px; }
+
+/* ── 카드 푸터: 고급(2단) + 완료 ── */
+.erpOSE-cft { display: flex; align-items: center; gap: 12px; padding: 8px 14px 12px; }
+.erpOSE-advbtn { display: inline-flex; align-items: center; gap: 5px; font: inherit; font-size: 0.78125rem; font-weight: 600; color: var(--text-secondary); border: 0; background: none; cursor: pointer; border-radius: 7px; padding: 5px 8px; }
+.erpOSE-advbtn:hover { background: var(--bg-secondary); }
+.erpOSE-advbtn .cv { font-size: 0.625rem; opacity: 0.7; }
+.erpOSE-done { font: inherit; background: var(--mantine-color-primary-0); color: var(--mantine-color-primary-6); font-weight: 650; font-size: 0.8125rem; border: 0; cursor: pointer; border-radius: 8px; padding: 7px 16px; }
+.erpOSE-done:hover { background: var(--mantine-color-primary-1); }
+.erpOSE-advbar { display: flex; align-items: center; gap: 16px; margin: 2px 14px 10px; padding: 9px 12px; background: var(--bg-secondary); border-radius: 8px; flex-wrap: wrap; }
+.erpOSE-advbar .uF { display: flex; align-items: center; gap: 7px; font-size: 0.78125rem; font-weight: 600; color: var(--text-secondary); }
+.erpOSE-advbar .uF input { width: 56px; font: inherit; font-size: 0.78125rem; color: var(--text-primary); border: 0; outline: none; background: var(--bg-primary); border-radius: 6px; padding: 4px 8px; box-shadow: inset 0 0 0 1px var(--border-default); }
+.erpOSE-advbar .uF input:focus { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
+
+/* ── 경로 헤더(묶음 스코프)·단일 옵션 미리보기(경량 내장 — 조립 프리뷰는 Composer=Picker 몫) ── */
+.erpOSE-bcw { flex: 1; min-width: 0; display: flex; align-items: center; gap: 4px; }
+.erpOSE-pth { font: inherit; font-size: 0.9375rem; font-weight: 600; color: var(--text-secondary); opacity: 0.8; white-space: nowrap; border: 0; background: none; cursor: pointer; padding: 0; border-radius: 4px; }
+.erpOSE-pth:hover { color: var(--text-primary); opacity: 1; }
+.erpOSE-pv { padding: 4px 6px; }
+.erpOSE-pvnone { padding: 26px 0; text-align: center; font-size: 0.78125rem; color: var(--text-secondary); opacity: 0.8; }
+.erpOSE-pvcards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.erpOSE-pvcard { text-align: left; border: 0; background: none; cursor: pointer; font: inherit; border-radius: 9px; padding: 9px 12px; box-shadow: inset 0 0 0 1px var(--border-default); display: flex; flex-direction: column; gap: 1px; }
+.erpOSE-pvcard:hover { background: var(--bg-secondary); }
+.erpOSE-pvcard .t { font-size: 0.84375rem; font-weight: 600; color: var(--text-primary); }
+.erpOSE-pvcard .d { font-size: 0.78125rem; color: var(--text-secondary); }
+.erpOSE-pvcard[data-on] { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
+.erpOSE-pvcard[data-on] .t { color: var(--mantine-color-primary-6); }
+.erpOSE-pvband { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); opacity: 0.85; padding: 8px 2px 2px; }
+.erpOSE-pvrow { width: 100%; display: flex; align-items: center; gap: 9px; height: 32px; border: 0; background: none; cursor: pointer; font: inherit; border-radius: 7px; padding: 0 6px; text-align: left; font-size: 0.84375rem; color: var(--text-primary); }
+.erpOSE-pvrow:hover { background: var(--bg-secondary); }
+.erpOSE-pvrow .mk { flex: none; width: 16px; text-align: center; font-size: 0.75rem; font-weight: 800; color: var(--mantine-color-primary-6); }
+.erpOSE-pvrow .d { font-size: 0.78125rem; color: var(--text-secondary); }
+.erpOSE-pvrow[data-on] { font-weight: 650; }
+.erpOSE-pvq { display: flex; align-items: center; gap: 9px; height: 36px; border-radius: 7px; padding: 0 6px; font-size: 0.84375rem; color: var(--text-primary); }
+.erpOSE-pvq:hover { background: var(--bg-secondary); }
+.erpOSE-pvq .mk { flex: none; width: 14px; font-size: 0.75rem; font-weight: 800; color: var(--mantine-color-primary-6); }
+.erpOSE-pvq[data-on] .lb { font-weight: 650; }
+.erpOSE-pvq .un { font-size: 0.71875rem; color: var(--text-secondary); opacity: 0.8; }
+.erpOSE-pvq .amt { font-size: 0.8125rem; color: var(--text-secondary); }
+.erpOSE-pvstp { display: inline-flex; align-items: center; }
+.erpOSE-pvstp button { width: 24px; height: 24px; border: 0; cursor: pointer; font: inherit; border-radius: 6px; background: var(--bg-secondary); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; }
+.erpOSE-pvstp button:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); }
+.erpOSE-pvstp button:disabled { opacity: 0.35; cursor: default; }
+.erpOSE-pvstp .v { width: 28px; text-align: center; font-size: 0.8125rem; font-weight: 650; color: var(--text-primary); }
+.erpOSE-pvstp.z .v { color: var(--text-secondary); opacity: 0.7; font-weight: 500; }
+.erpOSE-pvf { display: flex; align-items: center; gap: 10px; min-height: 40px; flex-wrap: wrap; }
+.erpOSE-pvf .lb { flex: none; min-width: 74px; font-size: 0.84375rem; color: var(--text-primary); }
+.erpOSE-pvf .box { display: flex; align-items: center; gap: 6px; background: var(--bg-secondary); border-radius: 8px; padding: 7px 11px; box-shadow: inset 0 0 0 1px var(--border-default); }
+.erpOSE-pvf .box:focus-within { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
+.erpOSE-pvf .box input { width: 74px; text-align: right; font: inherit; font-size: 0.84375rem; color: var(--text-primary); border: 0; background: none; outline: none; font-variant-numeric: tabular-nums; }
+.erpOSE-pvf .su { font-size: 0.78125rem; color: var(--text-secondary); font-weight: 600; }
+.erpOSE-pvf .hint { font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7; }
+.erpOSE-pvf .txt input { width: 250px; font: inherit; font-size: 0.84375rem; color: var(--text-primary); border: 0; outline: none; background: var(--bg-secondary); border-radius: 8px; padding: 8px 11px; box-shadow: inset 0 0 0 1px var(--border-default); }
+.erpOSE-pvf .txt input:focus { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
+
+/* ── 추가 · 플로팅 안내 ── */
+.erpOSE-add { width: 100%; display: flex; align-items: center; justify-content: center; gap: 7px; font: inherit; font-size: 0.84375rem; font-weight: 650; color: var(--mantine-color-primary-6); background: var(--mantine-color-primary-0); border: 0; cursor: pointer; border-radius: 10px; padding: 12px; margin-top: 2px; }
+.erpOSE-add:hover { background: var(--mantine-color-primary-1); }
+.erpOSE-float {
+  position: absolute; left: 14px; right: 14px; bottom: 14px; z-index: 8;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg-primary); color: var(--text-primary); font-size: 0.78125rem; font-weight: 600;
+  border-radius: 9px; padding: 9px 14px;
+  box-shadow: var(--elevation-overlay), 0 0 0 1px var(--border-default);
+  opacity: 0; pointer-events: none; transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.erpOSE-float[data-on] { opacity: 1; transform: none; }
+.erpOSE-card.closed:focus-visible, .erpOSE-swt:focus-visible, .erpOSE .erpOSE-grip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; border-radius: 6px; }
+@media (prefers-reduced-motion: reduce) { .erpOSE-float, .erpOSE-swt .tr, .erpOSE-swt .tr::after { transition: none; } }
 
 /* ═══ OptionSetPicker — 선택 면 ═══ */
+.erpOSP { position: relative; }   /* 플로팅 경고의 기준면 */
 .erpOSP-head {
   flex: none; display: flex; align-items: center; gap: var(--mantine-spacing-md);
   padding: 10px var(--mantine-spacing-md);
@@ -63,27 +342,18 @@
 
 .erpOSP-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; position: relative; }
 
-/* 섹션 헤더 — 등장 순서대로, 의미 부여 없음(§1-(d)-3). sticky는 그룹만(2단 sticky 과함 — R2 C-4 판단). */
-.erpOSP-sectionHd {
-  display: flex; align-items: baseline; gap: var(--mantine-spacing-sm);
-  padding: 10px var(--mantine-spacing-md) 3px;
-}
+.erpOSP-sectionHd { display: flex; align-items: baseline; gap: var(--mantine-spacing-sm); padding: 10px var(--mantine-spacing-md) 3px; }
 .erpOSP-sectionLbl { font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); }
 
-/* 그룹 — 랜드마크 헤더(sticky) + 본문. flash = CTA·펼침·다음의 착지 강조. */
 .erpOSP-group { border-bottom: var(--border-width) solid var(--border-default); }
 .erpOSP-group:last-child { border-bottom: 0; }
-.erpOSP-group[data-flash] .erpOSP-ghead, .erpOSP-group[data-flash] .erpOSP-gbd { animation: erpOSPFlash 1.4s ease-out; }
-@keyframes erpOSPFlash { 0%, 45% { background: var(--mantine-color-primary-0); } 100% { background: transparent; } }
-@media (prefers-reduced-motion: reduce) {
-  .erpOSP-group[data-flash] .erpOSP-ghead, .erpOSP-group[data-flash] .erpOSP-gbd { animation: none; background: var(--mantine-color-primary-0); }
-}
 
-/* 그룹 헤더 sticky(C-4) — 긴 그룹 스크롤 중 "지금 어디" 유지. 행 전체가 토글, 쉐브론은 우측 보조 표시. */
+/* 그룹 헤더 sticky — 불투명 배경 필수(버튼 리셋이 이기지 못하게 명시. 투명 유리 버그 실검토). */
 .erpOSP-ghead {
-  position: sticky; top: 0; z-index: 2; background: var(--surface-raised);
+  position: sticky; top: 0; z-index: 2;
   display: flex; align-items: center; gap: var(--mantine-spacing-xs);
   padding: 8px var(--mantine-spacing-md); cursor: pointer; min-width: 0; min-height: 38px;
+  background: var(--surface-raised);
 }
 .erpOSP-ghead:hover { background: var(--bg-secondary); }
 .erpOSP-ghead:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
@@ -92,13 +362,13 @@
 .erpOSP-chev[data-open] { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { .erpOSP-chev { transition: none; } }
 .erpOSP-gtitle { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.erpOSP-star { color: var(--text-danger); font-weight: 700; margin-left: 1px; }  /* 필수 = 라벨 별표(FormField 어휘) */
+.erpOSP-star { color: var(--text-danger); font-weight: 700; margin-left: 1px; }
 .erpOSP-gnote { font-size: var(--typo-caption-size); color: var(--text-secondary); white-space: nowrap; }
 .erpOSP-gstate { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 6px; }
 .erpOSP-done { display: inline-flex; align-items: center; gap: 4px; font-size: var(--typo-caption-size); font-weight: 600; color: var(--mantine-color-success-6); }
-.erpOSP-gbd { padding: 2px 0 8px; }
+.erpOSP-gbd { padding: 3px 0 9px; }
 
-/* "다음" — 접힘은 값 선택의 부작용이 아니라 진행 액션의 결과(횡단 비교 보존 + 정리 리듬) */
+/* "다음" — 순차 작성 진행(현재 접고 다음 펼침·최하단 맞춤) */
 .erpOSP-next { display: flex; justify-content: flex-end; padding: 5px var(--mantine-spacing-md) 2px; }
 .erpOSP-next button {
   display: inline-flex; align-items: center; gap: 3px; border: 0; cursor: pointer;
@@ -108,51 +378,144 @@
 .erpOSP-next button:hover { background: var(--mantine-color-primary-1); }
 .erpOSP-next button:focus-visible { outline: 2px solid var(--border-focus); }
 
-/* 값묶음 소헤더(list·grid) — 비인터랙티브 인라인 라벨(접기 없음 — 실검토 확정) */
-.erpOSP-subhead {
-  padding: 6px var(--mantine-spacing-md) 1px calc(var(--mantine-spacing-md) + 22px);
-  font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.04em; color: var(--text-secondary);
+/* 2열 규칙 — 3개 이상 반폭 2열(중앙 거터+hairline), 2개 이하 반열 한 열. 좁으면 1열 강등. */
+.erpOSP-grid2 {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 36px;
+  background: linear-gradient(var(--border-default), var(--border-default)) center top / 1px 100% no-repeat;
+}
+.erpOSP-col1 { background: none; }
+.erpOSP-col1 > * { grid-column: 1; }
+@container (max-width: 640px) { .erpOSP-grid2 { grid-template-columns: minmax(0, 1fr); background: none; } }
+
+/* 값묶음 구획 밴드 — 전폭 옅은 면("이 아래 전부가 이 묶음"). 밴드와 2열은 상호배타(밴드 그룹=1열). */
+.erpOSP-band {
+  margin-top: 3px; padding: 5px var(--mantine-spacing-md);
+  font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.04em;
+  color: var(--text-secondary); background: var(--bg-secondary);
 }
 
-/* 값 행 — [마크][본문][금액][스테퍼][단위]. 밀도 압축(목업 실검토 확정). */
-.erpOSP-row {
-  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
-  padding: 3px var(--mantine-spacing-md) 3px calc(var(--mantine-spacing-md) + 22px);
-  min-height: 32px;
+/* 택 행(라디오/체크) — [마크][라벨·보조][델타 우측]. 틴트 없음: 신호 = 마크 + weight. */
+.erpOSP-mrow {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) 96px;
+  align-items: center; gap: 8px; padding: 0 var(--mantine-spacing-md) 0 calc(var(--mantine-spacing-md) + 8px);
+  height: 32px; cursor: pointer; text-align: left;
 }
-.erpOSP-row[role='button'] { cursor: pointer; }
-.erpOSP-row[role='button']:hover { background: var(--bg-secondary); }
-.erpOSP-row[role='button']:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
-.erpOSP-row[data-on] { background: var(--mantine-color-primary-0); }
+.erpOSP-mrow:hover { background: var(--bg-secondary); }
+.erpOSP-mrow:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.erpOSP-mrow[data-on] .erpOSP-lbl { font-weight: var(--typo-body-strong-weight, 600); }
+.erpOSP-delta { font-size: var(--typo-caption-size); color: var(--text-secondary); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* 수량 행 — 미니 테이블: [마크 18][라벨 1fr][단가 92][수량 슬롯 84][단위?]. 행높이 36 고정. */
+.erpOSP-qrow {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr) 92px 84px;
+  align-items: center; gap: 8px; padding: 0 var(--mantine-spacing-md);
+  height: 36px;
+}
+.erpOSP[data-units] .erpOSP-qrow { grid-template-columns: 18px minmax(0, 1fr) 92px 84px 20px; }
+.erpOSP-qrow[role='button'] { cursor: pointer; }
+.erpOSP-qrow[role='button']:hover { background: var(--bg-secondary); }
+.erpOSP-qrow[role='button']:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.erpOSP-qrow[data-in] .erpOSP-lbl { font-weight: var(--typo-body-strong-weight, 600); }
+.erpOSP-price { font-size: var(--typo-caption-size); color: var(--text-secondary); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.erpOSP-grid2 .erpOSP-qrow { padding-right: 10px; }
+.erpOSP-grid2 .erpOSP-mrow { padding-right: 10px; }
+
+/* 빈 행 수량 슬롯 — 자리는 상시 예약, hover에 "담기" 알약이 스테퍼 자리에서 morph(확정 시안 ②). */
+.erpOSP-ghost { width: 100%; display: inline-flex; justify-content: flex-end; opacity: 0; transition: opacity 0.1s ease; }
+.erpOSP-qrow[role='button']:hover .erpOSP-ghost, .erpOSP-qrow[role='button']:focus-visible .erpOSP-ghost { opacity: 1; }
+.erpOSP-ghost span {
+  height: 24px; padding: 0 12px; border-radius: 6px; display: inline-flex; align-items: center;
+  background: var(--mantine-color-primary-0); color: var(--mantine-color-primary-6);
+  font-size: var(--typo-caption-size); font-weight: 650;
+}
+@media (prefers-reduced-motion: reduce) { .erpOSP-ghost { transition: none; } }
+
+/* 마크 — 원형(single)·사각(multi)·수량은 담긴 것만 ✓(빈 행은 빈 자리) */
 .erpOSP-mark {
   width: 16px; height: 16px; flex: none; display: inline-flex; align-items: center; justify-content: center;
   border-radius: var(--mantine-radius-full);
-  box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--mantine-color-white);
 }
-.erpOSP-mark[data-multi] { border-radius: var(--mantine-radius-xs); }   /* multi = 사각(복수 택 어포던스) */
+.erpOSP-mrow .erpOSP-mark { box-shadow: inset 0 0 0 1px var(--border-strong); }
+.erpOSP-mark[data-multi] { border-radius: var(--mantine-radius-xs); }
 .erpOSP-mark[data-on] { background: var(--mantine-color-primary-6); box-shadow: none; }
+.erpOSP-qrow .erpOSP-mark[data-on] { background: transparent; color: var(--mantine-color-success-6); }
+
 .erpOSP-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .erpOSP-lbl { font-size: var(--typo-body-size); line-height: 1.35; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.erpOSP-row[data-on] .erpOSP-lbl { font-weight: var(--typo-body-strong-weight, 600); }
 .erpOSP-sub { font-size: var(--typo-caption-size); line-height: 1.3; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .erpOSP-gtag { font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.erpOSP-amt { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.erpOSP-amt[data-strong] { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); }  /* 행 소계 */
-.erpOSP-unit { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); min-width: 20px; }
+.erpOSP-unit { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); min-width: 18px; }
 .erpOSP-range { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); opacity: 0.7; font-variant-numeric: tabular-nums; }
+/* 수량 미니 스테퍼(위젯 소유 — 정본 24px) — 상시 노출, 0 상태=숫자 흐림·− 비활성(기하 불변) */
+.erpOSP-stp { display: inline-flex; align-items: center; flex: none; }
+.erpOSP-stp button { width: 24px; height: 24px; border: 0; cursor: pointer; font: inherit; border-radius: 6px; background: var(--bg-secondary); color: var(--text-secondary); display: inline-flex; align-items: center; justify-content: center; }
+.erpOSP-stp button:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); }
+.erpOSP-stp button:disabled { opacity: 0.35; cursor: default; }
+.erpOSP-stp button:disabled:hover { background: var(--bg-secondary); color: var(--text-secondary); }
+.erpOSP-stp .v { width: 28px; text-align: center; font-size: var(--typo-body-size); font-weight: 650; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.erpOSP-stp.z .v { color: var(--text-secondary); opacity: 0.7; font-weight: 500; }
+.erpOSP-txtin { flex: 1; min-width: 0; max-width: 340px; }
+
+/* ═══ v13 이식(테스트베드 정본) — 아마존식 번호 블록·⑨트레이·잉크 비대칭·stuck 그림자. 섹션 오버라인 없음 ═══ */
+.erpOSP-body { padding: 4px 0 10px; }
+.erpOSP-group { margin: 0 10px 8px; border-radius: 10px; }
+.erpOSP-group[data-open] { background: var(--bg-secondary); }          /* ⑨ 열린 그룹만 표면 트레이 */
+.erpOSP-group[data-done] { cursor: pointer; }                          /* 완료 접힘 = 헤더+요약 한 몸 hover */
+.erpOSP-group[data-done]:hover { background: var(--bg-secondary); }
+.erpOSP-ghead {
+  position: sticky; top: -1px; z-index: 2;
+  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
+  padding: 12px 16px; min-height: 46px; cursor: pointer;
+  background: var(--surface-raised); border-radius: 10px; border-bottom: 0;
+}
+.erpOSP-ghead:hover { background: var(--bg-secondary); }
+.erpOSP-group[data-open] .erpOSP-ghead { background: var(--bg-secondary); border-radius: 10px 10px 0 0; }
+.erpOSP-group[data-done] .erpOSP-ghead, .erpOSP-group[data-done]:hover .erpOSP-ghead { background: transparent; }
+.erpOSP-ghead[data-sum] { padding-bottom: 2px; min-height: 0; }        /* 요약 줄과 짝일 때만 하단 조임(음수 마진 금지) */
+.erpOSP-ghead.stuck { box-shadow: 0 1px 0 var(--border-default); }     /* sticky로 떠 있을 때만 경계 */
+.erpOSP-gnum { flex: none; width: 18px; text-align: center; font-size: var(--typo-body-size); font-weight: 700; font-variant-numeric: tabular-nums; }
+.erpOSP-gnum[data-st='cur'] { color: var(--mantine-color-primary-6); }
+.erpOSP-gnum[data-st='done'] { color: var(--mantine-color-success-6); }
+.erpOSP-gnum[data-st='dim'] { color: var(--text-secondary); opacity: 0.6; font-weight: 600; }
+/* 비대칭 잉크 — 미래(빈 접힘)는 잉크를 죽인다(형태·높이 불변). 완료는 본문색+요약(정보를 살림) */
+.erpOSP-ghead[data-st='dim'] .erpOSP-gtitle { color: var(--text-secondary); opacity: 0.75; font-weight: 450; }
+.erpOSP-ghead[data-st='dim'] .erpOSP-star { opacity: 0.55; }
+.erpOSP-ghead[data-st='dim'] .erpOSP-chev { opacity: 0.45; }
+.erpOSP-ghead[data-st='dim'] .erpOSP-gnote { opacity: 0.5; }
+.erpOSP-grt { margin-left: auto; flex: none; display: inline-flex; align-items: center; }
+.erpOSP-chg { font-size: var(--typo-body-size); font-weight: 650; color: var(--mantine-color-primary-6); }
+.erpOSP-sumline {
+  padding: 2px 16px 13px 44px; font-size: var(--typo-body-size); color: var(--text-secondary);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
+}
+/* 트레이 안 값묶음 — 면 안의 면 금지: 밴드 배경을 걷고 캡션만 */
+.erpOSP-group[data-open] .erpOSP-band { background: transparent; margin-top: 6px; padding: 4px 16px 1px; }
+/* hover는 현재 표면보다 한 단계 진하게 — 트레이(fillS) 위에서는 line급 */
+.erpOSP-group[data-open] .erpOSP-qrow[role='button']:hover,
+.erpOSP-group[data-open] .erpOSP-mrow:hover,
+.erpOSP-group[data-open] .erpOSP-card:hover { background: var(--border-default); }
 .erpOSP-none { padding: var(--mantine-spacing-lg); text-align: center; font-size: var(--typo-body-size); color: var(--text-secondary); }
 
-/* 표현: chips / 2열 grid / 한 줄 컨트롤 */
-.erpOSP-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px var(--mantine-spacing-md) 6px calc(var(--mantine-spacing-md) + 22px); }
-.erpOSP-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.erpOSP-grid2 > div { min-width: 0; }
-.erpOSP-grid2 .erpOSP-row { padding-left: var(--mantine-spacing-md); }
-.erpOSP-grid2 .erpOSP-subhead { grid-column: 1 / -1; }
-@container (max-width: 560px) { .erpOSP-grid2 { grid-template-columns: minmax(0, 1fr); } }
-.erpOSP-inlineCtl { padding: 4px var(--mantine-spacing-md) 6px calc(var(--mantine-spacing-md) + 22px); max-width: 480px; }
+/* 카드(택 소수 후보) — 미선택도 같은 링, 선택=색 승격만(기하 불변, 제목+델타만) */
+.erpOSP-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 5px var(--mantine-spacing-md) 6px; }
+@container (max-width: 560px) { .erpOSP-cards { grid-template-columns: minmax(0, 1fr); } }
+.erpOSP-card {
+  display: flex; align-items: baseline; gap: 8px; text-align: left; cursor: pointer; border: 0;
+  font: inherit; background: var(--bg-primary);
+  border-radius: 9px; padding: 10px 12px;
+  box-shadow: inset 0 0 0 1px var(--border-default);
+}
+.erpOSP-card:hover { background: var(--bg-secondary); }
+.erpOSP-card:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
+.erpOSP-card[data-on] { box-shadow: inset 0 0 0 2px var(--mantine-color-primary-6); }
+.erpOSP-cardName { flex: 1; min-width: 0; font-size: var(--typo-body-size); font-weight: 650; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.erpOSP-cardDelta { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.erpOSP-card[data-on] .erpOSP-cardDelta { color: var(--mantine-color-primary-6); font-weight: 650; }
 
-/* 표현: 값묶음 필터 칩(C-3 — filtered·collect 공용). 접기 두 겹 대신 "한 묶음만 보기". */
+/* 칩 / 한 줄 컨트롤 / 값묶음 필터 칩 */
+.erpOSP-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px var(--mantine-spacing-md) 6px calc(var(--mantine-spacing-md) + 8px); }
+.erpOSP-inlineCtl { padding: 4px var(--mantine-spacing-md) 6px calc(var(--mantine-spacing-md) + 8px); max-width: 480px; }
 .erpOSP-fchips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px var(--mantine-spacing-md) 6px; }
 .erpOSP-fchip {
   border: 0; cursor: pointer; border-radius: var(--mantine-radius-full);
@@ -164,25 +527,35 @@
 .erpOSP-fchip .n { font-size: 0.9em; opacity: 0.7; margin-left: 3px; font-variant-numeric: tabular-nums; }
 .erpOSP-fchip:focus-visible { outline: 2px solid var(--border-focus); }
 
-/* 표현: collect(C-1·C-2) — 담긴 행 상단 소구획 고정 */
-.erpOSP-pin { border-bottom: var(--border-width) solid var(--border-default); padding-bottom: 4px; margin-bottom: 2px; }
-.erpOSP-pinLbl {
-  display: flex; align-items: center; gap: 4px;
-  padding: 6px var(--mantine-spacing-md) 2px;
-  font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.04em; color: var(--mantine-color-success-6);
+/* 수치 행 */
+.erpOSP-nrow {
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  padding: 3px var(--mantine-spacing-md) 3px calc(var(--mantine-spacing-md) + 8px);
+  min-height: 36px;
 }
 
-/* 풋터 — 고정(§3-4). 잠금 사유 상시, CTA는 잠금 스타일이되 탭 수신(첫 미충족 스크롤). */
+/* 미충족 플로팅 — 잠금 담기 탭 시에만, 풋터 위(기하 불변) */
+.erpOSP-float {
+  position: absolute; left: 14px; right: 14px; bottom: 66px; z-index: 6;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  background: var(--bg-primary); color: var(--text-danger);
+  font-size: var(--typo-caption-size); font-weight: 600;
+  border-radius: 9px; padding: 9px 14px;
+  box-shadow: var(--elevation-overlay), inset 0 0 0 1px var(--mantine-color-danger-1);
+  opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.erpOSP-float[data-on] { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .erpOSP-float { transition: none; } }
+
+/* 풋터 — 소계는 이 면의 대표 숫자(대형). 경고행 상시 없음. */
 .erpOSP-foot {
-  flex: none; display: flex; flex-direction: column; gap: var(--mantine-spacing-xs);
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  flex: none; padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
   border-top: var(--border-width) solid var(--border-default);
 }
-.erpOSP-hint { display: inline-flex; align-items: center; gap: 4px; font-size: var(--typo-caption-size); color: var(--text-danger); }
 .erpOSP-footRow { display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-md); }
-.erpOSP-subtl { display: inline-flex; align-items: baseline; gap: var(--mantine-spacing-xs); min-width: 0; }
-.erpOSP-subtl .lbl { font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.erpOSP-subtl .amt { font-size: var(--typo-subheading-size, 1rem); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.erpOSP-subtl { display: inline-flex; align-items: baseline; gap: 10px; min-width: 0; }
+.erpOSP-subtl .lbl { font-size: var(--typo-caption-size); color: var(--text-secondary); white-space: nowrap; }
+.erpOSP-subtl .amt { font-size: 1.3125rem; font-weight: 750; letter-spacing: -0.01em; color: var(--text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .erpOSP-cta[data-locked] { opacity: 0.55; }
 
 /* idle / pick */
@@ -201,7 +574,6 @@
 .erpOSP-pickrow:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 
 /* ═══ CompositionOutline — 작성물 카드 스택 ═══ */
-/* 추가 진입점 — 단일 버튼 + 섹션 선택 메뉴(items 있는 섹션은 하위 드릴 — 계층 추가 메뉴). */
 .erpOSO-addBar { flex: none; padding: var(--mantine-spacing-sm) var(--mantine-spacing-md); border-bottom: var(--border-width) solid var(--border-default); }
 .erpOSO-menu { display: flex; flex-direction: column; gap: 2px; min-width: 200px; }
 .erpOSO-menuItem {
@@ -222,8 +594,6 @@
 }
 .erpOSO-none { padding: var(--mantine-spacing-xl); text-align: center; font-size: var(--typo-body-size); color: var(--text-secondary); }
 
-/* 섹션 카드 — 라인이 있거나 작성 중(active)인 섹션만. flex:none(압착 버그 수정 — R2 §6-1).
-   선 최소화: 카드 링 하나만, 라인 사이 구분선 없음(간격이 구분 — 실검토 확정). */
 .erpOSO-sec {
   flex: none;
   background: var(--bg-primary);
@@ -233,7 +603,6 @@
   padding: 8px 4px 5px;
 }
 .erpOSO-sec[data-active] { box-shadow: inset 0 0 0 1px var(--mantine-color-primary-4); }
-/* 오버라인 캡션이 섹션, 라인이 주인공 — 위계를 라인 라벨·금액에 몰아준다. 카운트 뱃지 없음(중복 신호 금지). */
 .erpOSO-secHd { display: flex; align-items: center; gap: 7px; padding: 0 10px 5px; min-width: 0; }
 .erpOSO-secLbl { font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.05em; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .erpOSO-badge {
@@ -242,31 +611,29 @@
 }
 .erpOSO-hint { padding: 2px 10px 6px; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 
-/* 라인 — 클릭=좌측 재진입(조작면). active = 은은한 채움 *한 겹* + "편집 중" 마이크로 라벨(윤곽 중첩 금지 — 실검토). */
+/* 라인 — 수량은 라벨 *앞*(×N 열). active = 채움 한 겹 + "편집 중" 라벨(윤곽 중첩 금지). */
 .erpOSO-line {
-  display: flex; align-items: flex-start; gap: var(--mantine-spacing-sm);
+  display: flex; flex-direction: column; gap: 1px;
   padding: 6px 10px; cursor: pointer; border-radius: var(--mantine-radius-xs);
 }
 .erpOSO-line:hover { background: var(--bg-secondary); }
 .erpOSO-line:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 .erpOSO-line[data-active] { background: var(--mantine-color-primary-0); }
 .erpOSO-line[data-active]:hover { background: var(--mantine-color-primary-1); }
-.erpOSO-lineMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
-.erpOSO-lineLbl { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); display: flex; align-items: center; gap: 6px; min-width: 0; }
+.erpOSO-lineTop { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.erpOSO-qty { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); min-width: 20px; font-variant-numeric: tabular-nums; }
+.erpOSO-lineLbl { flex: 1; min-width: 0; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
 .erpOSO-lineLbl .txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .erpOSO-editing {
   flex: none; font-size: 10px; font-weight: 700; color: var(--mantine-color-primary-6);
   background: var(--bg-primary); border-radius: var(--mantine-radius-full); padding: 1px 7px;
 }
+.erpOSO-amt { flex: none; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .erpOSO-lineSub { font-size: var(--typo-caption-size); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.erpOSO-lineSide { flex: none; display: inline-flex; align-items: center; gap: var(--mantine-spacing-xs); }
-.erpOSO-qty { font-size: var(--typo-caption-size); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
-.erpOSO-amt { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .erpOSO-x { display: inline-flex; opacity: 0; transition: opacity 0.1s ease; }
 .erpOSO-line:hover .erpOSO-x, .erpOSO-line:focus-within .erpOSO-x { opacity: 1; }
 @media (prefers-reduced-motion: reduce) { .erpOSO-x { transition: none; } }
 
-/* 합계 블록 — 하단 고정. value는 이미 포맷된 문자열(§6-1). */
 .erpOSO-sum {
   flex: none; display: flex; flex-direction: column; gap: 5px;
   padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);

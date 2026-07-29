@@ -92,10 +92,11 @@ export { ExpressionField, type ExprVariable, type ExprFunction } from './Express
 export { KeyValueField, type KVKey } from './KeyValueField';  // 닫힌 키 맵 편집(dim_adjustments 류)
 export { AssignPicker, type AssignTemplate } from './AssignPicker';  // 옵션세트 kind별 배정 + 재적용 경고
 // OptionSet 계열 — 저작 면이 "쓰고" 선택 면이 "읽는" 같은 타입(optionset.ts 단일 계약, 변환 계층 금지)
-export { OptionSetEditor, type OptionSetSection } from './OptionSetEditor';  // 선택지 묶음 정의 편집기
+export { OptionSetEditor } from './OptionSetEditor';  // 옵션 정의 저작(v2.1 — 2-pane 트리+표, 동형 골격)
+export { OptionSetComposer } from './OptionSetComposer';  // 구성 위젯 — 트리 저작+부착·순서+Picker 내장 미리보기
 export { OptionSetPicker, type OptionSetPickerProps, type OptionGroupDisplay, type OptionSetPickerHandle } from './OptionSetPicker';  // 3모드 선택 면 + 표현 어휘(자동+override) + collect/filtered + ref 명령
 export { CompositionOutline, type CompositionLine, type CompositionSection, type SummaryRow } from './CompositionOutline';  // 우측 문서 목차(조작면)
-export type { Choice, NumberField, OptionGroup, OptionSet, OptionSelection } from './optionset';
+export type { Choice, NumberField, TextField, OptionGroup, OptionSet, OptionSelection, OptionNode } from './optionset';
 export { LineItemList, type LineItem } from './LineItemList';
 export { EmptyState } from './EmptyState';
 export { PageHeader } from './PageHeader';

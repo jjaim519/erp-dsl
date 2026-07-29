@@ -122,23 +122,22 @@ export function CompositionOutline({
             </div>
             {s.lines.length === 0 && <div className="erpOSO-hint">작성 중…</div>}
             {s.lines.map((l) => (
+              // 라인 해부(실검토 확정): [×수량?][라벨][편집 중?] ... [금액] / 아랫줄 = 보조 요약(있을 때만).
               <div key={l.id} className="erpOSO-line" role="button" tabIndex={0} data-active={l.active || undefined}
                 onClick={() => onSelectLine(l.id)}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectLine(l.id); } }}>
-                <span className="erpOSO-lineMain">
+                <span className="erpOSO-lineTop">
+                  {l.quantity != null && l.quantity !== 1 && <span className="erpOSO-qty">×{l.quantity}</span>}
                   <span className="erpOSO-lineLbl">
                     <span className="txt">{l.label}</span>
                     {l.active && <span className="erpOSO-editing">편집 중</span>}
                   </span>
-                  {l.sublabel && <span className="erpOSO-lineSub">{l.sublabel}</span>}
-                </span>
-                <span className="erpOSO-lineSide">
-                  {l.quantity != null && l.quantity !== 1 && <span className="erpOSO-qty">×{l.quantity}</span>}
                   {l.amount != null && <span className="erpOSO-amt">{fmtCurrency(l.amount)}</span>}
                   <span className="erpOSO-x" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
                     <IconButton icon="trash" label="삭제" variant="ghost" size="sm" onClick={() => onDeleteLine(l.id)} />
                   </span>
                 </span>
+                {l.sublabel && <span className="erpOSO-lineSub">{l.sublabel}</span>}
               </div>
             ))}
           </section>
