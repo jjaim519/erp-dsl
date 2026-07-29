@@ -13,6 +13,9 @@
 //  · usage(사용처)는 헤더 상시 노출 안 함(확정) — 삭제 확인에서만 나열. 도메인 무지(헌법 1)·금액 계산 0(§6).
 import { useEffect, useRef, useState } from 'react';
 import type { Choice, NumberField, OptionGroup, TextField } from './optionset';
+import type { RefOption } from './InheritedValueField';
+import type { ExprVariable } from './ExpressionField';
+import type { KVKey } from './KeyValueField';
 import { DotsGlyph, EyeGlyph, MiniSwitch, PlusGlyph, TreeRow, TypeIcon, usePopDismiss, useRowDrag } from './optionset-shared';
 import './optionset.css';
 
@@ -23,6 +26,11 @@ type Props = {
   usage?: Record<string, string[]>;
   title?: string;                             // 좌측 pane 제목(기본 '옵션')
   readOnly?: boolean;
+  /** R3 A군 — 가격 규칙 재노출. §3-①: 셋 다 미전달이면 관련 UI가 자리조차 차지하지 않는다.
+   *  전달 시: 행 hover·걸린 값만 fx 표식(상시 열 아님 — 열 경계 불변식: fx 슬롯은 빈 행·헤더에도 동시 예약). */
+  refOptions?: RefOption[];                   // 참조(refId) 후보 목록 — 지정·해제·상속가 표시
+  exprVariables?: ExprVariable[];             // 있으면 수식(formula) 입력 노출
+  adjustKeys?: KVKey[];                       // 있으면 보정(adjust) 입력 노출("키:±값" 표기)
 };
 
 type Sel = OptionGroup['selection'];
@@ -69,16 +77,29 @@ function choicesFromRows(g: OptionGroup, rows: Row[], extra?: Record<string, Cho
   }
   return out;
 }
-const newChoice = (label: string, amount?: number): Choice => {
+const newChoice = (label: string, price?: number): Choice => {
   const id = uid();
-  return { id, code: id, label, ...(amount != null && amount > 0 ? { amount } : {}) };
+  return { id, code: id, label, ...(price != null && price > 0 ? { override: price } : {}) };   // §2: 직접 단가=override
 };
 const newField = (): NumberField => ({ key: uid(), label: '', value: 0 });
 const newText = (): TextField => ({ key: uid(), label: '' });
 
-type Pop = { kind: 'type' } | { kind: 'menu'; id: string; confirm?: boolean } | null;
+type Pop = { kind: 'type' } | { kind: 'menu'; id: string; confirm?: boolean }
+  | { kind: 'fx'; cid: string; pick?: boolean } | null;
+const fxSet = (c: Choice) => c.refId != null || c.ratio != null || !!c.formula || !!c.adjust;
+const adjToText = (a?: Record<string, number>) =>
+  a ? Object.entries(a).map(([k, v]) => `${k}:${v >= 0 ? '+' : ''}${v}`).join(', ') : '';
+const textToAdj = (t: string): Record<string, number> | undefined => {
+  const out: Record<string, number> = {};
+  for (const part of t.split(',')) {
+    const m = part.trim().match(/^([^:\s]+)\s*:\s*([+-]?\d+(?:\.\d+)?)$/);
+    if (m) out[m[1]] = Number(m[2]);
+  }
+  return Object.keys(out).length ? out : undefined;
+};
 
-export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Props) {
+export function OptionSetEditor({ groups, onChange, usage, title, readOnly, refOptions, exprVariables, adjustKeys }: Props) {
+  const advOn = !!(refOptions?.length || exprVariables?.length || adjustKeys?.length);
   const [optId, setOptId] = useState<string | null>(groups[0]?.id ?? null);
   const [bandKey, setBandKey] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[]>(() => (groups[0] ? buildRows(groups[0]) : []));
@@ -475,8 +496,16 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
         tabIndex={c.hidden ? -1 : undefined}
         onChange={(e) => patchChoice(g, c.id, { label: e.target.value })} />
       {c.hidden && <span className="erpOSE-offtag">사용 안 함</span>}
-      <input className="erpOSE-amt" data-col="amt" value={comma(c.amount)} placeholder="포함" inputMode="numeric"
-        onChange={(e) => { const d = digits(e.target.value); patchChoice(g, c.id, { amount: d ? Number(d) : undefined }); }} />
+      {/* §2(R3 회귀 수정): 금액 칸 = override(직접값). amount는 소비처 주입 표시 전용으로 복귀.
+          참조 걸린 값은 비었을 때 상속 유효가가 흐리게(placeholder) — 적으면 직접값이 이긴다(IVF 규율) */}
+      <input className="erpOSE-amt" data-col="amt" value={comma(c.override)}
+        placeholder={c.refId != null ? comma(refOptions?.find((r) => r.id === c.refId)?.price ?? c.amount) || '포함' : '포함'}
+        inputMode="numeric"
+        onChange={(e) => { const d = digits(e.target.value); patchChoice(g, c.id, { override: d ? Number(d) : undefined }); }} />
+      {advOn && (
+        <button type="button" className="erpOSE-fxbtn" data-set={fxSet(c) || undefined} data-os-popbtn title="가격 규칙"
+          onClick={() => setPop(pop?.kind === 'fx' && pop.cid === c.id ? null : { kind: 'fx', cid: c.id })}>fx</button>
+      )}
       <span className="erpOSE-acts">
         <button type="button" title={c.hidden ? '다시 사용' : '사용 안 함'}
           onClick={() => patchChoice(g, c.id, { hidden: c.hidden ? undefined : true })}>
@@ -486,6 +515,51 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
           restamp(g, rows.filter((r) => !(r.t === 'c' && r.id === c.id)));
         }}>✕</button>
       </span>
+      {pop?.kind === 'fx' && pop.cid === c.id && (
+        <div className="erpOS-pop erpOSE-fxpop" data-os-pop>
+          <h4>가격 규칙 — {c.label || '값'}</h4>
+          <div className="hint">선택 면은 읽지 않습니다 · 저장용 저작 필드</div>
+          {refOptions && (
+            <label><span>참조</span>
+              <span className="erpOSE-fxref">
+                {c.refId != null ? (() => {
+                  const r = refOptions.find((x) => x.id === c.refId);
+                  return (
+                    <span className="erpOSE-fxrefon">{r?.label ?? c.refId}
+                      {r?.price != null && <b>{r.price.toLocaleString('ko-KR')}</b>}
+                      <button type="button" title="참조 해제" onClick={() => patchChoice(g, c.id, { refId: null })}>✕</button>
+                    </span>
+                  );
+                })() : (
+                  <button type="button" className="erpOSE-fxpick"
+                    onClick={() => setPop({ kind: 'fx', cid: c.id, pick: !pop.pick })}>목록에서 선택…</button>
+                )}
+              </span>
+            </label>
+          )}
+          {pop.pick && c.refId == null && refOptions && (
+            <div className="erpOSE-fxlist">
+              {refOptions.map((r) => (
+                <button key={r.id} type="button"
+                  onClick={() => { patchChoice(g, c.id, { refId: r.id }); setPop({ kind: 'fx', cid: c.id }); }}>
+                  <span>{r.label}</span>{r.price != null && <b>{r.price.toLocaleString('ko-KR')}</b>}
+                </button>
+              ))}
+            </div>
+          )}
+          <label><span>배율</span><input value={c.ratio != null ? String(c.ratio) : ''} placeholder="× 1.0"
+            onChange={(e) => { const v = e.target.value.replace(/[^\d.]/g, ''); patchChoice(g, c.id, { ratio: v === '' ? undefined : Number(v) }); }} /></label>
+          {exprVariables && (
+            <label><span>수식</span><input value={c.formula ?? ''} placeholder="예: w/1000"
+              onChange={(e) => patchChoice(g, c.id, { formula: e.target.value || undefined })} /></label>
+          )}
+          {adjustKeys && (
+            <label><span>보정</span><input key={'adj' + c.id} defaultValue={adjToText(c.adjust)} placeholder="키:±값 (예: w:+20)"
+              onChange={(e) => patchChoice(g, c.id, { adjust: textToAdj(e.target.value) })} /></label>
+          )}
+          <div className="hint" style={{ marginTop: 6 }}>참조를 걸면 금액 칸이 비었을 때 상속가가 흐리게 보이고, 적으면 직접값이 이깁니다.</div>
+        </div>
+      )}
     </div>
   );
   const bandRowEl = (g: OptionGroup, r: Extract<Row, { t: 'b' }>) => (
@@ -509,6 +583,7 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
         onChange={(e) => { if (e.target.value.trim()) commitGhostLabel(g, e.target.value); }} />
       <input className="erpOSE-amt" data-col="amt" data-ghost value="" placeholder="금액" inputMode="numeric"
         onChange={(e) => { const d = digits(e.target.value); if (d) commitGhostAmt(g, d); }} />
+      {advOn && <span className="erpOSE-fxsp" />}
       <span className="erpOSE-acts" />
     </div>
   );
@@ -524,7 +599,7 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
     return (
       <>
         <div className="erpOSE-vlist">
-          <div className="erpOSE-vhead"><span className="grow">값</span><span className="ha">금액</span><span className="hsp" /></div>
+          <div className="erpOSE-vhead"><span className="grow">값</span><span className="ha">금액</span>{advOn && <span className="hf" />}<span className="hsp" /></div>
           {body}
           {ghostRow(g, !bandKey && inBand)}
         </div>
@@ -614,7 +689,7 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
           {vis.map((c) => (
             <button key={c.id} type="button" className="erpOSE-pvcard" data-on={sel.pick === c.id || undefined}
               onClick={() => set('pick', sel.pick === c.id ? undefined : c.id)}>
-              <span className="t">{c.label}</span><span className="d num">{delta(c.amount)}</span>
+              <span className="t">{c.label}</span><span className="d num">{delta(c.override ?? c.amount)}</span>
             </button>
           ))}
         </div>
@@ -639,7 +714,7 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
                   <button key={c.id} type="button" className="erpOSE-pvrow" data-on={on || undefined}
                     onClick={() => g.selection === 'single' ? set('pick', on ? undefined : c.id) : set('m' + c.id, !on)}>
                     <span className={'mk' + (g.selection === 'multi' ? ' sq' : '')}>{on ? '✓' : ''}</span>
-                    <span>{c.label}</span><span className="grow" /><span className="d num">{delta(c.amount)}</span>
+                    <span>{c.label}</span><span className="grow" /><span className="d num">{delta(c.override ?? c.amount)}</span>
                   </button>
                 );
               })}
@@ -658,7 +733,7 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
                 <span className="mk">{q > 0 ? '✓' : ''}</span>
                 <span className="lb">{c.label}</span>
                 {c.unit && <span className="un">{c.unit}</span>}
-                <span className="grow" /><span className="amt num">{c.amount ? fmtWon(c.amount) : '포함'}</span>
+                <span className="grow" /><span className="amt num">{(c.override ?? c.amount) ? fmtWon((c.override ?? c.amount)!) : '포함'}</span>
                 <span className={'erpOSE-pvstp' + (q > 0 ? '' : ' z')}>
                   <button type="button" disabled={q === 0} onClick={() => set('q' + c.id, Math.max(0, q - 1))}>−</button>
                   <span className="v num">{q}</span>
@@ -739,6 +814,10 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly }: Pr
           <TypeIcon sel={g.selection} /> {selQ(g.selection)} <span className="cv">▾</span>
         </button>
         <MiniSwitch on={!!g.required} label="필수" onToggle={() => patchGroup(g.id, { required: !g.required || undefined })} />
+        {advOn && listy(g.selection) && (
+          <span className="erpOSE-gratio">×<input value={g.ratio != null ? String(g.ratio) : ''} placeholder="1.0"
+            onChange={(e) => { const v = e.target.value.replace(/[^\d.]/g, ''); patchGroup(g.id, { ratio: v === '' ? undefined : Number(v) }); }} /></span>
+        )}
         <span className="erpOS-hdiv" />
         <div className="erpOS-seg">
           <button type="button" data-on={view === 'edit' || undefined} onClick={() => setView('edit')}>편집</button>

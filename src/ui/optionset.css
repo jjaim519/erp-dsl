@@ -234,7 +234,8 @@
 .erpOSE-rowB .erpOSE-grip { font-size: 0.75rem; }
 .erpOSE-ghost .erpOSE-grip { visibility: hidden; }
 .erpOSE-fxsp { flex: none; width: 26px; }
-.erpOSE-fxbtn { flex: none; width: 26px; height: 26px; border: 0; background: none; cursor: pointer; border-radius: 6px; color: var(--text-secondary); opacity: 0.8; font: inherit; font-size: 0.71875rem; font-weight: 700; font-style: italic; display: inline-flex; align-items: center; justify-content: center; }
+.erpOSE-fxbtn { flex: none; width: 26px; height: 26px; border: 0; background: none; cursor: pointer; border-radius: 6px; color: var(--text-secondary); opacity: 0; font: inherit; font-size: 0.71875rem; font-weight: 700; font-style: italic; display: inline-flex; align-items: center; justify-content: center; }
+.erpOSE-row:hover .erpOSE-fxbtn, .erpOSE-row:focus-within .erpOSE-fxbtn, .erpOSE-fxbtn[data-set] { opacity: 1; }
 .erpOSE-fxbtn:hover { background: var(--mantine-color-neutral-2); color: var(--text-primary); opacity: 1; }
 .erpOSE-fxbtn[data-set] { color: var(--mantine-color-primary-6); background: var(--mantine-color-primary-0); opacity: 1; }
 .erpOSE-acts { flex: none; width: 54px; display: inline-flex; justify-content: flex-end; gap: 2px; opacity: 0; }
@@ -245,11 +246,25 @@
 .erpOSE-tblft { padding: 5px 14px 0 30px; }
 .erpOSE-bandadd { font: inherit; font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); border: 0; background: none; cursor: pointer; padding: 3px 9px; border-radius: 6px; }
 .erpOSE-bandadd:hover { background: var(--bg-secondary); color: var(--text-primary); }
-.erpOSE-fxpop { top: 34px; right: 44px; width: 270px; padding: 10px 12px 12px; cursor: default; }
+.erpOSE-fxpop { top: 34px; right: 44px; width: 360px; padding: 12px 14px 14px; cursor: default; }
 .erpOSE-fxpop h4 { font-size: 0.75rem; font-weight: 700; margin: 0 0 2px; color: var(--text-primary); }
 .erpOSE-fxpop .hint { font-size: 0.6875rem; color: var(--text-secondary); opacity: 0.8; margin-bottom: 8px; }
 .erpOSE-fxpop label { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); padding: 4px 0; }
-.erpOSE-fxpop label span { flex: none; width: 52px; font-weight: 600; }
+.erpOSE-fxpop label > span:first-child { flex: none; width: 44px; font-weight: 600; }
+.erpOSE-fxref { flex: 1; display: inline-flex; align-items: center; min-width: 0; }
+.erpOSE-fxrefon { display: inline-flex; align-items: center; gap: 7px; font-size: 0.84375rem; color: var(--text-primary); background: var(--bg-secondary); border-radius: 6px; padding: 5px 10px; box-shadow: inset 0 0 0 1px var(--border-default); white-space: nowrap; }
+.erpOSE-fxrefon b { color: var(--text-secondary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.erpOSE-fxrefon button { border: 0; background: none; cursor: pointer; color: var(--text-secondary); opacity: 0.7; font: inherit; font-size: 0.75rem; }
+.erpOSE-fxrefon button:hover { color: var(--text-danger); opacity: 1; }
+.erpOSE-fxpick { font: inherit; font-size: 0.84375rem; font-weight: 600; color: var(--mantine-color-primary-6); background: var(--mantine-color-primary-0); border: 0; cursor: pointer; border-radius: 6px; padding: 5px 12px; white-space: nowrap; flex: none; }
+.erpOSE-fxpick:hover { background: var(--mantine-color-primary-1); }
+.erpOSE-fxlist { max-height: 180px; overflow-y: auto; margin: 2px 0 4px; display: flex; flex-direction: column; }
+.erpOSE-fxlist button { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; border: 0; background: none; cursor: pointer; font: inherit; font-size: 0.84375rem; color: var(--text-primary); border-radius: 6px; padding: 6px 8px; }
+.erpOSE-fxlist button:hover { background: var(--bg-secondary); }
+.erpOSE-fxlist b { color: var(--text-secondary); font-weight: 600; font-variant-numeric: tabular-nums; }
+.erpOSE-gratio { flex: none; display: inline-flex; align-items: center; gap: 3px; font-size: 0.84375rem; color: var(--text-secondary); font-weight: 600; }
+.erpOSE-gratio input { width: 44px; font: inherit; font-size: 0.84375rem; text-align: center; color: var(--text-primary); border: 0; outline: none; background: var(--bg-secondary); border-radius: 6px; padding: 3px 4px; box-shadow: inset 0 0 0 1px var(--border-default); font-variant-numeric: tabular-nums; }
+.erpOSE-gratio input:focus { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
 .erpOSE-fxpop input { flex: 1; font: inherit; font-size: 0.78125rem; color: var(--text-primary); border: 0; outline: none; background: var(--bg-secondary); border-radius: 6px; padding: 5px 8px; box-shadow: inset 0 0 0 1px var(--border-default); }
 .erpOSE-fxpop input:focus { box-shadow: inset 0 0 0 1.5px var(--mantine-color-primary-6); }
 .erpOSE-stash { margin: 8px 16px 0 30px; font-size: 0.75rem; color: var(--text-secondary); background: var(--bg-secondary); border-radius: 7px; padding: 7px 10px; }
