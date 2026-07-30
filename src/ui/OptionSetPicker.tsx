@@ -3,25 +3,30 @@
 //  · 확정 시안(2026-07-28, 목업 v8.8 실검토): 행 = 미니 테이블(상태는 기하를 못 바꾼다 — 수량 슬롯 상시 예약,
 //    담긴 행 배경 틴트 없음: 신호는 ✓마크·weight·수량값). 행 소계 없음 — 품목 소계는 풋터가 말한다.
 //    수량 행의 숫자는 델타가 아니라 *단가*(부호 없음). 택 옵션 델타만 "+ ₩"(포함 사양은 '포함').
-//  · 표현 어휘(자동 도출 + 닫힌 override):
-//      single → cards(≤6 자동 — 제목+델타만, 미선택도 같은 링·선택=색 승격) | grid(≤10) | filtered(>10·값묶음 有) | list | chips | segmented | select
-//      multi  → grid(자동) | filtered(>10·값묶음 有) | list | chips | cards
-//      quantity → stepper(자동 — 값묶음 밴드 有=1열) | filtered(>10·값묶음 有 — 칩 평면) | grid
+//  · 표현 어휘 = **본문 기하**(자동 도출 + 닫힌 override). 값묶음은 여기 개입하지 않는다(아래 직교 레이어):
+//      single → cards(≤6 자동 — 제목+델타만, 미선택도 같은 링·선택=색 승격) | grid(≤10) | list(초과) | chips | segmented | select
+//      multi  → grid(≤10 자동) | list(초과) | chips | cards
+//      quantity → stepper(자동) | grid
 //      number → input(범위 넓거나 무한 — 타이핑, blur 스냅) | stepper
-//    ('collect'는 지원 중단 별칭 — filtered로 해석. 행 소계·담긴 행 상단 고정은 실검토로 채택 취소.)
+//    ('filtered'·'collect' override는 기하가 아니라 **칩 레이어 강제** 별칭 — 기하는 자동 도출에 맡긴다.)
+//  · 값묶음(Choice.group) = 기하와 **직교한 레이어**(F′ 2026-07-30, 계약은 optionset.ts bundleBlocks):
+//      기본 = 구획 블록(밴드 + 그 묶음의 본문 기하 반복 — 카드·2열도 지원. 전 후보가 한 화면 = 횡단 비교 보존).
+//      값 > AUTO_GRID_MAX = 필터 칩 레이어(밴드 없음 — 활성 칩이 말한다). 무묶음 값이 있으면 '전체' 칩이 열린다.
+//      정렬은 부품 책임(소비처는 묶음 연속을 보장하지 않는다) · segmented·select는 단일 컨트롤이라 묶음 표현 불가.
 //  · 2열 규칙: 목록형 값 3개 이상 = 반폭 2열(중앙 거터+hairline), 2개 이하 = 반열 폭 한 열 적재.
-//    값묶음 밴드와 2열은 *상호배타* — 밴드 그룹은 1열, 칩으로 평면화(filtered)된 그룹만 2열.
+//    밴드는 열 *사이*가 아니라 블록 *사이*에 온다 — "어느 열을 지배하나"라는 옛 충돌이 없어 상호배타 규율은 폐기.
 //  · 접힘: 초기값 defaultCollapsed — 'sequential'(첫 그룹만 — 신규 작성 기본) | 'satisfied' | 'all' | 'none' | ids.
 //    선택·입력은 접힘을 유발하지 않는다(횡단 가격 비교 보존). "다음" 진행 버튼(현재 접고 다음 펼침)·헤더 토글이 전부,
 //    collapseOnPick은 opt-in. openGroups/onToggleGroup으로 controlled 승격.
 //  · 시점 보정(실검토 확정): 펼침·다음 = *최하단 맞춤*(넘친 만큼만, 패널 내부 스크롤, 하이라이트 없음).
-//    잠금 담기 탭·ref 명령 = 상단 정렬 점프. 그룹 헤더 sticky(불투명 배경 — 투명 유리 금지).
+//    잠금 담기 탭·ref 명령 = 상단 정렬 점프. 그룹 헤더 고정은 *열린 그룹만*(불투명 배경 — 투명 유리 금지):
+//    접힌 그룹은 뒤로 흐를 본문이 없어 이득 0인데 자기 요약줄을 잠식했다. 스크롤 컨테이너 padding-top 금지(optionset.css 참조).
 //  · 풋터: 소계는 이 면의 대표 숫자(대형 타이포). 미충족 경고는 상시가 아니라 *잠금 담기 탭 시* 플로팅 배너
 //    (풋터 위, 2.6초, 기하 불변) + 첫 미충족 그룹 점프. 필수 = 라벨 옆 별표(FormField 어휘).
 //  · 검색: search prop(끄기·임계·문구). 대상=라벨+보조+값묶음(정규화). 미충족 필수 그룹은 검색이 못 지운다.
 //  · 단위: showUnits(기본 false) — 수량 행 우측 단위 열은 소비처가 켠다(전 행 도배 방지).
 //  · 도메인 무지·금액 계산 0(§6): amount·subtotal은 표시용 입력. 그룹 1개+섹션 없음 = 그룹 헤더 자동 생략.
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
+import { Fragment, forwardRef, useEffect, useImperativeHandle, useRef, useState, type ReactNode } from 'react';
 import { Title } from './Title';
 import { Text } from './Text';
 import { Button } from './Button';
@@ -34,14 +39,18 @@ import { SegmentedControl } from './SegmentedControl';
 import { Select } from './Select';
 import { EmptyState } from './EmptyState';
 import { fmtCurrency } from './_cells';
-import type { Choice, NumberField, OptionGroup, OptionSelection } from './optionset';
+import { bundleBlocks, bundleLabels, type Choice, type NumberField, type OptionGroup, type OptionSelection } from './optionset';
 import './optionset.css';
 
-/** 그룹 표현 override — selection과 안 맞는 값은 무시(자동 도출로 폴백). 'collect'는 지원 중단 별칭(=filtered). */
+/** 그룹 표현 override — selection과 안 맞는 값은 무시(자동 도출로 폴백).
+ *  'filtered'·'collect'는 기하가 아니라 **값묶음 칩 레이어 강제** 별칭(기하는 자동 도출). */
 export type OptionGroupDisplay =
   | 'list' | 'cards' | 'chips' | 'grid' | 'segmented' | 'select' | 'filtered'
   | 'stepper' | 'collect'
   | 'input';
+
+/** 본문 기하 — 표현 어휘 중 "무엇을 어떤 모양으로 쌓나"만. 값묶음 레이어는 여기 없다. */
+type BodyMode = 'list' | 'cards' | 'chips' | 'grid' | 'segmented' | 'select' | 'stepper' | 'input';
 
 export type OptionSetPickerHandle = {
   focusGroup: (groupId: string) => void;
@@ -84,32 +93,37 @@ export type OptionSetPickerProps =
 
 const DEFAULT_SEARCH_THRESHOLD = 12;
 const AUTO_CARDS_MAX = 6;      // single 카드 자동 상한
-const AUTO_GRID_MAX = 10;      // single 2열 라디오 자동 상한(초과 + 값묶음 → filtered)
+const AUTO_GRID_MAX = 10;      // 2열 라디오 자동 상한 + 값묶음 레이어가 밴드→칩으로 넘어가는 규모 경계
 
 const norm = (s: string) => s.replace(/\s+/g, '').toLowerCase();
 const isPicked = (sel: OptionSelection, g: OptionGroup, code: string) =>
   g.selection === 'multi' ? (sel.pickedMany?.[g.id] ?? []).includes(code) : sel.picked[g.id] === code;
 
-const SINGLE_DISPLAYS = new Set<OptionGroupDisplay>(['list', 'cards', 'chips', 'grid', 'segmented', 'select', 'filtered']);
-const MULTI_DISPLAYS = new Set<OptionGroupDisplay>(['list', 'cards', 'chips', 'grid', 'filtered']);
-const QTY_DISPLAYS = new Set<OptionGroupDisplay>(['stepper', 'grid', 'filtered']);
-const hasChoiceGroups = (g: OptionGroup) => (g.choices ?? []).some((c) => !c.hidden && c.group);
-function resolveDisplay(g: OptionGroup, override?: OptionGroupDisplay): OptionGroupDisplay {
-  const ov = override === 'collect' ? 'filtered' : override;   // 지원 중단 별칭
+const SINGLE_DISPLAYS = new Set<BodyMode>(['list', 'cards', 'chips', 'grid', 'segmented', 'select']);
+const MULTI_DISPLAYS = new Set<BodyMode>(['list', 'cards', 'chips', 'grid']);
+const QTY_DISPLAYS = new Set<BodyMode>(['stepper', 'grid']);
+const CHIP_FORCE = new Set<OptionGroupDisplay>(['filtered', 'collect']);   // 기하가 아니라 레이어 강제 별칭
+const asBody = (ov?: OptionGroupDisplay): BodyMode | undefined =>
+  ov == null || CHIP_FORCE.has(ov) ? undefined : (ov as BodyMode);
+/** 본문 기하 도출 — 값묶음은 개입하지 않는다(묶음은 직교 레이어). */
+function resolveDisplay(g: OptionGroup, override?: OptionGroupDisplay): BodyMode {
+  const ov = asBody(override);
   const n = g.choices?.length ?? 0;
   if (g.selection === 'single') {
     if (ov && SINGLE_DISPLAYS.has(ov)) return ov;
-    if (n <= AUTO_CARDS_MAX) return 'cards';
-    if (n <= AUTO_GRID_MAX) return 'grid';
-    return hasChoiceGroups(g) ? 'filtered' : 'list';
+    return n <= AUTO_CARDS_MAX ? 'cards' : n <= AUTO_GRID_MAX ? 'grid' : 'list';
   }
   if (g.selection === 'multi') {
     if (ov && MULTI_DISPLAYS.has(ov)) return ov;
-    return n > AUTO_GRID_MAX && hasChoiceGroups(g) ? 'filtered' : 'grid';
+    return n <= AUTO_GRID_MAX ? 'grid' : 'list';
   }
   if (ov && QTY_DISPLAYS.has(ov)) return ov;
-  return n > AUTO_GRID_MAX && hasChoiceGroups(g) ? 'filtered' : 'stepper';
+  return 'stepper';
 }
+/** 값묶음 레이어를 칩으로 전환할지 — 규모 초과(값 > AUTO_GRID_MAX)거나 소비처가 명시. 이하면 구획 밴드. */
+const chipLayer = (g: OptionGroup, override?: OptionGroupDisplay) =>
+  CHIP_FORCE.has(override as OptionGroupDisplay) || (g.choices?.length ?? 0) > AUTO_GRID_MAX;
+const ALL_BUNDLES = '';   // 칩 레이어의 '전체'(무묶음 값 포함) — filterBy에 저장되는 표현값
 const fieldMode = (f: NumberField): 'stepper' | 'input' =>
   f.max == null || (f.max - (f.min ?? 0)) / (f.step ?? 1) > 40 ? 'input' : 'stepper';
 
@@ -284,7 +298,8 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
 
   // ── 렌더러들 ──
   // 택 행(라디오/체크) — [마크][라벨·보조][델타 우측]. 틴트 없음: 신호 = 마크 + weight.
-  const markRow = (g: OptionGroup, c: Choice) => {
+  //  tag = 여러 묶음이 한 목록에 섞일 때만(칩 '전체') 켠다 — 활성 칩·밴드와 같은 말을 두 번 하지 않는다.
+  const markRow = (g: OptionGroup, c: Choice, tag: boolean) => {
     const on = isPicked(selection, g, c.code);
     return (
       <div key={c.id} className="erpOSP-mrow" role="button" tabIndex={0} data-on={on || undefined}
@@ -293,7 +308,7 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
           {on && <Icon name="check" size="sm" />}
         </span>
         <span className="erpOSP-info">
-          <span className="erpOSP-lbl">{c.label}</span>
+          <span className="erpOSP-lbl">{c.label}{tag && c.group && <span className="erpOSP-gtag"> {c.group}</span>}</span>
           {c.sublabel && <span className="erpOSP-sub">{c.sublabel}</span>}
         </span>
         <span className="erpOSP-delta">{delta(c.amount)}</span>
@@ -316,15 +331,15 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
     </div>
   );
 
-  // 수량 행 — [마크][라벨(+태그: filtered 평면일 때만)][단가(무부호)][수량 슬롯 상시][단위?].
+  // 수량 행 — [마크][라벨(+태그: 여러 묶음이 섞인 목록에서만)][단가(무부호)][수량 슬롯 상시][단위?].
   //  빈 행 = 행 전체 버튼(클릭·Enter = 1 담김), hover에 "담기" 알약이 스테퍼 자리에서 morph.
-  const qtyRow = (g: OptionGroup, c: Choice, flat: boolean) => {
+  const qtyRow = (g: OptionGroup, c: Choice, tag: boolean) => {
     const n = selection.qty[c.id] ?? 0;
     const unitCell = props.showUnits ? <span className="erpOSP-unit">{c.unit ?? ''}</span> : null;
     const price = c.amount != null && c.amount > 0 ? fmtCurrency(c.amount) : '';
     const info = (
       <span className="erpOSP-info">
-        <span className="erpOSP-lbl">{c.label}{flat && c.group && <span className="erpOSP-gtag"> {c.group}</span>}</span>
+        <span className="erpOSP-lbl">{c.label}{tag && c.group && <span className="erpOSP-gtag"> {c.group}</span>}</span>
         {c.sublabel && <span className="erpOSP-sub">{c.sublabel}</span>}
       </span>
     );
@@ -362,15 +377,17 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
     );
   };
 
-  // 값묶음 필터 칩 — 항상 정확히 하나 활성(정정 2026-07-29): 첫 묶음 기본 하이라이트, 재클릭 해제 폐지(칩 간 전환만).
-  const filterChips = (g: OptionGroup, all: Choice[]) => {
-    const groupsOf = [...new Set(all.filter((c) => c.group).map((c) => c.group as string))];
-    if (groupsOf.length === 0) return null;
-    const cur = filterBy[g.id] ?? groupsOf[0];
+  // 값묶음 필터 칩(규모 초과 레이어) — 항상 정확히 하나 활성(정정 2026-07-29): 첫 묶음 기본, 재클릭 해제 없음(칩 간 전환만).
+  //  무묶음 값이 있을 때만 '전체' 칩이 열린다(그 값들에 닿는 유일한 통로 — 없으면 묶음 칩이 이미 전 값을 덮는다).
+  const filterChips = (g: OptionGroup, all: Choice[], labels: string[], cur: string) => {
     const setF = (v: string) => setFilterBy((m) => (m[g.id] === v ? m : { ...m, [g.id]: v }));
     return (
       <div className="erpOSP-fchips">
-        {groupsOf.map((lbl) => (
+        {all.some((c) => !c.group) && (
+          <button type="button" className="erpOSP-fchip" data-on={cur === ALL_BUNDLES || undefined}
+            onClick={() => setF(ALL_BUNDLES)}>전체<span className="n">{all.length}</span></button>
+        )}
+        {labels.map((lbl) => (
           <button key={lbl} type="button" className="erpOSP-fchip" data-on={cur === lbl || undefined} onClick={() => setF(lbl)}>
             {lbl}<span className="n">{all.filter((c) => c.group === lbl).length}</span>
           </button>
@@ -378,19 +395,14 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
       </div>
     );
   };
-  const applyFilter = (g: OptionGroup, list: Choice[]) => {
-    const first = [...new Set((g.choices ?? []).filter((c) => !c.hidden && c.group).map((c) => c.group as string))][0] ?? '';
-    const cur = filterBy[g.id] ?? first;
-    return cur === '' ? list : list.filter((c) => c.group === cur);
-  };
 
-  const choiceBody = (g: OptionGroup, mode: OptionGroupDisplay) => {
-    const visible = (g.choices ?? []).filter((c) => !c.hidden).filter(matches);   // hidden=봉인 — 렌더 제외(§1 2026-07-29)
-    if (mode === 'cards') return cardsBody(g, visible);
+  // 본문 기하 하나 — 주어진 값 목록을 그 모드의 모양으로 쌓는다. 묶음 레이어는 이 위(호출측)에 있다.
+  const bodyOf = (g: OptionGroup, mode: BodyMode, list: Choice[], tag: boolean): ReactNode => {
+    if (mode === 'cards') return cardsBody(g, list);
     if (mode === 'chips') {
       return (
         <div className="erpOSP-chips">
-          {visible.map((c) => (
+          {list.map((c) => (
             <Chip key={c.id} selected={isPicked(selection, g, c.code)} onChange={() => pick(g, c.code)}>
               {`${c.label}${deltaOrNull(c.amount) ? ` ${deltaOrNull(c.amount)}` : ''}`}
             </Chip>
@@ -402,7 +414,7 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
       return (
         <div className="erpOSP-inlineCtl">
           <SegmentedControl size="sm" fullWidth
-            options={visible.map((c) => ({ value: c.code, label: c.label }))}
+            options={list.map((c) => ({ value: c.code, label: c.label }))}
             value={selection.picked[g.id] ?? ''}
             onChange={(v) => pick(g, v)} />
         </div>
@@ -412,38 +424,48 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
       return (
         <div className="erpOSP-inlineCtl">
           <Select size="sm" placeholder="선택"
-            options={visible.map((c) => ({ value: c.code, label: `${c.label}${deltaOrNull(c.amount) ? ` ${deltaOrNull(c.amount)}` : ''}` }))}
+            options={list.map((c) => ({ value: c.code, label: `${c.label}${deltaOrNull(c.amount) ? ` ${deltaOrNull(c.amount)}` : ''}` }))}
             value={selection.picked[g.id] ?? null}
             onChange={(v) => { if (v != null) pick(g, v); }} />
         </div>
       );
     }
     const isQty = g.selection === 'quantity';
-    if (mode === 'filtered') {
-      const list = applyFilter(g, visible);
-      const rows = list.map((c) => (isQty ? qtyRow(g, c, true) : markRow(g, c)));
+    const rows = list.map((c) => (isQty ? qtyRow(g, c, tag) : markRow(g, c, tag)));
+    if (mode === 'list') return <>{rows}</>;
+    return twoCol(rows, list.length);   // 'grid' | 'stepper'
+  };
+
+  const choiceBody = (g: OptionGroup, mode: BodyMode, override?: OptionGroupDisplay) => {
+    const all = (g.choices ?? []).filter((c) => !c.hidden);   // hidden=봉인 — 렌더 제외(§1 2026-07-29)
+    const visible = all.filter(matches);
+    const labels = bundleLabels(all);
+    // 단일 컨트롤(segmented·select)은 묶음을 표현할 수 없다 — 계약 §5(소비처가 override로 고른 소실)
+    if (labels.length === 0 || mode === 'segmented' || mode === 'select') return bodyOf(g, mode, visible, false);
+
+    if (chipLayer(g, override)) {
+      const cur = filterBy[g.id] ?? labels[0];
+      const list = cur === ALL_BUNDLES ? visible : visible.filter((c) => c.group === cur);
       return (
         <>
-          {filterChips(g, (g.choices ?? []).filter((c) => !c.hidden))}
-          {list.length === 0 ? <div className="erpOSP-none">결과가 없습니다.</div> : twoCol(rows, list.length)}
+          {filterChips(g, all, labels, cur)}
+          {list.length === 0
+            ? <div className="erpOSP-none">결과가 없습니다.</div>
+            : bodyOf(g, mode, list, cur === ALL_BUNDLES)}
         </>
       );
     }
-    // stepper(수량 기본) · grid · list — 밴드(값묶음 소구획)와 2열은 상호배타.
-    const bands = hasChoiceGroups(g);
-    if (bands && mode !== 'grid') {
-      // 1열 + 구획 밴드(전폭 옅은 면 — "이 아래 전부가 이 묶음")
-      const out: ReactNode[] = [];
-      let last: string | undefined;
-      for (const c of visible) {
-        if (c.group && c.group !== last) { out.push(<div key={`b:${c.group}`} className="erpOSP-band">{c.group}</div>); last = c.group; }
-        out.push(isQty ? qtyRow(g, c, false) : markRow(g, c));
-      }
-      return <>{out}</>;
-    }
-    const rows = visible.map((c) => (isQty ? qtyRow(g, c, false) : markRow(g, c)));
-    if (mode === 'list') return <>{rows}</>;
-    return twoCol(rows, visible.length);   // 'grid' | 'stepper'(묶음 없음)
+    // 기본 = 구획 블록. 밴드가 블록 *사이*에 오므로 어떤 기하(카드·2열·목록)와도 겹치지 않는다.
+    return (
+      <>
+        {bundleBlocks(visible).map((b, i) => (
+          <Fragment key={i}>
+            {b.band && <div className="erpOSP-band">{b.band}</div>}
+            {bodyOf(g, mode, b.items, false)}
+          </Fragment>
+        ))}
+      </>
+    );
   };
 
   const numRow = (f: NumberField, mode: 'stepper' | 'input') => {
@@ -551,7 +573,9 @@ export const OptionSetPicker = forwardRef<OptionSetPickerHandle, OptionSetPicker
         {sum != null && <div className="erpOSP-sumline">{sum}</div>}
         {open && (
           <div className="erpOSP-gbd">
-            {g.selection === 'number' ? numBody(g, props.display?.[g.id]) : g.selection === 'text' ? textBody(g) : choiceBody(g, mode!)}
+            {g.selection === 'number' ? numBody(g, props.display?.[g.id])
+              : g.selection === 'text' ? textBody(g)
+                : choiceBody(g, mode!, props.display?.[g.id])}
             {!headerless && !isLast && (
               <div className="erpOSP-next">
                 <button type="button" onClick={(e) => { e.stopPropagation(); goNext(g); }}>다음 <Icon name="chevron-down" size="sm" /></button>

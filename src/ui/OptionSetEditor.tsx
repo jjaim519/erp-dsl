@@ -12,7 +12,7 @@
 //  · 미리보기(단일 옵션)는 경량 내장 렌더 — Picker 통째 내장은 Composer(조립 프리뷰·풋터 유의미)의 몫.
 //  · usage(사용처)는 헤더 상시 노출 안 함(확정) — 삭제 확인에서만 나열. 도메인 무지(헌법 1)·금액 계산 0(§6).
 import { useEffect, useRef, useState } from 'react';
-import type { Choice, NumberField, OptionGroup, TextField } from './optionset';
+import { bundleBlocks, type Choice, type NumberField, type OptionGroup, type TextField } from './optionset';
 import type { RefOption } from './InheritedValueField';
 import type { ExprVariable } from './ExpressionField';
 import type { KVKey } from './KeyValueField';
@@ -695,13 +695,8 @@ export function OptionSetEditor({ groups, onChange, usage, title, readOnly, refO
       );
     }
     if (g.selection === 'single' || g.selection === 'multi') {
-      const bands: { band: string; items: Choice[] }[] = [];
-      for (const c of vis) {
-        const b = c.group ?? '';
-        const last = bands[bands.length - 1];
-        if (last && last.band === b) last.items.push(c);
-        else bands.push({ band: b, items: [c] });
-      }
+      // 묶음 블록은 선택 면과 같은 헬퍼로 — 두 면의 그림이 갈리지 않게(계약: optionset.ts bundleBlocks)
+      const bands = bundleBlocks(vis);
       return (
         <div>
           {bands.map((bg, i) => (

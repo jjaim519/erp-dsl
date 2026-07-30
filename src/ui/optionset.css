@@ -363,9 +363,9 @@
 .erpOSP-group { border-bottom: var(--border-width) solid var(--border-default); }
 .erpOSP-group:last-child { border-bottom: 0; }
 
-/* 그룹 헤더 sticky — 불투명 배경 필수(버튼 리셋이 이기지 못하게 명시. 투명 유리 버그 실검토). */
+/* 그룹 헤더 — 고정은 *열린 그룹만*(아래 v13 블록). 고정될 땐 불투명 배경 필수(투명 유리 금지). */
 .erpOSP-ghead {
-  position: sticky; top: 0; z-index: 2;
+  z-index: 2;
   display: flex; align-items: center; gap: var(--mantine-spacing-xs);
   padding: 8px var(--mantine-spacing-md); cursor: pointer; min-width: 0; min-height: 38px;
   background: var(--surface-raised);
@@ -402,7 +402,8 @@
 .erpOSP-col1 > * { grid-column: 1; }
 @container (max-width: 640px) { .erpOSP-grid2 { grid-template-columns: minmax(0, 1fr); background: none; } }
 
-/* 값묶음 구획 밴드 — 전폭 옅은 면("이 아래 전부가 이 묶음"). 밴드와 2열은 상호배타(밴드 그룹=1열). */
+/* 값묶음 구획 밴드 — 전폭 옅은 면("이 아래 전부가 이 묶음"). 밴드는 블록 *사이*에 오고 그 안에서 본문 기하(카드·2열·목록)가
+   반복된다 — 열 내부에 끼어들지 않으니 옛 "밴드×2열 상호배타" 규율은 폐기(F′ 2026-07-30). */
 .erpOSP-band {
   margin-top: 3px; padding: 5px var(--mantine-spacing-md);
   font-size: var(--typo-caption-size); font-weight: 700; letter-spacing: 0.04em;
@@ -473,19 +474,27 @@
 .erpOSP-txtin { flex: 1; min-width: 0; max-width: 340px; }
 
 /* ═══ v13 이식(테스트베드 정본) — 아마존식 번호 블록·⑨트레이·잉크 비대칭·stuck 그림자. 섹션 오버라인 없음 ═══ */
-.erpOSP-body { padding: 4px 0 10px; }
+/* 스크롤 컨테이너에 padding-top을 두면 안 된다 — 크롬은 sticky top을 *content box* 기준으로 잡아
+   그만큼 고정 헤더가 아래로 밀리고, 그 틈으로 뒤 행이 지나간다(실화면 3px 슬릿, 2026-07-30 실측).
+   상단 여백은 첫 그룹의 margin이 진다. */
+.erpOSP-body { padding: 0 0 10px; }
+.erpOSP-body > .erpOSP-group:first-child { margin-top: 4px; }
 .erpOSP-group { margin: 0 10px 8px; border-radius: 10px; }
 .erpOSP-group[data-open] { background: var(--bg-secondary); }          /* ⑨ 열린 그룹만 표면 트레이 */
 .erpOSP-group[data-done] { cursor: pointer; }                          /* 완료 접힘 = 헤더+요약 한 몸 hover */
 .erpOSP-group[data-done]:hover { background: var(--bg-secondary); }
 .erpOSP-ghead {
-  position: sticky; top: -1px; z-index: 2;
   display: flex; align-items: center; gap: 10px; width: 100%; text-align: left;
   padding: 12px 16px; min-height: 46px; cursor: pointer;
   background: var(--surface-raised); border-radius: 10px; border-bottom: 0;
 }
 .erpOSP-ghead:hover { background: var(--bg-secondary); }
-.erpOSP-group[data-open] .erpOSP-ghead { background: var(--bg-secondary); border-radius: 10px 10px 0 0; }
+/* 고정은 열린 그룹만 — 접힌 그룹은 뒤로 흐를 본문이 없어 이득이 0이고, 자기 요약줄을 잠식한다(투명 배경이라 비쳤다).
+   top:-1px = stuck 감지 트릭(IntersectionObserver threshold 1)과 상단 1px 겹침 보험. */
+.erpOSP-group[data-open] .erpOSP-ghead {
+  position: sticky; top: -1px;
+  background: var(--bg-secondary); border-radius: 10px 10px 0 0;
+}
 .erpOSP-group[data-done] .erpOSP-ghead, .erpOSP-group[data-done]:hover .erpOSP-ghead { background: transparent; }
 .erpOSP-ghead[data-sum] { padding-bottom: 2px; min-height: 0; }        /* 요약 줄과 짝일 때만 하단 조임(음수 마진 금지) */
 .erpOSP-ghead.stuck { box-shadow: 0 1px 0 var(--border-default); }     /* sticky로 떠 있을 때만 경계 */

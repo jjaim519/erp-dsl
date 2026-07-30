@@ -317,20 +317,26 @@ function KVFieldDemo() {
 const PIZZA_SET: OptionGroup[] = [
   { id: 'g1', label: '크기', section: '기본', selection: 'number',
     fields: [{ key: 'inch', label: '지름', value: 12, unit: 'in', min: 9, max: 18 }] },
+  // 도우 = single 4개 + 값묶음 → cards 기하가 묶음 블록으로 반복된다(F′ — 옛 밴드×2열 상호배타 폐기의 시각 증거)
   { id: 'g2', label: '도우', section: '기본', selection: 'single', required: true,
     choices: [
-      { id: 'c1', code: 'thin', label: '씬', amount: 0 },
-      { id: 'c2', code: 'pan', label: '팬', amount: 2000 },
+      { id: 'c1', code: 'thin', label: '씬', group: '클래식', amount: 0 },
+      { id: 'c2', code: 'pan', label: '팬', group: '클래식', amount: 2000 },
+      { id: 'c7', code: 'cheese', label: '치즈 크러스트', group: '프리미엄', amount: 4000 },
+      { id: 'c8', code: 'gold', label: '골드 엣지', group: '프리미엄', amount: 5000 },
     ] },
+  // 토핑 = 묶음이 *흩어진* 순서로 온다(실데이터가 그렇다 — 소비처의 정렬 축은 값 순서 하나뿐).
+  //  부품이 렌더 직전에 모은다: 밴드는 묶음당 한 번, 첫 등장 순서·묶음 안 순서 유지(bundleBlocks 계약).
   { id: 'g3', label: '토핑', section: '추가', selection: 'quantity',
     choices: [
       { id: 'c3', code: 'pep', label: '페퍼로니', group: '육류', amount: 1500 },
-      { id: 'c5', code: 'bacon', label: '베이컨', group: '육류', amount: 1800 },
       { id: 'c4', code: 'olive', label: '올리브', group: '채소', amount: 800 },
+      { id: 'c5', code: 'bacon', label: '베이컨', group: '육류', amount: 1800 },
       { id: 'c6', code: 'mush', label: '양송이', group: '채소', amount: 700 },
     ] },
 ];
-// 음료 = §5의 "quantity 그룹 하나"(2단 — 개체 층 없음). 값 12개 + 값묶음 → collect 표현 자동 발동(E-1 골라 담는 면).
+// 음료 = §5의 "quantity 그룹 하나"(2단 — 개체 층 없음). 값 13개(>AUTO_GRID_MAX) + 값묶음 → 묶음 레이어가 필터 칩으로 전환.
+//  마지막 값은 *무묶음*이다 — 그 값에 닿는 통로인 '전체' 칩이 열린다(칩만 있으면 무묶음 값이 화면에서 사라졌던 결함).
 const DRINK_SET: OptionGroup[] = [
   { id: 'gd', label: '음료', selection: 'quantity',
     choices: [
@@ -346,6 +352,7 @@ const DRINK_SET: OptionGroup[] = [
       { id: 'dc10', code: 'tomato', label: '토마토주스', group: '주스', amount: 3800, unit: '잔' },
       { id: 'dc11', code: 'milkis', label: '밀키스 500ml', group: '탄산', amount: 2200, unit: '병' },
       { id: 'dc12', code: 'water', label: '생수 500ml', group: '주스', amount: 1000, unit: '병' },
+      { id: 'dc13', code: 'icetea', label: '아이스티', amount: 2500, unit: '잔' },
     ] },
 ];
 const PIZZA_PRODUCTS = [
