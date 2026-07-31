@@ -96,10 +96,10 @@ type FieldSpec = {
 > 표기: `prop: 값` / 닫힌 enum은 `a|b|c`. 공통적으로 `className`·`style`은 어디에도 없다.
 
 ### 의미 원자 — 표시·행동 (18)
-- **Button** `variant: primary|secondary|danger|ghost` · `size: sm|md` · `loading` `disabled` `fullWidth` `leftIcon` `rightIcon` `onClick` `type: button|submit`
+- **Button** `variant: primary|secondary|danger|ghost` · `size: sm|md` · `loading` `disabled` `fullWidth` `leftIcon` `rightIcon` `onClick` `type: button|submit` · `ariaLabel?`(텍스트가 있는데 *맥락*이 필요할 때. 아이콘 전용은 IconButton)
 - **IconButton** `icon: IconName` · `label`(aria 필수) · `variant`(Button과 동일) · `size: sm|md`
 - **Badge** `color: neutral|success|warning|danger|info` · children=string
-- **CountBadge** `count`(0 이하면 안 보임) · `tone: danger|neutral`(기본 danger=행동요구) · `max?`(기본 99, 초과 "N+") · `dot?` — 알림 카운트(솔리드 빨강 N). 상태=Badge와 역할 분리
+- **CountBadge** `count`(0 이하면 안 보임) · `tone: danger|neutral`(기본 danger=행동요구) · `max?`(기본 99, 초과 "N+") · `dot?` · `showZero?`(0도 그림 — 단계별 큐처럼 "0건"도 정보일 때. 이때 tone=neutral 권장) — 알림 카운트(솔리드 빨강 N). 상태=Badge와 역할 분리
 - **Chip** `color`(상태색+neutral) · `selected` `onChange` `onRemove`
 - **Text** `variant: body|body-strong|caption` · `color: primary|secondary|danger`
 - **Title** `variant: display|heading|subheading`
@@ -114,7 +114,7 @@ type FieldSpec = {
 - **Skeleton** `variant: text|block|circle` · `lines`(text) · `size: sm|md|lg` · `radius: sm|md` — 로드 전 자리표시(레이아웃 부품 안에 박아 형태 보존; 비결정형 점은 Spinner)
 - **Progress** `value: 0~100` · `tone: primary|success|warning|danger` · `size` — 결정형 진행률(끝 모르는 로딩은 Spinner)
 - **SegmentedControl** `options` `value` `onChange` · `size` `fullWidth`  ← 같은 대상의 뷰/모드 토글
-- **TabBar** `options` `value` `onChange`  ← 다른 구획으로 전환
+- **TabBar** `options: {label,value,count?,countTone?,showZero?}[]` `value` `onChange`  ← 다른 구획으로 전환(`count`→CountBadge, 단계별 큐는 `showZero`+`countTone:'neutral'`)
 
 ### 의미 원자 — 입력군 (13)
 공통: `value`/`onChange`(controlled 전용) · `name` · `size: sm|md` · `disabled` · `placeholder`. **`label`·`error`·`required`는 입력칸이 아니라 `FormField`가 소유**.
@@ -127,16 +127,19 @@ type FieldSpec = {
 - **Combobox** `options` `value`(단일) `clearable?` — 검색되는 Select(대용량 옵션 타이핑 필터)
 - **TimePicker** `value: "HH:MM"` — 시각 입력(날짜는 DatePicker)
 
-### 레이아웃 원자 (3) · 배치 프리미티브 (4)
-- **Card** `variant: elevated|outlined|flat` · `padding: none|sm|md|lg`
+### 레이아웃 원자 (4) · 배치 프리미티브 (5)
+- **Card** `variant: elevated|outlined|flat` · `padding: none|sm|md|lg` · `fill`(부모 높이 채움)
 - **Divider** `orientation: horizontal|vertical`
-- **Container** `maxWidth: narrow|default|wide`  ← 폭의 천장은 여기 하나뿐
+- **Page** children만 — AppShell 아래 **모든 화면의 폭 규율**(1200 캡 + 중앙정렬). 페이지별 폭 오버라이드 없음. 1200을 넘겨야 하는 콘텐츠는 페이지 폭을 깨지 말고 그 위젯 안에서 가로 스크롤
+- **Container** `maxWidth: narrow|default|wide`  ← 위젯·폼 내부의 좁은 읽기 컬럼용(페이지 최상위는 Page)
 - **Stack**(세로) `gap`(토큰) · `align: start|center|end|stretch` · `justify: start|center|end|between`
 - **Group**(가로) `gap` · `align: start|center|end` · `justify: …|between` · `wrap`
 - **Grid** `columns: 1|2|3|4|6|12` · `gap` · 자식 `Grid.Col span: 1~12`
-- **Bento**(페이지 본문 격자, 전 PageGrid) `columns: 2|3|4|6|12` · `gap: sm|md|lg` · 타일 `Bento.Tile colSpan` `rowSpan: 1|2|3` — 고정 셀 높이(가변 높이 불허·iOS 홈식)
+- **Bento**(페이지 본문 격자, 전 PageGrid) `columns: 2|3|4|6|12` · `gap: sm|md|lg` · `fill`(작업면 모드=행이 부모 잔여고 등분) · 타일 `Bento.Tile colSpan` `rowSpan: 1|2|3` — 고정 셀 높이(가변 높이 불허·iOS 홈식)
+- **ListDetail** `list` `detail` `collapsed?` — 평면 목록 + 프리뷰 2-pane(.82:1.18, **상세는 sticky**, 0건이면 1열). 좌=QueueList / 우=DecisionPanel이 표준 조합. 계층 마스터-디테일은 HierarchyExplorer, 정보+폼은 DetailPage
 
-### 분자 (26) — 원자를 결합·일부 상태 고정
+### 분자 (27) — 원자를 결합·일부 상태 고정
+> 모바일 전용 분자 10종은 아래 「모바일 계열」에 따로 있다(시각 체계가 정반대라 섞어 쓰지 않는다).
 - **FormField** — 입력 컨트롤을 children으로 받아 `label`·`withAsterisk`·`error`(메시지+빨간 테두리)를 두름. **모든 입력칸은 이걸로 감싼다.**
 - **MultiSelect** `options` `value: string[]` · **DateRangeField** `value: {start,end}`
 - **InputGroup** `leftAddon`/`rightAddon: string|<Icon>` · **FileUploader** `value: FileItem[]`
@@ -155,14 +158,15 @@ type FieldSpec = {
 - **PeriodNavigator** `label`(포맷된 기간 문자열) `onPrev` `onNext` `disabledPrev?` `disabledNext?` — 기간 한 칸 이동(‹ 라벨 ›). 돈 화면 기간 스코프(LedgerPage)
 - **NumberStepper** `value` `onChange` `min?` `max?` `step?` `size?` — 수량 −[n]+ 스테퍼(타이핑 가능, B2B 대량). min/max는 UI 조작 한계(검증은 스키마)
 - **Editor** `value`(HTML) `onChange` `features?: ('bold'|'italic'|'heading'|'bulletList'|'orderedList'|'quote'|'link'|'image'|'table'|'divider')[]` `placeholder?` `name?` — 리치 텍스트 작성기. **TipTap(헤드리스 엔진) 흡수**, 툴바·서식은 우리 토큰(무테). `features` 닫힌 세트로 소비처가 기능 선택. 출력 HTML
+- **NoteThread** `notes: ThreadNote[]` `draft`/`onDraftChange`/`onSubmit` `onEdit?`/`onDelete?` `submitting?`/`busyId?` — 데스크탑에서 **쓰기 가능한 누적 메모**(MobileComment+MobileComposer의 데스크탑 짝). Enter 제출은 부품이 form을 소유해 해결. 빈 상태 문구 없음(입력칸이 이미 말한다). 자기 표면 없음 — 남의 섹션 안에 들어간다
 - **RichText** `html` — 저장된 리치 텍스트(HTML) 읽기 뷰어. **Editor의 짝**(같은 TipTap 스키마 → 새니타이즈). BoardView 본문 등에서 작성물 그대로 렌더
 
-### 유기체 (16) — 화면 한 구획, 도메인은 스키마로만 주입
+### 유기체 (29) — 화면 한 구획, 도메인은 스키마로만 주입
 - **Modal** `opened` `onClose` `title` `actions` `size: sm|md|lg|xl|full`(full=95vw·90vh, 풀스크린 아님) · children=본문
 - **DataTable** `columns` `rows` `status: loading|empty|ready` · controlled 정렬·페이징 · `onRowClick`
 - **EmptyState** `icon` `title` `description` `action?`
 - **PageHeader** `title` `description?` `actions?` · **DescriptionList** `items` `columns: 1|2|3`
-- **AppShell** `logo` `menuItems` `activePath` `onNavigate` `profile` `notification` · children=콘텐츠 · **3티어 반응형(자동)**: 데스크탑 ≥1280 풀 넷바(로고+메뉴+하단 유틸리티) / 태블릿 768–1279 아이콘 레일(로고 없음) / 폰 <768 하단탭+슬림 상단바. 상단바는 폰만(데스크탑·태블릿 해체 — 알림·프로필은 넷바 하단)
+- **AppShell** `logo` `menuItems`(`count?`→CountBadge) `activePath` `onNavigate` `profile` `notification` · children=콘텐츠 · **2티어 반응형(자동)**: 데스크탑 ≥1280 풀 넷바 260(로고+메뉴+하단 유틸리티) / 태블릿 768–1279 아이콘 레일 72(로고 없음). **상단바 없음** — 알림·프로필은 넷바 하단 유틸리티 존. **폰은 범위 밖**(MobileShell이 받는다): `APPSHELL_MIN_WIDTH`(768) export를 소비처가 import해 **같은 값으로 모바일 라우팅을 판정**한다(각자 숫자를 들면 반드시 어긋난다). 하한 아래는 가로 스크롤로 예측 가능하게 무너지는 안전망
 - **Timeline** `events: TimelineEvent[]` · **Calendar** `month` `events: CalendarEvent[]`(월 뷰 단일)
 - **Tree** `nodes` controlled 선택·펼침 · `editable`(쓰기 게이트)
 - **FieldGrid** `columns` `rows: FieldGridCell[][]`(셀=`label?`|`field?`|`image?`|`node?`, `colSpan?` `rowSpan?` `align?`) `fields: FieldSpec[]` `mode: edit|read` `size: sm|md|lg`(기본 md — 타이포·행 단위·세로패딩 한 세트, 행 높이는 타이포 따라 동적) `values` `onChange` `errors?` — 테두리 셀 격자(장표/帳票). 작성·확인 양용·**같은 기하**(셀 박스 불변, read=같은 입력 원자 inert 재사용). `node`=비표준 컨트롤 통째 슬롯(4종 배타·mode 무관). 머리표(라벨:값)·명세표(헤더+값 행)·대분류 밴드 다 같은 모델
@@ -172,6 +176,41 @@ type FieldSpec = {
 - **Transfer** `items: {value,label}[]` `selected: string[]` `onChange` `titles?` — 좌·우 듀얼 리스트 대량 배정(인라인 다중은 MultiSelect)
 - **ToastHost** (props 없음) — 토스트 호스트(위치·지속·스택 단일 관리). 트리거는 `notify.*`, 앱 셸에 1회 배치
 - **LineItemList** `items: LineItem[]` `onQuantityChange` `onRemove?` `showTotal?` `showAmount?` `unit?` — 그룹·소계·합계·컴팩트 ✕ 라인아이템(수량=NumberStepper). 자체 surface 없음(소비처가 well에 담음)
+- **ListWidget** `columns: ListColumn[]` `data: ListRow[]` `search?` `selectable?`/`bulkActions?` `pageSize?` `title?`/`primaryAction?` `onRowClick?` `emptyState?` `status` — 목록을 raised 표면 하나에 담는 위젯(**TanStack Table 흡수**). 툴바(검색·facet 필터)·벌크바를 표면 *안*에 소유. ListPage의 위젯판
+- **NotificationPanel** `items: NotifItem[]` `onMarkAllRead?` `onViewAll?` `emptyLabel?` — AppShell 알림 `content` 슬롯에 꽂는 패널(헤더/목록/푸터 3층, 시간 그룹 라벨은 소비처). 날짜 로직 0
+
+**큐·결정 계열 (2)** — "한 건을 골라 다음 단계로 넘긴다" 화면의 좌·우. `ListDetail`(배치)이 둘을 담는다:
+- **QueueList** `items: QueueItem[]` `selectedId`/`onSelect` `selectionMark: fill|radio` `status: ready|loading|empty` `skeletonRows?` `emptyState?` — 평면 목록 + **선택 상태**(ListWidget=표·선택 없음 / StatusRow=골격 고정 / MobileListRow=모바일). 행=`{ mark?{label,weight: quiet|outline|solid}, title, titleMuted?, meta?[{text,tone,icon?}], badge?, disabled? }` — **도메인 어휘는 라벨 문자열로만**(raw 노드 슬롯 아님). 선택 표현은 prop으로 못 바꾼다(모양+굵기 이중 단서=WCAG 1.4.1). mark 폭·구분선 인셋·`·` 구분자·행 높이는 부품 소유
+- **DecisionPanel** `title`/`subtitle?` `sections: DecisionSection[]` `primaryAction`(+`disabled?`/`disabledReason?`) `secondaryActions?` `actionNote?` — **하단 고정 액션 바를 소유**한 상세 패널(주 CTA는 언제나 맨 오른쪽, 보조가 그 왼쪽에 붙는다). 잠금 CTA는 `disabled` 속성이 아니라 **잠금+사유 안내**(disabled 버튼은 포커스를 못 받아 사유가 도달 안 함). ⚠ sticky 바는 **부모가 높이를 줘야** 성립
+
+**저작 툴킷 (5)** — "값을 만드는 면"의 부품. 도메인 무지, 계산은 표시용만(실제 파이프라인은 소비처):
+- **Repeater** `items` `renderItem` `renderHeader?` `onAdd`/`onRemove`/`onReorder?` `addLabel` `collapsible?`/`defaultOpen?` `min?`/`max?` `emptyState` — 가변 레코드 목록의 크롬만 소유(추가·삭제·펼침). 본문은 raw 슬롯이라 소비처가 원자로 조립, 중첩 가능
+- **InheritedValueField** `refOptions: RefOption[]` `refId`/`onRefChange` `override`/`onOverrideChange` `ratio?` `format?` — 참조(SSOT)+상속+override+배율을 한 부품에 봉인. `effective = (override>0 ? override : ref.price) × ratio`를 부품이 계산·표시(손조립 시 금액이 조용히 틀리는 것을 원천봉쇄)
+- **ExpressionField** `value`/`onChange` `variables: ExprVariable[]` `functions?` `validate?: live|off` — 닫힌 DSL 수식 편집기(하이라이트 + 미지 변수·괄호·비교 리터럴 live 검증). 문법은 패키지, 변수는 소비처 주입
+- **KeyValueField** `keys: KVKey[]` `value`/`onChange` `valueType?: number|currency` — 닫힌 키집합 → 수치 맵 편집(각 키 1회)
+- **AssignPicker** `templates: AssignTemplate[]` `kind` `onAssign` `confirmReapply?` — 템플릿 kind별 배정(필터 리스트 → 재적용 경고 Modal → 위임). kind는 불투명 태그(동등 비교만)
+
+**OptionSet 계열 (4)** — 저작 면이 *쓰고* 선택 면이 *읽는* 단일 계약(`optionset.ts`: `OptionGroup`·`Choice`·`OptionSelection`·`OptionNode`). 변환 계층 금지, 금액 계산 0:
+- **OptionSetEditor** `groups`/`onChange` `usage?` `title?` `readOnly?` — 옵션 *정의* 저작(2-pane: 좌 트리(옵션→묶음) / 우 표 작업면 + 단일 옵션 미리보기). 모든 쓰기는 `onChange` 하나
+- **OptionSetComposer** `nodes`/`onNodesChange` `library: OptionGroup[]` `onEditOption?`/`onCreateOption?` `labels?` — 구성(부착) 저작. 정의는 라이브러리 참조·부착과 순서는 노드의 속성. 미리보기는 Picker 통째 내장
+- **OptionSetPicker** `mode: idle|pick|configure` `groups`/`selection` `onPick`/`onPickMany?`/`onQty`/`onNum` `display?` `search?` `defaultCollapsed?` `subtotal` `primary` — 정의를 읽어 *고르는* 선택 면. 표현 어휘(cards/grid/list/chips/stepper/input)는 값 개수로 **자동 도출**, `display`는 override. **값묶음(`Choice.group`)은 기하와 직교한 레이어**(기본=구획 밴드 블록 / 값>10=필터 칩)이고 **정렬 책임은 부품**(`bundleBlocks`)
+- **CompositionOutline** `sections: CompositionSection[]` `summary?` `addLabel?`/`emptyHint?` `footer?` `onAddToSection`/`onSelectLine`/`onDeleteLine` — 2-pane 우측 "작성물 카드 스택". 카드는 라인이 있거나 작성 중인 섹션만, 추가는 상단 단일 버튼 + 계층 메뉴
+
+### 모바일 계열 (11) — AppShell 계열의 *형제*(축소판 아님)
+
+> **`Mobile*` 접두가 곧 경계다.** 면·그림자를 안 쓰고 **배경 + 가로 헤어라인**으로만 나눈다(무테 지향의 반대 — 모바일의 정체성이 이긴다). 데스크탑 부품과 시각 체계가 정반대라 **섞어 쓰면 안 된다**. 입력은 전용 부품을 두지 않는다 — `FormField` + 입력 원자를 그대로 쓰고, 타이포·44pt 터치타깃은 셸 스코프가 처리한다.
+
+- **MobileShell**(유기체) `title`/`onBack`/`backLabel`(Navigation) `actions`(아이콘만) `tabs: MobileTab[]`(3~5개, 오버플로 없음) `activePath`/`onNavigate` `bottom?`(탭 위 고정 한 칸 — CTA든 입력 바든) · children=유일한 스크롤 영역
+- **MobileTop** `title` `action?` — 화면 제목(셸이 아니라 화면이 소유). 우측은 **진입** 액션 전용(커밋 액션은 셸 `bottom`)
+- **MobileSection** `title`/`action?` `flush?` · children — 묶음을 카드가 아니라 경계선이 만든다
+- **MobileListRow** `title`/`meta` `leading`/`badges`/`trailing` `onClick?`(있으면 chevron) — 누르면 *다른 화면으로*
+- **MobileDisclosure** `title`/`meta` `defaultOpen?` · children — 그 자리에서 펼쳐지는 행(이동=›  / 펼침=⌄)
+- **MobileStatRow** `items: MobileStatItem[]` — KPI 2~4개 균등 분할 + 세로 헤어라인
+- **MobilePhotoPicker** `value: FileItem[]`/`onChange` `max`/`disabled` — 정사각 썸네일 격자(폰엔 드래그가 없어 FileUploader를 못 쓴다)
+- **MobileCalendar** `month`/`onMonthChange` `selected`/`onSelect` `events`/`encoding`/`annotations`/`holidays` `maxLanes?` — 월 달력. **스팬 바**로 기간을 읽는다(점 아님). 데스크탑 CalendarPage와 **같은 타입·같은 레인 알고리즘**(변환 0)
+- **MobileComment** `comment: BoardComment` `authorLabel?` `onReply?` — 1단 답글(데스크탑 BoardView와 타입 공유)
+- **MobileComposer** `value`/`onChange`/`onSubmit` `replyTo?` `placeholder`/`disabled` — 하단 고정 입력 바(셸 `bottom`에 꽂음)
+- **MobileFileRow** `name`/`size` `onDownload?` — 첨부 행(말줄임을 왼쪽에서 — 확장자가 끝에 있다)
 
 ### 페이지 템플릿 (9) + 폼 조립 조직 (1) — `FieldSpec[]`·스키마 구동, 도메인 0줄
 - **ListPage** `schema` `rows` `status` · 정렬·페이징·`totalCount`
@@ -187,8 +226,10 @@ type FieldSpec = {
 
 ### 공유 어휘 타입
 - **`Action`** = `{ label; variant?; onClick; icon?: IconName; iconOnly? }` — 버튼은 이 형태로 넘기고 배치는 부품이 고정한다.
-- **`CellType`**(DataTable·DescriptionList·ObjectCard 값 표현, 14종): `text badge number currency date boolean actions user tags link percent secondary relative-time thumbnail`
+- **`CellType`**(DataTable·ListWidget·DescriptionList·ObjectCard 값 표현, 16종): `text badge number currency date boolean actions menu user tags link percent secondary relative-time thumbnail chevron`
 - **`notify`** (휘발 피드백): `notify.success|danger|warning|info(...)` — 스키마 밖 코드 배선. **작업 결과만**; 필드 검증은 인라인 FormField.
+- **`APPSHELL_MIN_WIDTH`** = 768 — AppShell 지원 하한. 소비처는 **이 상수를 import해 모바일 라우팅을 판정**한다(같은 숫자를 각자 들지 않는다).
+- **`bundleBlocks(choices)` / `bundleLabels(choices)`** — OptionSet 값묶음 계약의 유일한 구현(첫 등장 순서 유지·묶음 안 순서 유지·무묶음은 밴드 없는 선두 블록). **정렬 책임은 부품** — 소비처는 값 순서를 자유롭게 준다.
 
 ---
 
@@ -242,9 +283,11 @@ const schema = buildZodSchema(fields);
 
 ```bash
 npm i @jjaim519/erp-dsl
-# peer 의존성(소비 앱이 직접 설치) — React 19+, Mantine v8, zod v4, TipTap v3(리치 에디터 Editor/RichText용)
+# peer 의존성(소비 앱이 직접 설치) — React 19+, Mantine v8, zod v4,
+#   TipTap v3(Editor/RichText 엔진) · TanStack Table v8(ListWidget 엔진)
 npm i @mantine/core @mantine/dates @mantine/hooks @mantine/notifications dayjs zod react react-dom
 npm i @tiptap/react @tiptap/pm @tiptap/starter-kit @tiptap/extension-image @tiptap/extension-table @tiptap/extension-placeholder
+npm i @tanstack/react-table
 ```
 
 ```ts
