@@ -118,7 +118,8 @@ type FieldSpec = {
 
 ### 의미 원자 — 입력군 (13)
 공통: `value`/`onChange`(controlled 전용) · `name` · `size: sm|md` · `disabled` · `placeholder`. **`label`·`error`·`required`는 입력칸이 아니라 `FormField`가 소유**.
-- **TextInput** / **PasswordInput** / **NumberInput** / **Textarea**(`autosize`)
+- **TextInput** / **PasswordInput** / **NumberInput**
+- **Textarea** `autosize` · `variant: field|canvas`(기본 field) — **canvas**=*글을 쓰는 면*(게시글 본문·메모): 비어 있어도 여러 줄로 시작해 "여기가 본문"을 형태로 말한다. 줄 수는 부품이 정한다(minRows/maxRows는 안 연다 — 열면 소비처마다 본문 높이가 갈린다)
 - **CurrencyInput** `value: number|string` — 돈 입력(₩ prefix·천단위 콤마·무소수). NumberInput 형제(표시만 통화, 저장·검증은 number)
 - **Select** `options: {label,value}[]` · `value: string`(단일)
 - **Radio** `options` · `value`(단일)
@@ -136,7 +137,7 @@ type FieldSpec = {
 - **Group**(가로) `gap` · `align: start|center|end` · `justify: …|between` · `wrap`
 - **Grid** `columns: 1|2|3|4|6|12` · `gap` · 자식 `Grid.Col span: 1~12`
 - **Bento**(페이지 본문 격자, 전 PageGrid) `columns: 2|3|4|6|12` · `gap: sm|md|lg` · `fill`(작업면 모드=행이 부모 잔여고 등분) · 타일 `Bento.Tile colSpan` `rowSpan: 1|2|3` — 고정 셀 높이(가변 높이 불허·iOS 홈식)
-- **ListDetail** `list` `detail` `collapsed?` — 평면 목록 + 프리뷰 2-pane(.82:1.18, **상세는 sticky**, 0건이면 1열). 좌=QueueList / 우=DecisionPanel이 표준 조합. 계층 마스터-디테일은 HierarchyExplorer, 정보+폼은 DetailPage
+- **ListDetail** `list` `detail` `collapsed?` — 평면 목록 + 프리뷰 2-pane(12열 중 **5:7**, **상세는 sticky**, 0건이면 1열). 좌=QueueList / 우=DecisionPanel이 표준 조합. 계층 마스터-디테일은 HierarchyExplorer, 정보+폼은 DetailPage
 
 ### 분자 (27) — 원자를 결합·일부 상태 고정
 > 모바일 전용 분자 10종은 아래 「모바일 계열」에 따로 있다(시각 체계가 정반대라 섞어 쓰지 않는다).
@@ -196,14 +197,16 @@ type FieldSpec = {
 - **OptionSetPicker** `mode: idle|pick|configure` `groups`/`selection` `onPick`/`onPickMany?`/`onQty`/`onNum` `display?` `search?` `defaultCollapsed?` `subtotal` `primary` — 정의를 읽어 *고르는* 선택 면. 표현 어휘(cards/grid/list/chips/stepper/input)는 값 개수로 **자동 도출**, `display`는 override. **값묶음(`Choice.group`)은 기하와 직교한 레이어**(기본=구획 밴드 블록 / 값>10=필터 칩)이고 **정렬 책임은 부품**(`bundleBlocks`)
 - **CompositionOutline** `sections: CompositionSection[]` `summary?` `addLabel?`/`emptyHint?` `footer?` `onAddToSection`/`onSelectLine`/`onDeleteLine` — 2-pane 우측 "작성물 카드 스택". 카드는 라인이 있거나 작성 중인 섹션만, 추가는 상단 단일 버튼 + 계층 메뉴
 
-### 모바일 계열 (11) — AppShell 계열의 *형제*(축소판 아님)
+### 모바일 계열 (16) — AppShell 계열의 *형제*(축소판 아님)
 
-> **`Mobile*` 접두가 곧 경계다.** 면·그림자를 안 쓰고 **배경 + 가로 헤어라인**으로만 나눈다(무테 지향의 반대 — 모바일의 정체성이 이긴다). 데스크탑 부품과 시각 체계가 정반대라 **섞어 쓰면 안 된다**. 입력은 전용 부품을 두지 않는다 — `FormField` + 입력 원자를 그대로 쓰고, 타이포·44pt 터치타깃은 셸 스코프가 처리한다.
+> **`Mobile*` 접두가 곧 경계다.** 폼도 갈린다 — 모바일에서는 `FormField`(상자)가 아니라 **`MobileField`(밑줄)**, 작은 선택지는 `Select`가 아니라 **`MobileChoice`(칩 줄)**를 쓴다. 면·그림자를 안 쓰고 **배경 + 가로 헤어라인**으로만 나눈다(무테 지향의 반대 — 모바일의 정체성이 이긴다). 데스크탑 부품과 시각 체계가 정반대라 **섞어 쓰면 안 된다**. 입력은 전용 부품을 두지 않는다 — `FormField` + 입력 원자를 그대로 쓰고, 타이포·44pt 터치타깃은 셸 스코프가 처리한다.
 
 - **MobileShell**(유기체) `title`/`onBack`/`backLabel`(Navigation) `actions`(아이콘만) `tabs: MobileTab[]`(3~5개, 오버플로 없음) `activePath`/`onNavigate` `bottom?`(탭 위 고정 한 칸 — CTA든 입력 바든) · children=유일한 스크롤 영역
 - **MobileTop** `title` `action?` — 화면 제목(셸이 아니라 화면이 소유). 우측은 **진입** 액션 전용(커밋 액션은 셸 `bottom`)
-- **MobileSection** `title`/`action?` `flush?` · children — 묶음을 카드가 아니라 경계선이 만든다
-- **MobileListRow** `title`/`meta` `leading`/`badges`/`trailing` `onClick?`(있으면 chevron) — 누르면 *다른 화면으로*
+- **MobileSection** `title`/`action?` `flush?` · children — 묶음을 카드가 아니라 경계선이 만든다. **내용이 없으면 본문을 안 그린다**(제목만 남는 빈 여백 블록 금지)
+- **MobileField** `label` `required?` `error?` · children — 모바일 폼의 한 칸(**밑줄 필드**). 라벨은 위(모바일 inline 라벨 금지 — Baymard), 포커스·에러는 **밑줄 색**으로 말한다
+- **MobileChoice** `options` `value`/`onChange` — 닫힌 선택지 하나 고르기(**가로 스크롤 칩 줄**). 폰에서 Select는 두 동작 + 오버레이라, 선택지가 몇 개면 전부 보여주고 한 번에 고른다. 꺽쇠(⌄)는 *펼침*에만 남는다
+- **MobileListRow** `title`/`meta` `leading`/`badges`/`trailing` `onClick?`(있으면 chevron) `emphasis?`(아직 안 본 행 — 제목 굵기) — 누르면 *다른 화면으로*
 - **MobileDisclosure** `title`/`meta` `defaultOpen?` · children — 그 자리에서 펼쳐지는 행(이동=›  / 펼침=⌄)
 - **MobileStatRow** `items: MobileStatItem[]` — KPI 2~4개 균등 분할 + 세로 헤어라인
 - **MobilePhotoPicker** `value: FileItem[]`/`onChange` `max`/`disabled` — 정사각 썸네일 격자(폰엔 드래그가 없어 FileUploader를 못 쓴다)
@@ -211,6 +214,11 @@ type FieldSpec = {
 - **MobileComment** `comment: BoardComment` `authorLabel?` `onReply?` — 1단 답글(데스크탑 BoardView와 타입 공유)
 - **MobileComposer** `value`/`onChange`/`onSubmit` `replyTo?` `placeholder`/`disabled` — 하단 고정 입력 바(셸 `bottom`에 꽂음)
 - **MobileFileRow** `name`/`size` `onDownload?` — 첨부 행(말줄임을 왼쪽에서 — 확장자가 끝에 있다)
+
+**모바일 게시판 3화면** — 데스크탑 `Board*`와 **같은 타입**(`BoardPost`·`BoardComment`·`BoardAttachment`·`AudienceNode`)을 받는다. 소비처는 데이터 한 벌로 두 화면을 그린다(변환 0):
+- **MobileBoardList** `posts: BoardPost[]` `categories?`/`category?`/`onCategoryChange?` `searchQuery?`/`onSearchChange?` `onSelectPost?` `onLoadMore?`/`totalCount?`(더보기 노출은 **데이터가 결정** — 다 불러왔으면 안 뜬다) `emptyState?` — 데스크탑의 6열을 폰의 3층(배지 줄/제목/보조 줄)으로 접는다. 공지=별도 구획 · 안읽음=제목 강조+점 · 분류=가로 스크롤 필터 칩 · 번호 페이징 대신 **더보기**
+- **MobileBoardView** `title`/`author`/`date`/`views?` `content` `attachments?` `readState?`(필독 읽음확인) `prev?`/`next?` `comments?`/`commentsAllowed?`/`onReply?` — 데스크탑 기능 전부. **댓글 작성란은 이 부품에 없다** — 셸 `bottom`의 `MobileComposer`가 받고 답글은 대상 태깅(`onReply`)으로 말한다
+- **MobileBoardWrite** `categories`/`category` `postTitle` `body` `audiences?`(조직도 드릴) `files?`(문서 포함) `notice?`/`mustRead?`/`commentsAllowed?` — 작성 기능 전부. 수신자 포섭 규칙은 데스크탑과 **같은 모듈**. **등록·취소·임시저장은 셸이 소유** — 임시저장은 등록과 같은 위계가 아니라 *안전망*이라 상단 보조 액션 자리(자동 저장 + 이탈 확인과 한 벌)
 
 ### 페이지 템플릿 (9) + 폼 조립 조직 (1) — `FieldSpec[]`·스키마 구동, 도메인 0줄
 - **ListPage** `schema` `rows` `status` · 정렬·페이징·`totalCount`

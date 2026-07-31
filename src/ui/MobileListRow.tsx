@@ -18,15 +18,19 @@ type Props = {
   badges?: ReactNode;    // 제목 위 배지 줄
   trailing?: ReactNode;  // 우측 값(금액·상태 등). chevron과 함께 놓인다.
   onClick?: () => void;  // 있으면 버튼 + chevron
+  emphasis?: boolean;    // 제목 강조 — "아직 안 본 것"(안 읽은 글·새 알림). 아래 참조
 };
 
-export function MobileListRow({ title, meta, leading, badges, trailing, onClick }: Props) {
+// emphasis: 목록에서 *아직 처리·확인하지 않은 행*을 굵기로 들어올린다(메일·게시판의 안 읽음 관습).
+//  색이 아니라 굵기인 이유: 폰 목록은 이미 배지·태그로 색이 붐비고, 굵기는 그 위에 겹쳐도 안 싸운다.
+//  기본 false — 안 주면 모든 행이 같은 무게다(강조가 기본이면 강조가 아니게 된다).
+export function MobileListRow({ title, meta, leading, badges, trailing, onClick, emphasis = false }: Props) {
   const inner = (
     <>
       {leading && <span className="mlr-lead">{leading}</span>}
       <span className="mlr-body">
         {badges && <span className="mlr-badges">{badges}</span>}
-        <span className="mlr-title">{title}</span>
+        <span className="mlr-title" data-emphasis={emphasis ? '' : undefined}>{title}</span>
         {meta && <span className="mlr-meta">{meta}</span>}
       </span>
       {trailing && <span className="mlr-trail">{trailing}</span>}

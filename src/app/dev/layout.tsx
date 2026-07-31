@@ -1,6 +1,9 @@
 'use client';
 // 박물관 dev 셸 — 좌측 분류 내비(우리 Tree, 보기 전용) + 부품 검색.
-//  · 분류 = 기초(토큰·셸) / 부품(계층 ladder, 의미 원자만 표시·행동·입력군 2분할) / 데모.
+//  · 분류 = 기초(토큰·셸) / 부품 = **데스크탑 · 모바일 2대분류**(각각 계층 ladder) / 데모.
+//  · 데스크탑↔모바일을 가르는 기준은 `Mobile*` 접두 하나다 — 그게 이미 두 계열의 경계이기 때문
+//    (모바일은 면·그림자를 안 쓰고 헤어라인으로만 나눠 시각 체계가 정반대라 섞어 쓰면 안 된다).
+//    수동 목록을 두지 않아 부품이 늘어도 분류가 저절로 따라온다(단일 출처 _catalog).
 //  · 각 그룹 내 부품은 알파벳 오름차순. 그룹 라벨에 카운트. 기본 펼침은 '부품'(+현재 계층)만.
 //  · 검색어 입력 시 부품명으로 필터 + 매칭 그룹 자동 펼침. 단일 출처(_catalog·INPUT_ATOMS)에서 파생 → 드리프트 0.
 import Link from 'next/link';
@@ -13,19 +16,27 @@ const byLabel = (a: TreeNodeData, b: TreeNodeData) => a.label.localeCompare(b.la
 const partLeaves = (entries: { name: string }[]): TreeNodeData[] =>
   entries.map((e) => ({ id: `/dev/part/${e.name}`, label: e.name })).sort(byLabel); // A→Z
 
+// 대분류 — 모바일 계열은 `Mobile*` 접두가 곧 경계다(모바일 계열 파일 헤더 규율).
+const isMobile = (name: string) => name.startsWith('Mobile');
+const DESKTOP = CATALOG.filter((e) => !isMobile(e.name));
+const MOBILE = CATALOG.filter((e) => isMobile(e.name));
+
 // 계층 ladder 순서 유지(LAYERS) · 의미 원자만 표시·행동/입력군 2분할 · 각 그룹 내 부품 A→Z · 라벨에 카운트.
-const PART_NODES: TreeNodeData[] = LAYERS.flatMap((layer) => {
-  const entries = CATALOG.filter((e) => e.layer === layer);
-  if (layer === '의미 원자') {
-    const inputs = entries.filter((e) => INPUT_ATOMS.has(e.name));
-    const display = entries.filter((e) => !INPUT_ATOMS.has(e.name));
-    return [
-      { id: '__bucket:display', label: `의미 원자 · 표시·행동 (${display.length})`, children: partLeaves(display) },
-      { id: '__bucket:input', label: `의미 원자 · 입력군 (${inputs.length})`, children: partLeaves(inputs) },
-    ];
-  }
-  return [{ id: `__layer:${layer}`, label: `${layer} (${entries.length})`, children: partLeaves(entries) }];
-});
+//  대분류마다 같은 사다리를 쓰되 그룹 id에 접두를 달아 펼침 상태가 서로 안 섞이게 한다.
+const partNodes = (entries: typeof CATALOG, scope: string): TreeNodeData[] =>
+  LAYERS.flatMap((layer) => {
+    const inLayer = entries.filter((e) => e.layer === layer);
+    if (inLayer.length === 0) return [];   // 그 대분류에 없는 계층은 빈 폴더로 남기지 않는다
+    if (layer === '의미 원자') {
+      const inputs = inLayer.filter((e) => INPUT_ATOMS.has(e.name));
+      const display = inLayer.filter((e) => !INPUT_ATOMS.has(e.name));
+      return [
+        ...(display.length ? [{ id: `__bucket:${scope}:display`, label: `의미 원자 · 표시·행동 (${display.length})`, children: partLeaves(display) }] : []),
+        ...(inputs.length ? [{ id: `__bucket:${scope}:input`, label: `의미 원자 · 입력군 (${inputs.length})`, children: partLeaves(inputs) }] : []),
+      ];
+    }
+    return [{ id: `__layer:${scope}:${layer}`, label: `${layer} (${inLayer.length})`, children: partLeaves(inLayer) }];
+  });
 
 const NODES: TreeNodeData[] = [
   { id: '__basics', label: '기초', children: [
@@ -33,7 +44,9 @@ const NODES: TreeNodeData[] = [
     { id: '/shell', label: '셸' },
     { id: '/dev/preview', label: '반응형 프리뷰' },
   ] },
-  { id: '__parts', label: `부품 (${CATALOG.length})`, children: PART_NODES },
+  { id: '__parts', label: `데스크탑 (${DESKTOP.length})`, children: partNodes(DESKTOP, 'd') },
+  // 모바일은 데스크탑의 축소판이 아니라 *형제 층*이라 같은 깊이에 나란히 둔다(사다리를 한 칸 더 파지 않는다).
+  { id: '__mobile', label: `모바일 (${MOBILE.length})`, children: partNodes(MOBILE, 'm') },
   { id: '__demos', label: '데모', children: [
     { id: '/dev/grid', label: '위젯 그리드 시범' },
     { id: '/dev/authoring', label: '구성 모델 저작(조립 증명)' },
@@ -43,18 +56,19 @@ const NODES: TreeNodeData[] = [
   ] },
 ];
 
-// 부품명이 속한 그룹 id (현재 위치 자동 펼침용).
-function groupIdOfPart(name: string): string | null {
+// 부품명이 속한 [대분류, 그룹] id (현재 위치 자동 펼침용).
+function groupIdsOfPart(name: string): string[] {
   const entry = CATALOG.find((e) => e.name === name);
-  if (!entry) return null;
-  if (entry.layer === '의미 원자') return INPUT_ATOMS.has(name) ? '__bucket:input' : '__bucket:display';
-  return `__layer:${entry.layer}`;
+  if (!entry) return [];
+  const scope = isMobile(name) ? 'm' : 'd';
+  const root = isMobile(name) ? '__mobile' : '__parts';
+  if (entry.layer === '의미 원자') return [root, `__bucket:${scope}:${INPUT_ATOMS.has(name) ? 'input' : 'display'}`];
+  return [root, `__layer:${scope}:${entry.layer}`];
 }
 function initialExpanded(path: string): string[] {
-  const base = ['__parts'];
   const m = path.match(/^\/dev\/part\/(.+)$/);
-  if (m) { const g = groupIdOfPart(m[1]); if (g) base.push(g); }
-  return base;
+  const found = m ? groupIdsOfPart(m[1]) : [];
+  return found.length ? found : ['__parts'];   // 부품 화면이 아니면 데스크탑만 펼침(모바일은 접힌 채 시작)
 }
 
 // 검색 필터 — 잎(부품)을 label로 매칭, 매칭 자식이 있는 폴더만 유지.

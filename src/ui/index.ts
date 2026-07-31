@@ -112,6 +112,8 @@ export { AppShell, APPSHELL_MIN_WIDTH } from './AppShell';   // 지원 하한(76
 //  Mobile* 접두가 곧 경계다: 데스크탑 부품과 시각 체계가 정반대라 섞어 쓰면 안 된다.
 export { MobileShell, type MobileTab } from './MobileShell';
 export { MobileSection } from './MobileSection';
+export { MobileField } from './MobileField';   // 모바일 폼의 한 칸(밑줄 필드) — 데스크탑 FormField의 짝이자 모바일 대체
+export { MobileChoice } from './MobileChoice'; // 닫힌 선택지 하나 고르기(가로 스크롤 칩 줄) — 폰에서 Select 대신
 export { MobileTop } from './MobileTop';
 export { MobileListRow } from './MobileListRow';
 export { MobileStatRow, type MobileStatItem } from './MobileStatRow';
@@ -121,8 +123,14 @@ export { MobileCalendar } from './MobileCalendar';
 export { MobileComment } from './MobileComment';
 export { MobileComposer } from './MobileComposer';
 export { MobileFileRow } from './MobileFileRow';   // 데스크탑 CalendarPage와 events/encoding/annotations 타입 공유
-//  입력은 모바일 전용 부품을 두지 않는다 — FormField(라벨·별표·에러·--field-border 통로)를 그대로 쓰고,
-//  타이포는 셸의 모바일 스코프가, 44pt 터치타깃은 mobileshell.css의 --input-height-* 가 처리한다.
+//  모바일 게시판 3화면 — 데스크탑 Board*와 **같은 타입**(BoardPost·BoardComment·BoardAttachment·AudienceNode)을
+//  받는다. 소비처는 데이터 한 벌로 두 화면을 그린다(변환 계층 0, MobileCalendar 선례).
+export { MobileBoardList } from './MobileBoardList';
+export { MobileBoardView } from './MobileBoardView';
+export { MobileBoardWrite } from './MobileBoardWrite';
+//  입력 *원자*는 모바일 전용을 두지 않는다(TextInput·Select…를 그대로 쓴다 — 타이포는 셸 스코프가,
+//  44pt 터치타깃은 mobileshell.css의 --input-height-* 가 처리). 다만 그 원자를 감싸는 *칸*은 갈린다:
+//  데스크탑 FormField(상자)가 아니라 MobileField(밑줄) — 상자를 벗기면 어포던스가 사라지기 때문.
 export { Timeline } from './Timeline';
 export { Calendar } from './Calendar';
 export { IconButton } from './IconButton';

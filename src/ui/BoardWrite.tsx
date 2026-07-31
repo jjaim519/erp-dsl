@@ -24,15 +24,12 @@ import { Icon } from './Icon';
 import { Text } from './Text';
 import { Group } from './Group';
 import { fieldBorder } from './_fieldStyles';
+import { buildAudienceIndex, type AudienceNode } from './_audience';
 import './board.css';
 
-export type AudienceNode = {
-  id: string;
-  label: string;
-  exclusive?: boolean;                                   // '전체'처럼 단독 선택(다른 선택 해제)
-  children?: AudienceNode[];                             // 하위 그룹(팀)
-  members?: { id: string; name: string; dept?: string }[]; // 개인
-};
+// 수신자 트리의 *규칙*(포섭·배타·행 상태)은 `_audience`가 단일 출처다 — 모바일(MobileBoardWrite)과
+//  같은 한 벌을 쓴다. 복제하면 같은 데이터가 두 화면에서 다르게 담긴다(_calendarLanes와 같은 이유).
+export type { AudienceNode };
 
 type Props = {
   pageTitle?: string;                                    // '글쓰기' | '글 수정'
@@ -82,58 +79,30 @@ export function BoardWrite({
 }: Props) {
   const [drillOpen, setDrillOpen] = useState(false);
 
-  // ── 수신자(안 C) ──
+  // ── 수신자(안 C) — 규칙은 `_audience`(공유), 여기선 화면만 ──
   const sel = new Set(selectedAudiences ?? []);
   const top = audiences ?? [];
-  const exclusiveIds = new Set(top.filter((n) => n.exclusive).map((n) => n.id));
-  // id → 라벨/부모 평탄화(선택 칩 표시 + 포섭 판정용)
-  const labelOf = new Map<string, string>();
-  const parentOf = new Map<string, string>();
-  const walk = (nodes: AudienceNode[], parent?: string) => nodes.forEach((n) => {
-    labelOf.set(n.id, n.label);
-    if (parent) parentOf.set(n.id, parent);
-    if (n.children) walk(n.children, n.id);
-    n.members?.forEach((m) => {
-      labelOf.set(m.id, m.dept ? `${m.name} · ${m.dept}` : m.name);
-      parentOf.set(m.id, n.id);
-    });
-  });
-  walk(top);
-
-  // 포섭(subsumption): 그룹을 담으면 그 아래는 *이미 포함*이다. 담기는 토큰 하나로 두고(명단 박제 방지 —
-  //  나중에 팀원이 늘어도 수신 범위가 따라온다), 하위는 '포함됨'으로 표시만 한다.
-  const ancestorsOf = (id: string) => {
-    const out: string[] = [];
-    for (let p = parentOf.get(id); p; p = parentOf.get(p)) out.push(p);
-    return out;
-  };
-  const coveredBy = (id: string) => ancestorsOf(id).find((a) => sel.has(a));   // 가장 가까운 조상부터
+  const aud = buildAudienceIndex(top);
+  const labelOf = { get: (id: string) => aud.labelOf(id) };
 
   // 선택 경로는 "담기"(add) 하나, 해제 경로는 결과 목록의 ✕(remove) 하나 — 같은 행위에 경로 둘을 두지 않는다(§11-3).
   //  프리셋 칩·조직도 행은 *소스*(가용 목록)라 선택 상태를 표현하지 않고, 이미 담긴 항목은 비활성으로 가용성만 알린다.
   //  선택 결과의 단일 진실은 아래 '수신자 N' 목록 하나뿐(이 부품의 원 설계 — 파일 헤더 주석).
   const add = (id: string) => {
-    if (!onAudiencesChange || sel.has(id) || coveredBy(id)) return;  // 이미 담겼거나 조상에 포함되면 무동작
-    if (exclusiveIds.has(id)) { onAudiencesChange([id]); return; }   // '전체'는 배타 — 나머지를 비운다
-    const next = new Set(sel);
-    exclusiveIds.forEach((e) => next.delete(e));
-    [...next].forEach((s) => { if (ancestorsOf(s).includes(id)) next.delete(s); });  // 포섭 정리: 하위 토큰 흡수
-    next.add(id);
-    onAudiencesChange([...next]);
+    if (!onAudiencesChange) return;
+    const next = aud.add(sel, id);
+    if (next) onAudiencesChange(next);
   };
   const remove = (id: string) => {
     if (!onAudiencesChange) return;
     const next = new Set(sel); next.delete(id);
     onAudiencesChange([...next]);
   };
-  const remaining = top.filter((n) => !sel.has(n.id));   // 빠른 추가엔 *아직 안 담긴* 제안만
+  const remaining = aud.remaining(sel);   // 빠른 추가엔 *아직 안 담긴* 제안만
 
-  // 행 상태 3종: added(직접 담김) / covered(조상에 포함 — 해제는 그 조상에서) / open(담을 수 있음).
-  //  covered를 빈 체크박스로 두면 "안 들어갔다"고 거짓말이 된다(실제론 수신자에 포함).
   function treeRow(id: string, label: string, level: number) {
-    const added = sel.has(id);
-    const cover = added ? undefined : coveredBy(id);
-    const state = added ? 'added' : cover ? 'covered' : 'open';
+    const state = aud.rowState(sel, id);
+    const cover = state === 'covered' ? aud.coveredBy(sel, id) : undefined;
     return (
       <div key={id} className={`bw-tnode lv${level} ${state}`}
         aria-disabled={state !== 'open' || undefined}

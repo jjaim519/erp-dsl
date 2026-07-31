@@ -20,6 +20,13 @@
   letter-spacing: .02em;
 }
 .mls-hd-a { margin-left: auto; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+/* 액션이 있는 헤더는 *대칭 행*이 된다 — 액션은 44px 터치타깃이라, 캡션용 비대칭 여백(위 24/아래 8)을
+   그대로 두면 컨트롤 기준으로 위18/아래9가 된다(실화면 지적). 세로 중앙 정렬도 함께(baseline은 텍스트끼리의 규칙). */
+.mls-hd[data-action] {
+  align-items: center;
+  padding-top: var(--mantine-spacing-xs);
+  padding-bottom: var(--mantine-spacing-xs);
+}
 
 /* 본문 — 기본은 사방 여백(자유 콘텐츠). 상단도 반드시 준다: 제목 없는 섹션이 기본이라
    상단만 비우면 내용이 위 경계선(또는 내비바)에 그대로 붙는다. */
@@ -59,6 +66,9 @@ button.mlr:active { background: var(--bg-secondary); }   /* 폰은 hover가 없�
   font-weight: var(--typo-body-strong-weight);
   line-height: 1.4;
 }
+/* emphasis — 아직 안 본 행. 굵기 한 단(600→700)만 올린다: 목록이 배지·태그로 이미 색이 붐벼서
+   색으로 강조하면 신호가 서로 싸운다. 안 본 것은 진하고, 본 것은 그대로 남는다(둘의 대비가 정보). */
+.mlr-title[data-emphasis] { font-weight: var(--typo-heading-weight); }
 .mlr-meta { font-size: var(--typo-caption-size); color: var(--text-secondary); line-height: 1.4; }
 .mlr-trail { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 .mlr-chev { flex: none; display: inline-flex; }
@@ -368,3 +378,48 @@ button.mfr:active { background: var(--bg-secondary); }
   direction: rtl; text-align: left;
 }
 .mfr-size { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+
+/* ── MobileField — 밑줄 폼 칸 ─────────────────────────────────────────────
+   [작은 라벨] / [값·입력] / [아래 헤어라인]. 헤어라인이 "여기가 입력칸"이자 칸의 경계다.
+   근거·기각안은 MobileField.tsx 헤더 주석(모바일 inline 라벨 금지 · 상단 라벨 완료속도) 참조. */
+.mfd {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md) var(--mantine-spacing-xxs);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+/* 섹션 안 마지막 칸의 밑줄은 섹션 경계선과 겹쳐 2px로 보이므로 지운다(MobileListRow와 같은 처리). */
+.mls-body.flush > .mfd:last-child { border-bottom: none; }
+
+/* 라벨 — 값보다 작고 흐리다. 값이 주인공이고 라벨은 그 이름표다(위계 역전 방지). */
+.mfd-l {
+  font-size: var(--typo-caption-size);
+  line-height: var(--typo-caption-lh);
+  color: var(--text-secondary);
+}
+.mfd-req { color: var(--text-danger); margin-left: 2px; }
+
+/* 값 자리 — 입력 원자는 셸 스코프에서 이미 무테·무배경이라 여기선 높이만 준다. */
+.mfd-c { display: flex; align-items: center; min-height: var(--input-height-md, 42px); }
+.mfd-c > * { flex: 1; min-width: 0; }
+
+/* 포커스는 밑줄 색으로 — 상자 아웃라인을 쓰면 벗긴 상자가 포커스 때만 되살아난다. */
+.mfd:focus-within { border-bottom-color: var(--border-focus); box-shadow: inset 0 -1px 0 var(--border-focus); }
+
+/* 에러 — 밑줄 + 메시지. 색은 FormField와 같은 danger 역할. */
+.mfd[data-error] { border-bottom-color: var(--text-danger); box-shadow: inset 0 -1px 0 var(--text-danger); }
+.mfd-e { font-size: var(--typo-caption-size); color: var(--text-danger); }
+
+/* ── MobileChoice — 가로 스크롤 칩 줄 ─────────────────────────────────────
+   줄바꿈 금지: 선택지가 늘 때마다 화면을 세로로 먹는다. 스크롤바는 숨기고 손가락으로 민다(폰 관습). */
+.mchoice {
+  display: flex;
+  gap: var(--mantine-spacing-xs);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+.mchoice::-webkit-scrollbar { display: none; }
+.mchoice > * { flex: none; }

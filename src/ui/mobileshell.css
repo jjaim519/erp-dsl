@@ -39,6 +39,29 @@ html.erp-mobile-lock body {
 /* iOS 자동 확대 봉인 — 어떤 size를 쓰든 16px 아래로 안 내려간다. */
 .ms input, .ms textarea, .ms select { font-size: max(16px, var(--input-fz, 16px)); }
 
+/* ── 필드 크롬(윤곽) 벗기기 — 모바일 폼의 시각 체계 ────────────────────────────────
+   iOS 폼의 기본형은 **grouped list**다: 라벨은 좌측, 컨트롤은 우측, 구분은 행 사이 헤어라인,
+   그리고 **필드마다 윤곽 상자가 없다**(SwiftUI 기본 GroupedFormStyle = insetGrouped 리스트).
+   우리 모바일 계열이 "면·그림자 없이 헤어라인으로만 나눈다"고 선언한 게 정확히 그 체계인데,
+   입력칸만 데스크탑 원자를 그대로 들여와 상자가 여럿 생겼다 — 한 화면에 두 체계가 섞였다.
+
+   고치는 자리는 *부품이 아니라 셸 스코프*다. 위 --input-height-* 를 덮어 44pt를 만든 것과 같은 방식이고,
+   타이포(mobileTypoVars)도 같은 통로다. 여기 한 곳이 바뀌면 모바일 폼 **전부**가 따라온다.
+   ⚠ 명시 예외: Mantine 내부 변수·클래스에 직접 닿는다(토큰만으로는 표현할 수 없는 영역).
+      예외는 이 파일 안에 가둔다 — 부품 파일에서 개별로 덮지 않는다.
+
+   윤곽은 *지우는* 게 아니라 **투명하게** 둔다: 자리(1px)는 남아 레이아웃이 안 흔들리고,
+   FormField가 에러 때 --field-border 를 danger로 덮으면 그 순간 빨간 윤곽이 다시 나타난다(역할 변수 통로 유지). */
+.ms { --field-border: transparent; }
+.ms .mantine-Input-input {
+  background: transparent;
+  padding-inline-start: 0;     /* 값이 라벨과 같은 세로선에서 시작(grouped list) */
+  border-radius: 0;
+}
+/* 포커스는 **MobileField의 밑줄**이 말한다(mobilelist.css `.mfd:focus-within`).
+   여기서 아웃라인 상자를 씌우면 벗긴 상자가 포커스 때만 되살아나 체계가 다시 섞인다.
+   밑줄이 없는 자리(셸 안 raw 컨트롤)는 각자 :focus-visible을 갖는다. */
+
 /* Navigation — 뒤로 / 제목 / 우측 아이콘 액션. 하단 헤어라인 하나로만 본문과 나뉜다(그림자 없음).
    좌·우 슬롯을 같은 최소폭으로 잡아 제목이 가운데 고정된다(액션 개수가 변해도 제목이 안 흔들림 — 축 예약). */
 .ms-nav {

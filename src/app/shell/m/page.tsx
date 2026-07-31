@@ -3,13 +3,13 @@
 //  · 이 파일은 *소비처* 역할이다(패키지 아님). 셸이 내주는 슬롯에 화면을 조립해본다.
 //  · 1차 추출 완료: 여기 인라인으로 짰던 "행"과 "묶음"이 MobileListRow·MobileSection으로 올라갔다.
 //    남은 인라인(본문 문단 등)은 아직 세 번 반복되지 않아 부품으로 올리지 않는다(rule of three).
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import {
   MobileShell, MobileTop, MobileSection, MobileListRow, MobileStatRow,
-  MobileDisclosure, MobilePhotoPicker, MobileCalendar,
-  MobileComment, MobileComposer, MobileFileRow,
-  FormField, TextInput, Select, Textarea, Switch, Button, Text, Title, Badge, RichText,
-  type MobileTab, type FileItem, type BoardComment,
+  MobileDisclosure, MobilePhotoPicker, MobileCalendar, MobileComposer,
+  MobileBoardList, MobileBoardView, MobileBoardWrite,
+  MobileField, MobileChoice, TextInput, Button, Text, Title, Badge, RichText,
+  type MobileTab, type FileItem, type BoardComment, type BoardPost, type AudienceNode,
   type CalendarEvent, type CalendarEncoding, type CalendarAnnotation,
 } from '@/ui';
 
@@ -29,11 +29,28 @@ const COMMENTS: BoardComment[] = [
 
 const POST_HTML = `<h2>1. 신청 기간</h2><p>신청 기간은 <strong>7월 1일 ~ 7월 15일 18:00</strong>까지입니다. 전자결재 &gt; 휴가신청서로 제출해 주세요.</p><ul><li>승인: 팀장 1차 → 인사팀 최종</li><li>반차·반반차는 휴가신청서에서 선택</li></ul>`;
 
-const POSTS = [
-  { id: 'p1', cat: '공지', title: '2026년 하계 휴가 신청 및 근태 처리 안내', who: '김서연 · 인사팀', when: '06.24', must: true },
-  { id: 'p2', cat: '업무', title: '사내 보안 정책 개정 — VPN 2차 인증 의무화', who: '박상우 · 정보보안', when: '06.20', must: false },
-  { id: 'p3', cat: '업무', title: '2026년 거래처 단가표 v3 배포', who: '정민호 · 구매', when: '06.25', must: false },
-  { id: 'p4', cat: '공지', title: '3분기 전사 워크샵 일정 공유', who: '김서연 · 인사팀', when: '06.18', must: false },
+// 게시판 데이터 — 데스크탑 BoardList와 *같은 타입*(BoardPost). 소비처는 한 벌만 들고 두 화면에 넘긴다.
+const POSTS: BoardPost[] = [
+  { id: 'p1', category: '공지', title: '2026년 하계 휴가 신청 및 근태 처리 안내', author: { name: '김서연', dept: '인사팀' },
+    date: '06.24', pinned: true, mustRead: true, comments: 3, attachments: 2, views: 214 },
+  { id: 'p2', category: '업무', title: '사내 보안 정책 개정 — VPN 2차 인증 의무화', author: { name: '박상우', dept: '정보보안' },
+    date: '06.20', unread: true, comments: 1, views: 88 },
+  { id: 'p3', category: '업무', title: '2026년 거래처 단가표 v3 배포', author: { name: '정민호', dept: '구매' },
+    date: '06.25', unread: true, isNew: true, attachments: 1, views: 41 },
+  { id: 'p4', category: '공지', title: '3분기 전사 워크샵 일정 공유', author: { name: '김서연', dept: '인사팀' },
+    date: '06.18', views: 176 },
+];
+const CATS = [
+  { value: 'all', label: '전체' }, { value: 'notice', label: '공지' },
+  { value: 'work', label: '업무' }, { value: 'hr', label: '인사' }, { value: 'safety', label: '안전' },
+];
+const AUDIENCES: AudienceNode[] = [
+  { id: 'all', label: '전사', exclusive: true },
+  { id: 'hq', label: '본사', children: [
+    { id: 'hr', label: '인사팀', members: [{ id: 'u1', name: '김서연', dept: '인사팀' }] },
+    { id: 'pur', label: '구매팀', members: [{ id: 'u2', name: '정민호', dept: '구매팀' }] },
+  ] },
+  { id: 'site', label: '현장', members: [{ id: 'u3', name: '옥성훈', dept: '시공' }] },
 ];
 
 // 달력 데이터 — 데스크탑 CalendarPage와 *같은 타입*이다(소비처가 한 벌만 들고 두 화면에 넘긴다).
@@ -90,7 +107,13 @@ export default function MobileShellDemo() {
   const [wCat, setWCat] = useState<string | null>('notice');
   const [wBody, setWBody] = useState('');
   const [wNotice, setWNotice] = useState(false);
+  const [wMust, setWMust] = useState(false);
+  const [wComments, setWComments] = useState(true);
+  const [wAud, setWAud] = useState<string[]>(['hr']);
   const [wFiles, setWFiles] = useState<FileItem[]>([]);
+  const [cat, setCat] = useState('all');
+  const [q, setQ] = useState('');
+  const [acked, setAcked] = useState(false);
 
   const submitComment = () => {
     const body = draft.trim();
@@ -190,57 +213,40 @@ export default function MobileShellDemo() {
           ]} />
         </MobileSection>
 
-        <MobileSection title="새 발주">
-          <FormField label="현장" withAsterisk>
+        <MobileSection title="새 발주" flush>
+          <MobileField label="현장" required>
             <TextInput value={site} onChange={setSite} placeholder="현장을 입력하세요" />
-          </FormField>
-          <div style={{ height: 'var(--mantine-spacing-md)' }} />
-          <FormField label="품목 분류">
-            <Select
-              options={[{ value: 'a', label: '자재' }, { value: 'b', label: '장비' }]}
-              value={kind} onChange={setKind} placeholder="분류 선택"
-            />
-          </FormField>
+          </MobileField>
+          <MobileField label="품목 분류">
+            <MobileChoice options={[{ value: 'a', label: '자재' }, { value: 'b', label: '장비' }]}
+              value={kind} onChange={setKind} ariaLabel="품목 분류" />
+          </MobileField>
         </MobileSection>
       </MobileShell>
     );
   }
 
-  // ── 게시판 쓰기 ──
+  // ── 게시판 쓰기 — 부품 하나로. 등록(커밋)은 셸 하단, 취소는 뒤로가기(부품은 본문만 소유) ──
   if (writing) {
     return (
       <MobileShell title="글쓰기" onBack={() => setWriting(false)}
+        /* 임시저장은 상단 보조 액션 — 커밋(등록)은 하단 한 자리, 안전망은 여기.
+           실제 제품이라면 여기에 더해 ① 입력 blur마다 백그라운드 초안 저장 ② onBack에서 "초안을 저장할까요?"가 붙는다. */
+        actions={[{ label: '임시저장', icon: 'save', iconOnly: true, onClick: () => {} }]}
         tabs={TABS} activePath={tab} onNavigate={(p) => { setWriting(false); setTab(p); }}
         bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
           <Button variant="primary" fullWidth onClick={() => setWriting(false)}>등록</Button>
         </div>}>
-        <MobileSection>
-          <FormField label="분류" withAsterisk>
-            <Select options={[{ value: 'notice', label: '공지' }, { value: 'work', label: '업무' }]}
-              value={wCat} onChange={setWCat} placeholder="분류 선택" />
-          </FormField>
-          <div style={{ height: 'var(--mantine-spacing-md)' }} />
-          <FormField label="제목" withAsterisk>
-            <TextInput value={wTitle} onChange={setWTitle} placeholder="제목을 입력하세요" />
-          </FormField>
-          <div style={{ height: 'var(--mantine-spacing-md)' }} />
-          {/* 본문은 Editor(툴바 8개)가 아니라 Textarea — 폰에서 리치 툴바는 화면을 먹고 손도 안 닿는다. */}
-          <FormField label="본문" withAsterisk>
-            <Textarea value={wBody} onChange={setWBody} placeholder="내용을 입력하세요" autosize />
-          </FormField>
-        </MobileSection>
-
-        <MobileSection title="첨부">
-          <MobilePhotoPicker value={wFiles} onChange={setWFiles} max={4} />
-        </MobileSection>
-
-        {/* 게시옵션 — 새 부품 없이 MobileListRow의 trailing 슬롯에 Switch를 꽂는다(onClick 없으면 정적 행). */}
-        <MobileSection title="게시 옵션" flush>
-          <MobileListRow title="상단 고정(공지)" meta="목록 최상단에 고정됩니다"
-            trailing={<Switch checked={wNotice} onChange={setWNotice} />} />
-          <MobileListRow title="댓글 허용" meta="끄면 댓글을 달 수 없습니다"
-            trailing={<Switch checked onChange={() => {}} />} />
-        </MobileSection>
+        <MobileBoardWrite
+          categories={CATS.slice(1)} category={wCat} onCategoryChange={setWCat}
+          postTitle={wTitle} onPostTitleChange={setWTitle}
+          body={wBody} onBodyChange={setWBody}
+          audiences={AUDIENCES} selectedAudiences={wAud} onAudiencesChange={setWAud}
+          files={wFiles} onFilesChange={setWFiles}
+          notice={wNotice} onNoticeChange={setWNotice}
+          mustRead={wMust} onMustReadChange={setWMust}
+          commentsAllowed={wComments} onCommentsAllowedChange={setWComments}
+        />
       </MobileShell>
     );
   }
@@ -249,7 +255,7 @@ export default function MobileShellDemo() {
   if (post) {
     return (
       <MobileShell
-        title={post.cat}
+        title={post.category ?? '게시글'}
         onBack={() => setOpen(null)}
         actions={[{ label: '더보기', icon: 'dots-vertical', iconOnly: true, onClick: () => {} }]}
         tabs={TABS} activePath={tab} onNavigate={(p) => { setOpen(null); setTab(p); }}
@@ -263,34 +269,25 @@ export default function MobileShellDemo() {
           />
         }
       >
-        <MobileSection>
-          <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-            <Badge color="info">{post.cat}</Badge>
-            {post.must && <Badge color="danger">필독</Badge>}
-          </div>
-          <Title variant="subheading">{post.title}</Title>
-          <div style={{ marginTop: 8 }}>
-            <Text variant="caption" color="secondary">{post.who} · {post.when}</Text>
-          </div>
-        </MobileSection>
-
-        <MobileSection>
-          <RichText html={POST_HTML} />
-        </MobileSection>
-
-        <MobileSection title="첨부파일 2" flush>
-          <MobileFileRow name="2026_하계휴가_신청서.xlsx" size="24 KB" onDownload={() => {}} />
-          <MobileFileRow name="휴가규정_개정본.pdf" size="180 KB" onDownload={() => {}} />
-        </MobileSection>
-
-        <MobileSection title={`댓글 ${cmts.length}`} flush>
-          {roots.map((c) => (
-            <Fragment key={c.id}>
-              <MobileComment comment={c} onReply={setReplyTo} />
-              {repliesOf(c.id).map((r) => <MobileComment key={r.id} comment={r} />)}
-            </Fragment>
-          ))}
-        </MobileSection>
+        <MobileBoardView
+          category={post.category}
+          notice={post.pinned}
+          mustRead={post.mustRead}
+          title={post.title}
+          author={{ name: post.author.name, dept: post.author.dept, role: '팀장' }}
+          date={post.date}
+          views={post.views}
+          content={<RichText html={POST_HTML} />}
+          attachments={[
+            { id: 'f1', name: '2026_하계휴가_신청서.xlsx', size: '24 KB', onDownload: () => {} },
+            { id: 'f2', name: '휴가규정_개정본.pdf', size: '180 KB', onDownload: () => {} },
+          ]}
+          readState={post.mustRead ? { read: 18, total: 32, acknowledged: acked, onAcknowledge: () => setAcked(true) } : undefined}
+          prev={{ title: '3분기 전사 워크샵 일정 공유', date: '06.18', onClick: () => setOpen('p4') }}
+          next={{ title: '2026년 거래처 단가표 v3 배포', date: '06.25', onClick: () => setOpen('p3') }}
+          comments={cmts}
+          onReply={setReplyTo}
+        />
       </MobileShell>
     );
   }
@@ -300,22 +297,14 @@ export default function MobileShellDemo() {
       <MobileTop title="게시판"
         action={{ label: '글쓰기', variant: 'primary', onClick: () => setWriting(true) }} />
 
-      <MobileSection flush>
-        {POSTS.map((p) => (
-          <MobileListRow
-            key={p.id}
-            title={p.title}
-            meta={`${p.who} · ${p.when}`}
-            badges={
-              <>
-                <Badge color={p.cat === '공지' ? 'info' : 'neutral'}>{p.cat}</Badge>
-                {p.must && <Badge color="danger">필독</Badge>}
-              </>
-            }
-            onClick={() => setOpen(p.id)}
-          />
-        ))}
-      </MobileSection>
+      <MobileBoardList
+        posts={POSTS}
+        categories={CATS} category={cat} onCategoryChange={setCat}
+        searchQuery={q} onSearchChange={setQ}
+        onSelectPost={(p) => setOpen(p.id)}
+        onLoadMore={() => {}}
+        totalCount={12}     /* 데모: 총 12건 중 4건만 불러온 상태 → 더보기가 뜬다(다 불러오면 저절로 사라진다) */
+      />
     </MobileShell>
   );
 }
