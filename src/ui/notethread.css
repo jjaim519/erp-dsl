@@ -1,0 +1,26 @@
+/* NoteThread — 격리 구역 내 raw CSS. 값은 전부 토큰.
+   시각: 항목 사이 헤어라인 하나(면·그림자 없음 — 이 부품은 남의 섹션 *안*에 들어가는 물건이라
+   자기 표면을 가지면 카드 안 카드가 된다). */
+
+.nt-form { display: flex; gap: var(--mantine-spacing-xs); margin-bottom: var(--mantine-spacing-xs); }
+.nt-form > :first-child { flex: 1; min-width: 0; }
+
+/* 항목 사이 선은 Divider 원자가 그린다 — 여기선 여백만. (선 아래 여백이 필요해 padding을 위아래로 나눈다.) */
+.nt-item > .nt-body,
+.nt-item > .nt-edit { padding: var(--mantine-spacing-xs) 0; }
+
+/* 본문 줄 — 첫 칸(글)이 남는 폭을 먹고 액션이 우측에 붙는다. Group은 자식을 늘려주지 않아
+   flex:1·min-width:0이 필요하고, 그건 프리미티브가 노출하지 않는 값이라 격리 구역 raw로 둔다
+   (assignpicker·notifpanel·repeater 등 다수 선례와 동류). */
+.nt-body { display: flex; align-items: flex-start; gap: var(--mantine-spacing-xs); }
+.nt-body > :first-child { flex: 1; min-width: 0; }
+
+/* 항목 액션(수정·삭제)은 hover·focus에서만 — 평시엔 글이 주인공이고, 자리는 미리 예약돼 있어
+   나타날 때 본문이 안 밀린다(축 예약 지향). 터치 기기엔 hover가 없어 상시 노출로 떨어진다. */
+.nt-acts { flex: none; display: flex; gap: var(--mantine-spacing-xxs); visibility: hidden; }
+.nt-item:hover .nt-acts,
+.nt-item:focus-within .nt-acts { visibility: visible; }
+@media (hover: none) { .nt-acts { visibility: visible; } }
+
+.nt-edit { display: flex; gap: var(--mantine-spacing-xs); align-items: center; }
+.nt-edit > :first-child { flex: 1; min-width: 0; }

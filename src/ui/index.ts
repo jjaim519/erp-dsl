@@ -99,6 +99,11 @@ export { CompositionOutline, type CompositionLine, type CompositionSection, type
 export type { Choice, NumberField, TextField, OptionGroup, OptionSet, OptionSelection, OptionNode } from './optionset';
 export { bundleBlocks, bundleLabels } from './optionset';  // 값묶음 계약의 유일한 구현 — 정렬 책임은 부품(소비처는 순서 자유)
 export { LineItemList, type LineItem } from './LineItemList';
+// 큐·결정 계열 — "한 건을 골라 다음 단계로 넘긴다" 화면의 3부품. 좌(QueueList)·우(DecisionPanel)·배치(ListDetail).
+export { QueueList, type QueueItem, type QueueMark, type QueueMeta } from './QueueList';
+export { DecisionPanel, type DecisionSection } from './DecisionPanel';
+export { NoteThread, type ThreadNote } from './NoteThread';
+export { ListDetail } from './ListDetail';
 export { EmptyState } from './EmptyState';
 export { PageHeader } from './PageHeader';
 export { DescriptionList } from './DescriptionList';

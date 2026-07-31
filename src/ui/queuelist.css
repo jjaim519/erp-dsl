@@ -1,0 +1,145 @@
+/* QueueList — 격리 구역 내 raw CSS(행 기하·인셋 계산·선택 표현은 부품이 소유한다).
+   값은 전부 토큰(간격·radius·타이포·색 역할). 아래 세 상수만 부품 상수다 — 토큰이 답할 성질이 아니라
+   정렬 계산의 근거값이기 때문:
+     --ql-mark   46px  mark 슬롯 고정폭. 이게 고정이라야 제목 시작점이 행마다 정렬된다(mark의 두 번째 임무).
+     --ql-row    44px  행 최소 높이. Apple HIG 최소 터치타깃(mobilelist.css 44 선례와 동류).
+     구분선 인셋   mark 폭 + 좌패딩 + gap 에서 자동 계산 — 소비처가 못 정한다(내용 시작점부터 그어야 하므로).
+   시각 모델: Apple 2평면 — 목록은 흰 면이고 회색은 페이지 바닥이다. 뒤집으면(목록을 가라앉히면)
+   비선택 행이 전부 묻힌다. 선택만 안쪽으로 들어간 라운드 pill이 된다. */
+
+.ql {
+  padding: var(--mantine-spacing-xxs);
+  display: flex;
+  flex-direction: column;
+}
+
+.ql-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  width: 100%;
+  min-height: var(--ql-row, 44px);
+  box-sizing: border-box;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border: none;
+  border-radius: var(--mantine-radius-sm);
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text-primary);
+}
+button.ql-row, label.ql-row { cursor: pointer; }
+button.ql-row:disabled,
+label.ql-row[data-disabled] { cursor: default; }
+
+/* 행 사이 헤어라인 — 내용(제목) 시작점부터. 좌측 인셋은 [좌패딩 + mark 폭 + gap]의 합이라
+   mark가 없는 목록에선 저절로 짧아진다(같은 규칙이 두 경우를 다 덮는다). */
+.ql-row + .ql-row::before {
+  content: "";
+  position: absolute;
+  left: var(--ql-inset);
+  right: 2px;
+  top: 0;
+  height: var(--border-width);
+  background: var(--border-default);
+}
+
+/* hover — 선택과 *모양은 같고 색만 약하다*. 그래서 선택이 하는 일을 hover도 똑같이 해야 한다:
+   자기 위/아래 구분선을 지운다. 안 지우면 채움은 라운드 pill인데 선은 인셋(mark 아래는 선이 없다)이라
+   배지 아래에서 박스 모양이 어긋나 보인다(실화면 지적). 선을 지우면 그 어긋남 자체가 없어진다. */
+button.ql-row:hover:not(:disabled):not([data-selected]),
+label.ql-row:hover:not([data-disabled]):not([data-selected]) { background: var(--bg-tertiary); }
+
+button.ql-row:hover:not(:disabled)::before,
+button.ql-row:hover:not(:disabled) + .ql-row::before,
+label.ql-row:hover:not([data-disabled])::before,
+label.ql-row:hover:not([data-disabled]) + .ql-row::before { display: none; }
+
+/* 이미 선택된 행은 hover로 다시 칠하지 않는다 — 선택(primary 틴트)이 hover(회색)보다 강한 상태인데
+   덮으면 마우스를 얹는 순간 상태가 *약해져* 보인다. Finder·VS Code·Linear 전부 선택을 유지한다.
+   (이전엔 hover 선택자의 특이도가 더 높아 실제로 덮이고 있었다 — 실화면 지적.) */
+
+/* 선택 — 모양(각진 전체폭 → 안쪽 라운드 pill)과 굵기가 함께 바뀐다. 둘 다 *색이 아닌 단서*라
+   WCAG 1.4.1(색 단독 금지)을 충족한다. 옅은 틴트(7.5%)는 흰 배경 대비 1.1:1로 1.4.11(3:1) 미달이라 폐기했다.
+   ★선택 행에서 mark의 스타일은 건드리지 않는다 — 건드리면 윤곽 없는 quiet에 윤곽이 생겨
+     무게 사다리(quiet < outline < solid)가 선택할 때마다 무너진다. */
+.ql-row[data-selected] { background: var(--mantine-color-primary-1); }
+.ql-row[data-selected] .ql-title { font-weight: var(--typo-heading-weight); }
+.ql-row[data-selected]::before,
+.ql-row[data-selected] + .ql-row::before { display: none; }
+
+/* 포커스 — 버튼 행은 자기 자신이, 라벨 행은 안의 라디오 입력이 포커스를 받는다(:focus-within). */
+.ql-row:focus-visible,
+label.ql-row:focus-within {
+  outline: 2px solid var(--border-focus);
+  outline-offset: -2px;
+  z-index: 2;
+}
+
+/* mark — 무게 사다리. 고정폭이라 라벨 길이가 달라도 제목 시작점이 안 흔들린다. */
+.ql-mark {
+  flex: none;
+  width: var(--ql-mark, 46px);
+  height: 1.3125rem;
+  padding: 0 var(--mantine-spacing-xxs);
+  border-radius: var(--mantine-radius-xs);
+  border: var(--border-width) solid transparent;
+  font-size: 0.625rem;
+  font-weight: var(--typo-heading-weight);
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.ql-mark[data-weight="quiet"]   { color: var(--text-secondary); font-weight: var(--typo-body-strong-weight); }
+.ql-mark[data-weight="outline"] { color: var(--text-secondary); border-color: var(--border-strong); }
+.ql-mark[data-weight="solid"]   { color: var(--mantine-color-white); background: var(--mantine-color-primary-6); }
+
+/* 라디오 표식 — 점 자체는 Radio 원자와 *같은 프리미티브*가 그린다(QueueList.tsx 주석 참조).
+   여기선 배치만 잡는다: 행 안에서 안 줄어들게 고정. */
+.ql-radio { flex: none; display: inline-flex; align-items: center; }
+
+.ql-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--typo-body-size);
+  font-weight: var(--typo-body-strong-weight);
+  line-height: var(--typo-body-lh);
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ql-title-muted { color: var(--text-secondary); font-weight: var(--typo-body-weight); }
+
+/* 메타 — 우측 값들. 숫자 열이 흔들리지 않게 tabular-nums, 줄바꿈 없음. */
+.ql-meta {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xxs);
+  font-size: var(--typo-caption-size);
+  line-height: var(--typo-caption-lh);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.ql-meta-item { display: inline-flex; align-items: center; gap: 0.25em; }
+.ql-meta-item[data-tone="strong"]  { color: var(--text-primary); font-weight: var(--typo-heading-weight); }
+.ql-meta-item[data-tone="warning"] { color: var(--mantine-color-warning-6); font-weight: var(--typo-heading-weight); }
+.ql-meta-item[data-tone="danger"]  { color: var(--text-danger); font-weight: var(--typo-heading-weight); }
+.ql-sep { color: var(--border-strong); }
+
+.ql-row[data-disabled] .ql-title { color: var(--text-secondary); }
+
+/* 스켈레톤 — 행 높이(44)를 그대로 유지한다. 데이터가 오는 순간 레이아웃이 안 흔들리는 게 목적이라
+   행 골격(패딩·gap)을 실제 행과 공유한다. 줄마다 폭을 달리해 실제 목록의 들쭉날쭉함을 흉내낸다. */
+.ql-sk { display: flex; align-items: center; gap: var(--mantine-spacing-xs); }
+.ql-sk-mark  { flex: none; width: var(--ql-mark, 46px); }
+.ql-sk-title { flex: 1; max-width: 190px; }
+.ql-sk-meta  { flex: none; width: 56px; }
+.ql-sk:nth-child(2n) .ql-sk-title { max-width: 154px; }
+.ql-sk:nth-child(2n) .ql-sk-meta  { width: 78px; }
+.ql-sk:nth-child(3n) .ql-sk-title { max-width: 136px; }

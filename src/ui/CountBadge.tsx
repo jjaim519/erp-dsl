@@ -10,14 +10,21 @@
 
 type Tone = 'danger' | 'neutral';
 type Props = {
-  count: number;        // 미처리 건수. 0 이하면 안 보인다.
+  count: number;        // 미처리 건수. 기본은 0 이하면 안 보인다(showZero로 뒤집는다).
   tone?: Tone;          // 기본 danger(행동요구). 정보성 카운트는 neutral.
   max?: number;         // 초과시 "N+"(기본 99).
   dot?: boolean;        // true면 숫자 없이 점만.
+  showZero?: boolean;   // 0도 그린다. 아래 주석 참조.
 };
 
-export function CountBadge({ count, tone = 'danger', max = 99, dot = false }: Props) {
-  if (count <= 0) return null;
+// showZero — "0건도 정보"인 맥락용(기본 false라 기존 소비처 불변).
+//  · 기본 규칙(0=숨김)은 *알림*의 문법이다: 배지의 존재 자체가 "나를 위한 일이 있다"는 신호라 0건엔 깨끗해야 한다.
+//  · 그런데 단계별 큐(견적 대기 N / 계약 대기 N / 시공 배정 N)는 다르다 — 여기선 숫자가 "어느 단계가 존재하고
+//    지금 얼마나 쌓였나"를 말하므로 0도 읽혀야 한다("이 단계는 비었다" 역시 답이다). 숨기면 소비처가 라벨 문자열에
+//    숫자를 박아 우회하고, 그 순간 배지 층위가 통째로 사라진다(kk가 실제로 그 상태였다).
+//  · 0을 danger로 칠하면 "행동요구만 빨강"이 무너진다 — showZero를 쓸 땐 tone='neutral'을 함께 주는 게 맞다.
+export function CountBadge({ count, tone = 'danger', max = 99, dot = false, showZero = false }: Props) {
+  if (count < 0 || (count === 0 && !showZero)) return null;
   const bg = `var(--mantine-color-${tone}-6)`;
   if (dot) {
     // rem — 폰트 스케일(접근성 줌)에 함께 커진다. 라벨은 rem인데 점만 px면 줌에서 쪼그라든다.

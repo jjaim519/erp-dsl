@@ -27,6 +27,10 @@ type ButtonProps = {
   fullWidth?: boolean;
   type?: 'button' | 'submit';
   onClick?: () => void;
+  // 접근성 이름 — children이 있어도 *맥락*이 필요한 버튼용("보기"가 어느 행의 보기인가).
+  //  · className/style과 성격이 다르다: 스타일 우회 통로가 아니라 접근성 계약이라 열어도 닫힘이 안 샌다.
+  //  · 아이콘 전용 버튼은 여전히 IconButton(label 필수)이다 — 이건 텍스트가 *있는데* 모호한 경우.
+  ariaLabel?: string;
 };
 
 // variant → 실제 스타일 매핑. 이 "정책"을 우리가 100% 소유한다.

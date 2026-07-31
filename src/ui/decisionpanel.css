@@ -1,0 +1,58 @@
+/* DecisionPanel — 격리 구역 내 raw CSS. 값은 전부 토큰.
+   이 부품의 정체성은 **하단 고정 액션 바**다: 탭이 셋이어도 주 CTA를 눈이 늘 같은 곳에서 찾는다.
+   근거(업계): SAP Fiori — 헤더·푸터 툴바가 둘 다 있으면 워크플로 액션(저장·전송)은 반드시 푸터 /
+   Workday Canvas — 액션이 바뀌어도 바의 위치는 유지.
+   ⚠ 4열 격자로 만들지 않는다 — 보조가 하나뿐인 탭에서 두 버튼이 패널 양 끝으로 벌어져 한 쌍으로 안 읽힌다.
+     "자리 고정"의 목적은 오른쪽 정렬만으로 이미 달성된다(kk v4 실측). */
+
+.dp {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 구획 사이 선은 Divider 원자가 그린다(여기 CSS 아님) — 선은 우리 부품이 이미 가진 물건이다.
+   이 파일이 갖는 건 패딩·정렬·sticky 같은 *기하*뿐. */
+.dp-head { padding: var(--mantine-spacing-sm) var(--mantine-spacing-md); }
+.dp-sub { font-variant-numeric: tabular-nums; }   /* 전화·날짜가 섞인 부제라 숫자 폭 고정 */
+
+.dp-sec { padding: var(--mantine-spacing-sm) var(--mantine-spacing-md); }
+
+.dp-sec-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--mantine-spacing-sm);
+  margin-bottom: var(--mantine-spacing-xs);
+  min-height: 1.5rem;              /* 축 예약 — labelExtra 유무로 섹션 머리가 위아래로 안 흔들린다 */
+}
+/* 섹션 라벨 = 구획의 이름표. 본문보다 *작고 넓게* 벌려 층위를 낮춘다(제목 경쟁 방지). */
+.dp-sec-t {
+  font-size: var(--typo-caption-size);
+  font-weight: var(--typo-heading-weight);
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* 액션 바 — sticky bottom. margin-top:auto라 내용이 짧아도 바닥에 붙는다.
+   ※ 성립 조건: 패널이 부모에게서 높이를 받아야 한다(부모가 auto면 그냥 문서 끝에 붙는다). */
+.dp-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  background: var(--surface-default);
+  border-top: var(--border-width) solid var(--border-default);
+  /* 목업은 "위로 뜨는 그림자"였으나 안 넣는다: ① 상향 그림자에 대응하는 토큰이 없어 raw 값이 되고
+     ② 우리 하단 바 선례(OptionSetPicker 풋터·CompositionOutline 합계)가 전부 border-top 하나뿐이라
+     여기만 그림자를 달면 같은 자리의 바가 화면마다 달라 보인다. 불투명 배경 + 구분선이면
+     "본문이 바 밑으로 흐른다"는 신호는 이미 선다. */
+}
+/* 안내 문구 자리는 항상 예약한다 — 잠금 사유가 이 자리를 빌리므로, 없다고 접으면 사유가 뜰 때 바가 흔들린다.
+   글자 자체(크기·색)는 Text 원자가 그린다 — 여기선 자리만 잡는다. */
+.dp-note { min-width: 0; }
+
+/* 잠금 CTA의 *생김새*는 이 파일이 정하지 않는다 — Button의 variant가 정한다(DecisionPanel.tsx 참조).
+   초판은 여기서 `.dp-locked > button`으로 Button 안쪽을 잡아 다시 칠했다: 부품은 자기가 primary인 줄
+   아는데 화면은 회색이라 계약이 조용히 깨지고, Button 내부가 바뀌면 같이 깨진다. */

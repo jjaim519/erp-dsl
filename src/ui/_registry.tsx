@@ -55,6 +55,10 @@ import { Collapsible } from './Collapsible';
 import { Modal } from './Modal';
 import { DataTable } from './DataTable';
 import { LineItemList, type LineItem } from './LineItemList';
+import { QueueList, type QueueItem } from './QueueList';
+import { DecisionPanel } from './DecisionPanel';
+import { NoteThread, type ThreadNote } from './NoteThread';
+import { ListDetail } from './ListDetail';
 import { EmptyState } from './EmptyState';
 import { PageHeader } from './PageHeader';
 import { DescriptionList } from './DescriptionList';
@@ -105,6 +109,24 @@ import { Cascader } from './Cascader';
 import { MillerColumns } from './MillerColumns';
 import { SearchToolbar } from './SearchToolbar';
 import { notify } from './notify';
+
+// 큐·결정 계열 데모 데이터 — 도메인은 문자열로만 들어온다(부품은 'B2C'가 뭔지 모른다).
+const QUEUE_ITEMS: QueueItem[] = [
+  { id: 'q1', mark: { label: 'B2C', weight: 'quiet' }, title: '아크로 서울포레스트 D동 2201호',
+    meta: [{ text: '9일째', tone: 'danger', icon: 'alert-triangle' }] },
+  { id: 'q2', mark: { label: '중점', weight: 'solid' }, title: '롯데캐슬 시그니처 중앙 205동',
+    meta: [{ text: '₩18,420,000', tone: 'strong' }, { text: '4일째', tone: 'warning' }] },
+  { id: 'q3', mark: { label: 'B2B', weight: 'outline' }, title: '반포 래미안 원베일리 302동',
+    meta: [{ text: '—' }, { text: '2일째' }] },
+  { id: 'q4', mark: { label: 'B2C', weight: 'quiet' }, title: '윤소라', titleMuted: '· 현장 미정',
+    meta: [{ text: '오늘' }] },
+];
+const BRANCH_ITEMS: QueueItem[] = [
+  { id: 'a', title: 'A안', meta: [{ text: '도면 3' }, { text: '₩18,420,000', tone: 'strong' }] },
+  { id: 'b', title: 'B안', meta: [{ text: '도면 1' }, { text: '견적 없음' }] },
+  { id: 'c', title: 'C안', meta: [{ text: '도면 4' }, { text: '₩24,100,000', tone: 'strong' }],
+    badge: { label: '계약', color: 'success' }, disabled: true },
+];
 
 const opts = [
   { label: '합판', value: 'plywood' },
@@ -898,6 +920,13 @@ export function Demo({ name }: { name: string }) {
   const [multi, setMulti] = useState<string[]>(['plywood']);
   const [range, setRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const [grp, setGrp] = useState('');
+  const [queueSel, setQueueSel] = useState('q1');
+  const [branchSel, setBranchSel] = useState('b');
+  const [memoDraft, setMemoDraft] = useState('');
+  const [notes, setNotes] = useState<ThreadNote[]>([
+    { id: 'n1', body: '고객이 상판 재질 두 가지로 비교 요청.', author: '옥성훈', time: '3일 전', canEdit: true },
+    { id: 'n2', body: '토요일 오후 내방. 3인 가구, 아일랜드 원함.', author: '김지우', time: '5일 전' },
+  ]);
   const [files, setFiles] = useState<FileItem[]>([
     { id: 'a', name: '도면.pdf', status: 'done' },
     { id: 'b', name: '사양.xlsx', status: 'uploading', progress: 60 },
@@ -985,6 +1014,7 @@ export function Demo({ name }: { name: string }) {
     Card: <Group gap="sm"><Card variant="elevated" padding="md"><Text variant="body">elevated</Text></Card><Card variant="outlined" padding="md"><Text variant="body">outlined</Text></Card><Card variant="flat" padding="md"><Text variant="body">flat</Text></Card></Group>,
     Divider: <div style={{ width: 240 }}><Divider /></div>,
     Container: <Card variant="flat" padding="sm"><Box>narrow 천장 + 가운데</Box></Card>,
+    Page: <Card variant="flat" padding="sm"><Box>1200 캡 + 중앙 — 페이지 폭의 유일한 주인(prop 없음)</Box></Card>,
     Stack: <div style={{ width: 200 }}><Stack gap="xs"><Box>1</Box><Box>2</Box><Box>3</Box></Stack></div>,
     Group: <Group gap="xs"><Box>A</Box><Box>B</Box><Box>C</Box></Group>,
     Grid: <Grid columns={3} gap="xs"><Grid.Col span={1}><Box>1</Box></Grid.Col><Grid.Col span={2}><Box>span 2</Box></Grid.Col></Grid>,
@@ -1237,6 +1267,54 @@ export function Demo({ name }: { name: string }) {
           showAmount
         />
       </div>
+    ),
+    QueueList: (
+      <Stack gap="md">
+        <QueueList items={QUEUE_ITEMS} selectedId={queueSel} onSelect={setQueueSel} />
+        {/* selectionMark="radio" — 같은 부품, 다른 *의미*(여럿 중 하나를 고른다). 마지막 행은 disabled+배지. */}
+        <QueueList items={BRANCH_ITEMS} selectedId={branchSel} onSelect={setBranchSel} selectionMark="radio" />
+        <QueueList items={[]} status="loading" skeletonRows={3} />
+      </Stack>
+    ),
+    DecisionPanel: (
+      <DecisionPanel
+        title="목동 하이페리온 A동 3305호"
+        subtitle="강도현 · 010-9902-6614"
+        sections={[
+          { key: 'memo', label: `메모 ${notes.length}`, children: (
+            <NoteThread notes={notes} draft={memoDraft} onDraftChange={setMemoDraft}
+              onSubmit={() => { setNotes((n) => [{ id: String(n.length + 1), body: memoDraft, author: '나', time: '방금', canEdit: true }, ...n]); setMemoDraft(''); }}
+              onEdit={(id, body) => setNotes((n) => n.map((x) => (x.id === id ? { ...x, body } : x)))}
+              onDelete={(id) => setNotes((n) => n.filter((x) => x.id !== id))} />
+          ) },
+          { key: 'branch', label: '견적안 2', labelExtra: <Button variant="ghost" size="sm" onClick={() => {}}>＋ 새 안</Button>, children: (
+            <QueueList items={BRANCH_ITEMS.slice(0, 2)} selectedId={branchSel} onSelect={setBranchSel} selectionMark="radio" />
+          ) },
+        ]}
+        secondaryActions={[{ label: '견적 수정', onClick: () => {} }, { label: '도면 첨부', onClick: () => {} }]}
+        // 금액 없는 B안이 선택돼 있으면 잠금 — 눌러 보면 사유가 안내 자리에 뜬다(기하 불변).
+        primaryAction={{ label: `${branchSel === 'a' ? 'A안' : 'B안'} 계약 작성`, onClick: () => {},
+          disabled: branchSel !== 'a', disabledReason: '금액이 있는 안만 계약할 수 있습니다' }}
+      />
+    ),
+    NoteThread: (
+      <NoteThread notes={notes} draft={memoDraft} onDraftChange={setMemoDraft}
+        onSubmit={() => { setNotes((n) => [{ id: String(n.length + 1), body: memoDraft, author: '나', time: '방금', canEdit: true }, ...n]); setMemoDraft(''); }}
+        onEdit={(id, body) => setNotes((n) => n.map((x) => (x.id === id ? { ...x, body } : x)))}
+        onDelete={(id) => setNotes((n) => n.filter((x) => x.id !== id))} />
+    ),
+    ListDetail: (
+      <ListDetail
+        list={<QueueList items={QUEUE_ITEMS.slice(0, 3)} selectedId={queueSel} onSelect={setQueueSel} />}
+        detail={(
+          <Card variant="elevated" padding="none">
+            <DecisionPanel title="아크로 서울포레스트 D동 2201호" subtitle="박서준 · 010-3311-7745"
+              sections={[{ key: 'x', label: '참조', children: <Text variant="body">가구 발주서</Text> }]}
+              actionNote="첫 견적안을 만들면 안 목록이 생깁니다"
+              primaryAction={{ label: '견적 작성', onClick: () => {} }} />
+          </Card>
+        )}
+      />
     ),
     EmptyState: <EmptyState icon="box" title="등록된 발주가 없습니다" description="신규 발주를 만들어 시작하세요." action={{ label: '신규 발주', variant: 'primary', onClick: () => {} }} />,
     PageHeader: <PageHeader title="고객 관리" meta={[{ kind: 'badge', label: '활성', tone: 'success' }, { kind: 'text', label: '유입경로 · 2026-05-02 등록' }]} actions={[{ label: '신규 고객', variant: 'primary', icon: 'user', onClick: () => {} }]} />,
