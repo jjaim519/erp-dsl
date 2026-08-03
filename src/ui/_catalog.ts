@@ -1125,6 +1125,30 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['격리 raw textarea(자동 높이·무테 — 필드 규격과 다른 물건. Tree 인라인편집 선례)', 'mobilelist.css'],
     } },
+  { name: 'MobileSegment', layer: '분자', role: '화면 *안*의 뷰 전환(결재함 5탭 등). 칩 줄=값 선택/필터라면 이건 뷰 전환 — 항상 하나가 켜져 있고 고르면 목록이 다른 것으로 바뀐다. 하단 탭바와 신호가 겹치지 않게 텍스트+밑줄(탭바는 아이콘+틴트 알약).',
+    props: [
+      { name: 'items', kind: '콘텐츠', values: '{ value, label, count? }[] — count는 정보성이라 neutral 톤(빨간 숫자 배지는 멘션급 전용)' },
+      { name: 'value / onChange', kind: '기능', values: 'controlled. 켜짐은 반드시 하나' },
+      { name: 'ariaLabel', kind: '기능', values: 'tablist 이름' },
+    ],
+    composition: {
+      토큰: ['--border-default(하단 경계)', 'primary-6(밑줄 인디케이터)', 'min-height 44px', 'inset box-shadow로 인디케이터 자리 예약'],
+      '의미 원자': ['CountBadge'],
+      공유: ['mobilelist.css'],
+    } },
+  { name: 'MobileDecisionBar', layer: '분자', role: '결재·승인 화면의 하단 결정 바(MobileShell.bottom에 꽂는다). MobileComposer의 형제 — 그건 입력, 이건 결정. 문서 길이와 무관하게 같은 자리에 있는 것이 값(위치 불변성).',
+    props: [
+      { name: 'primary', kind: '기능', values: 'Action — 커밋(승인·제출). **강조 1개가 여기서 소진된다**(타입에 둘째 강조 자리가 없다)' },
+      { name: 'secondary', kind: '기능', values: 'Action — 대안(반려·보류). 강조 아님' },
+      { name: 'more', kind: '기능', values: 'Action[] → ⋯ 메뉴. 인라인은 최대 둘(하단 한 줄에 셋이면 각 표적이 44pt 아래로 내려간다). 액션 시트는 안 쓴다' },
+      { name: 'disabled', kind: '기능', values: '처리 중 등 — 결정 전체를 잠근다(부분 잠금 미노출: 애매한 상태를 만든다)' },
+    ],
+    composition: {
+      토큰: ['gap xs', 'padding xs/md', 'bg-primary'],
+      '의미 원자': ['Button', 'IconButton', 'Icon'],
+      분자: ['Menu'],
+      공유: ['Action(_cells)', 'mobilelist.css'],
+    } },
   { name: 'MobileFileRow', layer: '분자', role: '첨부 파일 한 줄(읽기) — 아이콘·이름·크기·내려받기. MobileListRow(누르면 다른 화면)와 행동이 달라 별개 부품(§11-3).',
     props: [
       { name: 'name / size', kind: '콘텐츠', values: '파일명 + 크기 문자열(바이트 포맷은 소비처 — 로케일/도메인)' },

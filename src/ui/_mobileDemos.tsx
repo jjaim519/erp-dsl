@@ -34,6 +34,8 @@ import { MobileFileRow } from './MobileFileRow';
 import { MobileBoardList } from './MobileBoardList';
 import { MobileBoardView } from './MobileBoardView';
 import { MobileBoardWrite } from './MobileBoardWrite';
+import { MobileSegment } from './MobileSegment';
+import { MobileDecisionBar } from './MobileDecisionBar';
 import { TextInput } from './TextInput';
 import { Textarea } from './Textarea';
 import { Text } from './Text';
@@ -300,6 +302,94 @@ function FileRowDemo() {
   );
 }
 
+function SegmentDemo() {
+  const [a, setA] = useState('wait');
+  const [b, setB] = useState('unread');
+  return (
+    <>
+      <MobileSection title="4개 이상 — 가로 스크롤 (결재함)" flush>
+        <MobileSegment
+          ariaLabel="결재함"
+          value={a} onChange={setA}
+          items={[
+            { value: 'wait', label: '대기', count: 3 },
+            { value: 'plan', label: '예정' },
+            { value: 'done', label: '처리', count: 12 },
+            { value: 'end', label: '완료' },
+            { value: 'all', label: '전체', count: 128 },
+          ]}
+        />
+      </MobileSection>
+      <MobileSection title="3개 이하 — 균등 분할 (읽음 명단)" flush>
+        <MobileSegment
+          ariaLabel="읽음 명단"
+          value={b} onChange={setB}
+          items={[
+            { value: 'unread', label: '안읽음', count: 14 },
+            { value: 'read', label: '읽음', count: 18 },
+          ]}
+        />
+      </MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          균등/스크롤은 prop이 아니라 <b>항목 수</b>가 정한다(M3: fixed 2~3 / scrollable 4+).
+          5탭에 카운트까지 붙으면 375px에 균등으로 안 들어가 라벨이 뭉개진다.
+        </Text>
+      </MobileSection>
+    </>
+  );
+}
+
+function DecisionBarDemo() {
+  const [tab, setTab] = useState('wait');
+  const [done, setDone] = useState<string | null>(null);
+  return (
+    <MobileShell
+      title="휴가 신청서" onBack={() => {}}
+      tabs={TABS} activePath="/board" onNavigate={() => {}}
+      bottom={
+        <MobileDecisionBar
+          primary={{ label: '승인', onClick: () => setDone('승인') }}
+          secondary={{ label: '반려', onClick: () => setDone('반려') }}
+          more={[
+            { label: '보류', onClick: () => setDone('보류') },
+            { label: '전결 위임', onClick: () => setDone('위임') },
+            { label: '결재선 보기', onClick: () => {} },
+          ]}
+        />
+      }>
+      <MobileSegment
+        ariaLabel="결재함"
+        value={tab} onChange={setTab}
+        items={[
+          { value: 'wait', label: '대기', count: 3 },
+          { value: 'plan', label: '예정' },
+          { value: 'done', label: '처리', count: 12 },
+          { value: 'end', label: '완료' },
+        ]}
+      />
+      <MobileSection>
+        <Title variant="subheading">2026년 하계 휴가 신청</Title>
+        <div style={{ marginTop: 8 }}>
+          <Text variant="caption" color="secondary">김서연 · 인사팀 · 07.01 ~ 07.05 (5일)</Text>
+        </div>
+      </MobileSection>
+      <MobileSection title="결재선" flush>
+        <MobileListRow title="1차 · 박상우 팀장" meta="07.01 승인" badges={<Badge color="success">승인</Badge>} />
+        <MobileListRow title="2차 · 옥성훈 대표" meta="대기 중" badges={<Badge color="neutral">대기</Badge>} emphasis />
+      </MobileSection>
+      <MobileSection title="첨부" flush>
+        <MobileFileRow name="휴가신청서_김서연.pdf" size="182 KB" onOpen={() => {}} onDownload={() => {}} />
+      </MobileSection>
+      {done && (
+        <MobileSection>
+          <Text variant="body">처리 결과: <b>{done}</b> (데모 — 실제 전이는 소비처가 한다)</Text>
+        </MobileSection>
+      )}
+    </MobileShell>
+  );
+}
+
 /* ── 화면(유기체) ──────────────────────────────────────────────────────── */
 
 function BoardListDemo() {
@@ -474,7 +564,9 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileCalendar:    { render: () => <CalendarDemo />, bare: true, note: 'fill 모드 — 달력이 본문 전체를 갖는다' },
   MobileComment:     { render: () => <CommentDemo />, note: '루트 + 1단 답글 · 작성자 배지' },
   MobileComposer:    { render: () => <ComposerDemo />, bare: true, note: '하단 고정 입력 + 답글 대상 칩' },
-  MobileFileRow:     { render: () => <FileRowDemo />, note: '내려받기 있음/없음 · 용량 표기 없음' },
+  MobileFileRow:     { render: () => <FileRowDemo />, note: '열기+내려받기 분리 · 내려받기만 · 정적 행' },
+  MobileSegment:     { render: () => <SegmentDemo />, note: '4개↑ 가로 스크롤 / 3개↓ 균등 — 개수가 정한다' },
+  MobileDecisionBar: { render: () => <DecisionBarDemo />, bare: true, note: '승인/반려 + ⋯ 메뉴. 결재 화면 전체 맥락' },
   MobileBoardList:   { render: () => <BoardListDemo />, bare: true, note: '검색·분류 칩·공지 구획·더보기' },
   MobileBoardView:   { render: () => <BoardViewDemo />, bare: true, note: '필독 읽음확인·첨부·이전다음·댓글' },
   MobileBoardWrite:  { render: () => <BoardWriteDemo />, bare: true, note: '수신자 조직도·첨부·게시옵션 3종' },

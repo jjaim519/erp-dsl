@@ -353,6 +353,58 @@ button.mst-item:active { background: var(--bg-secondary); }
 }
 .mcmt-reply:active { background: var(--mantine-color-primary-0); color: var(--mantine-color-primary-7); }
 
+/* ── MobileSegment ── */
+/* 화면 안 뷰 전환 — 텍스트 + 밑줄 인디케이터(하단 탭바의 아이콘+틴트 알약과 신호가 겹치면 안 된다).
+   묶음 경계는 아래 헤어라인 하나. 면·그림자 없음(계열 규칙). */
+.mseg {
+  display: flex;
+  border-bottom: var(--border-width) solid var(--border-default);
+  padding: 0 var(--mantine-spacing-md);
+}
+/* 3개 이하 = 균등 분할. 4개 이상은 내용 폭 + 가로 스크롤(부품이 개수로 정한다 — MobileSegment.tsx 헤더). */
+.mseg[data-scroll] {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.mseg[data-scroll]::-webkit-scrollbar { display: none; }
+.mseg[data-scroll] .mseg-item { flex: none; }
+
+.mseg-item {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--mantine-spacing-xxs);
+  min-height: 44px;
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  border: none; background: none;
+  font-family: inherit;
+  font-size: var(--typo-body-size);
+  color: var(--text-secondary);
+  cursor: pointer; white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  /* 인디케이터 자리를 늘 잡아둔다 — 켜질 때 높이가 안 흔들린다(입력칸 윤곽과 같은 수법). */
+  box-shadow: inset 0 -2px 0 transparent;
+}
+.mseg-item[data-on] {
+  color: var(--text-primary);
+  font-weight: var(--typo-body-strong-weight);
+  box-shadow: inset 0 -2px 0 var(--mantine-color-primary-6);
+}
+.mseg-item:active { background: var(--bg-secondary); }
+.mseg-label { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── MobileDecisionBar ── */
+/* 하단 결정 바 — 셸 bottom 슬롯에 산다. 자기 패딩을 갖는다(슬롯은 선만 준다 — MobileComposer와 같은 규율).
+   버튼은 fullWidth라 남은 폭을 균등하게 나눠 갖는다. ⋯ 메뉴는 고정 폭. */
+.mdb {
+  display: flex; align-items: center;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  background: var(--bg-primary);
+}
+.mdb > *:not(:last-child) { min-width: 0; }
+
 /* ── MobileComposer ── */
 /* 하단 고정 입력 바 — 셸 bottom 슬롯에 산다. 자기 패딩을 갖는다(슬롯은 선만 준다). */
 .mcps { padding: var(--mantine-spacing-xs) var(--mantine-spacing-md); background: var(--bg-primary); }
