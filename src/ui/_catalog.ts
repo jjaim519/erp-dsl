@@ -83,6 +83,8 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'selected', kind: '기능', values: 'boolean (controlled)' },
       { name: 'onChange', kind: '기능', values: '() => void (클릭 신호)' },
       { name: 'onRemove', kind: '기능', values: '() => void (있으면 X 노출)' },
+      { name: 'type', kind: '기능', values: "'checkbox'(기본 — 각각 켜고 끄기) | 'radio'(같은 name끼리 '이 중 하나'). 칩은 껍데기가 아니라 실제 input이라, 이 값이 스크린리더가 읽는 구조를 정한다" },
+      { name: 'name', kind: '기능', values: "radio 묶음 이름 — 같은 name이 한 그룹(네이티브 규칙). type='radio'일 때만 의미" },
       { name: 'variant', kind: '스타일', values: "'value'(기본 — 사용자가 넣은 값, 채움·✕, 필드 안에 산다) | 'suggest'(제품이 내민 빠른 길, 아웃라인·가벼움). M3 input/suggestion chip 구분 — 둘이 한 화면에 있으면 형태로 갈라야 '같은 게 두 번'으로 안 읽힌다" },
       { name: 'children', kind: '콘텐츠', values: 'string' },
     ] },
@@ -972,7 +974,7 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'MobileShell', layer: '유기체', role: '모바일 셸 — AppShell의 *형제*(축소판 아님). 면·그림자를 안 쓰고 배경 + 가로 헤어라인으로만 나누는 네이티브 리스트 체계. 상단 Navigation(뒤로·제목·아이콘 액션)만 셸이 소유하고 화면 제목(Top)은 본문이 갖는다. CTA는 헤더가 아니라 하단 고정.',
     props: [
       { name: 'title / onBack / backLabel', kind: '콘텐츠', values: 'Navigation — 2뎁스에서 "여기가 어디인지" + 뒤로. 최상위 화면은 생략(본문 Top이 제목을 가짐)' },
-      { name: 'actions', kind: '기능', values: 'Action[] — 우측 아이콘 액션(icon 필수). 텍스트 CTA 자리가 아니다' },
+      { name: 'actions', kind: '기능', values: '[Action] | [Action, Action] — 우측 아이콘 액션(icon 필수). **상한 2를 타입에 못박음**(Base Web MobileHeader 선례): 좌측 ‹ 와 제목이 축을 예약해 셋째부터 제목이 밀린다. 넘치면 오버플로 메뉴. 텍스트 CTA 자리가 아니다' },
       { name: 'tabs / activePath / onNavigate', kind: '기능', values: 'MobileTab[] = { label, icon, path, count? } — 3~5개(HIG). 오버플로(더보기) 없음: HIG가 "숨은 탭은 도달·인지가 어렵다"며 말리는 패턴이라 소비처가 추려서 준다' },
       { name: 'bottom', kind: '콘텐츠', values: 'ReactNode (선택) — 탭 위 고정 한 칸. CTA 버튼이든 입력 바(MobileComposer)든 여기 들어간다. 자리를 하나로 둔 이유: 둘 다 "탭 위 고정"이라 슬롯을 나누면 같은 자리를 두 경로가 다툰다. 없으면 렌더 0' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (유일한 스크롤 영역)' },
@@ -1126,9 +1128,10 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'MobileFileRow', layer: '분자', role: '첨부 파일 한 줄(읽기) — 아이콘·이름·크기·내려받기. MobileListRow(누르면 다른 화면)와 행동이 달라 별개 부품(§11-3).',
     props: [
       { name: 'name / size', kind: '콘텐츠', values: '파일명 + 크기 문자열(바이트 포맷은 소비처 — 로케일/도메인)' },
-      { name: 'onDownload', kind: '기능', values: '있으면 행 전체가 눌린다' },
+      { name: 'onOpen', kind: '기능', values: '있으면 행 본체가 *뷰어를 연다*(주 행위). 내려받기는 우측 버튼으로 갈라진다 — 한 표적이 두 행위를 하면 손가락이 어느 쪽인지 모른다' },
+      { name: 'onDownload', kind: '기능', values: 'onOpen이 없으면 행 전체가 이것. 있으면 우측 아이콘 버튼' },
     ],
-    composition: { 토큰: ['--border-default', 'min-height 44px'], '의미 원자': ['Icon'], 공유: ['말줄임을 왼쪽에서(확장자가 끝에 있어 direction 반전)', 'mobilelist.css'] } },
+    composition: { 토큰: ['--border-default', 'min-height 44px', '--erp-touch-target(우측 버튼 폭)'], '의미 원자': ['Icon'], 공유: ['말줄임을 왼쪽에서(확장자가 끝에 있어 direction 반전)', 'mobilelist.css'] } },
   { name: 'Timeline', layer: '유기체', role: '시간순 누적 이벤트(시각·작성자·구분·내용 말풍선).',
     props: [
       { name: 'events', kind: '기능', values: 'TimelineEvent[]' },

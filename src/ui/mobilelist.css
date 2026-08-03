@@ -403,6 +403,26 @@ button.mst-item:active { background: var(--bg-secondary); }
 button.mfr { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button.mfr:active { background: var(--bg-secondary); }
 .mfr-ico, .mfr-dl { flex: none; display: inline-flex; }
+/* onOpen이 있으면 한 행에 버튼이 둘이다(본체=열기 / 우측=내려받기). 행 자신은 버튼이 아니라 컨테이너가 된다
+   — 버튼 안에 버튼을 넣을 수 없기 때문. 패딩은 각 버튼이 갖고, 행은 선만 유지한다. */
+.mfr[data-split] { padding: 0; }
+.mfr-main {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  min-height: 44px; box-sizing: border-box;
+  padding: var(--mantine-spacing-md);
+  border: none; background: none; text-align: left;
+  font-family: inherit; color: inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mfr-main:active { background: var(--bg-secondary); }
+button.mfr-dl {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: var(--erp-touch-target); align-self: stretch;
+  border: none; background: none; cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+button.mfr-dl:active { background: var(--bg-secondary); }
 /* 확장자가 끝에 있으므로 말줄임을 왼쪽에서 낸다(direction 반전 + 표시 방향 복구). */
 .mfr-name {
   flex: 1; min-width: 0;

@@ -37,7 +37,11 @@ type Props = {
   title?: string;              // 2뎁스에서 "여기가 어디인지". 최상위 화면은 생략하고 본문 Top이 제목을 갖는다.
   onBack?: () => void;         // 있으면 ‹ 노출
   backLabel?: string;          // 접근성 라벨(기본 '뒤로')
-  actions?: Action[];          // 우측 아이콘 액션(iconOnly 전제 — 텍스트 CTA 자리가 아니다)
+  // 우측 아이콘 액션 — iconOnly 전제(텍스트 CTA 자리가 아니다). **상한 2**를 타입에 못박는다.
+  //  왜 타입인가: 주석으로 적힌 상한은 지켜지지 않는다. Base Web의 MobileHeader가 같은 자리를
+  //  [IconButton?, IconButton?] 튜플로 닫아둔 선례가 있다.
+  //  왜 2인가: 좌측 ‹ 와 제목이 축을 예약하고 있어 셋째부터 제목이 밀린다. 넘치면 오버플로 메뉴다(06 §4).
+  actions?: readonly [Action] | readonly [Action, Action];
   // ── 탭(3~5 권장) ──
   tabs: MobileTab[];
   activePath: string;

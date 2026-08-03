@@ -10,6 +10,7 @@
 //
 //  같은 칩 줄을 게시판 목록의 말머리 필터가 이미 쓴다. 형태가 같으니 부품 하나로 모은다
 //   (필터냐 폼 값이냐는 *데이터*의 차이지 컨트롤의 차이가 아니다).
+import { useId } from 'react';
 import { Chip } from './Chip';
 import './mobilelist.css';
 
@@ -22,16 +23,19 @@ type Props = {
 };
 
 export function MobileChoice({ options, value, onChange, ariaLabel }: Props) {
+  // 라디오 묶음 이름 — 한 화면에 MobileChoice가 여럿이면(분류·품목 등) 이름이 같아선 안 된다.
+  //  같은 name은 네이티브 규칙상 *한 그룹*이라, 분류를 고르면 품목 선택이 풀린다. useId가 인스턴스마다 다른 값을 준다.
+  const groupName = useId();
   return (
     // 가로 스크롤 한 줄 — 줄바꿈하면 선택지가 늘 때마다 화면을 세로로 먹는다. 스크롤바는 숨기고 민다(폰 관습).
     //
-    // role은 group이다. **radiogroup이 아니다** — 전에는 radiogroup을 선언했는데 자식 Chip이
-    //  Mantine 기본값(type="checkbox")으로 렌더돼 라디오가 아니었다. 라디오가 아닌 것을 라디오 그룹이라
-    //  말하면 스크린리더가 "5개 중 1번" 같은 없는 구조를 읽어준다 — **거짓 시맨틱은 없는 시맨틱보다 나쁘다.**
-    //  제대로 고치려면 Chip이 type/name을 받아야 하는데 그건 원자 계약 변경이라 R4로 넘긴다(06 §7).
-    <div className="mchoice" role="group" aria-label={ariaLabel}>
+    // role="radiogroup"이 이제 **참**이다: 자식이 실제 <input type="radio">이고 같은 name으로 묶인다.
+    //  한동안 이 선언이 거짓이었다(자식이 Mantine 기본값 checkbox였다) — 스크린리더가 없는 구조를 읽어줬다.
+    //  껍데기(role)가 아니라 원자(Chip.type)를 고쳐야 닫히는 문제였고, R4에서 Chip에 type/name을 열어 닫았다.
+    <div className="mchoice" role="radiogroup" aria-label={ariaLabel}>
       {options.map((o) => (
-        <Chip key={o.value} variant="legend" selected={o.value === value} onChange={() => onChange(o.value)}>
+        <Chip key={o.value} variant="legend" type="radio" name={groupName}
+          selected={o.value === value} onChange={() => onChange(o.value)}>
           {o.label}
         </Chip>
       ))}

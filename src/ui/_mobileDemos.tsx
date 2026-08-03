@@ -284,13 +284,19 @@ function ComposerDemo() {
 
 function FileRowDemo() {
   return (
-    <MobileSection title="첨부 2" flush>
-      {ATTACHMENTS.map((f) => (
-        <MobileFileRow key={f.id} name={f.name} size={f.size} onDownload={() => {}} />
-      ))}
-      <MobileFileRow name="용량 표기 없는 첨부.hwpx" onDownload={() => {}} />
-      <MobileFileRow name="내려받기 없는 첨부(정적 행).png" size="1.2 MB" />
-    </MobileSection>
+    <>
+      <MobileSection title="열기 + 내려받기 (onOpen)" flush>
+        {ATTACHMENTS.map((f) => (
+          <MobileFileRow key={f.id} name={f.name} size={f.size} onOpen={() => {}} onDownload={() => {}} />
+        ))}
+        <MobileFileRow name="열기만 가능한 첨부.pdf" size="2.4 MB" onOpen={() => {}} />
+      </MobileSection>
+      <MobileSection title="내려받기만 (현행)" flush>
+        <MobileFileRow name="휴가규정_개정본.pdf" size="180 KB" onDownload={() => {}} />
+        <MobileFileRow name="용량 표기 없는 첨부.hwpx" onDownload={() => {}} />
+        <MobileFileRow name="내려받기 없는 첨부(정적 행).png" size="1.2 MB" />
+      </MobileSection>
+    </>
   );
 }
 

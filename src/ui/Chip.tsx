@@ -18,15 +18,28 @@ type ChipProps = {
   selected?: boolean;
   onChange?: () => void;   // 클릭 신호(controlled 짝). 상태는 부모 소유.
   onRemove?: () => void;
+  // ── 입력 시맨틱 ──
+  //  칩은 껍데기가 아니라 실제 <input>이다. 그 input이 checkbox냐 radio냐가 **스크린리더가 읽는 구조**를 정한다.
+  //  · 기본 checkbox = 여러 개를 각각 켜고 끄는 것(필터·범례).
+  //  · radio + 같은 name = "이 중 하나"(단일 선택). name이 같은 것끼리 한 그룹으로 묶인다(네이티브 규칙).
+  //  왜 열었나: MobileChoice가 단일 선택인데 role="radiogroup"만 선언하고 자식은 checkbox였다 —
+  //   스크린리더가 없는 구조("5개 중 1번")를 읽어주는 거짓 시맨틱이었다. 껍데기가 아니라 원자를 고쳐야 닫힌다.
+  type?: 'checkbox' | 'radio';
+  name?: string;           // radio 묶음 이름. type='radio'일 때만 의미가 있다.
   children: string;
 };
 
-export function Chip({ color = 'neutral', variant = 'value', selected = false, onChange, onRemove, children }: ChipProps) {
+export function Chip({
+  color = 'neutral', variant = 'value', selected = false,
+  onChange, onRemove, type = 'checkbox', name, children,
+}: ChipProps) {
   return (
     <MantineChip
       color={color}
       checked={selected}
       onClick={onChange}
+      type={type}
+      name={name}
       radius="full"
       size="sm"
       variant={variant === 'suggest' ? 'outline' : 'light'}
