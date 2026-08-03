@@ -169,12 +169,11 @@
 .erpAccordionItem { background: var(--bg-tertiary); border-color: transparent; box-shadow: var(--mantine-shadow-sm); }
 /* 강조: 틴트 채움({color}-0) + *얇은* 틴트 윤곽({color}-3) + 그림자(공통). 좌측 띠 폐기.
    data-attn="off"면 override 0 → 기본 회색 행과 동일(본 뒤 접으면 일반 행과 구분 0). transition으로 on↔off 페이드. */
-.erpAccordionAttn { transition: background-color 350ms ease, border-color 350ms ease; }
+.erpAccordionAttn { transition: background-color var(--motion-slow) var(--easing-standard), border-color var(--motion-slow) var(--easing-standard); }
 .erpAccordionAttn[data-attn="on"] {
   background: var(--erp-attn-fill, var(--mantine-color-danger-0));
   border-color: var(--erp-attn-border, var(--mantine-color-danger-3));
 }
-@media (prefers-reduced-motion: reduce) { .erpAccordionAttn { transition: none; } }
 
 /* 컬럼형 선택 공유 — Cascader(순차 인라인 박스 N개) / MillerColumns(트리거 1개 + 팝오버 다단). 같은 트리거·컬럼-아이템 박스 비주얼. */
 .erpColTrigger {

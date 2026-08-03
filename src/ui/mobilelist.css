@@ -188,7 +188,7 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mdis-hd:active { background: var(--bg-secondary); }
 .mdis-title { flex: 1; min-width: 0; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight); }
 .mdis-meta { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.mdis-chev { flex: none; display: inline-flex; transition: transform 150ms ease; }
+.mdis-chev { flex: none; display: inline-flex; transition: transform var(--motion-base) var(--easing-standard); }
 .mdis[data-open] .mdis-chev { transform: rotate(180deg); }
 /* 본문은 헤더보다 안쪽으로 들여쓰지 않는다 — 들여쓰면 헤어라인 좌변이 어긋나 격자가 깨진다. */
 .mdis-body { padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md); }

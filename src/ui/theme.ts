@@ -147,6 +147,20 @@ export const mobileTypoVars: Record<string, string> = Object.fromEntries(
 const borderWidth = '1px';            // 보더 굵기 1종
 const iconBaselineShift = '-0.125em'; // 아이콘 광학정렬 보정(폰트 크기 비례 토큰, 1/8 룰)
 
+// ── 모션 — 지속시간 3단 + 이징 1종 ──────────────────────────────────────────
+// 레포에 모션 토큰이 **0개**였고 12곳이 각자 0.1s/0.12s/0.15s/350ms를 박고 있었다(06 §1).
+//  값은 지금 쓰이는 것을 그대로 옮긴다 — **느낌을 바꾸지 않는 순수 정리**다. 바꿀 일이 생기면 여기 한 곳.
+//  단을 셋으로 닫는 이유: 관측된 값이 "즉각 반응 / 위치 이동 / 설명하는 전이" 세 무리로 갈렸다.
+//  이징을 하나만 여는 이유: 12곳이 전부 `ease`다. 두 번째가 필요한 사례가 세 번 나오면 그때 연다(rule of three).
+//  ⚠ prefers-reduced-motion은 여기서 0으로 만들지 않는다 — a11y.css의 전역 차단이 그 일을 한다.
+//    Mantine 내부 애니메이션은 우리 토큰을 안 쓰므로 어차피 그물이 필요하고, 두 기제가 한 일을 하면 안 된다.
+const motion = {
+  fast: '120ms',   // 색·배경·불투명도 — 눌렀다는 걸 즉시 말해야 하는 것
+  base: '150ms',   // 변형(transform)·펼침 — 위치가 바뀌는 것
+  slow: '350ms',   // 상태 전이가 *설명*을 해야 할 때(주의 카드 톤 전환)
+} as const;
+const easingStandard = 'ease';
+
 // 모서리 곡률(애플식 squircle). corner-shape: superellipse(2)=squircle.
 // radius 스케일(sm/md/full)·값은 안 건드리고, 그 위에 *연속 곡률*만 얹는 단일 토큰.
 // border·box-shadow·outline·overflow가 이 모양을 네이티브로 따라간다(충돌 없음).
@@ -250,6 +264,10 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
       '--border-width':        borderWidth,
       '--icon-baseline-shift': iconBaselineShift,
       '--corner-shape':        cornerShape,
+      '--motion-fast':         motion.fast,
+      '--motion-base':         motion.base,
+      '--motion-slow':         motion.slow,
+      '--easing-standard':     easingStandard,
       '--page-max':            pageMaxWidth,   // 페이지 콘텐츠 폭 캡(Page 원자 전용)
       '--elevation-raised':    elevation.raised,   // surface.raised 와 짝
       '--elevation-overlay':   elevation.overlay,  // surface.overlay 와 짝

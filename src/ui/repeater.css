@@ -17,9 +17,8 @@
 }
 .erpRep-head:hover { background: var(--bg-secondary); }
 .erpRep-head:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
-.erpRep-chev { display: inline-flex; transition: transform 0.15s ease; }
+.erpRep-chev { display: inline-flex; transition: transform var(--motion-base) var(--easing-standard); }
 .erpRep-chev[data-open] { transform: rotate(90deg); }
-@media (prefers-reduced-motion: reduce) { .erpRep-chev { transition: none; } }
 .erpRep-htitle { min-width: 0; display: flex; align-items: center; }
 .erpRep-del { display: inline-flex; flex: none; }
 

@@ -73,14 +73,13 @@
 .erpOS-confirm .btns button:hover { background: var(--mantine-color-neutral-2); }
 .erpOS-confirm .btns button.danger { background: var(--text-danger); color: var(--mantine-color-white); }
 .erpOS-swt { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; user-select: none; }
-.erpOS-swt .tr { width: 30px; height: 18px; border-radius: var(--mantine-radius-full); background: var(--border-default); position: relative; transition: background 0.12s ease; }
-.erpOS-swt .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.2); transition: left 0.12s ease; }
+.erpOS-swt .tr { width: 30px; height: 18px; border-radius: var(--mantine-radius-full); background: var(--border-default); position: relative; transition: background var(--motion-fast) var(--easing-standard); }
+.erpOS-swt .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.2); transition: left var(--motion-fast) var(--easing-standard); }
 .erpOS-swt[data-on][data-tone='danger'] { color: var(--text-danger); }
 .erpOS-swt[data-on][data-tone='danger'] .tr { background: var(--text-danger); }
 .erpOS-swt[data-on][data-tone='primary'] { color: var(--mantine-color-primary-6); }
 .erpOS-swt[data-on][data-tone='primary'] .tr { background: var(--mantine-color-primary-6); }
 .erpOS-swt[data-on] .tr::after { left: 14px; }
-@media (prefers-reduced-motion: reduce) { .erpOS-swt .tr, .erpOS-swt .tr::after { transition: none; } }
 
 /* ═══ OptionSetComposer — 부착 상위 면(트리 저작 + 부착 행 + Picker 내장 미리보기) ═══ */
 .erpOSC-body { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding: 14px 14px 20px; }
@@ -162,8 +161,8 @@
 .erpOSE-typebtn:hover { background: var(--mantine-color-neutral-2); }
 .erpOSE-typebtn .cv { color: var(--text-secondary); opacity: 0.7; font-size: 0.625rem; }
 .erpOSE-swt { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.78125rem; font-weight: 600; color: var(--text-secondary); cursor: pointer; user-select: none; }
-.erpOSE-swt .tr { width: 30px; height: 18px; border-radius: var(--mantine-radius-full); background: var(--border-default); position: relative; transition: background 0.12s ease; }
-.erpOSE-swt .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.2); transition: left 0.12s ease; }
+.erpOSE-swt .tr { width: 30px; height: 18px; border-radius: var(--mantine-radius-full); background: var(--border-default); position: relative; transition: background var(--motion-fast) var(--easing-standard); }
+.erpOSE-swt .tr::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: var(--bg-primary); box-shadow: 0 1px 2px rgba(20, 24, 33, 0.2); transition: left var(--motion-fast) var(--easing-standard); }
 .erpOSE-swt[data-on] { color: var(--text-danger); }
 .erpOSE-swt[data-on] .tr { background: var(--text-danger); }
 .erpOSE-swt[data-on] .tr::after { left: 14px; }
@@ -332,11 +331,10 @@
   border-radius: 9px; padding: 9px 14px;
   box-shadow: var(--elevation-overlay), 0 0 0 1px var(--border-default);
   opacity: 0; pointer-events: none; transform: translateY(4px);
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity var(--motion-base) var(--easing-standard), transform var(--motion-base) var(--easing-standard);
 }
 .erpOSE-float[data-on] { opacity: 1; transform: none; }
 .erpOSE-card.closed:focus-visible, .erpOSE-swt:focus-visible, .erpOSE .erpOSE-grip:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; border-radius: 6px; }
-@media (prefers-reduced-motion: reduce) { .erpOSE-float, .erpOSE-swt .tr, .erpOSE-swt .tr::after { transition: none; } }
 
 /* ═══ OptionSetPicker — 선택 면 ═══ */
 .erpOSP { position: relative; }   /* 플로팅 경고의 기준면 */
@@ -373,9 +371,8 @@
 .erpOSP-ghead:hover { background: var(--bg-secondary); }
 .erpOSP-ghead:focus-visible { outline: 2px solid var(--border-focus); outline-offset: -2px; }
 .erpOSP-ghead[aria-expanded='true'] { box-shadow: inset 0 -1px 0 var(--border-default); }
-.erpOSP-chev { display: inline-flex; flex: none; margin-left: 2px; color: var(--text-secondary); transition: transform 0.15s ease; }
+.erpOSP-chev { display: inline-flex; flex: none; margin-left: 2px; color: var(--text-secondary); transition: transform var(--motion-base) var(--easing-standard); }
 .erpOSP-chev[data-open] { transform: rotate(180deg); }
-@media (prefers-reduced-motion: reduce) { .erpOSP-chev { transition: none; } }
 .erpOSP-gtitle { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .erpOSP-star { color: var(--text-danger); font-weight: 700; margin-left: 1px; }
 .erpOSP-gnote { font-size: var(--typo-caption-size); color: var(--text-secondary); white-space: nowrap; }
@@ -437,14 +434,13 @@
 .erpOSP-grid2 .erpOSP-mrow { padding-right: 10px; }
 
 /* 빈 행 수량 슬롯 — 자리는 상시 예약, hover에 "담기" 알약이 스테퍼 자리에서 morph(확정 시안 ②). */
-.erpOSP-ghost { width: 100%; display: inline-flex; justify-content: flex-end; opacity: 0; transition: opacity 0.1s ease; }
+.erpOSP-ghost { width: 100%; display: inline-flex; justify-content: flex-end; opacity: 0; transition: opacity var(--motion-fast) var(--easing-standard); }
 .erpOSP-qrow[role='button']:hover .erpOSP-ghost, .erpOSP-qrow[role='button']:focus-visible .erpOSP-ghost { opacity: 1; }
 .erpOSP-ghost span {
   height: 24px; padding: 0 12px; border-radius: 6px; display: inline-flex; align-items: center;
   background: var(--mantine-color-primary-0); color: var(--mantine-color-primary-6);
   font-size: var(--typo-caption-size); font-weight: 650;
 }
-@media (prefers-reduced-motion: reduce) { .erpOSP-ghost { transition: none; } }
 
 /* 마크 — 원형(single)·사각(multi)·수량은 담긴 것만 ✓(빈 행은 빈 자리) */
 .erpOSP-mark {
@@ -566,10 +562,9 @@
   font-size: var(--typo-caption-size); font-weight: 600;
   border-radius: 9px; padding: 9px 14px;
   box-shadow: var(--elevation-overlay), inset 0 0 0 1px var(--mantine-color-danger-1);
-  opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity 0.15s ease, transform 0.15s ease;
+  opacity: 0; pointer-events: none; transform: translateY(4px); transition: opacity var(--motion-base) var(--easing-standard), transform var(--motion-base) var(--easing-standard);
 }
 .erpOSP-float[data-on] { opacity: 1; transform: none; }
-@media (prefers-reduced-motion: reduce) { .erpOSP-float { transition: none; } }
 
 /* 풋터 — 소계는 이 면의 대표 숫자(대형). 경고행 상시 없음. */
 .erpOSP-foot {
@@ -654,9 +649,8 @@
 }
 .erpOSO-amt { flex: none; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight, 600); color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .erpOSO-lineSub { font-size: var(--typo-caption-size); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.erpOSO-x { display: inline-flex; opacity: 0; transition: opacity 0.1s ease; }
+.erpOSO-x { display: inline-flex; opacity: 0; transition: opacity var(--motion-fast) var(--easing-standard); }
 .erpOSO-line:hover .erpOSO-x, .erpOSO-line:focus-within .erpOSO-x { opacity: 1; }
-@media (prefers-reduced-motion: reduce) { .erpOSO-x { transition: none; } }
 
 .erpOSO-sum {
   flex: none; display: flex; flex-direction: column; gap: 5px;
