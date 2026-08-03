@@ -1,0 +1,94 @@
+/* 첨부 뷰어 — 격리 구역 내 raw CSS(전체 화면 커버·캔버스 무대는 프리미티브로 못 만든다).
+   크롬 텍스트는 전부 rem 기반 토큰이다: WCAG 1.4.10 Reflow가 "2차원 레이아웃이 본질인 콘텐츠"를
+   예외로 두므로 **본체(이미지·PDF)는 예외이고 1.4.10은 크롬에 걸린다**. */
+
+/* ── 공유 무대 ── */
+.att-stage {
+  flex: 1; min-height: 0; min-width: 0;
+  display: flex; align-items: center; justify-content: center;
+  position: relative; overflow: hidden;
+}
+/* PDF는 확대하면 화면을 넘으므로 무대가 스크롤을 갖는다(이미지는 transform이라 안 넘친다). */
+.att-scroll { overflow: auto; align-items: flex-start; justify-content: center; padding: var(--mantine-spacing-md); }
+
+.att-img {
+  max-width: 100%; max-height: 100%;
+  object-fit: contain; display: block;
+  transform-origin: center center;
+  transition: transform var(--motion-base) var(--easing-standard);
+}
+.att-canvas { display: block; margin: 0 auto; background: var(--mantine-color-white); box-shadow: var(--mantine-shadow-sm); }
+
+.att-veil {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg-primary) 60%, transparent);
+}
+
+/* 페이지 이동 — 무대 하단에 떠 있다(뷰어 크롬이 아니라 *문서*의 일이라 여기 산다). */
+.att-pager {
+  position: sticky; bottom: 0;
+  display: flex; align-items: center; justify-content: center;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs);
+  background: var(--bg-primary);
+  border-top: var(--border-width) solid var(--border-default);
+}
+
+/* 폴백 카드 — 아이콘·이름·용량·사유·내려받기. 사유별 문구는 _attachment의 UNVIEWABLE_REASON. */
+.att-fallback {
+  display: flex; flex-direction: column; align-items: center; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xl);
+  text-align: center; max-width: 34ch;
+}
+
+/* ── 모바일 — 불투명 전체 화면 커버 ── */
+.attm {
+  position: fixed; inset: 0; z-index: 300;
+  display: flex; flex-direction: column;
+  background: var(--bg-primary);       /* 불투명 — 모달이 아니라 화면이다 */
+  overscroll-behavior: contain;
+}
+.attm-top {
+  flex: none; display: flex; align-items: center; gap: var(--mantine-spacing-xs);
+  min-height: 52px; padding: 0 var(--mantine-spacing-xs) 0 var(--mantine-spacing-xxs);
+  border-bottom: var(--border-width) solid var(--border-default);
+  padding-top: env(safe-area-inset-top);
+}
+.attm-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attm-counter { flex: none; padding-right: var(--mantine-spacing-xs); }
+.attm-body { flex: 1; min-height: 0; display: flex; }
+.attm-bottom {
+  flex: none; display: flex; align-items: center; justify-content: space-around;
+  gap: var(--mantine-spacing-xxs);
+  padding: var(--mantine-spacing-xxs) var(--mantine-spacing-xs);
+  padding-bottom: calc(var(--mantine-spacing-xxs) + env(safe-area-inset-bottom));
+  border-top: var(--border-width) solid var(--border-default);
+}
+.attm-zoom, .attd-zoom {
+  display: inline-flex; align-items: center; gap: var(--mantine-spacing-xxs);
+  min-height: 44px; padding: 0 var(--mantine-spacing-sm);
+  border: none; background: none; cursor: pointer;
+  font-family: inherit; font-size: var(--typo-caption-size); color: var(--text-secondary);
+  border-radius: var(--mantine-radius-sm);
+  -webkit-tap-highlight-color: transparent;
+}
+.attm-zoom:active, .attd-zoom:active { background: var(--bg-secondary); }
+
+/* ── 데스크탑 — dimmed backdrop 위 모달 ── */
+.attd { display: flex; flex-direction: column; width: min(90vw, 1100px); height: min(88vh, 860px); }
+.attd-body-wrap { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.attd-top {
+  flex: none; display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm) var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  border-bottom: var(--border-width) solid var(--border-default);
+}
+.attd-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attd-counter { flex: none; }
+.attd-tools { flex: none; display: flex; align-items: center; gap: var(--mantine-spacing-xxs); }
+.attd-body { flex: 1; min-height: 0; display: flex; background: var(--bg-tertiary); }
+.attd-nav {
+  flex: none; display: flex; align-items: center; justify-content: center; gap: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-xs);
+  border-top: var(--border-width) solid var(--border-default);
+}

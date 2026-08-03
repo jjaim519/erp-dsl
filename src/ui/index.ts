@@ -125,6 +125,13 @@ export { MobileComposer } from './MobileComposer';
 export { MobileFileRow } from './MobileFileRow';   // 데스크탑 CalendarPage와 events/encoding/annotations 타입 공유
 export { MobileSegment, type MobileSegmentItem } from './MobileSegment';
 export { MobileDecisionBar } from './MobileDecisionBar';
+// 첨부 뷰어 — 데스크탑·모바일 두 부품이 _attachment 계약 한 벌을 공유한다.
+export { AttachmentViewer } from './AttachmentViewer';
+export { MobileAttachmentViewer } from './MobileAttachmentViewer';
+export {
+  UNVIEWABLE_REASON,
+  type Attachment, type AttachmentKind, type UnviewableReason, type AttachmentViewerContract,
+} from './_attachment';
 //  모바일 게시판 3화면 — 데스크탑 Board*와 **같은 타입**(BoardPost·BoardComment·BoardAttachment·AudienceNode)을
 //  받는다. 소비처는 데이터 한 벌로 두 화면을 그린다(변환 계층 0, MobileCalendar 선례).
 export { MobileBoardList } from './MobileBoardList';

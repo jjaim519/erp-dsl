@@ -1125,6 +1125,30 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['격리 raw textarea(자동 높이·무테 — 필드 규격과 다른 물건. Tree 인라인편집 선례)', 'mobilelist.css'],
     } },
+  { name: 'AttachmentViewer', layer: '유기체', role: '데스크탑 첨부 뷰어 — dimmed backdrop 위 모달. 모바일 짝과 _attachment 계약 한 벌을 공유한다(layer prop을 두지 않는다: 소비처는 자기가 어느 셸인지 안다).',
+    props: [
+      { name: 'opened / onClose', kind: '기능', values: 'controlled' },
+      { name: 'items / index / onIndexChange', kind: '기능', values: 'Attachment[] + controlled 인덱스. 목록 화면과 상태를 공유해야 하므로 부품이 안 든다' },
+      { name: 'onDownload', kind: '기능', values: '폴백 카드의 **유일한 탈출구** — 못 여는 파일에 이것마저 없으면 막다른 길이다' },
+      { name: 'onPrint / actions', kind: '기능', values: '⋯ 메뉴로. actions는 기존 Action 어휘 재사용(새 액션 타입을 만들지 않는다)' },
+      { name: 'pdfAssetBase', kind: '기능', values: 'pdf.js 자산 경로(worker·cmaps·wasm·standard_fonts). **패키지는 정적 파일을 못 서빙하므로 소비 앱이 놓는다.** 안 주면 PDF는 폴백으로 — 조용히 깨지느니 낫다' },
+    ],
+    composition: {
+      토큰: ['--motion-base(이미지 확대 전이)', 'shadow-sm(캔버스)', 'bg-tertiary(무대 바닥)'],
+      '의미 원자': ['IconButton', 'Icon', 'Text', 'Button', 'Spinner'],
+      분자: ['Menu'],
+      공유: ['_attachment(계약)', '_attachmentStage(내용 렌더)', '_pdfEngine(엔진 격리)', 'attachment.css'],
+    } },
+  { name: 'MobileAttachmentViewer', layer: '유기체', role: '폰 첨부 뷰어 — **불투명 전체 화면 커버**(모달 아님). counter 필수 · 크롬 auto-hide 없음 · rotate 없음 · 탈출구 2개(X + Esc) · 제스처 미사용(가로 페이징/세로 닫기 동시 개방은 NN/g 경고).',
+    props: [
+      { name: '(AttachmentViewer와 동일)', kind: '기능', values: '_attachment의 AttachmentViewerContract 한 벌. 추가로 onShare를 그린다(데스크탑엔 OS 공유 관습이 없다)' },
+    ],
+    composition: {
+      토큰: ['safe-area-inset(상하)', 'min-height 52px(상단 바)', '--erp-touch-target'],
+      '의미 원자': ['IconButton', 'Icon', 'Text'],
+      분자: ['Menu'],
+      공유: ['_attachment', '_attachmentStage', '_pdfEngine', 'attachment.css'],
+    } },
   { name: 'MobileSegment', layer: '분자', role: '화면 *안*의 뷰 전환(결재함 5탭 등). 칩 줄=값 선택/필터라면 이건 뷰 전환 — 항상 하나가 켜져 있고 고르면 목록이 다른 것으로 바뀐다. 하단 탭바와 신호가 겹치지 않게 텍스트+밑줄(탭바는 아이콘+틴트 알약).',
     props: [
       { name: 'items', kind: '콘텐츠', values: '{ value, label, count? }[] — count는 정보성이라 neutral 톤(빨간 숫자 배지는 멘션급 전용)' },

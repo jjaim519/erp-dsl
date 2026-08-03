@@ -311,6 +311,35 @@ import { Providers, ColorSchemeScript, mantineHtmlProps } from '@jjaim519/erp-ds
 
 **폰트:** `Providers`가 PretendardGOV 가변 woff2(패키지 동봉, 전 weight)를 자동 로드 — CDN 없이 사내망·오프라인 동작.
 
+### 8-1. PDF 첨부 뷰어 (선택 — 안 쓰면 설치할 필요 없다)
+
+`AttachmentViewer`·`MobileAttachmentViewer`는 **이미지를 기본 지원**하고, **PDF는 선택 의존성**이다.
+안 깔면 PDF가 폴백 카드(파일명 + 용량 + 사유 + 내려받기)로 뜬다 — 터지지 않는다.
+
+```bash
+npm i pdfjs-dist          # optional peer. PDF 미리보기가 필요할 때만
+```
+
+**자산은 소비 앱이 서빙한다.** 패키지는 정적 파일을 못 내보내므로, `node_modules/pdfjs-dist`에서
+아래 넷을 `public/` 아래로 복사하고 그 경로를 `pdfAssetBase`로 넘긴다.
+
+| 복사할 것 | 없으면 |
+|---|---|
+| `build/pdf.worker.min.mjs` | 렌더 자체가 안 된다 |
+| `cmaps/` | **한글 PDF가 깨진다**(CJK 인코딩) |
+| `wasm/` | 스캔 PDF·JPEG2000·폼이 **조용히** 깨진다(에러 없이 빈 페이지) |
+| `standard_fonts/` | 내장 폰트 없는 PDF의 글자가 틀어진다 |
+
+```tsx
+<MobileAttachmentViewer … pdfAssetBase="/pdfjs" />
+```
+
+`pdfAssetBase`를 안 주면 PDF는 열지 않고 폴백으로 보낸다 — `cmaps`/`wasm` 없이 열면
+에러 없이 빈 페이지가 나오는데, **조용히 깨지느니 못 연다고 말하는 편이 낫다**.
+
+> 우리 dev 앱은 `npm run pdfjs:assets`(predev/prebuild에 자동 연결)가 같은 복사를 한다 —
+> `scripts/copy-pdfjs-assets.mjs`가 참고할 만한 예다. CDN은 쓰지 않는다(폐쇄망 요건).
+
 ---
 
 ## 9. 설계 문서

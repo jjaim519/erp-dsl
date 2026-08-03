@@ -1,6 +1,6 @@
 {
   "name": "@jjaim519/erp-dsl",
-  "version": "0.66.0",
+  "version": "0.67.0",
   "description": "ERP No-Code 빌더 — 닫힌 부품 DSL(원자·분자·유기체·템플릿) + 스키마 층(Zod).",
   "repository": {
     "type": "git",
@@ -29,7 +29,10 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "prepublishOnly": "npm run typecheck && npm run lint"
+    "prepublishOnly": "npm run typecheck && npm run lint",
+    "pdfjs:assets": "node scripts/copy-pdfjs-assets.mjs",
+    "predev": "node scripts/copy-pdfjs-assets.mjs",
+    "prebuild": "node scripts/copy-pdfjs-assets.mjs"
   },
   "peerDependencies": {
     "@mantine/core": "^8.3.18",
@@ -46,7 +49,8 @@
     "dayjs": "^1.11.21",
     "react": ">=19",
     "react-dom": ">=19",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "pdfjs-dist": "^6.2.108"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
@@ -71,6 +75,7 @@
     "dayjs": "^1.11.21",
     "eslint": "^9.39.4",
     "next": "^16.2.9",
+    "pdfjs-dist": "^6.2.108",
     "postcss": "^8.5.15",
     "postcss-preset-mantine": "^1.18.0",
     "postcss-simple-vars": "^7.0.1",
@@ -80,5 +85,10 @@
     "typescript-eslint": "^8.61.0",
     "xlsx": "^0.18.5",
     "zod": "^4.4.3"
+  },
+  "peerDependenciesMeta": {
+    "pdfjs-dist": {
+      "optional": true
+    }
   }
 }

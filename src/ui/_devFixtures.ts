@@ -94,6 +94,28 @@ export const ATTACHMENTS = [
   { id: 'f2', name: '휴가규정_개정본.pdf', size: '180 KB' },
 ];
 
+// 뷰어 데모용 첨부 — 렌더 가능한 것과 폴백 사유 4종을 한 벌에 담는다.
+//  이미지는 외부 호스트를 안 쓴다(폐쇄망 규율을 데모에서도 지킨다) — 인라인 SVG data URI.
+const demoSvg = (label: string, bg: string) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="800"><rect width="1200" height="800" fill="${bg}"/>` +
+    `<text x="600" y="420" font-family="sans-serif" font-size="64" fill="#fff" text-anchor="middle">${label}</text></svg>`,
+  )}`;
+
+export const VIEWER_ITEMS = [
+  // 아래 두 hex는 UI 색이 아니라 **가짜 사진의 내용**이다(실물 이미지 대신 그린 자리표시).
+  //  theme 토큰을 쓸 자리가 아니고, dev 전용이라 배포에도 안 나간다.
+  // eslint-disable-next-line no-restricted-syntax -- 데모 이미지 *콘텐츠* 색(UI 색 아님, dev 전용)
+  { id: 'v1', kind: 'image' as const, name: '현장사진_주방_01.png', size: '1.2 MB', src: demoSvg('현장사진 01', '#1E4178'), alt: '주방 시공 현장' },
+  // eslint-disable-next-line no-restricted-syntax -- 데모 이미지 *콘텐츠* 색(UI 색 아님, dev 전용)
+  { id: 'v2', kind: 'image' as const, name: '현장사진_주방_02.png', size: '980 KB', src: demoSvg('현장사진 02', '#0B7357'), alt: '주방 시공 현장 2' },
+  { id: 'v3', kind: 'pdf' as const, name: '휴가규정_개정본.pdf', size: '180 KB', src: '/pdfjs/sample.pdf' },
+  { id: 'v4', kind: 'sheet' as const, name: '2026_단가표_v3.xlsx', size: '2.4 MB', unviewable: 'unsupported' as const },
+  { id: 'v5', kind: 'document' as const, name: '계약서_원본.hwpx', size: '340 KB', unviewable: 'unsupported' as const },
+  { id: 'v6', kind: 'image' as const, name: '설계도면_전체.png', size: '84 MB', unviewable: 'too-large' as const },
+  { id: 'v7', kind: 'pdf' as const, name: '보안문서.pdf', size: '1.1 MB', unviewable: 'protected' as const },
+];
+
 // 날짜 라벨 — 포맷은 *소비처*의 일이다(부품은 날짜 계산·표기를 모른다).
 export const dayLabel = (iso: string) => {
   const d = new Date(iso);

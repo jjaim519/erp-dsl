@@ -36,6 +36,7 @@ import { MobileBoardView } from './MobileBoardView';
 import { MobileBoardWrite } from './MobileBoardWrite';
 import { MobileSegment } from './MobileSegment';
 import { MobileDecisionBar } from './MobileDecisionBar';
+import { MobileAttachmentViewer } from './MobileAttachmentViewer';
 import { TextInput } from './TextInput';
 import { Textarea } from './Textarea';
 import { Text } from './Text';
@@ -48,7 +49,7 @@ import { RichText } from './RichText';
 import type { FileItem } from './FileUploader';
 import type { BoardComment } from './BoardView';
 import {
-  TABS, POSTS, CATS, COMMENTS, POST_HTML, AUDIENCES, ATTACHMENTS,
+  TABS, POSTS, CATS, COMMENTS, POST_HTML, AUDIENCES, ATTACHMENTS, VIEWER_ITEMS,
   SITE_EVENTS, SITE_ENCODING, SITE_ANNOS,
 } from './_devFixtures';
 
@@ -390,6 +391,35 @@ function DecisionBarDemo() {
   );
 }
 
+function AttachmentViewerDemo() {
+  const [open, setOpen] = useState(false);
+  const [idx, setIdx] = useState(0);
+  return (
+    <MobileShell title="게시글" onBack={() => {}} tabs={TABS} activePath="/board" onNavigate={() => {}}>
+      <MobileSection title={`첨부 ${VIEWER_ITEMS.length}`} flush>
+        {VIEWER_ITEMS.map((f, i) => (
+          <MobileFileRow key={f.id} name={f.name} size={f.size}
+            onOpen={() => { setIdx(i); setOpen(true); }}
+            onDownload={() => {}} />
+        ))}
+      </MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          앞의 둘은 이미지, 셋째는 PDF(자산이 깔려 있으면 렌더된다), 나머지 넷은 <b>사유별 폴백 카드</b>다 —
+          형식 미지원 · 용량 초과 · 보호 문서. 단일 &ldquo;미리보기 불가&rdquo; 문구를 쓰지 않는 이유는
+          사용자가 다음에 뭘 할지가 사유마다 다르기 때문이다.
+        </Text>
+      </MobileSection>
+      <MobileAttachmentViewer
+        opened={open} onClose={() => setOpen(false)}
+        items={VIEWER_ITEMS} index={idx} onIndexChange={setIdx}
+        onDownload={() => {}} onShare={() => {}} onPrint={() => {}}
+        pdfAssetBase="/pdfjs"
+      />
+    </MobileShell>
+  );
+}
+
 /* ── 화면(유기체) ──────────────────────────────────────────────────────── */
 
 function BoardListDemo() {
@@ -567,6 +597,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileFileRow:     { render: () => <FileRowDemo />, note: '열기+내려받기 분리 · 내려받기만 · 정적 행' },
   MobileSegment:     { render: () => <SegmentDemo />, note: '4개↑ 가로 스크롤 / 3개↓ 균등 — 개수가 정한다' },
   MobileDecisionBar: { render: () => <DecisionBarDemo />, bare: true, note: '승인/반려 + ⋯ 메뉴. 결재 화면 전체 맥락' },
+  MobileAttachmentViewer: { render: () => <AttachmentViewerDemo />, bare: true, note: '이미지 2 · PDF 1 · 폴백 사유 4종. 행을 눌러 연다' },
   MobileBoardList:   { render: () => <BoardListDemo />, bare: true, note: '검색·분류 칩·공지 구획·더보기' },
   MobileBoardView:   { render: () => <BoardViewDemo />, bare: true, note: '필독 읽음확인·첨부·이전다음·댓글' },
   MobileBoardWrite:  { render: () => <BoardWriteDemo />, bare: true, note: '수신자 조직도·첨부·게시옵션 3종' },
