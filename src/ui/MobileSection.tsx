@@ -15,6 +15,10 @@ import './mobilelist.css';
 
 type Props = {
   title?: string;      // 섹션 제목(TDS ListHeader 자리). 없으면 제목 줄 자체를 렌더하지 않는다.
+  headingLevel?: 2 | 3; // 제목의 heading 단계. 기본 3 — 화면 제목(MobileTop)이 h2 자리를 갖는 전제.
+                        //  스크린리더 사용자는 heading을 타고 화면을 훑는다. 제목이 <span>이면 그 목록에
+                        //  아무것도 안 잡혀 **제목 탐색이 통째로 죽는다**(06 §1, 접근성 구멍).
+                        //  단계를 닫힌 두 값으로만 연다 — 열어두면 소비처마다 계층이 어긋난다(헌법 5).
   action?: ReactNode;  // 제목 우측 보조(‘전체보기’·‘＋ 첨부’ 등). CTA 자리는 아니다 — CTA는 셸 하단 고정.
                        //  액션이 있으면 헤더가 *대칭 행*으로 바뀐다(아래 data-action):
                        //  캡션 헤더의 기본 여백은 위 lg(24)/아래 xs(8)로 일부러 비대칭인데(자기 본문에 붙으라고),
@@ -23,14 +27,17 @@ type Props = {
   children: ReactNode;
 };
 
-export function MobileSection({ title, action, flush = false, children }: Props) {
+export function MobileSection({ title, action, flush = false, headingLevel = 3, children }: Props) {
   // 빈 배열·false·null은 "내용 없음"이다(조건부 렌더의 흔한 산출물). 그때는 본문 div 자체를 안 만든다.
   const hasBody = Children.toArray(children).length > 0;
+  const H = (headingLevel === 2 ? 'h2' : 'h3') as 'h2' | 'h3';
   return (
     <section className="mls">
       {(title || action) && (
         <div className="mls-hd" data-action={action ? '' : undefined}>
-          {title && <span className="mls-hd-t">{title}</span>}
+          {/* 시맨틱은 heading, 생김새는 캡션 그대로(.mls-hd-t가 크기·굵기·색을 정한다).
+              브라우저 기본 h3 여백은 CSS에서 0으로 눕힌다 — 형태는 하나도 안 바뀐다. */}
+          {title && <H className="mls-hd-t">{title}</H>}
           {action && <span className="mls-hd-a">{action}</span>}
         </div>
       )}

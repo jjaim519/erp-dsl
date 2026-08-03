@@ -50,8 +50,11 @@ export function MobileComposer({
           disabled={disabled}
           onChange={(e) => {
             onChange(e.currentTarget.value);
+            // 높이는 *내용*이 정하고, **상한은 CSS가 정한다**(.mcps-input max-height = 4줄, em 기반).
+            //  여기서 px 상한을 계산하면 폰트 스케일을 안 탄다 — 글자를 키우면 96px에 3줄도 안 들어갔다.
+            //  auto로 되돌린 뒤 scrollHeight를 읽어야 *줄어드는* 방향도 따라온다.
             e.currentTarget.style.height = 'auto';
-            e.currentTarget.style.height = `${Math.min(e.currentTarget.scrollHeight, 96)}px`;
+            e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
           }}
         />
         <IconButton icon="send" label="등록" variant="primary" size="sm"

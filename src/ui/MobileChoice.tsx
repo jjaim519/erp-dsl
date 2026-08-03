@@ -24,7 +24,12 @@ type Props = {
 export function MobileChoice({ options, value, onChange, ariaLabel }: Props) {
   return (
     // 가로 스크롤 한 줄 — 줄바꿈하면 선택지가 늘 때마다 화면을 세로로 먹는다. 스크롤바는 숨기고 민다(폰 관습).
-    <div className="mchoice" role="radiogroup" aria-label={ariaLabel}>
+    //
+    // role은 group이다. **radiogroup이 아니다** — 전에는 radiogroup을 선언했는데 자식 Chip이
+    //  Mantine 기본값(type="checkbox")으로 렌더돼 라디오가 아니었다. 라디오가 아닌 것을 라디오 그룹이라
+    //  말하면 스크린리더가 "5개 중 1번" 같은 없는 구조를 읽어준다 — **거짓 시맨틱은 없는 시맨틱보다 나쁘다.**
+    //  제대로 고치려면 Chip이 type/name을 받아야 하는데 그건 원자 계약 변경이라 R4로 넘긴다(06 §7).
+    <div className="mchoice" role="group" aria-label={ariaLabel}>
       {options.map((o) => (
         <Chip key={o.value} variant="legend" selected={o.value === value} onChange={() => onChange(o.value)}>
           {o.label}

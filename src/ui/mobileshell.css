@@ -109,6 +109,8 @@ html.erp-mobile-lock body {
    좌·우 슬롯을 같은 최소폭으로 잡아 제목이 가운데 고정된다(액션 개수가 변해도 제목이 안 흔들림 — 축 예약). */
 .ms-nav {
   flex: none;
+  /* 고정 밴드 — px으로 둔다(fontscale.css 정책: "고정 높이 밴드는 텍스트보다 충분히 커 안 잘림").
+     52 = 터치타깃 44 + 상하 여백. 셸 골격 치수라 타이포 스케일과 함께 커지면 본문이 그만큼 줄어든다. */
   height: 52px;
   display: flex;
   align-items: center;
@@ -158,6 +160,7 @@ html.erp-mobile-lock body {
 .ms-tabs {
   flex: none;
   display: flex;
+  /* 탭바 콘텐츠 높이 — 위 Navigation과 같은 이유로 고정 밴드다(아이콘 16 + 라벨 11 + 여백). */
   height: 56px;
   box-sizing: content-box;
   padding-bottom: env(safe-area-inset-bottom);
