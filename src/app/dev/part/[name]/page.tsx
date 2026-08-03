@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { findEntry, usedBy, basePart, PART_NAMES, type Composition } from '@/ui/_catalog';
 import { Demo } from '@/ui/_dev';
+import { MOBILE_DEMOS } from '@/ui/_mobileDemos';
+import { MobileStage } from '../../_MobileStage';
 import { Stack, Group, Card, Title, Text, Badge, Divider } from '@/ui';
 import type { BadgeColor } from '@/ui';
 
@@ -25,6 +27,7 @@ export default function PartDetail() {
   }
 
   const usedByList = usedBy(name);
+  const mobileDemo = MOBILE_DEMOS[entry.name];
 
   return (
     <Stack gap="lg">
@@ -37,11 +40,17 @@ export default function PartDetail() {
         <Text variant="body" color="secondary">{entry.role}</Text>
       </Stack>
 
-      {/* 라이브 예시 */}
+      {/* 라이브 예시 — 모바일은 페이지 안에 그대로 못 넣는다(뷰포트·문서 잠금·셸 스코프).
+          캔버스(/shell/m/part/[name])를 폰 프레임 iframe으로 임베드한다. _MobileStage 헤더 주석 참조. */}
       <Card variant="outlined" padding="lg">
         <Stack gap="sm">
-          <Text variant="caption" color="secondary">라이브 예시</Text>
-          <Card variant="flat" padding="md"><Demo name={entry.name} /></Card>
+          <Group gap="xs" align="center">
+            <Text variant="caption" color="secondary">라이브 예시</Text>
+            {mobileDemo?.note && <Text variant="caption" color="secondary">— {mobileDemo.note}</Text>}
+          </Group>
+          {mobileDemo
+            ? <MobileStage name={entry.name} />
+            : <Card variant="flat" padding="md"><Demo name={entry.name} /></Card>}
         </Stack>
       </Card>
 

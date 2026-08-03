@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useMemo, useState, type ReactNode } from 'react';
 import { CATALOG, LAYERS, INPUT_ATOMS } from '@/ui/_catalog';
+import { MOBILE_DEMOS, MOBILE_SCREENS } from '@/ui/_mobileDemos';
 import { Tree, TextInput, SegmentedControl, type TreeNodeData } from '@/ui';
 
 const byLabel = (a: TreeNodeData, b: TreeNodeData) => a.label.localeCompare(b.label);
@@ -46,7 +47,18 @@ const NODES: TreeNodeData[] = [
   ] },
   { id: '__parts', label: `데스크탑 (${DESKTOP.length})`, children: partNodes(DESKTOP, 'd') },
   // 모바일은 데스크탑의 축소판이 아니라 *형제 층*이라 같은 깊이에 나란히 둔다(사다리를 한 칸 더 파지 않는다).
-  { id: '__mobile', label: `모바일 (${MOBILE.length})`, children: partNodes(MOBILE, 'm') },
+  { id: '__mobile', label: `모바일 (${MOBILE.length})`, children: [
+    // 화면 — 부품 사다리와 나란히. 4탭 셸 데모를 통과하지 않고 *그 화면으로 바로* 간다.
+    //  (부품 하나만 보려면 아래 계층 그룹에서 고르고, 조립된 화면을 보려면 여기서 고른다.)
+    { id: '__mscreens', label: `화면 (${MOBILE_SCREENS.length + 1})`, children: [
+      { id: '/shell/mobile', label: '4탭 셸 데모 (통합)' },
+      ...MOBILE_SCREENS.map((k) => ({
+        id: `/shell/m/part/${k}`,
+        label: MOBILE_DEMOS[k].label ?? k,
+      })),
+    ] },
+    ...partNodes(MOBILE, 'm'),
+  ] },
   { id: '__demos', label: '데모', children: [
     { id: '/dev/grid', label: '위젯 그리드 시범' },
     { id: '/dev/authoring', label: '구성 모델 저작(조립 증명)' },

@@ -1,0 +1,505 @@
+'use client';
+// ─────────────────────────────────────────────────────────────────────────
+// _mobileDemos — 모바일 계열 라이브 예시 **단일 출처**.
+//
+//  왜 _registry와 갈라져 있나: 데스크탑 부품은 박물관 페이지 안에 그대로 렌더할 수 있지만
+//  Mobile*은 못 한다. 세 가지가 걸린다 —
+//   ① `.ms` 스코프가 있어야 타이포·터치타깃·--surface-input이 산다(셸 스코프가 값을 깐다)
+//   ② 뷰포트가 폰 폭이어야 미디어쿼리·useMediaQuery가 맞게 발화한다(/dev/preview가 iframe을 쓰는 이유와 동일)
+//   ③ MobileShell이 html.erp-mobile-lock으로 문서 스크롤을 잠근다 — 박물관 페이지 안에 넣으면 그 페이지가 죽는다
+//  → 그래서 모바일 예시는 **자기 주소(/shell/m/part/[name])를 갖고 iframe 안에서** 산다.
+//    박물관 상세(/dev/part/[name])는 그 주소를 폰 프레임으로 임베드만 한다.
+//
+//  이전 상태: _registry의 Mobile* 14항목이 전부 "→ /shell/mobile 에서 라이브" 링크 한 줄이었다.
+//   부품 하나를 보려면 셸 데모의 4탭을 손으로 통과해야 했고, 상태(포커스·에러·빈 상태)는 조작해야만 보였다.
+//
+//  · 데이터는 _devFixtures 한 벌(여기서 만들지 않는다 — 만들면 4탭 데모와 두 벌이 된다).
+//  · bare: 데모가 자기 MobileShell을 직접 그리는 경우. 아니면 캔버스가 셸로 감싼다.
+//  · dev 전용(publish 제외).
+// ─────────────────────────────────────────────────────────────────────────
+import { useState, type ReactNode } from 'react';
+import { MobileShell } from './MobileShell';
+import { MobileTop } from './MobileTop';
+import { MobileSection } from './MobileSection';
+import { MobileListRow } from './MobileListRow';
+import { MobileStatRow } from './MobileStatRow';
+import { MobileDisclosure } from './MobileDisclosure';
+import { MobileField } from './MobileField';
+import { MobileChoice } from './MobileChoice';
+import { MobilePhotoPicker } from './MobilePhotoPicker';
+import { MobileCalendar } from './MobileCalendar';
+import { MobileComment } from './MobileComment';
+import { MobileComposer } from './MobileComposer';
+import { MobileFileRow } from './MobileFileRow';
+import { MobileBoardList } from './MobileBoardList';
+import { MobileBoardView } from './MobileBoardView';
+import { MobileBoardWrite } from './MobileBoardWrite';
+import { TextInput } from './TextInput';
+import { Textarea } from './Textarea';
+import { Text } from './Text';
+import { Title } from './Title';
+import { Badge } from './Badge';
+import { Button } from './Button';
+import { Icon } from './Icon';
+import { Switch } from './Switch';
+import { RichText } from './RichText';
+import type { FileItem } from './FileUploader';
+import type { BoardComment } from './BoardView';
+import {
+  TABS, POSTS, CATS, COMMENTS, POST_HTML, AUDIENCES, ATTACHMENTS,
+  SITE_EVENTS, SITE_ENCODING, SITE_ANNOS,
+} from './_devFixtures';
+
+export type MobileDemoDef = {
+  render: () => ReactNode;
+  bare?: boolean;     // 데모가 MobileShell을 직접 소유한다(캔버스가 감싸지 않는다)
+  note?: string;      // 캔버스 밖(박물관 상세)에 적히는 한 줄 — "여기서 무엇을 보라"
+  screen?: boolean;   // 부품이 아니라 *화면* — 좌측 트리의 '화면' 그룹에 뜬다
+  label?: string;     // 화면의 표시 이름(부품은 이름 자체가 라벨이라 안 쓴다)
+};
+
+/* ── 기초 골격 ─────────────────────────────────────────────────────────── */
+
+function ShellDemo() {
+  const [tab, setTab] = useState('/board');
+  return (
+    <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}
+      actions={[{ label: '더보기', icon: 'dots-vertical', iconOnly: true, onClick: () => {} }]}
+      title="Navigation 제목"
+      onBack={() => {}}
+      bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
+        <Button variant="primary" fullWidth onClick={() => {}}>하단 고정 슬롯</Button>
+      </div>}>
+      <MobileSection title="본문">
+        <Text variant="body">
+          셸은 세 자리를 내준다 — 상단 Navigation, 본문(유일한 스크롤 영역), 하단 고정.
+          탭바는 그 아래 별도 층이라 하단 슬롯과 다투지 않는다.
+        </Text>
+      </MobileSection>
+      <MobileSection flush>
+        {Array.from({ length: 12 }, (_, i) => (
+          <MobileListRow key={i} title={`스크롤 확인용 행 ${i + 1}`} meta="본문만 스크롤된다" />
+        ))}
+      </MobileSection>
+    </MobileShell>
+  );
+}
+
+function TopDemo() {
+  return (
+    <>
+      <MobileTop title="게시판" action={{ label: '글쓰기', variant: 'primary', onClick: () => {} }} />
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          Top은 *화면 제목*이다(셸의 Navigation과 다른 층). 액션은 진입용 — 커밋은 셸 하단이 받는다.
+        </Text>
+      </MobileSection>
+      <MobileTop title="액션 없는 제목" />
+    </>
+  );
+}
+
+function SectionDemo() {
+  return (
+    <>
+      <MobileSection title="제목 있는 묶음">
+        <Text variant="body">자유 슬롯. 기본은 사방 여백.</Text>
+      </MobileSection>
+      <MobileSection title="액션 있는 헤더" action={<Text variant="caption" color="secondary">전체보기</Text>}>
+        <Text variant="body">액션이 있으면 헤더가 대칭 행이 된다.</Text>
+      </MobileSection>
+      <MobileSection title="flush — 행이 끝까지" flush>
+        <MobileListRow title="행 1" meta="좌우 끝까지 닿는다" />
+        <MobileListRow title="행 2" meta="마지막 행의 선은 지워진다" />
+      </MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">제목 없는 묶음(기본형).</Text>
+      </MobileSection>
+    </>
+  );
+}
+
+function ListRowDemo() {
+  return (
+    <MobileSection flush>
+      <MobileListRow title="제목만 있는 행" />
+      <MobileListRow title="메타가 붙은 행" meta="김서연 · 인사팀 · 06.24" />
+      <MobileListRow title="배지 줄이 붙은 행" meta="06.20"
+        badges={<><Badge color="neutral">업무</Badge><Badge color="danger">필독</Badge></>} />
+      <MobileListRow title="좌측 슬롯 + 우측 값" meta="첨부 2건"
+        leading={<Icon name="file" size="sm" color="secondary" />}
+        trailing={<Text variant="caption" color="secondary">1,240,000</Text>} />
+      <MobileListRow title="눌리는 행 — chevron이 생긴다" meta="onClick이 있으면 버튼" onClick={() => {}} />
+      <MobileListRow title="아직 안 본 행 (emphasis)" meta="굵기 한 단만 올린다" emphasis onClick={() => {}} />
+      <MobileListRow title="trailing 슬롯에 스위치" meta="onClick 없으면 정적 행"
+        trailing={<Switch checked onChange={() => {}} />} />
+    </MobileSection>
+  );
+}
+
+function StatRowDemo() {
+  return (
+    <>
+      <MobileSection flush>
+        <MobileStatRow items={[
+          { label: '진행 중', value: '12건', onClick: () => {} },
+          { label: '승인 대기', value: '3건', sub: '2건 지연', tone: 'danger', onClick: () => {} },
+          { label: '이번 달', value: '48건', sub: '+12%', tone: 'success' },
+        ]} />
+      </MobileSection>
+      <MobileSection title="2칸" flush>
+        <MobileStatRow items={[
+          { label: '미결', value: '7건', tone: 'warning', sub: '오늘 마감 2' },
+          { label: '완료', value: '135건' },
+        ]} />
+      </MobileSection>
+    </>
+  );
+}
+
+function DisclosureDemo() {
+  return (
+    <MobileSection flush>
+      <MobileDisclosure title="시공 상세" meta="4개 항목" defaultOpen>
+        <Text variant="body">주방 상부장 · 하부장 · 아일랜드 · 팬트리</Text>
+      </MobileDisclosure>
+      <MobileDisclosure title="변경 이력" meta="2건">
+        <Text variant="body">07.20 자재 변경 · 07.25 일정 조정</Text>
+      </MobileDisclosure>
+      <MobileDisclosure title="meta 없는 펼침">
+        <Text variant="body">우측 요약값이 없으면 chevron만 남는다.</Text>
+      </MobileDisclosure>
+    </MobileSection>
+  );
+}
+
+function FieldDemo() {
+  const [a, setA] = useState('2026년 하계 휴가 신청 안내');
+  const [b, setB] = useState('');
+  const [c, setC] = useState('2026-07-01');
+  const [body, setBody] = useState('');
+  return (
+    <>
+      <MobileSection title="상태 4종" flush>
+        <MobileField label="기본" required>
+          <TextInput value={a} onChange={setA} />
+        </MobileField>
+        <MobileField label="비어 있음 (placeholder)">
+          <TextInput value={b} onChange={setB} placeholder="입력하세요" />
+        </MobileField>
+        <MobileField label="에러" required error="오늘 이전 날짜는 지정할 수 없습니다">
+          <TextInput value={c} onChange={setC} />
+        </MobileField>
+        <MobileField label="원자가 아닌 칸 — 칩 줄은 면을 안 입는다">
+          <MobileChoice options={CATS.slice(1)} value="notice" onChange={() => {}} ariaLabel="분류" />
+        </MobileField>
+      </MobileSection>
+      <MobileSection title="본문 캔버스 — 면 없음">
+        <Textarea variant="canvas" value={body} onChange={setBody} placeholder="내용을 입력하세요" />
+      </MobileSection>
+    </>
+  );
+}
+
+function ChoiceDemo() {
+  const [v, setV] = useState<string | null>('notice');
+  const [w, setW] = useState<string | null>(null);
+  return (
+    <MobileSection flush>
+      <MobileField label="선택됨">
+        <MobileChoice options={CATS.slice(1)} value={v} onChange={setV} ariaLabel="분류" />
+      </MobileField>
+      <MobileField label="미선택">
+        <MobileChoice options={[{ value: 'a', label: '자재' }, { value: 'b', label: '장비' }]}
+          value={w} onChange={setW} ariaLabel="품목 분류" />
+      </MobileField>
+      <MobileField label="상한 초과 — 가로 스크롤(규율 상한 5)">
+        <MobileChoice
+          options={['전체', '공지', '업무', '인사', '안전', '품질', '물류', '재무'].map((l, i) => ({ value: String(i), label: l }))}
+          value="0" onChange={() => {}} ariaLabel="상한 초과 예시" />
+      </MobileField>
+    </MobileSection>
+  );
+}
+
+function PhotoPickerDemo() {
+  const [photos, setPhotos] = useState<FileItem[]>([]);
+  return (
+    <MobileSection title="현장 사진">
+      <MobilePhotoPicker value={photos} onChange={setPhotos} max={6} />
+    </MobileSection>
+  );
+}
+
+function CalendarDemo() {
+  const [month, setMonth] = useState('2026-07');
+  const [day, setDay] = useState('2026-07-27');
+  return (
+    <MobileCalendar
+      fill
+      month={month} onMonthChange={setMonth}
+      selected={day} onSelect={setDay}
+      onSelectEvent={() => {}}
+      events={SITE_EVENTS} encoding={SITE_ENCODING} annotations={SITE_ANNOS}
+    />
+  );
+}
+
+function CommentDemo() {
+  const roots = COMMENTS.filter((c) => !c.parentId);
+  return (
+    <MobileSection title="댓글 3">
+      {roots.map((c) => (
+        <div key={c.id}>
+          <MobileComment comment={c} onReply={() => {}} />
+          {COMMENTS.filter((r) => r.parentId === c.id).map((r) => (
+            <MobileComment key={r.id} comment={r} />
+          ))}
+        </div>
+      ))}
+    </MobileSection>
+  );
+}
+
+function ComposerDemo() {
+  const [v, setV] = useState('');
+  const [reply, setReply] = useState(true);
+  return (
+    <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}}
+      title="댓글" onBack={() => {}}
+      bottom={
+        <MobileComposer value={v} onChange={setV} onSubmit={() => setV('')}
+          placeholder="댓글을 입력하세요"
+          replyTo={reply ? { label: '박상우님에게 답글', onCancel: () => setReply(false) } : undefined} />
+      }>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          하단 고정 입력 바. 답글 대상 칩은 입력 *위*에 뜬다 — 폰은 입력이 하단 고정이라 &ldquo;위치&rdquo;로 대상을 못 말한다.
+          {!reply && ' (대상 칩을 껐다 — 새로고침하면 돌아온다)'}
+        </Text>
+      </MobileSection>
+    </MobileShell>
+  );
+}
+
+function FileRowDemo() {
+  return (
+    <MobileSection title="첨부 2" flush>
+      {ATTACHMENTS.map((f) => (
+        <MobileFileRow key={f.id} name={f.name} size={f.size} onDownload={() => {}} />
+      ))}
+      <MobileFileRow name="용량 표기 없는 첨부.hwpx" onDownload={() => {}} />
+      <MobileFileRow name="내려받기 없는 첨부(정적 행).png" size="1.2 MB" />
+    </MobileSection>
+  );
+}
+
+/* ── 화면(유기체) ──────────────────────────────────────────────────────── */
+
+function BoardListDemo() {
+  const [cat, setCat] = useState('all');
+  const [q, setQ] = useState('');
+  return (
+    <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}}>
+      <MobileTop title="게시판" action={{ label: '글쓰기', variant: 'primary', onClick: () => {} }} />
+      <MobileBoardList
+        posts={POSTS}
+        categories={CATS} category={cat} onCategoryChange={setCat}
+        searchQuery={q} onSearchChange={setQ}
+        onSelectPost={() => {}}
+        onLoadMore={() => {}}
+        totalCount={12}
+      />
+    </MobileShell>
+  );
+}
+
+function BoardListEmptyDemo() {
+  const [q, setQ] = useState('없는검색어');
+  return (
+    <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}}>
+      <MobileTop title="게시판" action={{ label: '글쓰기', variant: 'primary', onClick: () => {} }} />
+      <MobileBoardList
+        posts={[]}
+        categories={CATS} category="all" onCategoryChange={() => {}}
+        searchQuery={q} onSearchChange={setQ}
+        emptyState={{ title: '검색 결과가 없습니다', description: '다른 검색어를 입력해 보세요' }}
+      />
+    </MobileShell>
+  );
+}
+
+function BoardViewDemo() {
+  const [cmts, setCmts] = useState<BoardComment[]>(COMMENTS);
+  const [draft, setDraft] = useState('');
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [acked, setAcked] = useState(false);
+  const post = POSTS[0];
+  return (
+    <MobileShell title={post.category} onBack={() => {}}
+      actions={[{ label: '더보기', icon: 'dots-vertical', iconOnly: true, onClick: () => {} }]}
+      tabs={TABS} activePath="/board" onNavigate={() => {}}
+      bottom={
+        <MobileComposer value={draft} onChange={setDraft}
+          onSubmit={() => {
+            const body = draft.trim();
+            if (!body) return;
+            setCmts((p) => [...p, { id: 'n' + p.length, author: { name: '옥성훈', dept: '대표' }, date: '방금', body, ...(replyTo ? { parentId: replyTo } : {}) }]);
+            setDraft(''); setReplyTo(null);
+          }}
+          placeholder="댓글을 입력하세요"
+          replyTo={replyTo ? { label: `${cmts.find((c) => c.id === replyTo)?.author.name}님에게 답글`, onCancel: () => setReplyTo(null) } : undefined} />
+      }>
+      <MobileBoardView
+        category={post.category} notice={post.pinned} mustRead={post.mustRead}
+        title={post.title}
+        author={{ name: post.author.name, dept: post.author.dept, role: '팀장' }}
+        date={post.date} views={post.views}
+        content={<RichText html={POST_HTML} />}
+        attachments={ATTACHMENTS.map((f) => ({ ...f, onDownload: () => {} }))}
+        readState={{ read: 18, total: 32, acknowledged: acked, onAcknowledge: () => setAcked(true) }}
+        prev={{ title: '3분기 전사 워크샵 일정 공유', date: '06.18', onClick: () => {} }}
+        next={{ title: '2026년 거래처 단가표 v3 배포', date: '06.25', onClick: () => {} }}
+        comments={cmts}
+        onReply={setReplyTo}
+      />
+    </MobileShell>
+  );
+}
+
+function BoardWriteDemo() {
+  const [t, setT] = useState('');
+  const [cat, setCat] = useState<string | null>('notice');
+  const [body, setBody] = useState('');
+  const [aud, setAud] = useState<string[]>(['hr']);
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [notice, setNotice] = useState(false);
+  const [must, setMust] = useState(false);
+  const [cmt, setCmt] = useState(true);
+  return (
+    <MobileShell title="글쓰기" onBack={() => {}}
+      actions={[{ label: '임시저장', icon: 'save', iconOnly: true, onClick: () => {} }]}
+      tabs={TABS} activePath="/board" onNavigate={() => {}}
+      bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
+        <Button variant="primary" fullWidth onClick={() => {}}>등록</Button>
+      </div>}>
+      <MobileBoardWrite
+        categories={CATS.slice(1)} category={cat} onCategoryChange={setCat}
+        postTitle={t} onPostTitleChange={setT}
+        body={body} onBodyChange={setBody}
+        audiences={AUDIENCES} selectedAudiences={aud} onAudiencesChange={setAud}
+        files={files} onFilesChange={setFiles}
+        notice={notice} onNoticeChange={setNotice}
+        mustRead={must} onMustReadChange={setMust}
+        commentsAllowed={cmt} onCommentsAllowedChange={setCmt}
+      />
+    </MobileShell>
+  );
+}
+
+function OrdersDemo() {
+  const [site, setSite] = useState('');
+  const [kind, setKind] = useState<string | null>(null);
+  return (
+    <MobileShell tabs={TABS} activePath="/orders" onNavigate={() => {}}
+      bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
+        <Button variant="primary" fullWidth onClick={() => {}}>발주 요청</Button>
+      </div>}>
+      <MobileTop title="발주" />
+      <MobileSection flush>
+        <MobileStatRow items={[
+          { label: '진행 중', value: '12건', onClick: () => {} },
+          { label: '승인 대기', value: '3건', sub: '2건 지연', tone: 'danger', onClick: () => {} },
+          { label: '이번 달', value: '48건', sub: '+12%', tone: 'success' },
+        ]} />
+      </MobileSection>
+      <MobileSection title="새 발주" flush>
+        <MobileField label="현장" required>
+          <TextInput value={site} onChange={setSite} placeholder="현장을 입력하세요" />
+        </MobileField>
+        <MobileField label="품목 분류">
+          <MobileChoice options={[{ value: 'a', label: '자재' }, { value: 'b', label: '장비' }]}
+            value={kind} onChange={setKind} ariaLabel="품목 분류" />
+        </MobileField>
+      </MobileSection>
+    </MobileShell>
+  );
+}
+
+function EventDetailDemo() {
+  const [photos, setPhotos] = useState<FileItem[]>([]);
+  const ev = SITE_EVENTS[0];
+  return (
+    <MobileShell title="시공" onBack={() => {}} tabs={TABS} activePath="/sites" onNavigate={() => {}}>
+      <MobileSection>
+        <Title variant="subheading">{ev.label}</Title>
+        <div style={{ marginTop: 8 }}>
+          <Text variant="caption" color="secondary">{ev.start} ~ {ev.end ?? ev.start}</Text>
+        </div>
+      </MobileSection>
+      <MobileSection flush>
+        <MobileDisclosure title="시공 상세" meta="4개 항목" defaultOpen>
+          <Text variant="body">주방 상부장 · 하부장 · 아일랜드 · 팬트리</Text>
+        </MobileDisclosure>
+        <MobileDisclosure title="변경 이력" meta="2건">
+          <Text variant="body">07.20 자재 변경 · 07.25 일정 조정</Text>
+        </MobileDisclosure>
+      </MobileSection>
+      <MobileSection title="현장 사진">
+        <MobilePhotoPicker value={photos} onChange={setPhotos} max={6} />
+      </MobileSection>
+    </MobileShell>
+  );
+}
+
+/* ── 등록부 ────────────────────────────────────────────────────────────── */
+
+export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
+  // 부품 — 캔버스가 셸로 감싼다
+  MobileShell:       { render: () => <ShellDemo />, bare: true, note: '세 자리(Navigation·본문·하단 고정) + 탭바 층' },
+  MobileTop:         { render: () => <TopDemo />, note: '액션 있음 / 없음' },
+  MobileSection:     { render: () => <SectionDemo />, note: '제목·액션·flush·무제목 4형' },
+  MobileListRow:     { render: () => <ListRowDemo />, note: '슬롯 조합 7종 — emphasis·chevron·trailing' },
+  MobileStatRow:     { render: () => <StatRowDemo />, note: '3칸 / 2칸 · tone 3종' },
+  MobileDisclosure:  { render: () => <DisclosureDemo />, note: '펼침·접힘·meta 없음' },
+  MobileField:       { render: () => <FieldDemo />, note: '기본·빈칸·에러·원자 아닌 칸 + 본문 캔버스' },
+  MobileChoice:      { render: () => <ChoiceDemo />, note: '선택·미선택·상한 초과(가로 스크롤)' },
+  MobilePhotoPicker: { render: () => <PhotoPickerDemo />, note: '썸네일 격자 + 추가 타일' },
+  MobileCalendar:    { render: () => <CalendarDemo />, bare: true, note: 'fill 모드 — 달력이 본문 전체를 갖는다' },
+  MobileComment:     { render: () => <CommentDemo />, note: '루트 + 1단 답글 · 작성자 배지' },
+  MobileComposer:    { render: () => <ComposerDemo />, bare: true, note: '하단 고정 입력 + 답글 대상 칩' },
+  MobileFileRow:     { render: () => <FileRowDemo />, note: '내려받기 있음/없음 · 용량 표기 없음' },
+  MobileBoardList:   { render: () => <BoardListDemo />, bare: true, note: '검색·분류 칩·공지 구획·더보기' },
+  MobileBoardView:   { render: () => <BoardViewDemo />, bare: true, note: '필독 읽음확인·첨부·이전다음·댓글' },
+  MobileBoardWrite:  { render: () => <BoardWriteDemo />, bare: true, note: '수신자 조직도·첨부·게시옵션 3종' },
+
+  // 화면 — 4탭 데모를 안 거치고 직접 진입하는 자리.
+  //  키에 콜론 같은 구분자를 안 쓴다(URL 세그먼트로 그대로 나가므로). 구분은 screen 플래그가 한다.
+  ScreenBoardListEmpty: { render: () => <BoardListEmptyDemo />, bare: true, screen: true, label: '게시판 — 빈 상태', note: '조작 없이 빈 상태를 바로 본다' },
+  ScreenOrders:         { render: () => <OrdersDemo />, bare: true, screen: true, label: '발주 탭', note: '데스크탑 FormField를 셸 안에서 쓰는 자리 — 모바일 전용 부품 없이 성립하는지' },
+  ScreenEventDetail:    { render: () => <EventDetailDemo />, bare: true, screen: true, label: '현장 — 일정 상세', note: '3뎁스 화면' },
+};
+
+export const MOBILE_DEMO_NAMES = Object.keys(MOBILE_DEMOS);
+export const MOBILE_SCREENS = MOBILE_DEMO_NAMES.filter((n) => MOBILE_DEMOS[n].screen);
+export const hasMobileDemo = (name: string) => name in MOBILE_DEMOS;
+
+/** 캔버스 본체 — /shell/m/part/[name] 이 이걸 렌더한다. bare가 아니면 셸로 감싼다. */
+export function MobileDemoCanvas({ name }: { name: string }) {
+  const def = MOBILE_DEMOS[name];
+  if (!def) {
+    return (
+      <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}}>
+        <MobileSection title="없는 데모">
+          <Text variant="body" color="secondary">{name} 의 모바일 예시가 등록되지 않았습니다.</Text>
+        </MobileSection>
+      </MobileShell>
+    );
+  }
+  if (def.bare) return <>{def.render()}</>;
+  return (
+    <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}} title={name} onBack={() => {}}>
+      {def.render()}
+    </MobileShell>
+  );
+}

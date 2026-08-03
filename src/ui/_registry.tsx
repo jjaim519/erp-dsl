@@ -1372,20 +1372,11 @@ export function Demo({ name }: { name: string }) {
       </Stack>
     ),
     AppShell: <Anchor href="/dev/preview">→ /dev/preview 에서 3티어 라이브 (데스크탑 넷바 / 태블릿 아이콘 레일 / 폰 하단탭)</Anchor>,
-    MobileShell: <Anchor href="/shell/mobile">→ /shell/mobile 에서 폰 베젤 라이브 (Navigation · 본문 스크롤 · 하단 탭)</Anchor>,
-    MobileSection: <Anchor href="/shell/mobile">→ /shell/mobile 에서 라이브 (제목 + 자유 슬롯 + 헤어라인 경계)</Anchor>,
-    MobileTop: <Anchor href="/shell/mobile">→ /shell/mobile 에서 라이브 (화면 제목 — 보조 설명·액션 슬롯 없음)</Anchor>,
-    MobileListRow: <Anchor href="/shell/mobile">→ /shell/mobile 에서 라이브 (배지·제목·메타 + chevron 탐색 행)</Anchor>,
-    MobileBoardList: <Anchor href="/shell/mobile">→ /shell/mobile ‘게시판’ 탭에서 라이브 (검색·분류 칩·공지 구획·안읽음·카운트)</Anchor>,
-    MobileBoardView: <Anchor href="/shell/mobile">→ /shell/mobile ‘게시판’ → 글 선택 (필독 읽음확인 · 첨부 · 이전다음 · 댓글)</Anchor>,
-    MobileBoardWrite: <Anchor href="/shell/mobile">→ /shell/mobile ‘게시판’ → 글쓰기 (수신자 조직도 · 첨부 · 게시옵션 3종)</Anchor>,
-    MobileStatRow: <Anchor href="/shell/mobile">→ /shell/mobile ‘발주’ 탭에서 라이브 (KPI 3칸 + 세로 헤어라인)</Anchor>,
-    MobileDisclosure: <Anchor href="/shell/mobile">→ /shell/mobile ‘현장’ 탭에서 라이브 (펼침 행 — chevron 회전)</Anchor>,
-    MobilePhotoPicker: <Anchor href="/shell/mobile">→ /shell/mobile ‘현장’ 탭에서 라이브 (썸네일 격자 + 추가 타일)</Anchor>,
-    MobileComment: <Anchor href="/shell/mobile">→ /shell/mobile 게시판 글 열어서 라이브 (댓글 행·1단 답글)</Anchor>,
-    MobileComposer: <Anchor href="/shell/mobile">→ /shell/mobile 게시판 글 열어서 라이브 (하단 고정 입력 + 답글 대상 칩)</Anchor>,
-    MobileFileRow: <Anchor href="/shell/mobile">→ /shell/mobile 게시판 글 열어서 라이브 (첨부 행)</Anchor>,
-    MobileCalendar: <Anchor href="/shell/mobile">→ /shell/mobile ‘현장’ 탭에서 라이브 (월 그리드 + 점 표식)</Anchor>,
+    // Mobile* 는 여기 없다 — **_mobileDemos 가 단일 출처**다.
+    //  이전엔 이 자리에 "→ /shell/mobile 에서 라이브" 링크 14줄이 있었다. 실물이 4탭 셸 데모 안에만
+    //  존재해서, 부품 하나를 보려면 탭을 손으로 통과해야 했고 빈 상태·에러 같은 건 조작해야만 보였다.
+    //  지금은 부품마다 캔버스 주소(/shell/m/part/[name])가 있고 박물관이 그걸 폰 프레임으로 임베드한다.
+    //  → 링크를 여기 되살리지 말 것. 두 출처가 되는 순간 한쪽이 낡는다.
     ListPage: <Anchor href="/customers">→ /customers 에서 라이브 (스키마 구동 목록)</Anchor>,
     DetailPage: <Anchor href="/customers">→ /customers/[id] 에서 라이브 (정보+폼 2분할)</Anchor>,
     Combobox: (
