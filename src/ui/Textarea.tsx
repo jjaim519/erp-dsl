@@ -34,6 +34,9 @@ export function Textarea({
       minRows={canvas ? CANVAS_ROWS : undefined}
       value={value} name={name}
       onChange={(e) => onChange(e.currentTarget.value)} radius="sm" styles={{ input: fieldBorder }}
+      // canvas 표식 — 모바일 셸이 입력 원자에 면을 깔 때 *이것만* 뺀다(mobileshell.css).
+      //  본문 캔버스는 섹션 안의 한 칸이 아니라 그 섹션의 주인공 면이라, 면을 입으면 상자 안 상자가 된다.
+      classNames={canvas ? { input: 'erp-canvas' } : undefined}
     />
   );
 }

@@ -322,7 +322,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: '입력 컨트롤(원자)' },
     ],
     composition: {
-      토큰: ['gap xs/xxs', 'text.primary(라벨)', 'text.danger(별표·에러)', '타이포 body-strong/caption', '--field-border(에러 시 덮음)'],
+      토큰: ['gap xs/md', 'text.primary(라벨)', 'text.danger(별표·에러)', '타이포 body-strong/caption', '--field-border(에러 시 덮음 — 칸은 경계를 안 그린다. 면은 원자가 셸 스코프에서 입는다)'],
       '의미 원자': ['Label', 'Text'],
       '배치 프리미티브': ['Stack'],
     } },

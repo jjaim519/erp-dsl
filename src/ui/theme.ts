@@ -68,6 +68,16 @@ const semantic = {
     default: { light: neutral[2], dark: neutral[7] }, // 기본 = neutral 200
     strong:  { light: neutral[3], dark: neutral[6] }, // 강조 = neutral 300
     focus:   { light: primary[6], dark: primary[4] }, // 포커스 = primary 600
+    // field = 입력칸 윤곽 전용(데스크탑). default를 빌려 쓰던 것을 끊는다 — 그건 *구분선* 값이라
+    //  입력칸이 섹션 헤어라인과 같은 색이 됐다(라이트 1.27:1, 칸과 선이 구분 불가).
+    //  WCAG 1.4.11(비문자 대비 3:1)은 구분선엔 안 걸리고 **입력칸 경계**에 걸린다 — 그래서 역할을 가른다.
+    //  ⚠ 값은 3:1(neutral[5])이 아니라 neutral[4] = **2.59:1로 의도적 미달**이다(06 §1-3).
+    //   3:1 단은 데스크탑 폼에서 과하게 무겁다고 판단했고, 미달분은 고대비 모드(a11y.css)가 받는다.
+    field:   { light: neutral[4], dark: neutral[5] },
+    // fieldStrong = 고대비 모드에서만 쓰는 입력칸 경계. 3:1을 확실히 넘는 단(라이트 7.60:1).
+    //  기본값(field 2.59:1 · 모바일 면 1.09:1)이 의도적 미달이므로, 그 미달분을 받는 자리가 필요하다.
+    //  a11y.css의 prefers-contrast/forced-colors 블록에서만 참조한다.
+    fieldStrong: { light: neutral[6], dark: neutral[3] },
   },
   // ── surface (containment 축) — "윤곽 대신 음영·톤으로 구획" (02 elevation 2축) ──
   // 섀도(=lift)와 분리된 별개 축이다: surface는 *톤*으로 "어디에 박혀 있나"를 말한다.
@@ -83,6 +93,10 @@ const semantic = {
     default: { light: '#FFFFFF',  dark: neutral[8] }, // 카드 본문
     raised:  { light: '#FFFFFF',  dark: neutral[7] }, // 떠 있는 위젯(+그림자)
     overlay: { light: '#FFFFFF',  dark: neutral[7] }, // 모달·드롭다운(+그림자)
+    // input = 모바일 입력칸의 *면*. 모바일은 윤곽이 아니라 채움으로 "쓸 수 있는 자리"를 말한다(06 §3-3).
+    //  ⚠ sunken을 재사용할 수 없다: 다크가 neutral[9]인데 모바일 페이지 배경(bg.primary 다크)과 **같은 값**이라
+    //   다크에서 면이 통째로 사라진다. 다크는 M3 규칙대로 페이지보다 *밝은* 톤(neutral[8])을 쓴다.
+    input:   { light: neutral[1], dark: neutral[8] },
   },
 } as const;
 
@@ -223,10 +237,13 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
     '--border-default': s.border.default[mode],
     '--border-strong':  s.border.strong[mode],
     '--border-focus':   s.border.focus[mode],
+    '--border-field':        s.border.field[mode],
+    '--border-field-strong': s.border.fieldStrong[mode],
     '--surface-sunken':  s.surface.sunken[mode],
     '--surface-default': s.surface.default[mode],
     '--surface-raised':  s.surface.raised[mode],
     '--surface-overlay': s.surface.overlay[mode],
+    '--surface-input':   s.surface.input[mode],
   });
   return {
     variables: {

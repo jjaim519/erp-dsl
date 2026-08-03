@@ -15,6 +15,7 @@ import './controls.css';
 import './collector.css';
 import './squircle.css';
 import './fontscale.css';
+import './a11y.css';        // 전역 층(L0) — keep-all · 고대비 · 모션. 06 §1
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import type { ReactNode } from 'react';

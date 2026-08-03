@@ -39,28 +39,71 @@ html.erp-mobile-lock body {
 /* iOS 자동 확대 봉인 — 어떤 size를 쓰든 16px 아래로 안 내려간다. */
 .ms input, .ms textarea, .ms select { font-size: max(16px, var(--input-fz, 16px)); }
 
-/* ── 필드 크롬(윤곽) 벗기기 — 모바일 폼의 시각 체계 ────────────────────────────────
-   iOS 폼의 기본형은 **grouped list**다: 라벨은 좌측, 컨트롤은 우측, 구분은 행 사이 헤어라인,
-   그리고 **필드마다 윤곽 상자가 없다**(SwiftUI 기본 GroupedFormStyle = insetGrouped 리스트).
-   우리 모바일 계열이 "면·그림자 없이 헤어라인으로만 나눈다"고 선언한 게 정확히 그 체계인데,
-   입력칸만 데스크탑 원자를 그대로 들여와 상자가 여럿 생겼다 — 한 화면에 두 체계가 섞였다.
+/* ── 입력칸 어휘 — 윤곽이 아니라 **면** ────────────────────────────────────────────
+   폰의 지배적 어휘는 밑줄도 윤곽도 아니라 **채워진 라운드 박스**다(iOS 검색·입력 필드, M3 filled).
+   우리도 그쪽이다. 근거 3층:
+    ① 정본 — M3 filled가 container(면) + active indicator(선)로 역할을 나눈다. 면이 "쓸 수 있는 자리"를,
+       선이 상태를 말한다. 우리는 선을 상시 노출하지 않고 **포커스·에러에서만** 켠다(아래).
+    ② 접근성 — WCAG 2.4.13: 채움만 있고 테두리 없는 입력의 포커스는 (a) 컴포넌트 안쪽 표시자 또는
+       (b) **테두리**로 표시하고 최소 2px·상태 간 3:1을 만족해야 한다. (b)를 택했다 — --border-focus는 10:1.
+       KRDS는 "테두리 **또는 채움**이 인접 배경과 3:1"을 *권장*한다. 우리 면은 1.09:1로 미달이고,
+       그 미달분은 고대비 모드(a11y.css)가 윤곽을 되살려 받는다(06 §1-3).
+    ③ 레포 — theme.ts가 이미 corner-shape: superellipse(2) + radius.md 16을 깔아뒀다("squircle 곡률이
+       보이려면 큰 반경 필요"). **밑줄 어휘는 이 토큰을 쓸 수 없다** — 곡률이 드러날 면이 없기 때문이다.
+
+   ※ 이전 판(면 없이 밑줄만)은 M3 filled에서 면만 뺀 형태였다. 그래서 어포던스가 헤어라인 하나에 전부
+     걸렸고, 그 헤어라인이 --border-default라 목록 행 구분선과 **같은 색**이었다(입력칸이 정적 행처럼 보임).
 
    고치는 자리는 *부품이 아니라 셸 스코프*다. 위 --input-height-* 를 덮어 44pt를 만든 것과 같은 방식이고,
    타이포(mobileTypoVars)도 같은 통로다. 여기 한 곳이 바뀌면 모바일 폼 **전부**가 따라온다.
    ⚠ 명시 예외: Mantine 내부 변수·클래스에 직접 닿는다(토큰만으로는 표현할 수 없는 영역).
       예외는 이 파일 안에 가둔다 — 부품 파일에서 개별로 덮지 않는다.
 
-   윤곽은 *지우는* 게 아니라 **투명하게** 둔다: 자리(1px)는 남아 레이아웃이 안 흔들리고,
-   FormField가 에러 때 --field-border 를 danger로 덮으면 그 순간 빨간 윤곽이 다시 나타난다(역할 변수 통로 유지). */
+   윤곽은 *지우는* 게 아니라 **투명하게** 둔다: 자리(2px)가 남아 포커스 때 칸 높이가 안 흔들리고,
+   FormField가 에러 때 --field-border 를 danger로 덮으면 그 순간 빨간 윤곽이 나타난다(역할 변수 통로 유지). */
 .ms { --field-border: transparent; }
 .ms .mantine-Input-input {
-  background: transparent;
-  padding-inline-start: 0;     /* 값이 라벨과 같은 세로선에서 시작(grouped list) */
-  border-radius: 0;
+  background: var(--surface-input);
+  border-radius: var(--mantine-radius-md);   /* 16 — squircle 곡률이 드러나는 반경 */
+  border-width: 2px;                         /* WCAG 2.4.13 최소 두께. 평소엔 투명이라 안 보인다 */
 }
-/* 포커스는 **MobileField의 밑줄**이 말한다(mobilelist.css `.mfd:focus-within`).
-   여기서 아웃라인 상자를 씌우면 벗긴 상자가 포커스 때만 되살아나 체계가 다시 섞인다.
-   밑줄이 없는 자리(셸 안 raw 컨트롤)는 각자 :focus-visible을 갖는다. */
+/* 포커스는 **윤곽**이 말한다(WCAG 2.4.13 (b) 방법). 면은 그대로 두고 테두리만 켠다 —
+   면까지 같이 바꾸면 "상태가 둘 다 움직여" 무엇이 변했는지 되레 흐려진다(M3도 indicator만 바꾼다).
+
+   ⚠ border-color를 직접 쓰면 안 된다: fieldBorder(_fieldStyles.ts)가 Mantine `styles` prop으로 들어가
+     **인라인 스타일**이 되므로 어떤 CSS 규칙도 못 이긴다. 대신 그 인라인이 읽는 **역할 변수를 덮는다**
+     — 원자 자신에게 --field-border를 깔면 인라인 var()가 그 값으로 해석된다(!important 불필요). */
+.ms .mantine-Input-input:focus { --field-border: var(--border-focus); }
+.ms .mantine-Input-input:focus { outline: none; }   /* 윤곽이 이미 포커스를 말한다 — 이중 링 방지 */
+/* 값이 라벨과 같은 세로선에서 시작하던 규칙(padding-inline-start: 0)은 **면 어휘와 함께 폐기**한다.
+   면이 생기면 값이 면 안쪽에 여백을 갖는 게 맞다 — 0으로 두면 글자가 면 왼쪽 모서리에 붙는다.
+
+   예외 하나 — 본문 캔버스(Textarea variant="canvas")는 면을 안 입는다.
+   그건 섹션 안의 *한 칸*이 아니라 그 섹션의 **주인공 면**이라(MobileBoardWrite: "상자도 라벨 줄도 없이
+   바로 쓰는 면"), 면을 주면 상자 안에 상자가 생기고 화면의 주인공이 회색 박스가 된다.
+   ※ 윤곽 자리(2px 투명)는 남긴다 — 포커스 때 사각형이 떠서 WCAG 2.4.13을 캔버스도 만족한다. */
+.ms .mantine-Input-input.erp-canvas {
+  background: transparent;
+  border-radius: 0;
+  padding-inline: 0;
+}
+
+/* InputGroup([아이콘 | 입력 | 아이콘])도 하나의 입력칸이다 — 다만 면을 입는 주체가 다르다.
+   controls.css가 안쪽 input의 테두리·배경을 `!important`로 지워 그룹 하나로 묶으므로,
+   원자에 건 규칙이 여기선 통하지 않는다(막지 말고 *그룹*에 걸어야 한다).
+   → 면·윤곽·포커스를 전부 그룹이 받는다. 그룹 테두리는 실제 CSS border라 인라인 문제도 없다.
+   애드온의 배경·구분선은 지운다: 면이 이미 하나의 덩어리를 만들고 있어 그 안을 또 나누면
+   아이콘이 별도 버튼처럼 읽힌다(iOS 검색은 아이콘이 면 *안에* 산다). */
+.ms .erpInputGroup {
+  background: var(--surface-input);
+  border-width: 2px;
+  border-color: transparent;                 /* 자리만 잡아둔다 — 포커스 때 높이가 안 흔들린다 */
+  border-radius: var(--mantine-radius-md);
+}
+.ms .erpInputGroup:focus-within { border-color: var(--border-focus); }
+.ms .erpInputGroup .erpAddon { background: transparent; }
+.ms .erpInputGroup .erpAddonLeft { border-right: none; }
+.ms .erpInputGroup .erpAddonRight { border-left: none; }
 
 /* Navigation — 뒤로 / 제목 / 우측 아이콘 액션. 하단 헤어라인 하나로만 본문과 나뉜다(그림자 없음).
    좌·우 슬롯을 같은 최소폭으로 잡아 제목이 가운데 고정된다(액션 개수가 변해도 제목이 안 흔들림 — 축 예약). */

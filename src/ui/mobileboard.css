@@ -141,6 +141,11 @@
 .mbw-quick { display: flex; flex-direction: column; gap: var(--mantine-spacing-xxs); }
 .mbw-quick .chips { display: flex; flex-wrap: wrap; gap: var(--mantine-spacing-xxs); }
 
+/* 말머리 필터 칩 줄 — 검색칸 바로 아래. MobileSection 본문은 gap 없는 블록이라 그냥 두면 **간격 0**으로
+   검색칸에 그대로 붙는다(규칙이 아예 없던 자리다). 검색과 필터는 같은 묶음의 두 단계라
+   섹션을 가르지 않고 sm(12) 하나로 띄운다 — md(16)면 서로 다른 묶음처럼 갈라진다. */
+.mb-cats { margin-top: var(--mantine-spacing-sm); }
+
 /* 첨부 액션 — 섹션 헤더 우측. 보조 행위라 텍스트+글리프로 압축하되 표적은 44px을 지킨다.
    세로 여백 대칭은 MobileSection이 책임진다(.mls-hd[data-action] — 액션 있는 헤더는 대칭 행이 된다). */
 .mbw-attach {

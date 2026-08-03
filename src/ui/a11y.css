@@ -1,0 +1,61 @@
+/* ─────────────────────────────────────────────────────────────
+   a11y — 전역 층(L0). 부품이 하나도 아닌데 파급은 가장 크다.
+
+   여기 있는 것은 소비처가 *고를 수 없다*. 축(A/B/C)이 아니라 그냥 깔리는 바닥이다.
+   그래서 06 문서에서도 3축이 아니라 별도 장(§1)으로 서 있다.
+   (격리 구역 CSS — Providers가 로드, 헌법 7)
+   ───────────────────────────────────────────────────────────── */
+
+/* ── 1. 한글 줄바꿈 ───────────────────────────────────────────────────────
+   기본값(word-break: normal)은 한글을 **음절 단위로** 끊는다 — "휴가 신청 안"/"내" 처럼
+   단어 중간에서 잘린다. keep-all은 어절(띄어쓰기) 단위로만 끊는다.
+   KRDS가 리셋에 깔고 예외를 유틸로 여는 구조를 쓰며, 우리 레포엔 이 규칙이 **0건이었다**.
+
+   ⚠ 이 규칙은 소비 앱의 마크업에도 닿는다(패키지가 소비처를 안 건드린다는 원칙의 명시 예외).
+     한글 조판의 정오(正誤) 문제라 부품 단위로 고칠 수 없고, 안 깔면 모든 화면이 계속 틀린다.
+     탈출구는 .break-all 하나로 열어둔다.
+
+   overflow-wrap을 함께 깐다: keep-all만 두면 URL·계좌번호처럼 공백 없는 긴 문자열이
+   컨테이너를 뚫고 나간다(끊을 어절 경계가 없으므로). */
+:root {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* 예외 — 끊을 어절 경계가 없는 것(URL·토큰·해시·파일경로). 좁은 칸에서 넘칠 때만 쓴다. */
+.break-all {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
+/* ── 2. 고대비 모드 ───────────────────────────────────────────────────────
+   입력칸 경계는 기본값이 **의도적으로 3:1 미달**이다(06 §1-3):
+     · 데스크탑 윤곽 --border-field = 2.59:1  (3:1 단은 폼이 과하게 무거워진다고 판단)
+     · 모바일 면    --surface-input = 1.09:1  (면으로 자리를 말하는 iOS·M3 filled 어휘)
+   KRDS가 "테두리 **또는 채움**이 3:1"을 *권장*하므로 위반은 아니지만, 미달분을 받을 자리가 필요하다.
+   그 자리가 여기다 — 사용자가 고대비를 요청하면 윤곽을 3:1 초과 단으로 켠다.
+
+   ⚠ border-color를 직접 쓰지 않는다: fieldBorder(_fieldStyles.ts)가 Mantine styles prop으로 들어가
+     **인라인 스타일**이라 CSS가 못 이긴다. 인라인이 읽는 역할 변수(--field-border)를 덮는 방식만 통한다.
+   원자 자신에게 깔므로 .ms의 상속값(transparent)을 이긴다. 포커스·에러 규칙은 특정도가 더 높아 그대로 산다. */
+@media (prefers-contrast: more) {
+  .mantine-Input-input { --field-border: var(--border-field-strong); }
+}
+
+/* Windows 고대비(강제 색) — OS가 색을 갈아끼우는 모드. 투명 윤곽은 그대로 투명하게 남을 수 있어
+   시스템 색으로 못박는다. ButtonBorder = 컨트롤 경계용 시스템 색. */
+@media (forced-colors: active) {
+  .mantine-Input-input { --field-border: ButtonBorder; }
+}
+
+/* ── 3. 모션 ──────────────────────────────────────────────────────────────
+   전정기관 장애(vestibular disorder) 대응. 모션 토큰이 아직 없어 부품별 transition이 산재하므로,
+   지금은 전역 차단으로 받는다. 모션 토큰이 서면 이 블록을 토큰 층으로 옮긴다(R2 이후). */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
