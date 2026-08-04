@@ -27,7 +27,9 @@
   border-radius: var(--mantine-radius-full);
   background: none;
   font-family: inherit;
-  font-size: var(--typo-caption-size);
+  /* body(17)다. caption(13)이었는데 **축 버튼은 보조 정보가 아니라 컨트롤**이라 본문 무게를 갖는다
+     — 화면 검증에서 아래 목록 글자보다 작아 눌러야 할 것으로 안 읽혔다. */
+  font-size: var(--typo-body-size);
   color: var(--text-secondary);
   white-space: nowrap;
   cursor: pointer;
@@ -53,7 +55,7 @@
   border: none;
   background: none;
   font-family: inherit;
-  font-size: var(--typo-caption-size);
+  font-size: var(--typo-body-size);
   color: var(--mantine-color-primary-6);
   white-space: nowrap;
   cursor: pointer;

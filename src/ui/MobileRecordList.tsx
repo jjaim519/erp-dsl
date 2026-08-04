@@ -8,7 +8,6 @@
 //
 //  이 부품은 정렬·필터·페이징을 모른다 — 껍데기는 MobileList가 갖는다. 여기는 *행 하나의 기하*만 안다.
 import { MobileListRow } from './MobileListRow';
-import { Badge } from './Badge';
 import { renderCell } from './_cells';
 import type { DataTableColumn, DataTableRow } from './DataTable';
 
@@ -51,14 +50,18 @@ export function MobileRecordList({ columns, rows, idKey, onRowClick }: Props) {
             key={key}
             title={title}
             meta={meta || undefined}
+            // kicker는 **사다리 3단 자리**다 — 드물게 뜨는 것(지연·필독·반려)만 온다(06 §3-6).
+            //  값이 *모든 행에* 있는 축(공정·담당 같은 상시 상태)을 여기 넣으면 배지밭이 되고,
+            //  그러면 배지가 신호이길 그만둔다. 그런 축은 `inline`(보조 줄)이나 섹션으로 내린다.
+            //  표현은 renderCell에 맡긴다: 열이 `type: 'badge'`라고 선언했으면 배지고,
+            //  아니면 그 타입 그대로다 — 여기서 배지를 강제하면 표와 목록이 다른 말을 하게 된다.
             badges={
               kicker.length > 0 ? (
                 <>
                   {kicker.map((c) => {
                     const v = row[c.key];
                     if (v == null || v === '') return null;
-                    // badgeColors가 있으면 그 열은 상태다 — 없으면 중립(색을 지어내지 않는다).
-                    return <Badge key={c.key} color={c.badgeColors?.[String(v)] ?? 'neutral'}>{String(v)}</Badge>;
+                    return <span key={c.key}>{renderCell(c.type, v, { badgeColors: c.badgeColors })}</span>;
                   })}
                 </>
               ) : undefined

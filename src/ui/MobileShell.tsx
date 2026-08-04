@@ -64,7 +64,15 @@ export function MobileShell({
   useEffect(() => {
     const el = document.documentElement;
     el.classList.add('erp-mobile-lock');
-    return () => el.classList.remove('erp-mobile-lock');
+    // 타이포 스케일을 **문서 루트에도** 깐다 — 포털(Drawer·Modal·Popover) 내용은 DOM상 .ms 밖이라
+    //  셸 스코프를 안 타고 데스크탑 값(body 14)으로 떨어진다. theme.ts가 "모바일에서 포털 부품을
+    //  쓰게 되면 그때 확장"이라고 예고한 그 지점이고, MobileBottomSheet·MobileConfirm이 그 시점이다.
+    //  .ms의 인라인은 그대로 둔다: 이건 마운트 후에 걸리는데 셸 본문은 첫 페인트부터 맞아야 한다(SSR).
+    for (const [k, v] of Object.entries(mobileTypoVars)) el.style.setProperty(k, v);
+    return () => {
+      el.classList.remove('erp-mobile-lock');
+      for (const k of Object.keys(mobileTypoVars)) el.style.removeProperty(k);
+    };
   }, []);
 
   const hasNav = Boolean(onBack || title || (actions && actions.length > 0));

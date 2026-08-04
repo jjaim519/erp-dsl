@@ -422,18 +422,21 @@ function FilterBarDemo() {
   );
 }
 
+// 공정은 **모든 행에 있는 축**이라 kicker(배지)가 아니라 inline(보조 줄)이다 — 06 §3-6.
+//  배지를 세 행에 다 달면 배지밭이 되고 그 순간 배지가 신호이길 그만둔다.
+//  kicker는 드물게 뜨는 것만: 여기선 '지연'이 한 행에만 있다.
 const REC_COLS: DataTableColumn[] = [
   { key: 'name', label: '거래처', type: 'text', listSlot: 'primary' },
   { key: 'owner', label: '담당', type: 'text', listSlot: 'secondary' },
   { key: 'date', label: '납기', type: 'date', listSlot: 'inline' },
-  { key: 'stage', label: '공정', type: 'badge', listSlot: 'kicker',
-    badgeColors: { 실측: 'info', 제작: 'warning', 완료: 'success' } },
+  { key: 'stage', label: '공정', type: 'text', listSlot: 'inline' },
+  { key: 'flag', label: '이상', type: 'badge', listSlot: 'kicker', badgeColors: { 지연: 'danger' } },
   { key: 'amount', label: '금액', type: 'currency', listSlot: 'trailing' },
   { key: 'memo', label: '비고', type: 'text' },   // listSlot 없음 → 좁은 화면에서 안 보인다
 ];
 const REC_ROWS: DataTableRow[] = [
   { id: 'r1', name: '대명물산', owner: '옥성훈', date: '2026-07-06', stage: '시공', amount: 3400000, memo: '표에만 보이는 열' },
-  { id: 'r2', name: '한빛산업', owner: '김민지', date: '2026-07-13', stage: '실측', amount: 1280000, memo: '—' },
+  { id: 'r2', name: '한빛산업', owner: '김민지', date: '2026-07-13', stage: '실측', flag: '지연', amount: 1280000, memo: '—' },
   { id: 'r3', name: '세종테크', owner: '이재현', date: '2026-07-22', stage: '완료', amount: 8750000, memo: '—' },
 ];
 
@@ -445,6 +448,7 @@ function RecordListDemo() {
         <Text variant="body" color="secondary">
           컬럼을 <b>한 번</b> 선언하고 <b>listSlot</b>만 붙였다. 표와 이 목록이 같은 배열을 본다 —
           <b>비고</b> 열은 slot이 없어 여기선 안 보인다.
+          공정은 모든 행에 있으므로 배지가 아니라 보조 줄이고(06 §3-6), <b>배지는 드문 것</b>(지연 1건)에만 붙는다.
         </Text>
       </MobileSection>
     </>
@@ -948,7 +952,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileBottomSheet: { render: () => <BottomSheetDemo />, note: '필드 시트(제목+커밋 2) · 피커 시트(제목 없음). 입력칸을 누르면 키보드만큼 올라간다' },
   MobileConfirm:     { render: () => <ConfirmDemo />, note: 'danger(삭제) · default(상신) — 되돌림 가능성이 톤을 정한다' },
   MobileFilterBar:   { render: () => <FilterBarDemo />, bare: true, note: '축 3(색·글자·실선/파선 표식) · 걸린 축 톤 · 값 고르기는 시트' },
-  MobileRecordList:  { render: () => <RecordListDemo />, note: 'listSlot 5종에서 파생 — 비고 열은 slot이 없어 안 보인다' },
+  MobileRecordList:  { render: () => <RecordListDemo />, note: 'listSlot에서 파생 — 비고는 slot이 없어 안 보이고, 배지는 드문 것(지연 1건)에만' },
   MobilePullToRefresh: { render: () => <PullToRefreshDemo />, bare: true, note: '**터치로** 맨 위에서 아래로 당긴다(마우스 불가). 임계 72px에서 화살표가 뒤집힌다' },
 
   // 화면 — 4탭 데모를 안 거치고 직접 진입하는 자리.

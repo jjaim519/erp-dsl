@@ -30,15 +30,17 @@ type Props = {
   children: ReactNode;
 };
 
-/** 가장 가까운 세로 스크롤 조상. 없으면 null(그러면 아무 일도 안 한다 — 조용히 꺼진다). */
-function findScroller(from: HTMLElement | null): HTMLElement | null {
+/** 가장 가까운 세로 스크롤 조상. **넘치는지는 안 따진다** — 지금 안 넘쳐도 그게 스크롤 주인이고,
+ *  마운트 시점엔 내용이 아직 안 차 있을 수 있다(그때 걸러내면 리스너가 영영 안 붙는다).
+ *  못 찾으면 문서(스크롤이 문서 레벨인 소비처)로 떨어진다. */
+function findScroller(from: HTMLElement | null): HTMLElement {
   let el: HTMLElement | null = from?.parentElement ?? null;
   while (el) {
     const oy = getComputedStyle(el).overflowY;
-    if ((oy === 'auto' || oy === 'scroll') && el.scrollHeight > el.clientHeight) return el;
+    if (oy === 'auto' || oy === 'scroll') return el;
     el = el.parentElement;
   }
-  return null;
+  return document.scrollingElement as HTMLElement ?? document.documentElement;
 }
 
 export function MobilePullToRefresh({ onRefresh, refreshing, children }: Props) {
@@ -52,13 +54,19 @@ export function MobilePullToRefresh({ onRefresh, refreshing, children }: Props) 
   const active = refreshing ?? busy;
 
   useEffect(() => {
-    const scroller = findScroller(rootRef.current);
-    if (!scroller) return;
+    // **리스너는 우리 루트에 건다.** 스크롤 조상에 걸면 그 조상이 마운트 시점에 아직 없거나
+    //  바뀔 수 있고, 무엇보다 우리 밖의 형제 영역에서 시작한 터치까지 잡는다.
+    //  루트는 터치 경로 위에 있으므로 preventDefault가 유효하다(버블 단계여도 취소 가능).
+    const root = rootRef.current;
+    if (!root) return;
+    // 스크롤 주인은 **터치 시작 때마다** 다시 찾는다 — 접힘·펼침으로 스크롤러가 바뀌어도 따라간다.
+    let scroller: HTMLElement = findScroller(root);
 
     let startY = 0;
     let pulling = false;
 
     const onStart = (e: TouchEvent) => {
+      scroller = findScroller(root);
       // 최상단에서 시작한 터치만 후보다. 중간에서 위로 스크롤해 올라온 경우는 아니다
       //  — 그때 당김이 발동하면 "끝까지 올렸더니 새로고침됐다"가 된다.
       if (scroller.scrollTop > 0) { pulling = false; return; }
@@ -90,15 +98,15 @@ export function MobilePullToRefresh({ onRefresh, refreshing, children }: Props) 
       });
     };
 
-    scroller.addEventListener('touchstart', onStart, { passive: true });
-    scroller.addEventListener('touchmove', onMove, { passive: false });
-    scroller.addEventListener('touchend', onEnd, { passive: true });
-    scroller.addEventListener('touchcancel', onEnd, { passive: true });
+    root.addEventListener('touchstart', onStart, { passive: true });
+    root.addEventListener('touchmove', onMove, { passive: false });
+    root.addEventListener('touchend', onEnd, { passive: true });
+    root.addEventListener('touchcancel', onEnd, { passive: true });
     return () => {
-      scroller.removeEventListener('touchstart', onStart);
-      scroller.removeEventListener('touchmove', onMove);
-      scroller.removeEventListener('touchend', onEnd);
-      scroller.removeEventListener('touchcancel', onEnd);
+      root.removeEventListener('touchstart', onStart);
+      root.removeEventListener('touchmove', onMove);
+      root.removeEventListener('touchend', onEnd);
+      root.removeEventListener('touchcancel', onEnd);
     };
   }, []);
 

@@ -1220,7 +1220,7 @@ export const CATALOG: CatalogEntry[] = [
     } },
   { name: 'MobileRecordList', layer: '유기체', role: '**표와 같은 데이터**를 폰에서 행으로. kk 요청은 표용 `cells`와 카드용 필드를 따로 받는 형태였는데, 그러면 매핑을 두 번 쓰고 둘이 어긋나는 사고(강조가 카드에만 걸리는 류)가 계약 차원에서 반복된다. 그래서 `DataTableColumn.listSlot` 하나만 붙이고 columns·rows를 그대로 받는다 — **한 벌에서 두 표현이 파생돼 어긋날 수가 없다**(06 §3-4 · Polaris `s-table`).',
     props: [
-      { name: 'columns / rows', kind: '기능', values: 'DataTableColumn[] · DataTableRow[] — 표와 **같은 배열**을 본다. listSlot이 카드 표현을 파생시킨다' },
+      { name: 'columns / rows', kind: '기능', values: 'DataTableColumn[] · DataTableRow[] — 표와 **같은 배열**을 본다. listSlot이 카드 표현을 파생시킨다. **kicker는 사다리 3단 자리**(드물게 뜨는 것 — 지연·필독)이고, 값이 *모든 행에* 있는 축(공정·담당)은 `inline`이나 섹션으로 내린다(06 §3-6 — 배지밭이 되면 배지가 신호이길 그만둔다). 표현은 열의 `type`이 정한다(여기서 배지를 강제하면 표와 목록이 다른 말을 한다)' },
       { name: 'idKey', kind: '값', values: 'string(선택) — 행 식별자 열. 없으면 인덱스라 재정렬 시 React 키가 흔들린다' },
       { name: 'onRowClick', kind: '기능', values: '(row) => void' },
     ],
