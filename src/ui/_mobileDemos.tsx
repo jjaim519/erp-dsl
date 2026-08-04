@@ -51,6 +51,7 @@ import { TextInput } from './TextInput';
 import { Textarea } from './Textarea';
 import { Text } from './Text';
 import { Title } from './Title';
+import { Avatar } from './Avatar';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { Icon } from './Icon';
@@ -160,8 +161,25 @@ function ListRowDemo() {
         trailing={<Text variant="caption" color="secondary">1,240,000</Text>} />
       <MobileListRow title="눌리는 행 — chevron이 생긴다" meta="onClick이 있으면 버튼" onClick={() => {}} />
       <MobileListRow title="아직 안 본 행 (emphasis)" meta="굵기 한 단만 올린다" emphasis onClick={() => {}} />
+      {/* unread — 제목 *앞* 인라인. 아래 행들과 제목 시작선이 같아야 한다(06 §3-7).
+          emphasis와 따로 켤 수 있다: 굵기 없이 점만도 가능하다. */}
+      <MobileListRow title="안 읽음 — 점 + 굵기" meta="둘은 다른 prop이다" unread emphasis onClick={() => {}} />
+      <MobileListRow title="안 읽음 — 점만" meta="굵기 없이도 켜진다" unread onClick={() => {}} />
+      {/* leading이 있으면 점이 그 모서리로 옮겨간다(같은 요소·같은 낭독 문구). */}
+      <MobileListRow title="좌측 슬롯이 있을 때" meta="점이 아바타 모서리로 간다" unread
+        leading={<Avatar size="sm">옥</Avatar>} onClick={() => {}} />
       <MobileListRow title="trailing 슬롯에 스위치" meta="onClick 없으면 정적 행"
         trailing={<Switch checked onChange={() => {}} />} />
+      {/* actions — 행이 컨테이너가 되고 [본체 | 액션]이 형제로 선다. chevron은 사라진다. */}
+      <MobileListRow title="그 자리 액션 1개" meta="본체를 누르면 진입, 우측은 액션" onClick={() => {}}
+        actions={[{ label: '재요청', icon: 'refresh', iconOnly: true, variant: 'ghost', onClick: () => {} }]} />
+      <MobileListRow title="그 자리 액션 2개 (상한)" meta="셋째는 타입이 막는다" onClick={() => {}}
+        actions={[
+          { label: '승인', icon: 'check', iconOnly: true, variant: 'ghost', onClick: () => {} },
+          { label: '반려', icon: 'x', iconOnly: true, variant: 'ghost', onClick: () => {} },
+        ]} />
+      <MobileListRow title="액션만 (진입 없음)" meta="onClick이 없으면 본체는 정적"
+        actions={[{ label: '삭제', icon: 'trash', iconOnly: true, variant: 'ghost', onClick: () => {} }]} />
     </MobileSection>
   );
 }
@@ -936,7 +954,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileShell:       { render: () => <ShellDemo />, bare: true, note: '세 자리(Navigation·본문·하단 고정) + 탭바 층' },
   MobileTop:         { render: () => <TopDemo />, note: '액션 있음 / 없음' },
   MobileSection:     { render: () => <SectionDemo />, note: '제목·액션·flush·무제목 4형' },
-  MobileListRow:     { render: () => <ListRowDemo />, note: '슬롯 조합 7종 — emphasis·chevron·trailing' },
+  MobileListRow:     { render: () => <ListRowDemo />, note: '슬롯 조합 11종 — emphasis·unread(점 자리 2곳)·actions(1·2·진입없음)·chevron·trailing' },
   MobileStatRow:     { render: () => <StatRowDemo />, note: '3칸 / 2칸 · tone 3종' },
   MobileDisclosure:  { render: () => <DisclosureDemo />, note: '펼침·접힘·sub(제목 옆 보조)·긴 제목 말줄임·meta 없음' },
   MobileField:       { render: () => <FieldDemo />, note: '기본·빈칸·에러·원자 아닌 칸 + 본문 캔버스' },
