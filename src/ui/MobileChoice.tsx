@@ -34,7 +34,12 @@ export function MobileChoice({ options, value, onChange, ariaLabel }: Props) {
     //  껍데기(role)가 아니라 원자(Chip.type)를 고쳐야 닫히는 문제였고, R4에서 Chip에 type/name을 열어 닫았다.
     <div className="mchoice" role="radiogroup" aria-label={ariaLabel}>
       {options.map((o) => (
-        <Chip key={o.value} variant="legend" type="radio" name={groupName}
+        // color를 **명시**한다. legend variant는 원래 *범례*용이라 "켜짐 = 자기가 거는 바와 같은 색"이
+        //  전제인데, 이 줄은 항목별 색이 없는 **단일 선택 컨트롤**이다. 색을 안 넘기면 기본 neutral이 되어
+        //  켜짐(neutral-2 연회색)과 꺼짐(투명+회색 윤곽)이 **둘 다 무채색**이라 무엇이 켜졌는지 안 보인다(실화면).
+        //  컨트롤의 켜짐은 primary다 — MobileSegment 활성 밑줄·탭바 캡슐과 같은 어휘라 셋이 한 이야기를 한다.
+        //  축으로 열지 않는다: 이 부품은 정의상 색이 없는 선택지라 소비처가 고를 것이 없다.
+        <Chip key={o.value} variant="legend" color="primary" type="radio" name={groupName}
           selected={o.value === value} onChange={() => onChange(o.value)}>
           {o.label}
         </Chip>
