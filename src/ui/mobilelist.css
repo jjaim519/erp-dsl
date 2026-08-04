@@ -1,11 +1,31 @@
 /* 모바일 목록 계열(MobileSection · MobileListRow) — 격리 구역 내 raw CSS.
-   시각 규칙: 면(surface)·그림자(elevation) 미사용. 묶음과 구분은 전부 헤어라인(--border-default).
-   근거는 MobileShell.tsx 헤더 주석(iOS HIG inset grouped 경고 / TDS Border·ListRow 어휘) 참조. */
+   시각 규칙: 면(surface)·그림자(elevation) 미사용. 묶음은 **여백 우선, 필요할 때 헤어라인**(06 §1-8).
+   ※ 배치 프리미티브(Stack·Group·Grid)를 여기 쓰지 않는다 — 부품이 자기 패딩을 갖고 소비처는 쌓기만 한다.
+     TDS도 같은 선택이다("대부분의 컴포넌트엔 패딩이 포함되어 있어서 gap 없이 다 붙여서 쓸 수 있도록").
+   근거는 MobileShell.tsx 헤더 주석(M3 카드 억제 / TDS Border·ListRow 어휘) 참조. */
+
+/* ── 행 구분선 · 밀도 — 계열 공통 ─────────────────────────────────────────
+   **선은 "행 사이"와 "구간 사이"가 다른 물건이다.**
+    · 구간 사이(성격이 다른 큰 덩어리) → 전체 너비 선이 맞다(M3 명문).
+    · 행 사이(같은 목록 안의 항목) → **들여쓴 선(inset divider)** 이 맞다(M3: "nested content items는 inset").
+   전에는 둘 다 전체 너비였다. 그래서 목록 한 화면에 가로선이 열 개 넘게 그어졌고,
+   그건 M3가 경고한 "선이 많으면 화면이 어수선해진다"에 정확히 해당했다.
+   ※ 선을 *지우지* 않는 이유: 촘촘한 목록에서 항목 경계가 사라지면 읽을 수 없다.
+     여백 우선은 **구간**의 규율이지 행의 규율이 아니다. iOS grouped list도 행 사이엔 들여쓴 선을 긋는다. */
+:root { --row-divider-inset: var(--mantine-spacing-md); }
+
+/* 행 밀도 — 섹션이 정하고 안쪽 행이 따라온다(TDS ListRow의 상하 패딩 4단이 근거. 우리는 셋). */
+.mls[data-density='compact'] { --row-pad-y: var(--mantine-spacing-xs); }
+.mls[data-density='normal']  { --row-pad-y: var(--mantine-spacing-md); }
+.mls[data-density='loose']   { --row-pad-y: var(--mantine-spacing-lg); }
 
 /* ── MobileSection ── */
-/* 섹션 사이는 위쪽 헤어라인 하나로 나뉜다. 연속된 섹션이 선을 두 개 긋지 않도록 첫 섹션만 선을 지운다. */
-.mls { border-top: var(--border-width) solid var(--border-default); }
-.mls:first-child { border-top: none; }
+/* 앞 구간과의 경계 — 축이 셋이다(MobileSection.tsx 헤더 주석 참조).
+   연속된 섹션이 선을 두 개 긋지 않도록 첫 섹션은 어떤 경우든 경계를 안 만든다. */
+.mls[data-separator='line'] { border-top: var(--border-width) solid var(--border-default); }
+/* space = 선 없이 빈 공간. TDS Border의 height16과 같은 값(md=16)을 쓴다. */
+.mls[data-separator='space'] { margin-top: var(--mantine-spacing-md); }
+.mls:first-child { border-top: none; margin-top: 0; }
 
 .mls-hd {
   display: flex;
@@ -39,8 +59,24 @@
 /* flush면 행이 좌우 끝까지 닿아야 하므로 사방 0(행이 자기 패딩을 갖는다). 위 두 규칙보다 뒤에 온다. */
 .mls-body.flush { padding: 0; }
 
-/* 섹션 안 *마지막* 행의 하단 선은 지운다 — 섹션 경계선과 겹쳐 2px로 보이는 걸 막는다. */
-.mls-body.flush > .mlr:last-child { border-bottom: none; }
+/* 들여쓴 행 구분선 — border 대신 ::after로 그린다(border는 패딩까지 덮어 전체 너비가 된다).
+   `.row-divided`를 붙인 요소가 자기 아래에 선을 하나 갖고, 마지막 항목은 지운다
+   (섹션 경계선과 겹쳐 2px로 보이는 걸 막는다 — 이건 이전 규율 그대로다). */
+.mlr, .mdis, .mcmt, .mfr { position: relative; }
+.mlr::after, .mdis::after, .mcmt::after, .mfr::after {
+  content: '';
+  position: absolute;
+  left: var(--row-divider-inset);
+  right: 0;
+  bottom: 0;
+  height: var(--border-width);
+  background: var(--border-default);
+}
+/* 섹션 안 마지막 행은 선을 지운다 — 섹션 경계선과 겹쳐 2px로 보이는 걸 막는다(이전 규율 그대로). */
+.mls-body.flush > .mlr:last-child::after,
+.mls-body.flush > .mdis:last-child::after,
+.mls-body.flush > .mcmt:last-child::after,
+.mls-body.flush > .mfr:last-child::after { content: none; }
 
 /* ── MobileListRow ── */
 .mlr {
@@ -51,9 +87,9 @@
   min-height: 44px;              /* 터치타깃 하한. HIG는 44pt *권장* / 28pt 하한의 2단이고, 단일 하한
                                     48dp는 M3 규정이다. 44는 두 정본 사이에서 잡은 값(실제 높이는 내용이 만든다). */
   box-sizing: border-box;
-  padding: var(--mantine-spacing-md);
+  /* 좌우는 계열 단일 인셋(md), 세로는 섹션이 정한 밀도를 따른다(--row-pad-y). */
+  padding: var(--row-pad-y, var(--mantine-spacing-md)) var(--mantine-spacing-md);
   border: none;
-  border-bottom: var(--border-width) solid var(--border-default);
   background: none;
   text-align: left;
   font-family: inherit;
@@ -176,7 +212,7 @@ button.mst-item:active { background: var(--bg-secondary); }
 
 /* ── MobileDisclosure ── */
 /* 헤더는 MobileListRow와 같은 리듬(높이·패딩)을 쓰되, chevron이 아래를 향하고 열리면 회전한다. */
-.mdis { border-bottom: var(--border-width) solid var(--border-default); }
+/* 구분선은 위 ::after(들여쓴 선)가 그린다 — border-bottom은 패딩까지 덮어 전체 너비가 된다. */
 .mdis-hd {
   display: flex; align-items: center; gap: var(--mantine-spacing-sm);
   width: 100%; min-height: 44px; box-sizing: border-box;
@@ -319,11 +355,10 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mcal-morecell { text-align: center; font-size: var(--typo-caption-size); line-height: 1.25; color: var(--text-secondary); }
 
 /* ── MobileComment ── */
-/* 댓글 행 — 아래 헤어라인 하나로 구분. 답글은 아바타 폭만큼 들여쓴다(부모와 시각적으로 물리게). */
+/* 댓글 행 — 구분선은 위 ::after(들여쓴 선)가 그린다. 답글은 아바타 폭만큼 들여쓴다(부모와 시각적으로 물리게). */
 .mcmt {
   display: flex; gap: var(--mantine-spacing-sm);
-  padding: var(--mantine-spacing-md);
-  border-bottom: var(--border-width) solid var(--border-default);
+  padding: var(--row-pad-y, var(--mantine-spacing-md)) var(--mantine-spacing-md);
 }
 /* 답글 들여쓰기 = 좌측 인셋 + 아바타 폭 + 아바타·본문 간격. 답글 본문이 부모 본문과 *같은 세로선*에서
    시작하게 하는 값이라, 34px 같은 결과값이 아니라 그 유래를 적는다(아바타가 바뀌면 같이 바뀐다).
@@ -448,8 +483,8 @@ button.mst-item:active { background: var(--bg-secondary); }
   width: 100%; min-height: 44px; box-sizing: border-box;
   /* 세로도 md — ListRow(16)와 같은 값이어야 한다. 첨부 행과 목록 행이 같은 섹션에 섞여 놓이는데
      12/16으로 갈리면 행 높이가 들쭉날쭉해진다(06 §1 인셋 통일). */
-  padding: var(--mantine-spacing-md);
-  border: none; border-bottom: var(--border-width) solid var(--border-default);
+  padding: var(--row-pad-y, var(--mantine-spacing-md)) var(--mantine-spacing-md);
+  border: none;
   background: none; text-align: left; font-family: inherit; color: var(--text-primary);
 }
 button.mfr { cursor: pointer; -webkit-tap-highlight-color: transparent; }

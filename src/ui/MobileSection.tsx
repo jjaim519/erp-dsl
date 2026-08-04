@@ -24,15 +24,30 @@ type Props = {
                        //  캡션 헤더의 기본 여백은 위 lg(24)/아래 xs(8)로 일부러 비대칭인데(자기 본문에 붙으라고),
                        //  거기 44px 컨트롤이 들어가면 그 비대칭을 뒤집어써 위18/아래9로 보인다(실화면 지적).
   flush?: boolean;     // true=본문 좌우 여백 0(행이 끝까지 닿음). 기본 false=여백 있음(자유 콘텐츠).
+  // 앞 구간과 무엇으로 나뉘는가. **옵션이 아니라 축이다** — M3가 implicit containment(여백)와
+  //  explicit containment(선·카드)를 다른 수단으로 명시하고, TDS `Border`도 `full` / `padding24`(들여쓴 선) /
+  //  `height16`(선 아닌 빈 공간) 셋을 나란히 둔다. 즉 "구간을 무엇으로 나누는가"는 실재하는 축이다(06 §3-1).
+  //   · line(기본) = 전체 너비 선. M3: "성격이 다른 큰 구간 사이"에 쓰라는 그 용도.
+  //   · space      = 선 없이 여백만. TDS가 "구간을 나눈다면 height16을 쓰라"고 한 그 방식.
+  //   · none       = 아무것도 없음. 앞 구간과 이어지는 한 덩어리일 때.
+  separator?: 'line' | 'space' | 'none';
+  // 행 밀도 — 섹션이 정하고 안쪽 행들이 따라온다(역할 변수 통로).
+  //  **행마다 열지 않는 이유**: 한 목록 안에서 행 높이가 들쭉날쭉하면 그건 정보가 아니라 사고다.
+  //  근거: TDS ListRow가 상하 패딩 4단(좁음/일반/넓음/매우넓음)을 내장한다 — 밀도는 실재하는 축이다.
+  //  우리는 셋만 연다(매우넓음은 아직 쓸 자리가 없다 — 필요해지면 그때).
+  density?: 'compact' | 'normal' | 'loose';
   children: ReactNode;
 };
 
-export function MobileSection({ title, action, flush = false, headingLevel = 3, children }: Props) {
+export function MobileSection({
+  title, action, flush = false, headingLevel = 3,
+  separator = 'line', density = 'normal', children,
+}: Props) {
   // 빈 배열·false·null은 "내용 없음"이다(조건부 렌더의 흔한 산출물). 그때는 본문 div 자체를 안 만든다.
   const hasBody = Children.toArray(children).length > 0;
   const H = (headingLevel === 2 ? 'h2' : 'h3') as 'h2' | 'h3';
   return (
-    <section className="mls">
+    <section className="mls" data-separator={separator} data-density={density}>
       {(title || action) && (
         <div className="mls-hd" data-action={action ? '' : undefined}>
           {/* 시맨틱은 heading, 생김새는 캡션 그대로(.mls-hd-t가 크기·굵기·색을 정한다).

@@ -111,12 +111,28 @@ function SectionDemo() {
       <MobileSection title="액션 있는 헤더" action={<Text variant="caption" color="secondary">전체보기</Text>}>
         <Text variant="body">액션이 있으면 헤더가 대칭 행이 된다.</Text>
       </MobileSection>
-      <MobileSection title="flush — 행이 끝까지" flush>
-        <MobileListRow title="행 1" meta="좌우 끝까지 닿는다" />
+
+      {/* 구간 경계 3축 — 선 / 여백 / 없음 */}
+      <MobileSection title="separator: line (기본)" flush>
+        <MobileListRow title="행 사이는 들여쓴 선" meta="구간 사이는 전체 너비 선" />
         <MobileListRow title="행 2" meta="마지막 행의 선은 지워진다" />
       </MobileSection>
-      <MobileSection>
-        <Text variant="body" color="secondary">제목 없는 묶음(기본형).</Text>
+      <MobileSection title="separator: space" separator="space" flush>
+        <MobileListRow title="위와 선 없이 여백으로만 나뉜다" meta="TDS Border height16과 같은 방식" />
+        <MobileListRow title="행 2" />
+      </MobileSection>
+      <MobileSection title="separator: none" separator="none" flush>
+        <MobileListRow title="앞 구간과 이어지는 한 덩어리" />
+      </MobileSection>
+
+      {/* 밀도 3단 */}
+      <MobileSection title="density: compact" density="compact" flush>
+        <MobileListRow title="촘촘한 행" meta="상하 xs" />
+        <MobileListRow title="촘촘한 행" meta="결재함처럼 정보가 많은 화면" />
+      </MobileSection>
+      <MobileSection title="density: loose" density="loose" flush>
+        <MobileListRow title="여유로운 행" meta="상하 lg" />
+        <MobileListRow title="여유로운 행" meta="설정처럼 항목이 적은 화면" />
       </MobileSection>
     </>
   );
