@@ -32,12 +32,17 @@ html.erp-mobile-lock body {
    입력 원자를 하나도 안 고치고 셸 안쪽 전부가 따라온다(타이포 역할 변수와 같은 방식).
    ※ 폰트: iOS는 **16px 미만 입력에 포커스하면 페이지를 자동 확대**한다. md는 16px이라 안전하지만
       소비처가 size="sm"(14px)을 쓸 수 있으므로 하한을 못박아 확대 자체를 봉인한다. */
-.ms {
+/* ⚠ 스코프 주체가 `.ms`(셸 엘리먼트)가 아니라 **`.erp-mobile`(문서 루트)** 인 이유 — 06 §1-9.
+   `.ms` 안에만 두면 **포털(Drawer·Modal·Popover·Menu)이 통째로 규격 밖으로 나간다.**
+   시트 안 입력칸이 데스크탑 윤곽 필드로 되돌아갔고(실화면), 아래 iOS 확대 봉인도 안 걸렸다.
+   한 문서는 데스크탑이거나 모바일이지 둘 다일 수 없으므로(§1-5, 경계 768) 문서 단위가 맞다.
+   클래스는 `_mobileScope.useMobileScope()`가 붙인다 — 셸 크롬과 분리돼 있어 크롬 없는 자리도 규격 안이다. */
+.erp-mobile {
   --input-height-sm: var(--erp-touch-target);        /* 36 → 44 */
   --input-height-md: calc(var(--erp-touch-target) + 4px);  /* 42 → 48 */
 }
 /* iOS 자동 확대 봉인 — 어떤 size를 쓰든 16px 아래로 안 내려간다. */
-.ms input, .ms textarea, .ms select { font-size: max(16px, var(--input-fz, 16px)); }
+.erp-mobile input, .erp-mobile textarea, .erp-mobile select { font-size: max(16px, var(--input-fz, 16px)); }
 
 /* ── 입력칸 어휘 — 윤곽이 아니라 **면** ────────────────────────────────────────────
    폰의 지배적 어휘는 밑줄도 윤곽도 아니라 **채워진 라운드 박스**다(iOS 검색·입력 필드, M3 filled).
@@ -61,8 +66,8 @@ html.erp-mobile-lock body {
 
    윤곽은 *지우는* 게 아니라 **투명하게** 둔다: 자리(2px)가 남아 포커스 때 칸 높이가 안 흔들리고,
    FormField가 에러 때 --field-border 를 danger로 덮으면 그 순간 빨간 윤곽이 나타난다(역할 변수 통로 유지). */
-.ms { --field-border: transparent; }
-.ms .mantine-Input-input {
+.erp-mobile { --field-border: transparent; }
+.erp-mobile .mantine-Input-input {
   background: var(--surface-input);
   border-radius: var(--mantine-radius-md);   /* 16 — squircle 곡률이 드러나는 반경 */
   border-width: 2px;                         /* WCAG 2.4.13 최소 두께. 평소엔 투명이라 안 보인다 */
@@ -73,8 +78,8 @@ html.erp-mobile-lock body {
    ⚠ border-color를 직접 쓰면 안 된다: fieldBorder(_fieldStyles.ts)가 Mantine `styles` prop으로 들어가
      **인라인 스타일**이 되므로 어떤 CSS 규칙도 못 이긴다. 대신 그 인라인이 읽는 **역할 변수를 덮는다**
      — 원자 자신에게 --field-border를 깔면 인라인 var()가 그 값으로 해석된다(!important 불필요). */
-.ms .mantine-Input-input:focus { --field-border: var(--border-focus); }
-.ms .mantine-Input-input:focus { outline: none; }   /* 윤곽이 이미 포커스를 말한다 — 이중 링 방지 */
+.erp-mobile .mantine-Input-input:focus { --field-border: var(--border-focus); }
+.erp-mobile .mantine-Input-input:focus { outline: none; }   /* 윤곽이 이미 포커스를 말한다 — 이중 링 방지 */
 /* 값이 라벨과 같은 세로선에서 시작하던 규칙(padding-inline-start: 0)은 **면 어휘와 함께 폐기**한다.
    면이 생기면 값이 면 안쪽에 여백을 갖는 게 맞다 — 0으로 두면 글자가 면 왼쪽 모서리에 붙는다.
 
@@ -92,7 +97,7 @@ html.erp-mobile-lock body {
     · 부수 효과로 정렬이 맞는다 — 윤곽이 없으면 padding-inline: 0이 정상이고, 글자가 섹션 제목과
       같은 세로선에 선다. (이전 판은 투명 2px 윤곽만 남겨 캐럿이 그 선 위에 얹혔다.)
    ※ 위 :focus 규칙이 --field-border를 덮어도 그릴 테두리가 없어 무해하다 — 규칙을 따로 빼지 않는다. */
-.ms .mantine-Input-input.erp-canvas {
+.erp-mobile .mantine-Input-input.erp-canvas {
   background: transparent;
   border-width: 0;
   padding-inline: 0;
@@ -104,16 +109,16 @@ html.erp-mobile-lock body {
    → 면·윤곽·포커스를 전부 그룹이 받는다. 그룹 테두리는 실제 CSS border라 인라인 문제도 없다.
    애드온의 배경·구분선은 지운다: 면이 이미 하나의 덩어리를 만들고 있어 그 안을 또 나누면
    아이콘이 별도 버튼처럼 읽힌다(iOS 검색은 아이콘이 면 *안에* 산다). */
-.ms .erpInputGroup {
+.erp-mobile .erpInputGroup {
   background: var(--surface-input);
   border-width: 2px;
   border-color: transparent;                 /* 자리만 잡아둔다 — 포커스 때 높이가 안 흔들린다 */
   border-radius: var(--mantine-radius-md);
 }
-.ms .erpInputGroup:focus-within { border-color: var(--border-focus); }
-.ms .erpInputGroup .erpAddon { background: transparent; }
-.ms .erpInputGroup .erpAddonLeft { border-right: none; }
-.ms .erpInputGroup .erpAddonRight { border-left: none; }
+.erp-mobile .erpInputGroup:focus-within { border-color: var(--border-focus); }
+.erp-mobile .erpInputGroup .erpAddon { background: transparent; }
+.erp-mobile .erpInputGroup .erpAddonLeft { border-right: none; }
+.erp-mobile .erpInputGroup .erpAddonRight { border-left: none; }
 
 /* Navigation — 뒤로 / 제목 / 우측 아이콘 액션. 하단 헤어라인 하나로만 본문과 나뉜다(그림자 없음).
    좌·우 슬롯을 같은 최소폭으로 잡아 제목이 가운데 고정된다(액션 개수가 변해도 제목이 안 흔들림 — 축 예약). */

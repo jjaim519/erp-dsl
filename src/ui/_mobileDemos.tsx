@@ -19,7 +19,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { useState, type ReactNode, type CSSProperties } from 'react';
 import { mobileTypoVars } from './theme';
-import { useMobileTypoScope } from './_mobileScope';
+import { useMobileScope } from './_mobileScope';
 import { MobileShell } from './MobileShell';
 import { MobileTop } from './MobileTop';
 import { MobileSection } from './MobileSection';
@@ -978,7 +978,7 @@ export const hasMobileDemo = (name: string) => name in MOBILE_DEMOS;
 /** 캔버스 본체 — /shell/m/part/[name] 이 이걸 렌더한다. bare가 아니면 셸로 감싼다. */
 /** 크롬 없는 캔버스 — 스케일·평면만 갖는다(문서 루트 변수 + .ms 클래스). 크롬은 MobileShell 것. */
 function BareCanvas({ children }: { children: ReactNode }) {
-  useMobileTypoScope();
+  useMobileScope();
   return <div className="ms" style={mobileTypoVars as CSSProperties}>{children}</div>;
 }
 

@@ -22,7 +22,7 @@
 //    격리 구역 내 raw CSS(헌법 7 명시 예외 — AppShell 골격과 동류). 바 *안의 콘텐츠*는 우리 부품으로 조립.
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { mobileTypoVars } from './theme';
-import { useMobileTypoScope } from './_mobileScope';
+import { useMobileScope } from './_mobileScope';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { CountBadge } from './CountBadge';
@@ -67,9 +67,10 @@ export function MobileShell({
     el.classList.add('erp-mobile-lock');
     return () => el.classList.remove('erp-mobile-lock');
   }, []);
-  // 타이포 스코프는 **크롬과 분리된 관심사**다(_mobileScope 주석). 셸이 소유하면 크롬 없이
-  //  부품만 띄우는 자리에서 스케일이 통째로 사라진다. 여기선 그 훅을 부르기만 한다.
-  useMobileTypoScope();
+  // 모바일 **규격**(44/48 터치 높이 · iOS 확대 봉인 · 입력 면 어휘 · 타이포)은 크롬과 분리된 관심사다.
+  //  셸이 소유하면 ① 크롬 없는 자리에서 규격이 통째로 사라지고 ② 포털(시트·경고·메뉴)은 아예
+  //  스코프 밖이라 데스크탑 부품 얼굴로 돌아간다. 그래서 문서 루트에 건다 — 06 §1-9.
+  useMobileScope();
 
   const hasNav = Boolean(onBack || title || (actions && actions.length > 0));
 
