@@ -413,21 +413,29 @@ button.mst-item:active { background: var(--bg-secondary); }
      완전 균등을 강제하면 긴 라벨이 잘린다. */
 .mseg {
   display: flex;
-  border-bottom: var(--border-width) solid var(--border-default);
   padding: 0 var(--mantine-spacing-md);
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
 .mseg::-webkit-scrollbar { display: none; }
+/* **아래 경계선을 스스로 긋지 않는다.** 뒤에 오는 섹션이 자기 border-top을 이미 갖고 있어서,
+   여기서 또 그으면 회색 1px이 두 줄이 된다 — 활성 밑줄(2px) 아래로 3px 회색이 깔려
+   "인디케이터와 구분선 사이에 유격이 있는" 것처럼 보였다(실화면 지적).
+   경계는 *다음 구간*이 갖는다는 계열 규율(MobileTop도 같다)을 여기서도 따른다. */
 
 .mseg-item {
   flex: 1 0 auto;      /* grow 1 · shrink 0 — 위 주석의 판정 기제 */
   min-width: 0;
   display: inline-flex; align-items: center; justify-content: center;
   gap: var(--mantine-spacing-xxs);
-  min-height: 44px;
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  min-height: var(--erp-touch-target);
+  /* 좌우 md — **여백의 하한**이다. sm(12)이면 5탭이 375px에 아슬아슬하게 들어가면서
+     항목끼리 붙어 "갈래"로 안 읽힌다(실화면 지적). md면 5탭+카운트가 넘쳐 스크롤로 넘어가고,
+     그때 각 항목이 자기 폭과 숨을 갖는다.
+     M3 명문: "탭이 안 맞으면 **텍스트를 줄이지 말고 스크롤 탭을 써라**" · "라벨을 자르지 마라"
+     (고정 탭은 4개 이하 권장, 5개는 스크롤). 개수를 세지 않아도 이 하한이 같은 판정을 한다. */
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
   border: none; background: none;
   font-family: inherit;
   font-size: var(--typo-body-size);
