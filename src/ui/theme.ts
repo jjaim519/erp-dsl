@@ -125,9 +125,11 @@ const typography: Record<TypographyStep, { fontSize: string; fontWeight: number;
 //  Toss도 이 대역이다. 데스크탑 스케일을 그대로 쓰면 21% 작아 답답해 보인다(화면 검증에서 확인).
 //  적용 방식: 역할 변수 통로를 그대로 쓴다 — MobileShell 루트에 이 변수를 깔면 Text·Title·Badge 등
 //  *모든* 자손이 자동으로 따라온다(원자는 여전히 크기를 모른다). 색·타이포가 같은 구조라 새 기제 0.
-//  ※ 포털(Popover/Modal/Drawer)은 DOM상 셸 밖이라 .ms 스코프를 안 탄다. **v0.73.1에서 확장했다** —
-//    MobileShell이 마운트 동안 이 변수를 `document.documentElement`에도 깐다(erp-mobile-lock과 같은 수명).
-//    안 하면 시트·경고 안 글자가 데스크탑 값(body 14)으로 떨어진다(실화면에서 그랬다).
+//  ※ **적용은 `_mobileScope.useMobileTypoScope()`가 한다(v0.73.2, 06 §1-9).** 여기는 값만 갖는다.
+//    엘리먼트 스코프(.ms 인라인)만 쓰던 시절 구멍이 둘 있었다 — ① 포털(Drawer·Modal·Popover·Menu)은
+//    DOM상 .ms 밖이라 데스크탑 값으로 떨어졌고(MobileDecisionBar·MobileAttachmentViewer의 메뉴가
+//    여러 릴리스 동안 그랬다), ② 셸 크롬을 안 쓰는 자리에선 스케일이 통째로 사라졌다.
+//    그래서 스코프는 **문서 루트**에 깔고 **크롬과 분리**한다.
 const typographyMobile: Record<TypographyStep, { fontSize: string; fontWeight: number; lineHeight: number }> = {
   display:       { fontSize: '2.125rem',  fontWeight: 700, lineHeight: 1.2 },  // iOS Large Title 34
   heading:       { fontSize: '1.75rem',   fontWeight: 700, lineHeight: 1.25 }, // iOS Title1 28

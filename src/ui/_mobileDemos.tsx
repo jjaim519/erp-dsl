@@ -17,7 +17,9 @@
 //  · bare: 데모가 자기 MobileShell을 직접 그리는 경우. 아니면 캔버스가 셸로 감싼다.
 //  · dev 전용(publish 제외).
 // ─────────────────────────────────────────────────────────────────────────
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type CSSProperties } from 'react';
+import { mobileTypoVars } from './theme';
+import { useMobileTypoScope } from './_mobileScope';
 import { MobileShell } from './MobileShell';
 import { MobileTop } from './MobileTop';
 import { MobileSection } from './MobileSection';
@@ -974,6 +976,12 @@ export const MOBILE_SCREENS = MOBILE_DEMO_NAMES.filter((n) => MOBILE_DEMOS[n].sc
 export const hasMobileDemo = (name: string) => name in MOBILE_DEMOS;
 
 /** 캔버스 본체 — /shell/m/part/[name] 이 이걸 렌더한다. bare가 아니면 셸로 감싼다. */
+/** 크롬 없는 캔버스 — 스케일·평면만 갖는다(문서 루트 변수 + .ms 클래스). 크롬은 MobileShell 것. */
+function BareCanvas({ children }: { children: ReactNode }) {
+  useMobileTypoScope();
+  return <div className="ms" style={mobileTypoVars as CSSProperties}>{children}</div>;
+}
+
 export function MobileDemoCanvas({ name }: { name: string }) {
   const def = MOBILE_DEMOS[name];
   if (!def) {
@@ -985,7 +993,10 @@ export function MobileDemoCanvas({ name }: { name: string }) {
       </MobileShell>
     );
   }
-  if (def.bare) return <>{def.render()}</>;
+  // bare = 셸 **크롬**을 안 씌운다는 뜻이지 모바일 규격 밖이라는 뜻이 아니다.
+  //  전에는 여기서 MobileShell을 통째로 건너뛰어 **타이포 스케일까지 같이 사라졌고**(포털이든 아니든),
+  //  그래서 bare 데모의 글자가 전부 데스크탑 값으로 떴다. 스코프만 따로 씌운다.
+  if (def.bare) return <BareCanvas>{def.render()}</BareCanvas>;
   return (
     <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}} title={name} onBack={() => {}}>
       {def.render()}

@@ -22,6 +22,7 @@
 //    격리 구역 내 raw CSS(헌법 7 명시 예외 — AppShell 골격과 동류). 바 *안의 콘텐츠*는 우리 부품으로 조립.
 import { useEffect, type CSSProperties, type ReactNode } from 'react';
 import { mobileTypoVars } from './theme';
+import { useMobileTypoScope } from './_mobileScope';
 import { Icon, type IconName } from './Icon';
 import { Text } from './Text';
 import { CountBadge } from './CountBadge';
@@ -64,16 +65,11 @@ export function MobileShell({
   useEffect(() => {
     const el = document.documentElement;
     el.classList.add('erp-mobile-lock');
-    // 타이포 스케일을 **문서 루트에도** 깐다 — 포털(Drawer·Modal·Popover) 내용은 DOM상 .ms 밖이라
-    //  셸 스코프를 안 타고 데스크탑 값(body 14)으로 떨어진다. theme.ts가 "모바일에서 포털 부품을
-    //  쓰게 되면 그때 확장"이라고 예고한 그 지점이고, MobileBottomSheet·MobileConfirm이 그 시점이다.
-    //  .ms의 인라인은 그대로 둔다: 이건 마운트 후에 걸리는데 셸 본문은 첫 페인트부터 맞아야 한다(SSR).
-    for (const [k, v] of Object.entries(mobileTypoVars)) el.style.setProperty(k, v);
-    return () => {
-      el.classList.remove('erp-mobile-lock');
-      for (const k of Object.keys(mobileTypoVars)) el.style.removeProperty(k);
-    };
+    return () => el.classList.remove('erp-mobile-lock');
   }, []);
+  // 타이포 스코프는 **크롬과 분리된 관심사**다(_mobileScope 주석). 셸이 소유하면 크롬 없이
+  //  부품만 띄우는 자리에서 스케일이 통째로 사라진다. 여기선 그 훅을 부르기만 한다.
+  useMobileTypoScope();
 
   const hasNav = Boolean(onBack || title || (actions && actions.length > 0));
 
