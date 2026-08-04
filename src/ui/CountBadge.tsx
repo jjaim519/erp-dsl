@@ -9,12 +9,24 @@
 //  · 색은 토큰 var(danger-6/neutral-6)·흰 글자 var로 직접 참조 — Mantine Badge(light 고정)로는 솔리드가 안 나와서 별도 부품.
 
 type Tone = 'danger' | 'neutral';
+// 크기 — 배지는 **자기가 붙는 아이콘보다 작아야** 한다. 그게 안 되면 배지가 주인공이 된다.
+//  md(기본 18px)는 데스크탑 넷바·탭바(아이콘 20px) 기준이고, 모바일 하단 탭은 아이콘이 16px라
+//  같은 치수를 쓰면 배지가 아이콘의 112%가 된다(v0.72.0 실측 — 화면에서 실제로 그렇게 보였다).
+//  자리마다 아이콘 크기가 다른 게 원인이므로 축을 여는 게 맞다: sm은 15px로 16px 아이콘의 94%.
+type Size = 'md' | 'sm';
 type Props = {
   count: number;        // 미처리 건수. 기본은 0 이하면 안 보인다(showZero로 뒤집는다).
   tone?: Tone;          // 기본 danger(행동요구). 정보성 카운트는 neutral.
+  size?: Size;          // 기본 md(아이콘 20px 옆). 16px 아이콘 옆이면 sm.
   max?: number;         // 초과시 "N+"(기본 99).
   dot?: boolean;        // true면 숫자 없이 점만.
   showZero?: boolean;   // 0도 그린다. 아래 주석 참조.
+};
+
+// 치수는 전부 rem — 옆 라벨(rem)과 함께 줌(고령 클라이언트 폰트 스케일). md 18/11px · sm 15/10px.
+const DIM: Record<Size, { box: string; pad: string; font: string; dot: string }> = {
+  md: { box: '1.125rem', pad: '0 0.3125rem', font: '0.6875rem', dot: '0.5rem' },
+  sm: { box: '0.9375rem', pad: '0 0.25rem', font: '0.625rem', dot: '0.4375rem' },
 };
 
 // showZero — "0건도 정보"인 맥락용(기본 false라 기존 소비처 불변).
@@ -23,12 +35,13 @@ type Props = {
 //    지금 얼마나 쌓였나"를 말하므로 0도 읽혀야 한다("이 단계는 비었다" 역시 답이다). 숨기면 소비처가 라벨 문자열에
 //    숫자를 박아 우회하고, 그 순간 배지 층위가 통째로 사라진다(kk가 실제로 그 상태였다).
 //  · 0을 danger로 칠하면 "행동요구만 빨강"이 무너진다 — showZero를 쓸 땐 tone='neutral'을 함께 주는 게 맞다.
-export function CountBadge({ count, tone = 'danger', max = 99, dot = false, showZero = false }: Props) {
+export function CountBadge({ count, tone = 'danger', size = 'md', max = 99, dot = false, showZero = false }: Props) {
   if (count < 0 || (count === 0 && !showZero)) return null;
   const bg = `var(--mantine-color-${tone}-6)`;
+  const d = DIM[size];
   if (dot) {
     // rem — 폰트 스케일(접근성 줌)에 함께 커진다. 라벨은 rem인데 점만 px면 줌에서 쪼그라든다.
-    return <span aria-hidden style={{ display: 'inline-block', width: '0.5rem', height: '0.5rem', borderRadius: 'var(--mantine-radius-full)', background: bg }} />;
+    return <span aria-hidden style={{ display: 'inline-block', width: d.dot, height: d.dot, borderRadius: 'var(--mantine-radius-full)', background: bg }} />;
   }
   const label = count > max ? `${max}+` : String(count);
   return (
@@ -36,11 +49,11 @@ export function CountBadge({ count, tone = 'danger', max = 99, dot = false, show
       role="status"
       aria-label={`${count}건`}
       style={{
-        // 치수·폰트 전부 rem — 옆 라벨(rem)과 함께 줌(고령 클라이언트 폰트 스케일). 18px=1.125rem, 11px=0.6875rem.
+        // 단일/두 자리는 원형, 길어지면 알약으로 자연히 늘어난다(minWidth=height).
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-        minWidth: '1.125rem', height: '1.125rem', padding: '0 0.3125rem', borderRadius: 'var(--mantine-radius-full)',
+        minWidth: d.box, height: d.box, padding: d.pad, borderRadius: 'var(--mantine-radius-full)',
         background: bg, color: 'var(--mantine-color-white)',
-        fontSize: '0.6875rem', fontWeight: 700, lineHeight: 1, flexShrink: 0,
+        fontSize: d.font, fontWeight: 700, lineHeight: 1, flexShrink: 0,
       }}
     >
       {label}

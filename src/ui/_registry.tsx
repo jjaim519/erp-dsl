@@ -1021,6 +1021,11 @@ export function Demo({ name }: { name: string }) {
           <Group gap="xs" align="center"><Text variant="body" color="secondary">진행 중</Text><CountBadge count={3} tone="neutral" /></Group>
           <Group gap="xs" align="center"><Text variant="body" color="secondary">완료</Text><CountBadge count={0} /></Group>
         </Group>
+        {/* 크기 축 — 붙는 아이콘보다 작아야 한다. 16px 아이콘 옆에 md를 쓰면 배지가 아이콘을 이긴다. */}
+        <Group gap="lg" align="center">
+          <Group gap="xs" align="center"><Text variant="caption" color="secondary">md · 아이콘 20px 옆</Text><Icon name="bell" size="md" /><CountBadge count={3} /></Group>
+          <Group gap="xs" align="center"><Text variant="caption" color="secondary">sm · 아이콘 16px 옆</Text><Icon name="bell" size="sm" /><CountBadge count={3} size="sm" /></Group>
+        </Group>
         {/* 점(dot) 모드 + 99+ 캡 */}
         <Group gap="lg" align="center">
           <Group gap="xs" align="center"><Text variant="body">발주</Text><CountBadge count={5} dot /></Group>

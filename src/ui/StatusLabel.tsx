@@ -37,9 +37,12 @@ type StatusLabelProps = {
 
 export function StatusLabel({ tone = 'neutral', icon, children }: StatusLabelProps) {
   const style: CSSProperties = {
-    display: 'inline-flex',
-    alignItems: 'center',
-    gap: 'var(--mantine-spacing-xxs)',
+    // **flex가 아니다.** inline-flex로 두면 문장 속에서 정렬이 깨진다:
+    //  ① flex 컨테이너 안에서는 vertical-align이 무시돼 Icon의 --icon-baseline-shift(광학 보정)가 죽는다.
+    //  ② align-items:center면 flex 항목이 baseline 정렬에 참여하지 않아, inline-flex 상자의 baseline이
+    //     내용이 아니라 *바깥 테두리*에서 합성된다 → 라벨 전체가 주변 문장보다 위/아래로 뜬다.
+    //  inline-block은 baseline이 자기 마지막 줄상자의 baseline이라 문장에 그대로 얹힌다.
+    display: 'inline-block',
     color: TONE_COLOR[tone],
     // 크기를 스스로 정하지 않는다 — 놓인 자리의 글자 크기를 따른다(문장 속에선 본문, 행 우측에선 caption).
     //  이게 "타이포처럼 다룬다"의 실제 구현이고, 자리마다 size prop을 받는 것보다 축이 하나 적다.
@@ -48,9 +51,10 @@ export function StatusLabel({ tone = 'neutral', icon, children }: StatusLabelPro
     whiteSpace: 'nowrap',   // 상태어는 짧다 — 줄바꿈되면 값이 아니라 문장으로 읽힌다
   };
   // Icon에 color를 안 준다 → currentColor를 따라 글자와 한 색으로 묶인다(SF Symbols의 hierarchical과 같은 수법).
+  //  간격은 flex gap이 아니라 em 여백 — 글자 크기를 따라 늘고 줄어야 심볼이 단어에 붙어 보인다.
   return (
     <span style={style}>
-      {icon && <Icon name={icon} size="sm" />}
+      {icon && <span style={{ marginInlineEnd: '0.25em' }}><Icon name={icon} size="sm" /></span>}
       {children}
     </span>
   );

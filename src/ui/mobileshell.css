@@ -226,9 +226,13 @@ html.erp-mobile-lock body {
   border-radius: var(--mantine-radius-full);
   background: var(--mantine-color-primary-light);
 }
+/* 카운트 배지 — 아이콘(16px) 우상단. 두 값은 세로 예산에서 도출한다:
+   밴드 56 − (아이콘 16 + gap 8 + 라벨 15) = 17 → 위 여유 8.5px. 활성 캡슐 상단은 inset 4px.
+   배지가 15px일 때 top:-5면 밴드에서 3.5px 남아 **캡슐 안**에 들어간다(전엔 18px·top:-7이라
+   1.5px만 남고 캡슐 위로 2.5px 삐져나왔다 — 화면에서 어긋나 보이던 것이 이것이다). */
 .ms-tab-badge {
   position: absolute;
-  top: -7px;
+  top: -5px;
   left: 100%;
-  margin-left: -8px;
+  margin-left: -7px;
 }

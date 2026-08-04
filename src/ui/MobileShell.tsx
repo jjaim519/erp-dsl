@@ -108,8 +108,10 @@ export function MobileShell({
               <Stack gap="xs" align="center">
                 <span className="ms-tab-ico">
                   <Icon name={t.icon} size="sm" color={active ? 'primary' : 'secondary'} />
+                  {/* size="sm" — 탭 아이콘이 16px이라 기본 md(18px)를 쓰면 배지가 아이콘보다 커진다(112%).
+                      sm(15px)이면 94%로 내려가 아이콘이 다시 주인공이 된다. CountBadge 주석 참조. */}
                   {t.count != null && t.count > 0 && (
-                    <span className="ms-tab-badge"><CountBadge count={t.count} /></span>
+                    <span className="ms-tab-badge"><CountBadge count={t.count} size="sm" /></span>
                   )}
                 </span>
                 <Text variant="caption" color={active ? 'primary' : 'secondary'}>{t.label}</Text>

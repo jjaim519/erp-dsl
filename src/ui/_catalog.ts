@@ -85,6 +85,7 @@ export const CATALOG: CatalogEntry[] = [
     props: [
       { name: 'count', kind: '값', values: 'number (0 이하면 안 보임)' },
       { name: 'tone', kind: '스타일', values: "'danger'(기본=행동요구) | 'neutral'(정보 카운트)" },
+      { name: 'size', kind: '스타일', values: "'md'(기본 18px — 아이콘 20px 옆: 데스크탑 넷바·TabBar) | 'sm'(15px — 아이콘 16px 옆: MobileShell 하단 탭). **배지는 자기가 붙는 아이콘보다 작아야 한다** — 안 그러면 배지가 주인공이 된다. 자리마다 아이콘 크기가 달라 축을 열었다(v0.72.0: 모바일 탭에서 18:16=112%였다)" },
       { name: 'max', kind: '값', values: 'number (초과시 "N+", 기본 99)' },
       { name: 'dot', kind: '스타일', values: 'boolean (숫자 없이 점만)' },
     ] },
