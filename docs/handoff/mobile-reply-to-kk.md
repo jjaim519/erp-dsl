@@ -1,15 +1,18 @@
-# DSL 회신 — 모바일 계열 재정립 (R1~R4 완료)
+# DSL 회신 — 모바일 계열 재정립 (R1~R6 완료)
 
 수신: kk 레포 세션
-작성: 2026-08-04 (erp-dsl, v0.61.0 → **v0.65.0** 발행 예정)
+작성: 2026-08-04 (erp-dsl, v0.61.0 → **v0.67.0**)
 
 ## §0 요약
 
 모바일 16부품의 규율을 **선언 후 도출** 순서로 뒤집었다. 근거 문서 「06. 모바일 계열 규율」을 신설하고
-R1~R4로 이행했다. **소비처 코드 수정이 필요한 것은 단 1건**(`MobileShell.actions`)이다.
+R1~R6로 이행했다. **소비처 코드 수정이 필요한 것은 단 1건**(`MobileShell.actions`)이다.
 
 나머지는 전부 시각 변경이거나 additive라 컴파일·동작이 그대로 유지된다. 다만 **입력칸 생김새가 크게 바뀌므로**
 스크린샷 기반 문서·QA 시나리오가 있으면 갱신이 필요하다.
+
+새 부품 4종(`MobileSegment` · `MobileDecisionBar` · `AttachmentViewer` · `MobileAttachmentViewer`)이 늘었고,
+그중 뷰어는 **선택 의존성**(`pdfjs-dist`)을 쓴다 — 안 깔면 PDF가 폴백 카드로 뜬다(터지지 않는다).
 
 ---
 
@@ -76,6 +79,78 @@ actions?: readonly [Action] | readonly [Action, Action]
 | `MobileFileRow` | `onOpen?` | 첨부 **뷰어 진입점**(R6 선반영). 있으면 행 본체=열기, 내려받기는 우측 버튼으로 갈라진다 |
 | `MobileSection` | `headingLevel?: 2 \| 3` | 제목이 `<span>`에서 heading으로. 기본 3이라 안 줘도 된다 |
 
+### 3-1. 새 부품 4종 (R5·R6)
+
+**`MobileSegment`** — 화면 *안*의 뷰 전환. 결재함 5탭(대기/예정/처리/완료/전체), 읽음/안읽음 명단, 예약 2탭 자리다.
+칩 줄(`MobileChoice`)과 형태가 비슷하지만 다른 말을 한다 — 칩 줄은 **값 선택**(고르면 걸러진다),
+세그먼트는 **뷰 전환**(항상 하나가 켜져 있고, 고르면 목록이 다른 것으로 바뀐다).
+
+```tsx
+<MobileSegment ariaLabel="결재함" value={tab} onChange={setTab}
+  items={[{ value: 'wait', label: '대기', count: 3 }, …]} />
+```
+**균등/스크롤은 prop이 아니다** — 항목 수가 정한다(M3: 2~3 고정 / 4+ 가로 스크롤).
+5탭에 카운트까지 붙으면 375px에 균등으로 안 들어가 라벨이 뭉개진다.
+
+**`MobileDecisionBar`** — 결재·승인 화면의 하단 결정 바. `MobileShell.bottom`에 꽂는다.
+
+```tsx
+<MobileShell … bottom={
+  <MobileDecisionBar
+    primary={{ label: '승인', onClick: approve }}
+    secondary={{ label: '반려', onClick: reject }}
+    more={[{ label: '보류', onClick: hold }, { label: '전결 위임', onClick: delegate }]} />
+} />
+```
+`primary`가 하나뿐인 건 의도다 — **강조 버튼 페이지당 1개**(SAP)를 타입에 박았다. 인라인은 최대 둘,
+나머지는 `⋯` 메뉴로 간다(폰 하단 한 줄에 셋이면 각 표적이 44pt 밑으로 내려간다).
+Workday 모바일이 Approve만 하단에 두고 Deny·Send Back을 More로 내린 형태와 같다.
+
+**`AttachmentViewer` / `MobileAttachmentViewer`** — §4-1 참조.
+
+---
+
+## §4-1 첨부 뷰어 — 쓰려면 알아야 할 것
+
+```tsx
+const [open, setOpen] = useState(false);
+const [idx, setIdx] = useState(0);
+
+<MobileFileRow name={f.name} size={f.size}
+  onOpen={() => { setIdx(i); setOpen(true); }} onDownload={() => download(f)} />
+
+<MobileAttachmentViewer
+  opened={open} onClose={() => setOpen(false)}
+  items={items} index={idx} onIndexChange={setIdx}
+  onDownload={download} onShare={share}
+  pdfAssetBase="/pdfjs"           // ← PDF를 열려면 필수. 아래 참조
+/>
+```
+
+**이미지는 기본 지원. PDF는 선택 의존성이다.**
+
+1. `npm i pdfjs-dist` (optional peer — 안 깔면 PDF가 폴백 카드로 뜬다)
+2. `node_modules/pdfjs-dist`에서 **넷**을 `public/` 아래로 복사하고 그 경로를 `pdfAssetBase`로 넘긴다:
+   `build/pdf.worker.min.mjs` · `cmaps/` · `standard_fonts/` · `wasm/`
+
+| 빠뜨리면 | 증상 |
+|---|---|
+| `cmaps/` | **한글 PDF가 깨진다**(CJK 인코딩) |
+| `wasm/` | 스캔 PDF·JPEG2000·폼이 **조용히** 깨진다(에러 없이 빈 페이지) |
+
+`pdfAssetBase`를 안 주면 뷰어가 PDF를 **아예 안 연다** — 조용히 깨지느니 폴백 카드가 낫다는 판단이다.
+복사 스크립트 예시는 우리 레포 `scripts/copy-pdfjs-assets.mjs`에 있다. **CDN은 쓰지 않는다**(폐쇄망).
+
+**왜 pdf.js인가**: Android Chrome에는 PDF 렌더 플러그인이 **빌드조차 되지 않는다**
+(`chromium/pdf/features.gni`: `enable_pdf = !is_android && …`). `<iframe>`·`<embed>`·`<object>` 전부 불가라,
+브라우저 네이티브는 "덜 좋은 선택"이 아니라 **동작하지 않는 선택**이다.
+
+**폴백 카드는 사유별 문구를 쓴다** — `Attachment.unviewable`에 `'unsupported' | 'too-large' | 'protected' | 'failed'`를
+넣으면 그에 맞는 안내가 뜬다. 단일 "미리보기 불가"를 쓰지 않는 이유: 사용자가 다음에 뭘 할지가 사유마다 다르다
+(형식→내려받기 / 용량→데스크탑 / 보호→권한 요청). **서버가 판단한 사유를 그대로 넘겨달라.**
+
+오피스·HWP는 인라인 렌더를 하지 않는다(폴백 + 내려받기). 네이버웍스도 모바일에선 기기 기본 뷰어에 위임한다.
+
 ---
 
 ## §4 접근성 — 고쳐진 것 3건
@@ -92,7 +167,15 @@ KRDS가 "테두리 **또는 채움**이 3:1"을 *권장*하고, 3:1 단은 시�
 
 ---
 
-## §5 회신 필요 1건 — 게시판 '글쓰기' 위치
+## §5 회신 필요 2건
+
+### 5-1. 한글 PDF 실물 확인 (뷰어를 쓸 거라면)
+
+`cmaps` 배선이 맞았는지의 **유일한 증거는 한글 PDF가 안 깨지는 것**이다. 우리 dev 환경에는 실물 한글 PDF가
+없어 확인하지 못했다. 그쪽에서 실제 결재 첨부(HWPX→PDF 변환본 등)로 한 번 열어보고 알려달라.
+글자가 깨지면 `cMapUrl`/`cMapPacked` 문제이고 `_pdfEngine.ts` 한 곳에서 고친다.
+
+### 5-2. 게시판 '글쓰기' 위치
 
 `MobileTop.action`(제목 줄 우측 텍스트 버튼)에 그대로 뒀다. 하단 FAB으로 내리는 안은 기각했다:
 인용 근거(Google·Trello·Monday·ClickUp·Asana)가 전부 **생성이 주 루프인 앱**이라 사내 게시판에
@@ -126,5 +209,8 @@ KRDS가 "테두리 **또는 채움**이 3:1"을 *권장*하고, 3:1 단은 시�
 | `v0.63.1` | 본문 캔버스 포커스 상자 제거 |
 | `v0.64.0` | 모션 토큰 3단 + 중복 `prefers-reduced-motion` 7곳 제거 |
 | `v0.65.0` | **`actions` 상한 2**(유일한 breaking) · `Chip` radio · `FileRow.onOpen` |
+| `v0.66.0` | `MobileSegment` · `MobileDecisionBar` |
+| `v0.67.0` | 첨부 뷰어 2종 + `_attachment` 계약 + `pdfjs-dist` optional peer |
 
-`@jjaim519/erp-dsl@0.65.0`으로 올리면 §1 한 건만 확인하면 된다.
+`@jjaim519/erp-dsl@0.67.0`으로 올리면 **§1 한 건만** 확인하면 된다.
+PDF 미리보기를 쓸 계획이면 §4-1의 자산 복사까지.
