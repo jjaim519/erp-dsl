@@ -36,6 +36,12 @@ import { MobileBoardView } from './MobileBoardView';
 import { MobileBoardWrite } from './MobileBoardWrite';
 import { MobileSegment } from './MobileSegment';
 import { MobileDecisionBar } from './MobileDecisionBar';
+import { MobileBottomSheet } from './MobileBottomSheet';
+import { MobileConfirm } from './MobileConfirm';
+import { MobileFilterBar, type FilterAxis } from './MobileFilterBar';
+import { MobileRecordList } from './MobileRecordList';
+import { MobilePullToRefresh } from './MobilePullToRefresh';
+import type { DataTableColumn, DataTableRow } from './DataTable';
 import { MobileAttachmentViewer } from './MobileAttachmentViewer';
 import { MobileStepTrail, type TrailStep } from './MobileStepTrail';
 import { MobileList } from './MobileList';
@@ -322,6 +328,145 @@ function FileRowDemo() {
         <MobileFileRow name="내려받기 없는 첨부(정적 행).png" size="1.2 MB" />
       </MobileSection>
     </>
+  );
+}
+
+function BottomSheetDemo() {
+  const [a, setA] = useState(false);
+  const [b, setB] = useState(false);
+  const [v, setV] = useState('');
+  return (
+    <>
+      <MobileSection title="시트 2종" flush>
+        <MobileListRow title="필드 시트 — 제목 + 커밋 2" meta="키보드가 뜨면 시트가 그만큼 올라간다" onClick={() => setA(true)} />
+        <MobileListRow title="피커 시트 — 제목 없음" meta="제목이 군더더기인 경우" onClick={() => setB(true)} />
+      </MobileSection>
+      <MobileBottomSheet
+        opened={a} onClose={() => setA(false)} title="지출 등록"
+        actions={[{ label: '취소', variant: 'secondary', onClick: () => setA(false) },
+                  { label: '등록', variant: 'primary', onClick: () => setA(false) }]}
+      >
+        <MobileField label="항목" required><TextInput value={v} onChange={setV} placeholder="예: 자재비" /></MobileField>
+        <MobileField label="금액"><TextInput value="" onChange={() => {}} placeholder="0" /></MobileField>
+      </MobileBottomSheet>
+      <MobileBottomSheet opened={b} onClose={() => setB(false)}>
+        <MobileListRow title="현장 실측" onClick={() => setB(false)} />
+        <MobileListRow title="시공" onClick={() => setB(false)} />
+        <MobileListRow title="검수" onClick={() => setB(false)} />
+      </MobileBottomSheet>
+    </>
+  );
+}
+
+function ConfirmDemo() {
+  const [d, setD] = useState(false);
+  const [s, setS] = useState(false);
+  return (
+    <>
+      <MobileSection title="되돌림 가능성이 톤을 정한다" flush>
+        <MobileListRow title="삭제 — danger" meta="되돌릴 수 없다" onClick={() => setD(true)} />
+        <MobileListRow title="상신 — default" meta="회수할 수 있다" onClick={() => setS(true)} />
+      </MobileSection>
+      <MobileConfirm
+        opened={d} tone="danger" title="이 발주를 삭제할까요?"
+        message="삭제하면 되돌릴 수 없습니다."
+        confirmLabel="삭제" onConfirm={() => setD(false)} onCancel={() => setD(false)}
+      />
+      <MobileConfirm
+        opened={s} title="결재를 상신할까요?"
+        confirmLabel="상신" onConfirm={() => setS(false)} onCancel={() => setS(false)}
+      />
+    </>
+  );
+}
+
+const FB_AXES: FilterAxis[] = [
+  { id: 'stage', label: '공정', rows: [
+    { key: 'st:meas', label: '실측', count: 4, marker: { kind: 'swatch', color: 'info' } },
+    { key: 'st:make', label: '제작', count: 7, marker: { kind: 'swatch', color: 'warning' } },
+    { key: 'st:inst', label: '시공', count: 3, marker: { kind: 'swatch', color: 'success' } },
+    { key: 'st:done', label: '완료', count: 12, marker: { kind: 'swatch', color: 'neutral' } },
+  ] },
+  { id: 'owner', label: '담당', rows: [
+    { key: 'ow:ok', label: '옥성훈', count: 9, marker: { kind: 'initial', text: '옥' } },
+    { key: 'ow:km', label: '김민지', count: 6, marker: { kind: 'initial', text: '김' } },
+    { key: 'ow:lj', label: '이재현', count: 2, marker: { kind: 'initial', text: '이' } },
+  ], action: { label: '담당 관리', icon: 'settings', onClick: () => {} } },
+  { id: 'firm', label: '확정 여부', rows: [
+    { key: 'fm:y', label: '확정', count: 11, marker: { kind: 'emphasis', value: 'solid' } },
+    { key: 'fm:n', label: '가예약', count: 5, marker: { kind: 'emphasis', value: 'dashed' } },
+  ] },
+];
+
+function FilterBarDemo() {
+  const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set(['st:done']));
+  const toggle = (k: string) => setHidden((prev) => {
+    const next = new Set(prev);
+    if (next.has(k)) next.delete(k); else next.add(k);
+    return next;
+  });
+  return (
+    <>
+      <MobileFilterBar axes={FB_AXES} hiddenKeys={hidden} onToggle={toggle} onReset={() => setHidden(new Set())} />
+      <MobileSection flush separator="line">
+        <MobileListRow title="대명물산 주방 시공" meta="옥성훈 · 07.06" onClick={() => {}} />
+        <MobileListRow title="한빛산업 실측" meta="김민지 · 07.13" onClick={() => {}} />
+      </MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          축 버튼을 누르면 <b>시트</b>가 열린다(06 §2-2 — 값 고르기는 피커다). 걸린 축만 톤이 켜지고,
+          바 높이는 값 개수와 무관하다.
+        </Text>
+      </MobileSection>
+    </>
+  );
+}
+
+const REC_COLS: DataTableColumn[] = [
+  { key: 'name', label: '거래처', type: 'text', listSlot: 'primary' },
+  { key: 'owner', label: '담당', type: 'text', listSlot: 'secondary' },
+  { key: 'date', label: '납기', type: 'date', listSlot: 'inline' },
+  { key: 'stage', label: '공정', type: 'badge', listSlot: 'kicker',
+    badgeColors: { 실측: 'info', 제작: 'warning', 완료: 'success' } },
+  { key: 'amount', label: '금액', type: 'currency', listSlot: 'trailing' },
+  { key: 'memo', label: '비고', type: 'text' },   // listSlot 없음 → 좁은 화면에서 안 보인다
+];
+const REC_ROWS: DataTableRow[] = [
+  { id: 'r1', name: '대명물산', owner: '옥성훈', date: '2026-07-06', stage: '시공', amount: 3400000, memo: '표에만 보이는 열' },
+  { id: 'r2', name: '한빛산업', owner: '김민지', date: '2026-07-13', stage: '실측', amount: 1280000, memo: '—' },
+  { id: 'r3', name: '세종테크', owner: '이재현', date: '2026-07-22', stage: '완료', amount: 8750000, memo: '—' },
+];
+
+function RecordListDemo() {
+  return (
+    <>
+      <MobileSection flush><MobileRecordList columns={REC_COLS} rows={REC_ROWS} idKey="id" onRowClick={() => {}} /></MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          컬럼을 <b>한 번</b> 선언하고 <b>listSlot</b>만 붙였다. 표와 이 목록이 같은 배열을 본다 —
+          <b>비고</b> 열은 slot이 없어 여기선 안 보인다.
+        </Text>
+      </MobileSection>
+    </>
+  );
+}
+
+function PullToRefreshDemo() {
+  const [n, setN] = useState(0);
+  return (
+    <MobilePullToRefresh onRefresh={() => new Promise((r) => setTimeout(() => { setN((v) => v + 1); r(); }, 900))}>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          <b>폰 프레임 안에서 터치로</b> 목록 맨 위를 아래로 당겨보세요(마우스로는 안 됩니다 — 터치 이벤트입니다).
+          새로고침 {n}회.
+        </Text>
+      </MobileSection>
+      <MobileSection title="목록" flush>
+        {Array.from({ length: 12 }, (_, i) => (
+          <MobileListRow key={i} title={`항목 ${i + 1}`} meta="당김 새로고침 대상" onClick={() => {}} />
+        ))}
+      </MobileSection>
+    </MobilePullToRefresh>
   );
 }
 
@@ -800,6 +945,11 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileAttachmentViewer: { render: () => <AttachmentViewerDemo />, bare: true, note: '이미지 2 · PDF 1 · 폴백 사유 4종. 행을 눌러 연다' },
   MobileStepTrail:   { render: () => <StepTrailDemo />, note: '접힘(기본)·펼침·반려·summary 없음' },
   MobileList:        { render: () => <ListDemo />, note: '평면·섹션·섹션+그룹·로딩·빈 상태 5모드 전환' },
+  MobileBottomSheet: { render: () => <BottomSheetDemo />, note: '필드 시트(제목+커밋 2) · 피커 시트(제목 없음). 입력칸을 누르면 키보드만큼 올라간다' },
+  MobileConfirm:     { render: () => <ConfirmDemo />, note: 'danger(삭제) · default(상신) — 되돌림 가능성이 톤을 정한다' },
+  MobileFilterBar:   { render: () => <FilterBarDemo />, bare: true, note: '축 3(색·글자·실선/파선 표식) · 걸린 축 톤 · 값 고르기는 시트' },
+  MobileRecordList:  { render: () => <RecordListDemo />, note: 'listSlot 5종에서 파생 — 비고 열은 slot이 없어 안 보인다' },
+  MobilePullToRefresh: { render: () => <PullToRefreshDemo />, bare: true, note: '**터치로** 맨 위에서 아래로 당긴다(마우스 불가). 임계 72px에서 화살표가 뒤집힌다' },
 
   // 화면 — 4탭 데모를 안 거치고 직접 진입하는 자리.
   ScreenBulkApprove: { render: () => <BulkSelectDemo />, bare: true, screen: true, label: '결재함 — 일괄 승인', note: '상단 선택 → 체크 → 하단 결정 바. chevron이 사라지는지 확인' },

@@ -22,6 +22,15 @@ export type DataTableColumn = {
   maxWidth?: number | string; // 이 열의 최대 폭(px/%/CSS) 상한. 넘으면 … 말줄임. 내용이 짧으면 그만큼만 차지(상한일 뿐 고정 아님).
   sortable?: boolean;
   badgeColors?: Record<string, BadgeColor>;
+  // 이 열이 **좁은 화면의 행 기하에서 갖는 역할**. 표에는 영향이 없다(DataTable은 이 값을 안 읽는다).
+  //  왜 여기 사는가: 표용 컬럼과 카드용 매핑을 따로 받으면 소비처가 매핑을 두 번 쓰고,
+  //  둘이 어긋나는 사고(강조가 카드에만 걸리는 류)가 계약 차원에서 반복된다.
+  //  컬럼을 **한 번** 선언하고 역할을 닫힌 enum으로 붙이면 두 표현이 한 벌에서 파생돼 어긋날 수 없다
+  //  (06 §3-4 · Polaris `s-table`의 그 방식).
+  //   · primary   제목 줄(행마다 하나)      · secondary 제목 아래 보조 줄
+  //   · kicker    제목 위 배지 줄            · trailing  우측 값(금액·상태)
+  //   · inline    보조 줄에 이어 붙는 값     · none      좁은 화면에서 안 보임(기본)
+  listSlot?: 'primary' | 'secondary' | 'kicker' | 'inline' | 'trailing' | 'none';
 };
 export type DataTableRow = Record<string, unknown>;
 export type DataTableSort = { key: string; direction: 'asc' | 'desc' } | null;

@@ -161,6 +161,28 @@ button.mlr:active { background: var(--bg-secondary); }   /* 폰은 hover가 없�
 .mlr-trail { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 .mlr-chev { flex: none; display: inline-flex; }
 
+/* 그 자리 액션 — 행이 컨테이너가 되고 [본체 | 액션]이 형제로 선다(버튼 안에 버튼 금지).
+   MobileFileRow의 .mfr[data-split]과 같은 기제다: 패딩 주인이 행에서 각 표적으로 옮겨간다. */
+.mlr[data-split] { padding: 0; gap: 0; }
+.mlr-main {
+  flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  min-height: var(--erp-touch-target); box-sizing: border-box;
+  padding: var(--row-pad-y, var(--mantine-spacing-sm)) var(--mantine-spacing-md);
+  border: none; background: none; text-align: left;
+  font-family: inherit; color: inherit;
+}
+button.mlr-main { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+button.mlr-main:active { background: var(--bg-secondary); }
+/* 액션 묶음 — 세로로 행 높이를 다 쓴다(표적이 44px 아래로 안 내려간다).
+   우측 인셋은 md: 액션이 없을 때의 chevron과 같은 자리에서 끝나야 목록 우변이 안 흔들린다. */
+.mlr-acts {
+  flex: none; display: inline-flex; align-items: stretch;
+  padding-right: var(--mantine-spacing-md);
+  gap: var(--mantine-spacing-xxs);
+}
+.mlr-acts > button { align-self: center; }
+
 /* ── MobileStatRow ── */
 /* KPI 행 — 균등 분할 + 항목 사이 *세로* 헤어라인. 카드 면을 쓰지 않으므로 묶음은 선이 만든다. */
 .mst { display: flex; align-items: stretch; }

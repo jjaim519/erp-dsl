@@ -205,7 +205,11 @@ export function MobileCalendar({
               </div>
             )}
 
-            {/* 이벤트 스팬 바 — 라벨은 *시작 칸*에만. 주 경계에서 잘리면 그쪽 끝을 삼각형으로 깎아 "계속됨"을 표시(데스크탑 cont-l/cont-r과 같은 신호·같은 클래스명). */}
+            {/* 이벤트 스팬 바 — 주 경계에서 잘리면 그쪽 끝을 삼각형으로 깎아 "계속됨"을 표시(데스크탑 cont-l/cont-r과 같은 신호·같은 클래스명).
+                라벨은 **조각마다 반복한다.** 전에는 `isStart`인 조각에만 그려서, 3주에 걸친 일정이
+                둘째·셋째 주에서는 이름 없는 색 막대가 됐다 — 데스크탑은 반복하는데 여기만 안 해서
+                **같은 데이터가 두 표현에서 다르게 읽혔다**(v0.73.0 수정). prop으로 열지 않는다:
+                안 반복하는 게 맞는 사례가 나오면 그때 축을 연다(06 §3-1). */}
             <div className="mcal-bars" style={{ top: NUM_ROW + banners.length * 26 }}>
               {shown.map((it) => (
                 <button
@@ -220,10 +224,10 @@ export function MobileCalendar({
                   }}
                   onClick={() => onSelectEvent?.(it.e)}
                 >
-                  {it.isStart && <span className="mcal-bartxt">{it.e.label}</span>}
+                  <span className="mcal-bartxt">{it.e.label}</span>
                   {/* 표식 = 남은 유일한 채널(색=분류, 윤곽=상태, 길이=기간, 텍스트=라벨은 이미 점유).
                       라벨이 먼저 줄고 표식은 남는다 — 좁은 칸에서도 두 번째 축은 읽혀야 한다. */}
-                  {it.isStart && markOf(it.e) && (
+                  {markOf(it.e) && (
                     <span className="mcal-mark"
                       style={markOf(it.e)!.color ? { background: cvar(markOf(it.e)!.color!, 6) } : undefined}>
                       {markOf(it.e)!.glyph}

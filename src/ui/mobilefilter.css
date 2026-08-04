@@ -1,0 +1,95 @@
+/* MobileFilterBar — 축 버튼 줄. 격리 구역 내 raw CSS. 값은 전부 토큰. */
+
+/* 가로 스크롤. **줄바꿈하지 않는다** — 바 높이가 축 개수에 따라 변하면 아래 본문이 밀려
+   "필터를 건드렸더니 목록이 움직였다"가 된다(kk 계약: 높이는 값 개수와 무관해야 한다).
+   좌우 md는 목록 행의 인셋과 같은 값 — 바와 행이 같은 세로선에서 시작한다. */
+.mfb {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.mfb::-webkit-scrollbar { display: none; }
+
+/* 축 버튼 — 알약. 배지가 아니라 컨트롤이라 채움이 아니라 윤곽으로 선다.
+   flex:none — 축 이름이 길어도 안 줄어든다. 줄면 라벨이 잘려 어느 축인지 모르게 된다. */
+.mfb-ax {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xxs);
+  min-height: var(--erp-touch-target);
+  padding: 0 var(--mantine-spacing-sm);
+  border: var(--border-width) solid var(--border-default);
+  border-radius: var(--mantine-radius-full);
+  background: none;
+  font-family: inherit;
+  font-size: var(--typo-caption-size);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+/* 걸린 축 — 톤으로 말한다. 배지를 얹지 않는 이유: 배지는 사다리 3단(드물게 나타나는 것)인데
+   축 요약은 늘 떠 있다(06 §3-6). 늘 있는 것에 3단을 쓰면 3단이 신호이길 그만둔다. */
+.mfb-ax[data-active] {
+  border-color: var(--mantine-color-primary-6);
+  background: var(--mantine-color-primary-light);
+  color: var(--mantine-color-primary-6);
+  font-weight: var(--typo-body-strong-weight);
+}
+.mfb-ax:active { background: var(--bg-secondary); }
+.mfb-ax[data-active]:active { background: var(--mantine-color-primary-light); }
+.mfb-ax-t { min-width: 0; }
+
+/* 초기화 — 버튼이 아니라 글자다. 축 버튼과 같은 무게로 두면 "축이 하나 더 있다"로 읽힌다. */
+.mfb-reset {
+  flex: none;
+  min-height: var(--erp-touch-target);
+  padding: 0 var(--mantine-spacing-xs);
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--typo-caption-size);
+  color: var(--mantine-color-primary-6);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 값 표식 — 행 좌측. 셋 다 같은 상자에 들어가야 목록의 좌변이 안 흔들린다. */
+.mfb-mk {
+  display: inline-grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  border-radius: var(--mantine-radius-full);
+  font-size: 0.625rem;
+  font-weight: 700;
+}
+.mfb-mk[data-swatch='primary'] { background: var(--mantine-color-primary-6); }
+.mfb-mk[data-swatch='neutral'] { background: var(--mantine-color-neutral-6); }
+.mfb-mk[data-swatch='success'] { background: var(--mantine-color-success-6); }
+.mfb-mk[data-swatch='warning'] { background: var(--mantine-color-warning-6); }
+.mfb-mk[data-swatch='danger']  { background: var(--mantine-color-danger-6); }
+.mfb-mk[data-swatch='info']    { background: var(--mantine-color-info-6); }
+/* 글자 표식 — 색으로 못 가르는 값(사람·거래처). 면이 아니라 윤곽이라 색 표식과 안 섞인다. */
+.mfb-mk[data-initial] {
+  border: var(--border-width) solid var(--border-strong);
+  color: var(--text-secondary);
+}
+/* 강조 표식 — 달력 바의 실선/파선을 그대로 미리보기. 색이 아니라 선의 성질이 정보다. */
+.mfb-mk[data-emphasis] { border-radius: var(--mantine-radius-xs); height: 0; width: 1.25rem; }
+.mfb-mk[data-emphasis='solid']  { border-top: 2px solid var(--text-primary); }
+.mfb-mk[data-emphasis='dashed'] { border-top: 2px dashed var(--text-primary); }
+
+/* 축 동작 — 값 목록 끝. 경계선으로 "여기부터는 값이 아니다"를 말한다. */
+.mfb-act {
+  margin-top: var(--mantine-spacing-xs);
+  padding-top: var(--mantine-spacing-xs);
+  border-top: var(--border-width) solid var(--border-default);
+}

@@ -9,6 +9,7 @@
 //  · 펼침형(그 자리에서 열림)은 이 부품이 아니다 — 행동이 다르므로 별도 named 부품으로 간다.
 import type { ReactNode } from 'react';
 import { Icon } from './Icon';
+import { renderAction, type Action } from './_cells';
 import './mobilelist.css';
 
 type Props = {
@@ -36,6 +37,16 @@ type Props = {
   selectable?: boolean;
   selected?: boolean;
   onSelectedChange?: (next: boolean) => void;
+  // ── 그 자리 액션 ──
+  //  selectable(일괄, 나중에 한꺼번에)과 다르다 — 이건 *이 행 하나*를 지금 처리한다.
+  //  **상한 2를 타입에 못박는다**(MobileShell.actions와 같은 판단): 제목·메타가 이미 폭을 쓰므로
+  //  행 안에서는 2가 실질 상한이고, 주석으로 적은 상한은 지켜지지 않는다.
+  //  기제는 MobileFileRow.onOpen이 v0.67.0에서 쓴 것과 같다 — 버튼 안에 버튼을 못 넣으므로
+  //  행이 컨테이너가 되고 [본체 | 액션]이 형제로 선다(data-split). 두 행 부품이 같은 CSS를 쓴다.
+  //  · selectable이 켜지면 액션은 사라진다. 그 순간 행의 일은 "지금 처리"가 아니라 "고르기"다.
+  //  · **chevron도 사라진다.** 진입 표적이 본체로 좁아졌는데 꺽쇠를 오른쪽 끝에 두면
+  //    액션 버튼 너머를 가리켜 아무 데도 안 데려간다(거짓 어포던스 금지 — 이 부품 머리말).
+  actions?: readonly [Action] | readonly [Action, Action];
 };
 
 // emphasis: 목록에서 *아직 처리·확인하지 않은 행*을 굵기로 들어올린다(메일·게시판의 안 읽음 관습).
@@ -43,8 +54,10 @@ type Props = {
 //  기본 false — 안 주면 모든 행이 같은 무게다(강조가 기본이면 강조가 아니게 된다).
 export function MobileListRow({
   title, meta, leading, badges, trailing, onClick, emphasis = false, unread = false,
-  selectable = false, selected = false, onSelectedChange,
+  selectable = false, selected = false, onSelectedChange, actions,
 }: Props) {
+  // 액션은 선택 모드에 자리를 내준다 — 고르는 중에 개별 처리를 열어두면 두 흐름이 겹친다.
+  const acts = !selectable && actions && actions.length > 0 ? actions : null;
   // 점은 자리가 둘이다: leading이 있으면 그 모서리, 없으면 제목 앞. 선택 모드에선 안 찍는다
   //  — 그 순간 행의 일은 "읽기"가 아니라 "고르기"고, 체크 옆의 점은 선택 상태로 오독된다.
   const showDot = unread && !selectable;
@@ -73,8 +86,9 @@ export function MobileListRow({
         {meta && <span className="mlr-meta">{meta}</span>}
       </span>
       {trailing && <span className="mlr-trail">{trailing}</span>}
-      {/* chevron은 *진입*의 신호다. 선택 모드에선 행이 진입을 안 하므로 지운다. */}
-      {onClick && !selectable && <span className="mlr-chev"><Icon name="chevron-right" size="sm" color="secondary" /></span>}
+      {/* chevron은 *진입*의 신호다. 선택 모드에선 행이 진입을 안 하므로 지우고,
+          액션이 있으면 진입 표적이 본체로 좁아져 오른쪽 끝의 꺽쇠가 아무 데도 안 데려간다. */}
+      {onClick && !selectable && !acts && <span className="mlr-chev"><Icon name="chevron-right" size="sm" color="secondary" /></span>}
     </>
   );
 
@@ -90,6 +104,19 @@ export function MobileListRow({
       >
         {inner}
       </button>
+    );
+  }
+
+  // 액션이 있으면 행이 *컨테이너*가 된다 — 버튼 안에 버튼을 넣을 수 없기 때문.
+  //  [본체(진입) | 액션]이 형제로 서고 패딩은 각자가 갖는다. MobileFileRow.onOpen과 같은 기제·같은 CSS.
+  if (acts) {
+    return (
+      <div className="mlr" data-split>
+        {onClick
+          ? <button type="button" className="mlr-main" onClick={onClick}>{inner}</button>
+          : <span className="mlr-main">{inner}</span>}
+        <span className="mlr-acts">{acts.map((a, i) => renderAction(a, i, 'sm'))}</span>
+      </div>
     );
   }
 

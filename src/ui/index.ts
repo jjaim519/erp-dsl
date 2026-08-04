@@ -128,6 +128,11 @@ export { MobileSegment, type MobileSegmentItem } from './MobileSegment';
 export { MobileDecisionBar } from './MobileDecisionBar';
 export { MobileStepTrail, type TrailStep, type StepState } from './MobileStepTrail';
 export { MobileList, type MobileListSection } from './MobileList';
+export { MobileBottomSheet } from './MobileBottomSheet';                       // 생성·편집·피커 전용 표면(06 §2-2)
+export { MobileConfirm } from './MobileConfirm';                   // window.confirm 대체 — 가운데 경고
+export { MobileFilterBar, type FilterAxis, type FilterRow, type FilterMarker } from './MobileFilterBar';
+export { MobileRecordList } from './MobileRecordList';             // DataTableColumn.listSlot에서 파생
+export { MobilePullToRefresh } from './MobilePullToRefresh';
 // 첨부 뷰어 — 데스크탑·모바일 두 부품이 _attachment 계약 한 벌을 공유한다.
 export { AttachmentViewer } from './AttachmentViewer';
 export { MobileAttachmentViewer } from './MobileAttachmentViewer';

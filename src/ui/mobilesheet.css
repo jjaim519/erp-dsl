@@ -1,0 +1,135 @@
+/* BottomSheet — 폰 하단에서 올라오는 면. 격리 구역 내 raw CSS(헌법 7 명시 예외 — 오버레이 기하).
+   모바일 계열은 면·그림자를 안 쓰지만 **시트는 예외다**: 시트의 존재 이유가 "본문 위에 얹혔다"는 것이고,
+   그건 위계가 아니라 *층*이라 면으로만 말할 수 있다(헤어라인으로는 "위에 있다"를 못 말한다).
+   값은 전부 토큰. */
+
+.mbs {
+  /* 내용 높이 + 상한. 여러 단 스냅은 안 만든다(드래그가 유일 경로가 되므로 — 06 §1-4). */
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  /* 위 두 모서리만 둥글다 — 아래는 화면 끝에 붙어 있어 곡률을 볼 자리가 없다. */
+  border-top-left-radius: var(--mantine-radius-md);
+  border-top-right-radius: var(--mantine-radius-md);
+  background: var(--bg-primary);
+  /* 아이폰 홈 인디케이터 — 푸터 버튼이 그 위에 깔리지 않게 시트 바닥을 비운다. */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 손잡이 — 드래그 어포던스가 아니라 "얹힌 면"이라는 표지. 우리 시트는 드래그로 안 닫힌다. */
+.mbs-grip {
+  flex: none;
+  width: 2.25rem;
+  height: 0.25rem;
+  margin: var(--mantine-spacing-xs) auto var(--mantine-spacing-xxs);
+  border-radius: var(--mantine-radius-full);
+  background: var(--border-strong);
+}
+
+/* 제목 줄 — 데스크탑 Drawer가 heading을 쓰는 자리지만 폰에서는 한 단 낮춘다.
+   시트는 화면이 아니라 화면 위의 한 칸이라, 제목이 화면 제목(MobileTop)만큼 커지면 위계가 뒤집힌다. */
+.mbs-hd {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md) var(--mantine-spacing-sm);
+}
+.mbs-hd-t {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--typo-subheading-size);
+  font-weight: var(--typo-heading-weight);
+}
+/* 닫기 — 시각 크기는 아이콘 그대로, 표적만 44px(controls.css의 히트 영역 수법과 같다). */
+.mbs-hd-x {
+  flex: none;
+  width: var(--erp-touch-target);
+  height: var(--erp-touch-target);
+  margin: calc(var(--erp-touch-target) / -4) calc(var(--mantine-spacing-xs) * -1) calc(var(--erp-touch-target) / -4) 0;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 본문 — 유일한 스크롤 영역. 넘쳐도 제목·푸터는 안 밀린다.
+   overscroll-behavior: 시트 안에서 끝까지 스크롤한 뒤 계속 끌 때 뒤 화면이 따라 움직이는 것 차단. */
+.mbs-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md);
+}
+
+/* 푸터 — 커밋 자리. 셸 하단(.ms-bottom)과 같은 어법: 상단 헤어라인, 버튼이 폭을 다 쓴다.
+   1개면 꽉, 2개면 균등. 우측 정렬(데스크탑 Drawer)이 아닌 이유는 엄지가 화면 가운데 아래에 있어서가 아니라,
+   폰에서 버튼이 작아지면 44px 하한과 라벨 말줄임이 동시에 걸리기 때문이다. */
+.mbs-ft {
+  flex: none;
+  display: flex;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  border-top: var(--border-width) solid var(--border-default);
+}
+.mbs-ft-a { flex: 1; min-width: 0; }
+.mbs-ft-a > button { width: 100%; }
+
+
+/* ── MobileConfirm ── */
+/* 가운데 뜨는 경고. 시트와 달리 화면 폭을 다 쓰지 않는다 — 좌우가 남아야 "뒤 화면이 멈췄다"가 보인다.
+   폭 상한은 rem: 폰트 스케일을 키우면 상자도 같이 커져야 글자가 안 갇힌다. */
+.mcf {
+  width: calc(100vw - var(--mantine-spacing-xl) * 2);
+  max-width: 20rem;
+  padding: var(--mantine-spacing-lg) var(--mantine-spacing-md) var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-md);
+  background: var(--bg-primary);
+  text-align: center;
+}
+.mcf-t {
+  font-size: var(--typo-subheading-size);
+  font-weight: var(--typo-heading-weight);
+  line-height: 1.4;
+}
+.mcf-m {
+  margin-top: var(--mantine-spacing-xs);
+  font-size: var(--typo-body-size);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+/* 버튼 두 개 균등. 취소가 좌측 — 되돌릴 수 없는 쪽을 손가락 기본 경로에서 뗀다. */
+.mcf-ft {
+  display: flex;
+  gap: var(--mantine-spacing-xs);
+  margin-top: var(--mantine-spacing-lg);
+}
+.mcf-ft-a { flex: 1; min-width: 0; }
+.mcf-ft-a > button { width: 100%; }
+
+
+/* ── MobilePullToRefresh ── */
+/* 인디케이터가 자리를 *밀어서* 만든다 — 겹치면 첫 행 글자를 가린다.
+   높이는 인라인(당긴 거리라 런타임 값)이고 여기서는 그 안의 정렬만 맡는다. */
+.mptr-ind {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* 화살표 — 임계를 넘기면 뒤집힌다("놓으면 된다"). 회전이 곧 상태라 별도 문구가 필요 없다.
+   기본이 왼쪽 화살표라 90도면 아래, 270도면 위를 가리킨다. */
+.mptr-ar {
+  display: inline-flex;
+  transform: rotate(-90deg);
+  transition: transform var(--motion-base) var(--easing-standard);
+}
+.mptr-ar[data-ready] { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .mptr-ar { transition: none; } }
