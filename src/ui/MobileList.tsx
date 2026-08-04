@@ -18,7 +18,6 @@ import { MobileChoice } from './MobileChoice';
 import { InputGroup } from './InputGroup';
 import { TextInput } from './TextInput';
 import { EmptyState } from './EmptyState';
-import { Button } from './Button';
 import { Spinner } from './Spinner';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
@@ -154,9 +153,14 @@ export function MobileList<T>({
               ))
             : <MobileSection flush>{renderBucket(items)}</MobileSection>}
 
+          {/* 더보기·총계 — 목록의 *연장*이지 커밋 행동이 아니다(커밋은 셸 하단 고정이 받는다).
+              그래서 채운 버튼을 쓰지 않고 TDS ListFooter 어법(파란 텍스트 + 들여쓴 구분선)으로 간다.
+              separator="none": 구분선을 섹션이 아니라 .mlist-more가 그린다(행 구분선과 같은 인셋). */}
           {(hasMore || totalCount != null) && (
-            <MobileSection>
-              {hasMore && <Button variant="secondary" fullWidth onClick={onLoadMore}>{loadMoreLabel}</Button>}
+            <MobileSection separator="none" flush>
+              {hasMore && (
+                <button type="button" className="mlist-more" onClick={onLoadMore}>{loadMoreLabel}</button>
+              )}
               {totalCount != null && (
                 <div className="mlist-total"><Text variant="caption" color="secondary">총 {fmtNumber(totalCount)}건</Text></div>
               )}

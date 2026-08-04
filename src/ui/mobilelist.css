@@ -54,7 +54,9 @@
 
 /* 본문 — 기본은 사방 여백(자유 콘텐츠). 상단도 반드시 준다: 제목 없는 섹션이 기본이라
    상단만 비우면 내용이 위 경계선(또는 내비바)에 그대로 붙는다. */
-.mls-body { padding: var(--mantine-spacing-md) var(--mantine-spacing-md) var(--mantine-spacing-lg); }
+/* 사방 같은 값 — 아래만 lg였는데 근거가 없었다(눈으로 맞춘 값). 섹션 사이 간격은 다음 섹션의
+   위 여백과 경계선이 이미 만들고, 여기서 아래만 더 벌리면 제목-본문 묶음이 아래로 흘러내려 보인다. */
+.mls-body { padding: var(--mantine-spacing-md); }
 /* 단, 제목이 바로 위에 있으면 헤더의 아래 여백이 이미 간격을 줬으므로 이중으로 벌리지 않는다. */
 .mls-hd + .mls-body { padding-top: 0; }
 /* flush면 행이 좌우 끝까지 닿아야 하므로 사방 0(행이 자기 패딩을 갖는다). 위 두 규칙보다 뒤에 온다. */
@@ -492,7 +494,45 @@ button.mst-item:active { background: var(--bg-secondary); }
 /* 검색칸과 필터 칩 줄은 같은 묶음의 두 단계라 섹션을 가르지 않고 sm(12)으로만 띄운다
    (md면 서로 다른 묶음처럼 갈라진다). */
 .mlist-filters { margin-top: var(--mantine-spacing-sm); }
-.mlist-total { margin-top: var(--mantine-spacing-xs); text-align: center; }
+
+/* 더보기 — **채운 버튼이 아니다.** 회색 채움 버튼은 목록 끝에서 시각 무게가 가장 커져
+   "이 화면에서 제일 중요한 행동"처럼 읽혔는데, 더보기는 목록의 연장이지 커밋이 아니다.
+   TDS ListFooter가 이 자리의 이름 있는 부품이고 기본 textColor가 blue500이다("리스트 연속성을 암시").
+   border는 full|indented|none 3종인데 우리는 **indented** — 행 구분선이 이미 들여쓰여 있어
+   full을 쓰면 한 목록 안에 선 어법이 둘이 된다. 선은 행처럼 의사요소로 그린다(border는 패딩까지 덮는다).
+   가운데 정렬인 이유: 들여쓴 선 + 파란 글자를 행과 같은 세로선에 왼쪽 정렬하면 진짜 항목 행과
+   구분이 안 된다(게시판에서 "이건 무슨 글이지"가 된다). 가운데는 "항목이 아니라 목록의 조작"을 말한다. */
+.mlist-more {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: var(--erp-touch-target);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: var(--typo-body-size);
+  font-weight: var(--typo-body-strong-weight);
+  color: var(--mantine-color-primary-6);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mlist-more::before {
+  content: '';
+  position: absolute;
+  left: var(--row-divider-inset);
+  right: 0;
+  top: 0;
+  height: var(--border-width);
+  background: var(--border-default);
+}
+.mlist-more:active { background: var(--bg-secondary); }   /* 폰은 hover가 없다 — 눌림만 표현 */
+
+/* 총 N건 — 더보기 아래에 붙는 보조 줄. 더보기가 없으면 스스로 위 여백을 갖는다
+   (섹션이 선을 안 그리므로 앞 목록과의 경계는 여백이 만든다 — 06 §1-8 여백 우선). */
+.mlist-total { margin-top: var(--mantine-spacing-xs); padding-bottom: var(--mantine-spacing-md); text-align: center; }
+.mls-body > .mlist-total:first-child { margin-top: var(--mantine-spacing-md); }
 
 /* 그룹 머리 — 섹션 제목(캡션)보다 한 단 아래 위계다. 섹션은 "무엇의 묶음"이고 그룹은 "그 안의 갈래"다. */
 .mlist-group-hd {

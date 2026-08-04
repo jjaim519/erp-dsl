@@ -1085,7 +1085,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'categories / category / onCategoryChange', kind: '기능', values: '말머리 필터 칩(안 주면 미조립)' },
       { name: 'searchQuery / onSearchChange / searchPlaceholder', kind: '기능', values: 'controlled 검색' },
       { name: 'onSelectPost', kind: '기능', values: '(post) => void' },
-      { name: 'onLoadMore / loadMoreLabel / totalCount', kind: '기능', values: '더보기(번호 페이징 없음) / 총 N건. **노출은 데이터가 결정** — totalCount를 주면 posts.length < totalCount일 때만 버튼이 뜬다(다 보이는데 더보기가 있으면 없는 걸 있다고 말하는 셈). totalCount가 없으면 남은 양을 알 수 없어 콜백 준 소비처를 믿는다' },
+      { name: 'onLoadMore / loadMoreLabel / totalCount', kind: '기능', values: '더보기(번호 페이징 없음) / 총 N건. **노출은 데이터가 결정** — totalCount를 주면 posts.length < totalCount일 때만 뜬다(다 보이는데 더보기가 있으면 없는 걸 있다고 말하는 셈). totalCount가 없으면 남은 양을 알 수 없어 콜백 준 소비처를 믿는다. 표현은 **채운 버튼이 아니라 파란 텍스트 + 들여쓴 구분선**(TDS ListFooter 어법, v0.72.0) — 더보기는 목록의 연장이지 커밋이 아니다(커밋은 셸 하단 고정)' },
       { name: 'emptyState', kind: '콘텐츠', values: '{ icon?, title, description? }' },
       { name: 'status', kind: '기능', values: "'loading' | 'empty' | 'ready'(기본) — DataTable·ListPage와 같은 어휘. loading은 **스켈레톤이 아니라 스피너**이고(스켈레톤은 구조가 굳은 자리에서만 — Viget 2017에서 체감 대기가 가장 나빴다), **400ms 지연 후**에 뜨며(NN/g: 1초 미만엔 표시하지 않는다), **이미 행이 있으면 지우지 않는다**(재조회는 목록을 유지). 06 §1-7" },
     ],
