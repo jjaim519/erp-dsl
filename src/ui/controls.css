@@ -104,8 +104,29 @@
   background: transparent !important;
 }
 
-/* Menu(분자) 항목 hover — Popover content 안의 클릭 가능한 행. */
+/* Menu(분자) 항목 — Popover content 안의 클릭 가능한 행.
+   **기하가 CSS에 있는 이유**: 전에는 Menu.tsx 인라인 style이었고(padding 6px 8px, 스케일 밖 매직값),
+   인라인은 어떤 CSS도 못 이겨 **모바일 스코프가 이 행을 못 덮었다.** 폰에서 메뉴 항목이
+   38px쯤으로 떠서 HIG 44 / M3 48 둘 다 미달이었다 — MobileDecisionBar·MobileAttachmentViewer의
+   ⋯ 메뉴가 그 상태였다(06 §1-9의 같은 부류). */
+.erpMenuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xxs) var(--mantine-spacing-xs);
+  min-height: 32px;                       /* 데스크탑은 마우스 기준 */
+  border-radius: var(--mantine-radius-xs);
+  cursor: pointer;
+}
 .erpMenuItem:hover { background: var(--bg-secondary); }
+/* 메뉴 상단 신원/제목 블록 — 항목과 *같은* 좌우 여백이라야 구분선 정렬이 맞는다. */
+.erpMenuHeader { padding: var(--mantine-spacing-xxs) var(--mantine-spacing-xs); }
+
+/* 폰: 손가락이 표적이다. iOS 14부터 메뉴는 액션시트로 안 바꾸고 **앵커에 붙은 채** 뜨므로
+   (배경 딤·과한 전환을 피하려고 Apple이 iOS 13 방식을 바꿨다) 형태는 그대로 두고 **치수만** 올린다.
+   M3 메뉴 항목은 48dp·16sp, HIG 터치 하한은 44 — 우리는 레포 전역과 같은 --erp-touch-target(44)을 쓴다. */
+.erp-mobile .erpMenuItem,
+.erp-mobile .erpMenuHeader { min-height: var(--erp-touch-target); padding-inline: var(--mantine-spacing-sm); }
 
 /* Tree 제자리 인라인 편집 — 입력칸 모양의 래퍼(.erpTreeEdit) 안에 [입력 | 취소 ✕ | 확인 ✓].
    · 래퍼가 윤곽(solid border 대신 1px box-shadow ring + 옅은 드롭섀도, VS Code식)을 갖고, 내부 input은 테두리 없이 글자만.
