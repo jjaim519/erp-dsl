@@ -1053,6 +1053,7 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'MobileDisclosure', layer: '분자', role: '그 자리에서 펼쳐지는 행 — MobileListRow(다른 화면으로 이동)의 짝. 이동=chevron-right / 펼침=chevron-down(회전)으로 어포던스가 방향으로 갈린다.',
     props: [
       { name: 'title / meta', kind: '콘텐츠', values: '제목 + 접힌 상태에서도 보이는 우측 요약(금액·건수)' },
+      { name: 'sub', kind: '콘텐츠', values: "string(선택) — 제목 **옆** 보조. 한 줄 안의 타이포 위계다. title을 ReactNode로 열지 않은 이유: raw 슬롯이면 한 줄의 규격이 소비처마다 갈린다(06 §3-1 — 축이 추가될 때만 연다). 요구는 '위계 두 단'이고 축 하나로 닫힌다. **짧아야 한다** — meta처럼 flex:none이라 길면 제목을 밀어낸다" },
       { name: 'defaultOpen', kind: '스타일', values: 'boolean — 펼침은 UI 표현이라 내부 상태(Collapsible과 같은 판단)' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode raw 슬롯' },
     ],
@@ -1169,7 +1170,7 @@ export const CATALOG: CatalogEntry[] = [
     } },
   { name: 'MobileSegment', layer: '분자', role: '화면 *안*의 뷰 전환(결재함 5탭 등). 칩 줄=값 선택/필터라면 이건 뷰 전환 — 항상 하나가 켜져 있고 고르면 목록이 다른 것으로 바뀐다. 하단 탭바와 신호가 겹치지 않게 텍스트+밑줄(탭바는 아이콘+틴트 알약).',
     props: [
-      { name: 'items', kind: '콘텐츠', values: '{ value, label, count? }[] — count는 정보성이라 neutral 톤(빨간 숫자 배지는 멘션급 전용)' },
+      { name: 'items', kind: '콘텐츠', values: "{ value, label, count?, countTone?: 'danger'|'neutral', showZero? }[] — 데스크탑 TabBar가 받는 두 축을 여기도 연다(계약 비대칭 해소). **countTone 기본은 neutral**(TabBar는 danger): 하단 탭바(primary)는 '가서 처리해라'고 화면 안 세그먼트(secondary)는 '지금 보는 갈래'라 건수가 정보성이다 — 06 §3-5. 행동요구인 갈래만 소비처가 danger로 올린다. showZero는 단계별 큐(대기 0 / 처리 12)용 — 안 열면 소비처가 라벨에 숫자를 박아 우회한다" },
       { name: 'value / onChange', kind: '기능', values: 'controlled. 켜짐은 반드시 하나' },
       { name: 'ariaLabel', kind: '기능', values: 'tablist 이름' },
     ],

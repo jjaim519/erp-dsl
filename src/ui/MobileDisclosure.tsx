@@ -12,17 +12,27 @@ import './mobilelist.css';
 
 type Props = {
   title: string;
+  // 제목 옆 보조 — 한 줄 안의 **타이포 위계**. title을 ReactNode로 열지 않은 이유:
+  //  raw 슬롯이면 무엇이든 들어와 한 줄의 규격이 소비처마다 갈린다(06 §3-1 — 축이 추가될 때만 연다).
+  //  요구는 "위계가 두 단"이고 그건 축 하나로 닫힌다. 짧아야 한다 — meta처럼 flex:none이라
+  //  길면 제목을 밀어낸다(보조가 주를 밀면 그건 보조가 아니다).
+  sub?: string;
   meta?: string;          // 접힌 상태에서도 보이는 우측 요약값(금액·건수 등)
   defaultOpen?: boolean;
   children: ReactNode;    // 펼쳐지는 내용 — raw 슬롯
 };
 
-export function MobileDisclosure({ title, meta, defaultOpen = false, children }: Props) {
+export function MobileDisclosure({ title, sub, meta, defaultOpen = false, children }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="mdis" data-open={open || undefined}>
       <button type="button" className="mdis-hd" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
-        <span className="mdis-title">{title}</span>
+        {/* 제목+보조는 한 묶음으로 폭을 갖는다 — 따로 두면 보조가 우측 meta 쪽으로 밀려
+            "제목 옆 보조"가 아니라 "또 하나의 우측 값"으로 읽힌다. */}
+        <span className="mdis-t">
+          <span className="mdis-title">{title}</span>
+          {sub && <span className="mdis-sub">{sub}</span>}
+        </span>
         {meta && <span className="mdis-meta">{meta}</span>}
         <span className="mdis-chev"><Icon name="chevron-down" size="sm" color="secondary" /></span>
       </button>

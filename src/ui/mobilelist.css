@@ -268,7 +268,12 @@ button.mst-item:active { background: var(--bg-secondary); }
   -webkit-tap-highlight-color: transparent;
 }
 .mdis-hd:active { background: var(--bg-secondary); }
-.mdis-title { flex: 1; min-width: 0; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight); }
+/* 제목 묶음 — 제목이 남는 폭을 갖고 보조는 자기 크기만 갖는다(meta와 같은 규칙).
+   baseline 정렬: 크기가 다른 두 글자를 center로 맞추면 작은 쪽이 떠 보인다. */
+.mdis-t { flex: 1; min-width: 0; display: flex; align-items: baseline; gap: var(--mantine-spacing-xs); }
+.mdis-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight); }
+.mdis-sub { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 .mdis-meta { flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 .mdis-chev { flex: none; display: inline-flex; transition: transform var(--motion-base) var(--easing-standard); }
 .mdis[data-open] .mdis-chev { transform: rotate(180deg); }

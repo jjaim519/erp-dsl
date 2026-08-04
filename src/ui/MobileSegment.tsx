@@ -30,6 +30,16 @@ export type MobileSegmentItem = {
   value: string;
   label: string;
   count?: number;      // 있으면 라벨 옆 카운트. 0 이하는 CountBadge가 알아서 안 그린다.
+  // 데스크탑 TabBar가 받는 두 축을 여기도 연다 — 데스크탑 짝은 받는데 모바일만 못 받는 자리였다.
+  //  · countTone 기본은 **neutral**이다(TabBar는 danger). 층위가 다르기 때문이다:
+  //    하단 탭바(primary)는 "가서 처리해라"라 빨강이 기본이고, 화면 안 세그먼트(secondary)는
+  //    "지금 보는 갈래"라 건수가 정보성이다. 빨간 숫자 배지는 멘션급 전용(06 §3-5).
+  //    행동요구인 갈래(반려·기한초과)만 소비처가 danger로 올린다.
+  //  · showZero: 단계별 큐(대기 0 / 처리 12 …)에선 0도 답이다 — 안 열면 소비처가 라벨 문자열에
+  //    숫자를 박아 우회하고 그 순간 배지 층위가 사라진다(CountBadge 주석의 그 사례).
+  //    결재함 5탭이 정확히 그 큐라 이 부품이 제일 필요한 자리다.
+  countTone?: 'danger' | 'neutral';
+  showZero?: boolean;
 };
 
 type Props = {
@@ -55,8 +65,10 @@ export function MobileSegment({ items, value, onChange, ariaLabel }: Props) {
             onClick={() => onChange(it.value)}
           >
             <span className="mseg-label">{it.label}</span>
-            {/* 카운트는 정보성이다 — 행동요구(빨강)가 아니라 neutral. 빨간 숫자 배지는 멘션급 전용이다(06 §3-5). */}
-            {it.count != null && <CountBadge count={it.count} tone="neutral" />}
+            {/* 기본은 정보성(neutral) — 행동요구(빨강)는 소비처가 올린다. 위 타입 주석 참조. */}
+            {it.count != null && (it.count > 0 || it.showZero) && (
+              <CountBadge count={it.count} tone={it.countTone ?? 'neutral'} showZero={it.showZero} />
+            )}
           </button>
         );
       })}

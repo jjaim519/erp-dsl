@@ -181,11 +181,15 @@ function StatRowDemo() {
 function DisclosureDemo() {
   return (
     <MobileSection flush>
-      <MobileDisclosure title="시공 상세" meta="4개 항목" defaultOpen>
+      <MobileDisclosure title="시공 상세" sub="3차" meta="4개 항목" defaultOpen>
         <Text variant="body">주방 상부장 · 하부장 · 아일랜드 · 팬트리</Text>
       </MobileDisclosure>
-      <MobileDisclosure title="변경 이력" meta="2건">
+      <MobileDisclosure title="변경 이력" sub="최근 30일" meta="2건">
         <Text variant="body">07.20 자재 변경 · 07.25 일정 조정</Text>
+      </MobileDisclosure>
+      {/* sub가 붙어도 제목이 길면 제목만 말줄임 — 보조는 flex:none이라 안 잘린다 */}
+      <MobileDisclosure title="제목이 아주 길어서 한 줄에 안 들어가는 경우의 처리" sub="2차" meta="8건">
+        <Text variant="body">제목만 말줄임되고 보조·요약값은 남는다.</Text>
       </MobileDisclosure>
       <MobileDisclosure title="meta 없는 펼침">
         <Text variant="body">우측 요약값이 없으면 chevron만 남는다.</Text>
@@ -326,20 +330,22 @@ function SegmentDemo() {
   const [b, setB] = useState('unread');
   return (
     <>
-      <MobileSection title="4개 이상 — 가로 스크롤 (결재함)" flush>
+      {/* countTone·showZero — 대기는 행동요구라 danger, 나머지는 정보성 neutral(기본).
+          예정 0건은 showZero로 남긴다: 단계별 큐에선 "이 단계는 비었다"도 답이다. */}
+      <MobileSection title="여백이 넘쳐 스크롤 (결재함) · 톤 2종 + 0건" flush>
         <MobileSegment
           ariaLabel="결재함"
           value={a} onChange={setA}
           items={[
-            { value: 'wait', label: '대기', count: 3 },
-            { value: 'plan', label: '예정' },
+            { value: 'wait', label: '대기', count: 3, countTone: 'danger' },
+            { value: 'plan', label: '예정', count: 0, showZero: true },
             { value: 'done', label: '처리', count: 12 },
             { value: 'end', label: '완료' },
             { value: 'all', label: '전체', count: 128 },
           ]}
         />
       </MobileSection>
-      <MobileSection title="3개 이하 — 균등 분할 (읽음 명단)" flush>
+      <MobileSection title="여백이 남아 균등 분할 (읽음 명단)" flush>
         <MobileSegment
           ariaLabel="읽음 명단"
           value={b} onChange={setB}
@@ -781,7 +787,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileSection:     { render: () => <SectionDemo />, note: '제목·액션·flush·무제목 4형' },
   MobileListRow:     { render: () => <ListRowDemo />, note: '슬롯 조합 7종 — emphasis·chevron·trailing' },
   MobileStatRow:     { render: () => <StatRowDemo />, note: '3칸 / 2칸 · tone 3종' },
-  MobileDisclosure:  { render: () => <DisclosureDemo />, note: '펼침·접힘·meta 없음' },
+  MobileDisclosure:  { render: () => <DisclosureDemo />, note: '펼침·접힘·sub(제목 옆 보조)·긴 제목 말줄임·meta 없음' },
   MobileField:       { render: () => <FieldDemo />, note: '기본·빈칸·에러·원자 아닌 칸 + 본문 캔버스' },
   MobileChoice:      { render: () => <ChoiceDemo />, note: '선택·미선택·상한 초과(가로 스크롤)' },
   MobilePhotoPicker: { render: () => <PhotoPickerDemo />, note: '썸네일 격자 + 추가 타일' },
@@ -789,7 +795,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileComment:     { render: () => <CommentDemo />, note: '루트 + 1단 답글 · 작성자 배지' },
   MobileComposer:    { render: () => <ComposerDemo />, bare: true, note: '하단 고정 입력 + 답글 대상 칩' },
   MobileFileRow:     { render: () => <FileRowDemo />, note: '열기+내려받기 분리 · 내려받기만 · 정적 행' },
-  MobileSegment:     { render: () => <SegmentDemo />, note: '4개↑ 가로 스크롤 / 3개↓ 균등 — 개수가 정한다' },
+  MobileSegment:     { render: () => <SegmentDemo />, note: '여백 하한(md)이 균등↔스크롤을 정한다(개수 분기 아님) · countTone 2종 · 0건 표시' },
   MobileDecisionBar: { render: () => <DecisionBarDemo />, bare: true, note: '승인/반려 + ⋯ 메뉴. 결재 화면 전체 맥락' },
   MobileAttachmentViewer: { render: () => <AttachmentViewerDemo />, bare: true, note: '이미지 2 · PDF 1 · 폴백 사유 4종. 행을 눌러 연다' },
   MobileStepTrail:   { render: () => <StepTrailDemo />, note: '접힘(기본)·펼침·반려·summary 없음' },
