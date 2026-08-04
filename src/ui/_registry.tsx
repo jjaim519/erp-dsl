@@ -14,6 +14,7 @@ import { Divider } from './Divider';
 import { Title } from './Title';
 import { Text } from './Text';
 import { Badge } from './Badge';
+import { StatusLabel } from './StatusLabel';
 import { CountBadge } from './CountBadge';
 import { Button } from './Button';
 import { Chip } from './Chip';
@@ -970,7 +971,48 @@ export function Demo({ name }: { name: string }) {
 
   const D: Record<string, ReactNode> = {
     Button: <Group gap="xs" wrap><Button variant="primary">저장</Button><Button variant="secondary">취소</Button><Button variant="danger">삭제</Button><Button variant="ghost">더보기</Button></Group>,
-    Badge: <Group gap="xs"><Badge color="success">완료</Badge><Badge color="warning">대기</Badge><Badge color="danger">실패</Badge><Badge color="info">신규</Badge></Group>,
+    Badge: (
+      <Stack gap="sm">
+        {/* weak(기본) — 평상시. 톤만 얹는다. */}
+        <Group gap="xs" align="center">
+          <Text variant="caption" color="secondary">weak</Text>
+          <Badge color="success">완료</Badge><Badge color="warning">대기</Badge><Badge color="danger">실패</Badge><Badge color="info">신규</Badge>
+        </Group>
+        {/* fill — 반전. "여기 좀 봐". 한 화면에 여럿 두면 강조가 강조이길 그만둔다. */}
+        <Group gap="xs" align="center">
+          <Text variant="caption" color="secondary">fill</Text>
+          <Badge color="info" strength="fill">공지</Badge><Badge color="danger" strength="fill">필독</Badge>
+        </Group>
+      </Stack>
+    ),
+    // 상태 사다리 3단을 한 눈에 — 같은 상태를 세 무게로 그린다(06 §3-6).
+    StatusLabel: (
+      <Stack gap="sm">
+        <Group gap="md" align="center" wrap>
+          <Text variant="caption" color="secondary">1단 · 텍스트+색</Text>
+          <StatusLabel>진행</StatusLabel>
+          <StatusLabel tone="warning">대기</StatusLabel>
+          <StatusLabel tone="success">완료</StatusLabel>
+          <StatusLabel tone="danger">반려</StatusLabel>
+        </Group>
+        <Group gap="md" align="center" wrap>
+          <Text variant="caption" color="secondary">2단 · 심볼+텍스트</Text>
+          <StatusLabel icon="clock">진행</StatusLabel>
+          <StatusLabel tone="warning" icon="history">대기</StatusLabel>
+          <StatusLabel tone="success" icon="check-circle">완료</StatusLabel>
+          <StatusLabel tone="danger" icon="x-circle">반려</StatusLabel>
+        </Group>
+        <Group gap="md" align="center" wrap>
+          <Text variant="caption" color="secondary">3단 · 알약(Badge)</Text>
+          <Badge color="warning">지연</Badge>
+          <Badge color="danger" strength="fill">필독</Badge>
+        </Group>
+        {/* 문장 속 — Badge가 못 하는 일. padding이 없어 행간을 안 민다. */}
+        <Text variant="body">
+          이 품의는 <StatusLabel tone="danger" icon="x-circle">반려</StatusLabel>됐습니다. 사유를 확인한 뒤 다시 상신하세요.
+        </Text>
+      </Stack>
+    ),
     CountBadge: (
       <Stack gap="sm">
         {/* 탭 라벨 뒤 카운트 — 행동요구(빨강)만 튀고 정보(중립)는 가라앉는다. 0건은 안 보임. */}

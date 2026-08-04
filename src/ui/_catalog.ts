@@ -65,11 +65,22 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'type', kind: '기능', values: "'button' | 'submit'" },
       { name: 'onClick', kind: '기능', values: '() => void' },
     ] },
-  { name: 'Badge', layer: '의미 원자', role: '표시 전용 상태 알약(행동 없음).',
+  { name: 'Badge', layer: '의미 원자', role: '표시 전용 상태 알약(행동 없음). 상태 사다리의 **3단**(면 있음) — *드물게* 나타나는 것에만. 모든 행에 배지가 달리면 배지가 신호이길 그만둔다. 1·2단(면 없음)은 StatusLabel.',
     props: [
       { name: 'color', kind: '스타일', values: BADGE + ' (primary 제외)' },
+      { name: 'strength', kind: '스타일', values: "'weak'(기본, 톤만) | 'fill'(반전 — \"여기 좀 봐\": 필독·공지). 알약끼리도 위계가 있어야 한다. 이 축이 없어서 게시판이 board.css에 솔리드 클래스 3개를 따로 팠었다(v0.72.0 회수)" },
       { name: 'children', kind: '콘텐츠', values: 'string' },
     ] },
+  { name: 'StatusLabel', layer: '의미 원자', role: '**면 없는** 상태 표기 — 사다리 1단(텍스트+색) · 2단(심볼+텍스트). icon 유무가 단을 가른다. Badge와 안 합친 이유: 면이 없으면 알약이 아니고, 무엇보다 **줄 높이를 안 밀어** 문장·표 셀·헤더 어디에나 섞인다(Badge는 padding이 있어 행간이 튄다). iOS엔 상태 알약 컴포넌트가 아예 없고 SwiftUI Label(심볼+텍스트)+시맨틱 색이 이 자리를 맡는다.',
+    props: [
+      { name: 'tone', kind: '스타일', values: BADGE + " (기본 neutral). 색 통로는 weak Badge의 글자색과 동일(-light-color) — 1·2·3단이 같은 색 계열로 묶여야 사다리를 오르내려도 같은 상태로 읽힌다" },
+      { name: 'icon', kind: '콘텐츠', values: 'IconName (선택). 주면 2단. **종류가 다섯을 넘거나 색만으로 못 가를 땐 필수** — 색만으로 뜻을 나르면 WCAG 1.4.1 위반. 그룹웨어 기본값은 2단' },
+      { name: 'children', kind: '콘텐츠', values: 'string' },
+    ],
+    composition: {
+      토큰: ['상태색 -light-color(모드별 자동)', 'text-secondary(neutral)', 'gap xxs', 'typo-body-strong-weight', 'font-size: inherit — 크기를 스스로 안 정하고 놓인 자리를 따른다(자리마다 size prop을 받는 것보다 축이 하나 적다)'],
+      '의미 원자': ['Icon(색 미지정 → currentColor로 글자와 한 색. SF Symbols hierarchical과 같은 수법)'],
+    } },
   { name: 'CountBadge', layer: '의미 원자', role: '알림 카운트(미처리 건수) — 카톡식 빨강 N 동그라미. 솔리드 채움(행동요구 환기). Badge(상태·반투명)와 별개 역할.',
     props: [
       { name: 'count', kind: '값', values: 'number (0 이하면 안 보임)' },
@@ -1016,6 +1027,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'title / meta', kind: '콘텐츠', values: '제목 + 아래 줄 보조 정보(작성자·날짜 — 포맷은 소비처)' },
       { name: 'leading / badges / trailing', kind: '콘텐츠', values: 'ReactNode 슬롯 — 좌측(아바타·아이콘) / 제목 위 배지 줄 / 우측 값. 어떤 배지를 쓸지는 도메인이라 소비처가 정한다' },
       { name: 'onClick', kind: '기능', values: '있으면 버튼 + chevron(iOS disclosure 관습). 없으면 정적 행 — 눌리는 것처럼 보이지 않는다(거짓 어포던스 금지)' },
+      { name: 'emphasis / unread', kind: '스타일', values: '제목 굵기 / 안 읽음 점(06 §3-7). **합치지 않는다** — 게시판은 공지 행을 굵게 두면서 점은 안 찍어(이미 배지로 구분) 두 값이 갈린다. 점은 **제목 앞 인라인**이고 leading이 있으면 그 모서리로 옮겨간다(같은 요소·같은 낭독 문구). 좌측 슬롯에 두면 예약=빈 칸 / 미예약=제목 시작선 톱니 중 하나를 반드시 고르게 된다. 선택 모드에선 안 찍는다(체크 옆 점은 선택 상태로 오독)' },
       { name: 'selectable / selected / onSelectedChange', kind: '기능', values: '일괄 처리(선택 모드). 켜지면 좌측에 체크가 서고 **chevron이 사라진다**(행이 진입을 안 하므로 — 같은 표적이 두 가지로 동작하면 손가락이 어느 쪽인지 모른다). 체크는 leading 자리를 대신한다. **모드의 주인은 화면**이고 행은 자기가 선택됐는지만 안다. 진입 경로(길게 누르기·상단 액션)도 화면 책임 — 단 제스처가 유일 경로여선 안 된다(06 §1-4)' },
     ],
     composition: {
@@ -1081,7 +1093,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Chip(legend)', 'Badge', 'Text', 'Icon', 'Button', 'TextInput', 'Spinner'],
       분자: ['InputGroup', 'MobileSection', 'MobileListRow(emphasis=안읽음)'],
       유기체: ['EmptyState'],
-      공유: ['BoardPost(BoardList)', 'board.css(공지·필독·NEW 솔리드 배지 — 같은 신호는 같은 형태)', 'mobileboard.css', '_useDelayedFlag(로딩 표시 지연)'],
+      공유: ['BoardPost(BoardList)', 'Badge strength(공지=info/fill · 필독=danger/fill · NEW=danger/weak — 데스크탑 BoardList와 같은 호출. v0.72.0 전엔 board.css 전용 클래스 3개였다)', 'mobileboard.css', '_useDelayedFlag(로딩 표시 지연)'],
     } },
   { name: 'MobileBoardView', layer: '유기체', role: '게시판 글 보기의 모바일 화면 — 데스크탑 BoardView의 짝. 업무 기능을 전부 갖는다(필독 읽음확인 배너+진행률+CTA · 첨부 · 이전/다음글 · 조회수 · 작성자 신원 · 댓글 차단). 글 카드가 없다(면·그림자 대신 섹션 헤어라인). **댓글 작성란이 이 부품 안에 없다** — 폰은 입력이 하단 고정이라 셸 `bottom`의 MobileComposer가 받고, 답글은 *위치*가 아니라 **대상 태깅**으로 말한다(`onReply(id)`). 데스크탑은 반대로 중첩 인라인 폼 — 같은 행위, 다른 매체. 상단 액션(수정·삭제)도 셸 몫.',
     props: [
@@ -1096,7 +1108,7 @@ export const CATALOG: CatalogEntry[] = [
       토큰: ['warning-0/-2(필독 배너 틴트+얇은 윤곽 — Accordion attention 레시피)', 'success(읽음 완료)', 'border-default'],
       '의미 원자': ['Title', 'Text', 'Icon', 'Avatar', 'Badge', 'Button', 'Progress'],
       분자: ['MobileSection', 'MobileListRow', 'MobileFileRow', 'MobileComment'],
-      공유: ['BoardAttachment·BoardComment(BoardView)', 'board.css 배지', 'mobileboard.css'],
+      공유: ['BoardAttachment·BoardComment(BoardView)', 'Badge strength(공지=info/fill · 필독=danger/fill)', 'mobileboard.css'],
     } },
   { name: 'MobileBoardWrite', layer: '유기체', role: '게시판 작성/수정의 모바일 화면 — 데스크탑 BoardWrite의 짝. 작성 기능을 전부 갖는다(분류·제목·수신자 조직도·본문·첨부(문서 포함)·게시옵션 3종·임시저장). **수신자 포섭·배타 규칙은 `_audience` 공유 모듈**(복제하면 같은 조직도가 두 화면에서 다르게 담긴다 — _calendarLanes와 같은 이유). 본문은 Editor가 아니라 Textarea(폰에서 리치 툴바는 화면을 먹고 손도 안 닿는다) · 첨부는 드롭존이 아니라 파일 선택 버튼+행(폰엔 드래그가 없다) · 조직도는 새 화면이 아니라 그 자리에서 펼침(화면을 쌓으면 쓰던 글의 맥락이 끊긴다). 등록·취소·**임시저장 전부 셸 소유** — 임시저장은 등록과 같은 위계가 아니라 안전망이라, 업계 권고대로 자동 저장 + 이탈 확인 + *눈에 안 띄는* 상단 보조 액션 자리로 간다(폼 끝에 두면 정작 나가려는 순간 화면 밖이다).',
     props: [

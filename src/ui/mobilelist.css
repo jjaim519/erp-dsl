@@ -99,7 +99,35 @@
 button.mlr { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button.mlr:active { background: var(--bg-secondary); }   /* 폰은 hover가 없다 — 눌림만 표현 */
 
-.mlr-lead { flex: none; display: inline-flex; align-items: center; }
+.mlr-lead { flex: none; display: inline-flex; align-items: center; position: relative; }
+
+/* 안 읽음 점 — **제목 앞 인라인**이다(06 §3-7). 좌측 슬롯으로 두면 둘 중 하나가 반드시 생긴다:
+   자리를 예약하면 안 읽은 행이 아닐 때 빈 칸이 남고, 예약을 안 하면 제목 시작선이 행마다 갈려
+   왼쪽 가장자리가 톱니처럼 튄다. 제목의 첫 글자처럼 다루면 둘 다 안 생기고,
+   좌측 슬롯이 아바타·썸네일 전용으로 비워진다(TDS ListRow Left 영역).
+   크기·간격은 em 기준 — 폰트 스케일을 키우면 점도 따라 커진다(1-2 px 금지). */
+.mlr-dot {
+  display: inline-block;
+  flex: none;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: 0.35em;
+  vertical-align: 0.05em;
+  border-radius: var(--mantine-radius-full);
+  background: var(--mantine-color-primary-6);
+}
+/* leading이 이미 있는 목록(아바타·썸네일)에선 제목 앞이 아니라 그 모서리에 얹는다 —
+   앞에 두면 아바타와 점 사이에서 시선이 두 번 멈춘다. 같은 요소를 자리만 바꿔 쓴다(낭독 문구 단일).
+   테두리는 행 배경을 뚫어 점을 아바타에서 떼어낸다. */
+.mlr-lead > .mlr-dot {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  width: 0.6rem;
+  height: 0.6rem;
+  margin-right: 0;
+  border: calc(var(--border-width) * 2) solid var(--bg-primary);
+}
 /* 선택 체크 — leading 자리를 대신한다. 시각 크기는 22px이고 터치 표적은 행 전체다(행이 곧 버튼). */
 .mlr-check {
   flex: none; width: 22px; height: 22px; box-sizing: border-box;

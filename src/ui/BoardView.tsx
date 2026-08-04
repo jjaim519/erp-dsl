@@ -10,6 +10,7 @@ import { Page } from './Page';
 import { Title } from './Title';
 import { Text } from './Text';
 import { Avatar } from './Avatar';
+import { Badge } from './Badge';
 import { Divider } from './Divider';
 import { Button } from './Button';
 import { IconButton } from './IconButton';
@@ -117,8 +118,8 @@ export function BoardView({
         <article className="boardview-card">
           <div className="boardview-head">
             <div className="boardview-badges">
-              {notice && <span className="board-notice">공지</span>}
-              {mustRead && <span className="board-must">필독</span>}
+              {notice && <Badge color="info" strength="fill">공지</Badge>}
+              {mustRead && <Badge color="danger" strength="fill">필독</Badge>}
               {!notice && category && <Text variant="caption" color="secondary">{category}</Text>}
             </div>
             <Title variant="heading">{title}</Title>

@@ -41,14 +41,11 @@
 .board-date { text-align: center; font-size: var(--typo-caption-size); color: var(--text-secondary); }
 .board-views { text-align: center; font-size: var(--typo-caption-size); color: var(--text-disabled); }
 
-/* 템플릿 전용 배지 (Badge 원자는 light translucent라 솔리드 공지/필독을 못 냄 — 01 4-D 전용 소유) */
-.board-notice { display: inline-flex; align-items: center; font-size: var(--typo-caption-size); font-weight: 700;
-  color: #fff; background: var(--mantine-color-primary-6); padding: 2px 9px; border-radius: var(--mantine-radius-full); }
-.board-must { display: inline-flex; align-items: center; flex: none; font-size: var(--typo-caption-size); font-weight: 700;
-  color: var(--mantine-color-danger-7); background: var(--mantine-color-danger-0);
-  border: var(--border-width) solid var(--mantine-color-danger-2); padding: 1px 8px; border-radius: var(--mantine-radius-full); }
-.board-new { flex: none; font-size: 0.68rem; font-weight: 700; color: #fff;
-  background: var(--mantine-color-danger-6); padding: 1px 6px; border-radius: var(--mantine-radius-full); }
+/* 공지·필독·NEW 배지는 v0.72.0에서 Badge 원자로 회수했다.
+   여기 세 클래스(.board-notice/.board-must/.board-new)가 있던 이유는 하나뿐이었다 — Badge가
+   variant="light"로 못박혀 있어 솔리드를 못 냈기 때문. 이제 Badge에 strength 축이 있으므로
+   공지=info/fill, 필독=danger/fill, NEW=danger/weak 세 호출로 대체된다.
+   같은 신호를 다른 화면이 내려면 여길 또 파야 했는데, 그 값이 사라졌다. */
 
 /* 상단 고정 공지 밴드 (무테 tonal — 윤곽 아니라 톤으로 구분) */
 .board-pinned { background: var(--mantine-color-primary-0); }

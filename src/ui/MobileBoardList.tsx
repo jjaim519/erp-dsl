@@ -70,13 +70,15 @@ export function MobileBoardList({
         key={p.id}
         title={p.title}
         emphasis={p.unread}                                   // 안 읽음 = 제목 강조(데스크탑 볼드와 같은 신호)
-        leading={p.unread && !p.pinned ? <span className="mb-dot" aria-label="안 읽음" /> : undefined}
+        // 공지는 굵되 점은 안 찍는다 — 이미 배지로 구분되므로 점까지 붙이면 신호가 겹친다.
+        //  두 값이 갈리는 자리라 emphasis와 unread를 한 prop으로 못 합친다(MobileListRow 주석).
+        unread={p.unread && !p.pinned}
         meta={meta}
         badges={
           <>
-            {p.pinned ? <span className="board-notice">공지</span> : p.category ? <Badge color="neutral">{p.category}</Badge> : null}
-            {p.mustRead && <span className="board-must">필독</span>}
-            {p.isNew && <span className="board-new">NEW</span>}
+            {p.pinned ? <Badge color="info" strength="fill">공지</Badge> : p.category ? <Badge color="neutral">{p.category}</Badge> : null}
+            {p.mustRead && <Badge color="danger" strength="fill">필독</Badge>}
+            {p.isNew && <Badge color="danger">NEW</Badge>}
           </>
         }
         trailing={counts}

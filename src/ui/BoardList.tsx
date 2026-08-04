@@ -79,14 +79,14 @@ export function BoardList({
         onClick={onSelectPost ? () => onSelectPost(p) : undefined}>
         <div className="board-cat">
           {p.pinned
-            ? <span className="board-notice">공지</span>
+            ? <Badge color="info" strength="fill">공지</Badge>
             : p.category ? <Badge color="neutral">{p.category}</Badge> : null}
         </div>
         <div className="board-title">
-          {p.mustRead && <span className="board-must">필독</span>}
+          {p.mustRead && <Badge color="danger" strength="fill">필독</Badge>}
           {p.unread && !p.pinned && <span className="board-dot" />}
           <span className="board-t">{p.title}</span>
-          {p.isNew && <span className="board-new">NEW</span>}
+          {p.isNew && <Badge color="danger">NEW</Badge>}
         </div>
         {meta(p)}
         <div className="board-author">

@@ -5,14 +5,9 @@
 
 /* ── 목록 ── */
 
-/* 안 읽음 점 — 제목 굵기(emphasis)와 짝. 굵기만으로는 스캔 중에 놓치고, 점만으로는 작다. */
-.mb-dot {
-  display: inline-block;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: var(--mantine-radius-full);
-  background: var(--mantine-color-primary-6);
-}
+/* 안 읽음 점은 v0.72.0에서 MobileListRow가 소유한다(unread prop · .mlr-dot).
+   여기 있으면 목록마다 점 모양이 갈릴 수 있었고, 실제로 좌측 슬롯에 raw로 꽂혀 있어
+   자리 문제(빈 칸 / 정렬 깨짐)를 게시판 혼자 떠안았다. 굵기(emphasis)와 짝이라는 규율은 그대로다. */
 
 /* 첨부·댓글 카운트 — 행 우측. 숫자가 늘어도 제목이 밀리지 않게 flex:none은 MobileListRow가 준다. */
 .mb-counts { display: inline-flex; align-items: center; gap: var(--mantine-spacing-xs); }

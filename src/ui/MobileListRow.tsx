@@ -19,6 +19,13 @@ type Props = {
   trailing?: ReactNode;  // 우측 값(금액·상태 등). chevron과 함께 놓인다.
   onClick?: () => void;  // 있으면 버튼 + chevron
   emphasis?: boolean;    // 제목 강조 — "아직 안 본 것"(안 읽은 글·새 알림). 아래 참조
+  // 안 읽음 점. **emphasis와 합치지 않는다** — 항상 같이 켜지지 않기 때문이다:
+  //  게시판은 공지 행을 굵게(emphasis) 두면서 점은 안 찍는다(공지는 이미 다른 신호를 갖는다).
+  //  둘을 하나로 묶으면 그 구분을 표현할 수 없다.
+  //  · 모양은 부품이 소유한다(전엔 소비처가 leading에 raw로 점을 넣어 목록마다 갈릴 수 있었다).
+  //  · 이건 축이 다르다: 진행·대기·완료는 *대상의 상태*고, 안 읽음은 *나와 대상의 관계*다.
+  //    사람마다 다르게 보이고 누르는 순간 사라진다 — 그래서 자리도 trailing이 아니다(06 §3-7).
+  unread?: boolean;
   // ── 일괄 처리(선택 모드) ──
   //  **모드의 주인은 화면(소비처)이다.** 행은 자기가 선택됐는지만 안다 — 선택 모드가 켜졌는지,
   //  몇 개 골랐는지, 무엇을 실행하는지는 전부 화면의 일이다(행이 알면 목록마다 규칙이 갈린다).
@@ -35,9 +42,15 @@ type Props = {
 //  색이 아니라 굵기인 이유: 폰 목록은 이미 배지·태그로 색이 붐비고, 굵기는 그 위에 겹쳐도 안 싸운다.
 //  기본 false — 안 주면 모든 행이 같은 무게다(강조가 기본이면 강조가 아니게 된다).
 export function MobileListRow({
-  title, meta, leading, badges, trailing, onClick, emphasis = false,
+  title, meta, leading, badges, trailing, onClick, emphasis = false, unread = false,
   selectable = false, selected = false, onSelectedChange,
 }: Props) {
+  // 점은 자리가 둘이다: leading이 있으면 그 모서리, 없으면 제목 앞. 선택 모드에선 안 찍는다
+  //  — 그 순간 행의 일은 "읽기"가 아니라 "고르기"고, 체크 옆의 점은 선택 상태로 오독된다.
+  const showDot = unread && !selectable;
+  // 두 자리 모두 **같은 요소**를 쓴다 — 자리마다 다른 요소로 그리면 낭독 문구가 둘로 갈린다.
+  //  role="img"가 있어야 aria-label이 읽힌다(라벨만 붙인 span은 낭독기가 건너뛴다).
+  const dot = <span className="mlr-dot" role="img" aria-label="안 읽음" />;
   const inner = (
     <>
       {/* 선택 모드에서는 체크가 leading 자리를 대신한다 — 둘을 나란히 두면 좌측이 붐비고
@@ -47,11 +60,16 @@ export function MobileListRow({
           {selected && <Icon name="check" size="sm" />}
         </span>
       ) : (
-        leading && <span className="mlr-lead">{leading}</span>
+        leading && <span className="mlr-lead">{leading}{showDot && dot}</span>
       )}
       <span className="mlr-body">
         {badges && <span className="mlr-badges">{badges}</span>}
-        <span className="mlr-title" data-emphasis={emphasis ? '' : undefined}>{title}</span>
+        <span className="mlr-title" data-emphasis={emphasis ? '' : undefined}>
+          {/* leading이 없으면 점이 제목 *안에* 산다 — 밖의 슬롯이면 예약(빈 칸)이냐
+              미예약(정렬 깨짐)이냐를 골라야 한다. 제목 안이면 둘 다 안 생긴다. */}
+          {showDot && !leading && dot}
+          {title}
+        </span>
         {meta && <span className="mlr-meta">{meta}</span>}
       </span>
       {trailing && <span className="mlr-trail">{trailing}</span>}

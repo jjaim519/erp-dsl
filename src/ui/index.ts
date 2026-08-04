@@ -5,6 +5,7 @@
 // 표시·행동 원자
 export { Button } from './Button';
 export { Badge } from './Badge';
+export { StatusLabel } from './StatusLabel';   // 면 없는 상태 표기(사다리 1·2단) — Badge(3단)의 아래 칸
 export { CountBadge } from './CountBadge';
 export { Chip } from './Chip';
 export { Text } from './Text';

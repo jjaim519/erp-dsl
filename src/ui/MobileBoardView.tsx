@@ -61,8 +61,8 @@ export function MobileBoardView({
     <>
       <MobileSection>
         <div className="mbv-badges">
-          {notice && <span className="board-notice">공지</span>}
-          {mustRead && <span className="board-must">필독</span>}
+          {notice && <Badge color="info" strength="fill">공지</Badge>}
+          {mustRead && <Badge color="danger" strength="fill">필독</Badge>}
           {!notice && category && <Badge color="neutral">{category}</Badge>}
         </div>
         <Title variant="subheading">{title}</Title>
