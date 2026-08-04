@@ -1016,9 +1016,10 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'title / meta', kind: '콘텐츠', values: '제목 + 아래 줄 보조 정보(작성자·날짜 — 포맷은 소비처)' },
       { name: 'leading / badges / trailing', kind: '콘텐츠', values: 'ReactNode 슬롯 — 좌측(아바타·아이콘) / 제목 위 배지 줄 / 우측 값. 어떤 배지를 쓸지는 도메인이라 소비처가 정한다' },
       { name: 'onClick', kind: '기능', values: '있으면 버튼 + chevron(iOS disclosure 관습). 없으면 정적 행 — 눌리는 것처럼 보이지 않는다(거짓 어포던스 금지)' },
+      { name: 'selectable / selected / onSelectedChange', kind: '기능', values: '일괄 처리(선택 모드). 켜지면 좌측에 체크가 서고 **chevron이 사라진다**(행이 진입을 안 하므로 — 같은 표적이 두 가지로 동작하면 손가락이 어느 쪽인지 모른다). 체크는 leading 자리를 대신한다. **모드의 주인은 화면**이고 행은 자기가 선택됐는지만 안다. 진입 경로(길게 누르기·상단 액션)도 화면 책임 — 단 제스처가 유일 경로여선 안 된다(06 §1-4)' },
     ],
     composition: {
-      토큰: ['--border-default(행 하단 선)', 'min-height 44px(Apple HIG 최소 터치타깃)', 'bg-secondary(:active — 폰은 hover가 없다)'],
+      토큰: ['--border-default(들여쓴 행 선)', '--erp-touch-target(44 하한)', '--row-pad-y(밀도)', 'primary-6/primary-light(선택 체크·행 틴트)', 'bg-secondary(:active — 폰은 hover가 없다)'],
       '의미 원자': ['Icon'],
       공유: ['mobilelist.css — 마지막 행 선 제거는 MobileSection이 소유'],
     } },
@@ -1162,6 +1163,18 @@ export const CATALOG: CatalogEntry[] = [
     composition: {
       토큰: ['--border-default(하단 경계)', 'primary-6(밑줄 인디케이터)', 'min-height 44px', 'inset box-shadow로 인디케이터 자리 예약'],
       '의미 원자': ['CountBadge'],
+      공유: ['mobilelist.css'],
+    } },
+  { name: 'MobileStepTrail', layer: '분자', role: '단계의 진행 — 전자결재 *결재선*이 첫 소비처지만 부품은 결재를 모른다. MobileListRow로 대신할 수 없다(그 행은 "누르면 다른 화면으로"인데 결재선은 읽는 것이고, 무엇보다 순서·현재 위치를 말해야 한다). Timeline과도 다르다 — Timeline은 *일어난 일*의 기록이고 여기는 **아직 안 일어난 단계까지** 그린다(plan·halt). 데스크탑 결재란 격자의 모바일 짝(06 §5 "격자는 폰에서 트레일로").',
+    props: [
+      { name: 'steps', kind: '기능', values: "TrailStep[] = { id, role, name, meta?, state, stateLabel?, comment? }. state는 'done'|'current'|'plan'|'reject'|'halt' 닫힌 열거. 역할명·상태 문구는 도메인이라 소비처가 준다" },
+      { name: 'defaultOpen', kind: '스타일', values: '기본 false=**접힘**. 단계가 5~6개면 펼친 채로 화면을 다 먹는다' },
+      { name: 'summary', kind: '콘텐츠', values: "접힌 줄의 요약('2/4 · 옥성훈 차례'). 안 주면 부품이 n/N만 만든다 — 이름·차례는 도메인이라 못 지어낸다. **접어도 값은 보인다**(숨기는 건 단계 목록이지 진행 상태가 아니다)" },
+      { name: 'label', kind: '콘텐츠', values: "접힌 줄 좌측 이름표(기본 '결재선')" },
+    ],
+    composition: {
+      토큰: ['success-6/3(끝난 단계·잇는 선)', 'primary-6(지금 여기 링)', 'danger-6(반려)', '--erp-touch-target', '--row-pad-y'],
+      '의미 원자': ['Icon', 'Text'],
       공유: ['mobilelist.css'],
     } },
   { name: 'MobileDecisionBar', layer: '분자', role: '결재·승인 화면의 하단 결정 바(MobileShell.bottom에 꽂는다). MobileComposer의 형제 — 그건 입력, 이건 결정. 문서 길이와 무관하게 같은 자리에 있는 것이 값(위치 불변성).',

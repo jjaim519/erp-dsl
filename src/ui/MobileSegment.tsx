@@ -8,12 +8,19 @@
 //  켜짐이 반드시 하나라는 것, 그리고 그게 "지금 보고 있는 화면"이라는 것을 밑줄이 말한다(알약 채움이 아니라).
 //
 //  왜 하단 탭바(MobileShell.tabs)와 다른가: 그건 앱 전체의 척추이고 이건 한 화면 안의 갈래다.
-//   같은 화면에 둘이 공존하므로 신호가 겹치면 안 된다 — 탭바는 아이콘+틴트 알약, 여기는 텍스트+밑줄.
+//   정본이 같은 구분을 다른 이름으로 갖는다 — iOS: "탭 바는 '앱의 어디에 있나', 세그먼티드 컨트롤은
+//   '이 화면의 어느 버전인가'에 답한다" / M3: primary tabs(앱 목적지) vs **secondary tabs**(콘텐츠 영역 내 갈래).
+//   우리 하단 탭바가 primary니까 여기는 secondary tabs 자리다. 같은 화면에 둘이 공존하므로 신호가
+//   겹치면 안 된다 — 탭바는 아이콘+틴트 알약, 여기는 텍스트+밑줄.
 //
-//  **균등/스크롤을 prop으로 열지 않는다.** 개수로 결정한다(M3 규정 그대로):
-//   3개 이하 = 균등 분할(고정), 4개 이상 = 가로 스크롤. 결재함 5탭에 카운트까지 붙으면 375px에
-//   균등으로 안 들어가 라벨이 뭉개진다 — 그 경우가 정확히 스크롤이 필요한 경우다.
-//   소비처가 고를 일이 아니라 항목 수가 이미 답을 알고 있다(헌법 5 — 열 축이 없으면 안 연다).
+//  **왜 iOS 세그먼티드 컨트롤(채운 알약)이 아닌가**: 그 컨트롤은 카운트 배지를 달 수 없다.
+//   결재함은 "대기 3 / 처리 12"가 핵심 정보다. M3 탭은 배지를 명시적으로 지원한다 → 밑줄 탭이 맞다.
+//
+//  **균등/스크롤을 prop으로도, 개수로도 정하지 않는다 — 내용이 정한다.**
+//   전에는 "3개 이하 균등 / 4개 이상 스크롤"로 개수 분기를 했는데 그게 임의 판단이었다.
+//   M3의 실제 기준은 개수가 아니라 **라벨 길이**다("4 with short labels"까지 고정 허용).
+//   결재함 라벨은 2글자라 375px에 5개도 들어간다. → flex-grow는 열되 flex-shrink를 막으면
+//   들어갈 땐 나눠 갖고 넘칠 땐 스크롤한다(CSS 한 줄이 판정한다. 매직넘버 0).
 import { CountBadge } from './CountBadge';
 import './mobilelist.css';
 
@@ -31,10 +38,8 @@ type Props = {
 };
 
 export function MobileSegment({ items, value, onChange, ariaLabel }: Props) {
-  // 4개부터 스크롤 — 위 헤더 주석의 근거(M3 fixed 2~3 / scrollable 4+).
-  const scroll = items.length > 3;
   return (
-    <div className="mseg" data-scroll={scroll ? '' : undefined} role="tablist" aria-label={ariaLabel}>
+    <div className="mseg" role="tablist" aria-label={ariaLabel}>
       {items.map((it) => {
         const on = it.value === value;
         return (

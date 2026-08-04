@@ -207,7 +207,14 @@ html.erp-mobile-lock body {
    ④ 기하: padding이 아니라 의사요소로 깐다. .ms-tab-ico에 padding을 주면 그 안에 절대배치된 카운트
       배지(left:100%)가 활성일 때만 바깥으로 밀려 자리가 튄다. ::before는 기하를 안 건드려 활·비활성
       레이아웃이 동일하다. .ms-tab의 isolation은 z-index:-1이 셸 배경(.ms) 뒤로 새지 않게 문맥을 가둔다.
-   ⑤ 치수: 16px 아이콘 기준 42×22 — M3의 24dp 아이콘 : 64×32dp 비율을 그대로 축소. */
+   ⑤ 치수: **52×26**. 전에는 42×22(M3의 24dp:64×32 비율을 16px 아이콘에 그대로 축소)였는데
+      화면에서 신호가 약했다 — 비례는 맞았지만 **절대 크기가 작았다**. M3의 32dp 높이는 비례값이기 전에
+      "손가락이 닿는 덩어리"의 절대 치수이기도 하다. 그래서 비례를 넘되 M3 절대치(64×32)는 안 넘는 중간을 잡았다.
+      상한은 라벨이 정한다: 아이콘과 라벨 사이가 Stack gap xs(8px)라 세로로 5px까지만 넓힐 수 있다
+      (6px이면 라벨과 2px까지 붙는다). 폰트 스케일이 커지면 gap도 rem이라 여유가 같이 는다.
+   ⑥ **아이콘+라벨 전체를 덮지 않는다.** 그러면 캡슐 폭이 *칸 폭에 종속*돼 탭이 3개일 땐 넓고 5개일 땐 좁아진다.
+      06 §4가 탭을 3~5로 열어둔 이상 개수마다 활성 표시가 달라 보이는 건 부담이다. 아이콘 기준이면 항상 같다.
+      (M3도 "캡슐이 아이콘을 감싼다"고 명문화한다 — 라벨은 그 아래 밖이다.) */
 .ms-tab { isolation: isolate; }
 .ms-tab-ico {
   position: relative;
@@ -216,7 +223,7 @@ html.erp-mobile-lock body {
 .ms-tab[data-active='true'] .ms-tab-ico::before {
   content: '';
   position: absolute;
-  inset: -3px -13px;
+  inset: -5px -18px;          /* 16px 아이콘 → 52×26 (위 ⑤) */
   z-index: -1;
   border-radius: var(--mantine-radius-full);
   background: var(--mantine-color-primary-light);

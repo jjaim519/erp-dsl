@@ -37,6 +37,7 @@ import { MobileBoardWrite } from './MobileBoardWrite';
 import { MobileSegment } from './MobileSegment';
 import { MobileDecisionBar } from './MobileDecisionBar';
 import { MobileAttachmentViewer } from './MobileAttachmentViewer';
+import { MobileStepTrail, type TrailStep } from './MobileStepTrail';
 import { TextInput } from './TextInput';
 import { Textarea } from './Textarea';
 import { Text } from './Text';
@@ -436,6 +437,107 @@ function AttachmentViewerDemo() {
   );
 }
 
+const TRAIL_OK: TrailStep[] = [
+  { id: 's0', role: '기안', name: '김서연', meta: '인사팀 · 07.01 10:22', state: 'done', stateLabel: '상신' },
+  { id: 's1', role: '1차', name: '박상우', meta: '구매팀 팀장 · 07.01 14:05', state: 'done', stateLabel: '승인',
+    comment: '이 코멘트는 안 보인다 — 승인 코멘트는 그리지 않는다.' },
+  { id: 's2', role: '2차', name: '옥성훈', meta: '대표 · 대기 중', state: 'current', stateLabel: '내 차례' },
+  { id: 's3', role: '최종', name: '결재 완료', state: 'plan', stateLabel: '예정' },
+];
+const TRAIL_REJECT: TrailStep[] = [
+  { id: 'r0', role: '기안', name: '정민호', meta: '구매팀 · 07.02 09:10', state: 'done', stateLabel: '상신' },
+  { id: 'r1', role: '1차', name: '박상우', meta: '구매팀 팀장 · 07.02 11:40', state: 'reject', stateLabel: '반려',
+    comment: '증빙 누락입니다. 카드 전표 첨부 후 재상신 바랍니다.' },
+  { id: 'r2', role: '2차', name: '옥성훈', state: 'halt', stateLabel: '중단' },
+];
+
+function StepTrailDemo() {
+  return (
+    <>
+      <MobileSection title="기본 — 접힘" flush>
+        <MobileStepTrail steps={TRAIL_OK} summary="2/4 · 옥성훈 차례" />
+      </MobileSection>
+      <MobileSection title="펼친 상태" flush>
+        <MobileStepTrail steps={TRAIL_OK} summary="2/4 · 옥성훈 차례" defaultOpen />
+      </MobileSection>
+      <MobileSection title="반려 — 사유는 그 단계 안에" flush>
+        <MobileStepTrail steps={TRAIL_REJECT} summary="1차에서 반려됨" defaultOpen />
+      </MobileSection>
+      <MobileSection title="summary 없음 — 부품이 n/N만 만든다" flush>
+        <MobileStepTrail steps={TRAIL_OK} />
+      </MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          접어도 <b>값(어디까지 왔나)은 보인다</b> — 숨기는 건 단계 목록이지 진행 상태가 아니다.
+          승인 코멘트는 데이터에 있어도 그리지 않는다(위 1차 단계에 코멘트가 들어 있다).
+        </Text>
+      </MobileSection>
+    </>
+  );
+}
+
+function BulkSelectDemo() {
+  const [mode, setMode] = useState(false);
+  const [sel, setSel] = useState<string[]>([]);
+  const rows = [
+    { id: 'a', title: '휴가신청서', meta: '김서연 · 인사팀 · 07.01' },
+    { id: 'b', title: '지출결의서', meta: '박상우 · 구매팀 · 07.02' },
+    { id: 'c', title: '발주요청서', meta: '정민호 · 물류팀 · 07.02' },
+  ];
+  const toggle = (id: string) => setSel((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const exit = () => { setMode(false); setSel([]); };
+
+  return (
+    <MobileShell
+      title={mode ? `${sel.length}건 선택` : undefined}
+      onBack={mode ? exit : undefined}
+      backLabel={mode ? '선택 종료' : '뒤로'}
+      actions={mode
+        ? [{ label: '전체 선택', icon: 'check', iconOnly: true, onClick: () => setSel(rows.map((r) => r.id)) }]
+        : undefined}
+      tabs={TABS} activePath="/board" onNavigate={() => {}}
+      bottom={mode && sel.length > 0
+        ? (
+          <MobileDecisionBar
+            primary={{ label: `${sel.length}건 승인`, onClick: exit }}
+            more={[{ label: '선택 해제', onClick: () => setSel([]) }]}
+          />
+        )
+        : undefined}
+    >
+      {!mode && <MobileTop title="결재함" action={{ label: '선택', variant: 'secondary', onClick: () => setMode(true) }} />}
+      <MobileSegment
+        ariaLabel="결재함"
+        value="wait" onChange={() => {}}
+        items={[
+          { value: 'wait', label: '대기', count: 3 },
+          { value: 'plan', label: '예정' },
+          { value: 'done', label: '처리', count: 12 },
+          { value: 'end', label: '완료' },
+        ]}
+      />
+      <MobileSection flush>
+        {rows.map((r) => (
+          <MobileListRow
+            key={r.id} title={r.title} meta={r.meta}
+            selectable={mode}
+            selected={sel.includes(r.id)}
+            onSelectedChange={() => toggle(r.id)}
+            onClick={() => {}}
+          />
+        ))}
+      </MobileSection>
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          선택이 켜지면 <b>chevron이 사라진다</b> — 행이 진입을 안 하기 때문이다.
+          모드의 주인은 <b>화면</b>이고 행은 자기가 선택됐는지만 안다.
+          일괄은 <b>승인만</b> 연다 — 반려는 사유를 요구하는데 여러 건에 같은 사유를 다는 건 기록으로 못 쓴다.
+        </Text>
+      </MobileSection>
+    </MobileShell>
+  );
+}
+
 /* ── 화면(유기체) ──────────────────────────────────────────────────────── */
 
 function BoardListDemo() {
@@ -631,6 +733,10 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileSegment:     { render: () => <SegmentDemo />, note: '4개↑ 가로 스크롤 / 3개↓ 균등 — 개수가 정한다' },
   MobileDecisionBar: { render: () => <DecisionBarDemo />, bare: true, note: '승인/반려 + ⋯ 메뉴. 결재 화면 전체 맥락' },
   MobileAttachmentViewer: { render: () => <AttachmentViewerDemo />, bare: true, note: '이미지 2 · PDF 1 · 폴백 사유 4종. 행을 눌러 연다' },
+  MobileStepTrail:   { render: () => <StepTrailDemo />, note: '접힘(기본)·펼침·반려·summary 없음' },
+
+  // 화면 — 4탭 데모를 안 거치고 직접 진입하는 자리.
+  ScreenBulkApprove: { render: () => <BulkSelectDemo />, bare: true, screen: true, label: '결재함 — 일괄 승인', note: '상단 선택 → 체크 → 하단 결정 바. chevron이 사라지는지 확인' },
   MobileBoardList:   { render: () => <BoardListDemo />, bare: true, note: '검색·분류 칩·공지 구획·더보기' },
   MobileBoardView:   { render: () => <BoardViewDemo />, bare: true, note: '필독 읽음확인·첨부·이전다음·댓글' },
   MobileBoardWrite:  { render: () => <BoardWriteDemo />, bare: true, note: '수신자 조직도·첨부·게시옵션 3종' },

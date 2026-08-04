@@ -100,6 +100,21 @@ button.mlr { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button.mlr:active { background: var(--bg-secondary); }   /* 폰은 hover가 없다 — 눌림만 표현 */
 
 .mlr-lead { flex: none; display: inline-flex; align-items: center; }
+/* 선택 체크 — leading 자리를 대신한다. 시각 크기는 22px이고 터치 표적은 행 전체다(행이 곧 버튼). */
+.mlr-check {
+  flex: none; width: 22px; height: 22px; box-sizing: border-box;
+  border-radius: var(--mantine-radius-xs);
+  box-shadow: inset 0 0 0 calc(var(--border-width) * 2) var(--border-strong);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: transparent;
+}
+.mlr-check[data-on] {
+  background: var(--mantine-color-primary-6);
+  box-shadow: none;
+  color: var(--mantine-color-white);
+}
+/* 선택된 행 — 틴트로 말한다. 체크만으로는 목록을 훑을 때 어디가 골렸는지 안 잡힌다. */
+.mlr[data-selected] { background: var(--mantine-color-primary-light); }
 .mlr-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--mantine-spacing-xxs); }
 /* 배지 줄 — 간격은 xxs 토큰. 이전엔 gap:5px + margin-bottom:1px 이었는데, 둘 다 눈으로 맞춘
    매직넘버였고 스케일 안에 있지도 않았다(4로 내려도 화면에서 구분되지 않는다). */
@@ -392,22 +407,22 @@ button.mst-item:active { background: var(--bg-secondary); }
 /* ── MobileSegment ── */
 /* 화면 안 뷰 전환 — 텍스트 + 밑줄 인디케이터(하단 탭바의 아이콘+틴트 알약과 신호가 겹치면 안 된다).
    묶음 경계는 아래 헤어라인 하나. 면·그림자 없음(계열 규칙). */
+/* 균등이냐 스크롤이냐를 **내용이 정한다**(개수 분기 없음 — MobileSegment.tsx 헤더 참조).
+   flex-grow는 열고 flex-shrink를 막으면: 들어갈 땐 남는 폭을 나눠 갖고, 넘칠 땐 줄지 않아 스크롤이 생긴다.
+   ※ 이때 칸 폭이 완전히 균등하진 않다(내용 폭 + 남는 폭의 균등 분배). 라벨 길이가 다르면 그게 오히려 자연스럽고,
+     완전 균등을 강제하면 긴 라벨이 잘린다. */
 .mseg {
   display: flex;
   border-bottom: var(--border-width) solid var(--border-default);
   padding: 0 var(--mantine-spacing-md);
-}
-/* 3개 이하 = 균등 분할. 4개 이상은 내용 폭 + 가로 스크롤(부품이 개수로 정한다 — MobileSegment.tsx 헤더). */
-.mseg[data-scroll] {
   overflow-x: auto;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
 }
-.mseg[data-scroll]::-webkit-scrollbar { display: none; }
-.mseg[data-scroll] .mseg-item { flex: none; }
+.mseg::-webkit-scrollbar { display: none; }
 
 .mseg-item {
-  flex: 1 1 0;
+  flex: 1 0 auto;      /* grow 1 · shrink 0 — 위 주석의 판정 기제 */
   min-width: 0;
   display: inline-flex; align-items: center; justify-content: center;
   gap: var(--mantine-spacing-xxs);
@@ -429,6 +444,68 @@ button.mst-item:active { background: var(--bg-secondary); }
 }
 .mseg-item:active { background: var(--bg-secondary); }
 .mseg-label { overflow: hidden; text-overflow: ellipsis; }
+
+/* ── MobileStepTrail ── */
+/* 접힌 줄 — 값(어디까지 왔나)은 접혀도 보인다. 행 리듬을 그대로 따른다(44 하한 · 좌우 md). */
+.mtr-sum {
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  width: 100%; min-height: var(--erp-touch-target); box-sizing: border-box;
+  padding: var(--row-pad-y, var(--mantine-spacing-md)) var(--mantine-spacing-md);
+  border: none; background: none; text-align: left;
+  font-family: inherit; color: var(--text-primary); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.mtr-sum:active { background: var(--bg-secondary); }
+.mtr-sum-l { font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mtr-sum-v { flex: 1; min-width: 0; font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.mtr-list { list-style: none; margin: 0; padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-md); }
+/* 단계 — 좌측 노드 + 본문. 노드를 잇는 세로선은 ::before로, *마지막 단계엔 안 그린다*. */
+.mtr-step { position: relative; display: flex; gap: var(--mantine-spacing-sm); padding-bottom: var(--mantine-spacing-md); }
+.mtr-step[data-last] { padding-bottom: 0; }
+.mtr-step:not([data-last])::before {
+  content: '';
+  position: absolute;
+  /* 노드(22px) 중심에 맞춘다 — 노드 폭의 절반에서 선 폭의 절반을 뺀 값. */
+  left: calc(11px - (var(--border-width) * 1));
+  top: 22px; bottom: 0;
+  width: calc(var(--border-width) * 2);
+  background: var(--border-default);
+}
+/* 끝난 구간의 잇는 선은 성공 톤 — "여기까지 왔다"를 선이 말한다. */
+.mtr-step[data-state='done']:not([data-last])::before { background: var(--mantine-color-success-3); }
+
+.mtr-node {
+  flex: none; width: 22px; height: 22px; border-radius: var(--mantine-radius-full);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.6875rem; font-weight: 700; z-index: 1;
+  background: var(--bg-primary); box-sizing: border-box;
+}
+.mtr-step[data-state='done'] .mtr-node    { background: var(--mantine-color-success-6); color: var(--mantine-color-white); }
+.mtr-step[data-state='reject'] .mtr-node  { background: var(--mantine-color-danger-6); color: var(--mantine-color-white); }
+/* 지금 여기 — 채우지 않고 굵은 링. 채우면 '끝났다'로 읽힌다. */
+.mtr-step[data-state='current'] .mtr-node { box-shadow: inset 0 0 0 3px var(--mantine-color-primary-6); }
+.mtr-step[data-state='plan'] .mtr-node,
+.mtr-step[data-state='halt'] .mtr-node    { box-shadow: inset 0 0 0 var(--border-width) var(--border-strong); }
+
+.mtr-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mtr-head { display: flex; align-items: baseline; gap: var(--mantine-spacing-xs); flex-wrap: wrap; }
+.mtr-role { flex: none; font-size: var(--typo-caption-size); font-weight: var(--typo-body-strong-weight); color: var(--text-secondary); }
+.mtr-name { font-size: var(--typo-body-size); font-weight: var(--typo-body-strong-weight); }
+/* 아직 안 온 단계는 이름을 흐리게 — "예정"이라는 말을 배지와 색이 함께 한다. */
+.mtr-step[data-state='plan'] .mtr-name,
+.mtr-step[data-state='halt'] .mtr-name { color: var(--text-disabled); font-weight: var(--typo-body-weight); }
+.mtr-state { margin-left: auto; flex: none; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mtr-step[data-state='done'] .mtr-state   { color: var(--mantine-color-success-7); }
+.mtr-step[data-state='reject'] .mtr-state { color: var(--text-danger); }
+/* 반려 사유 — 멈춘 이유가 본체라 눈에 띄는 면에 올린다(승인 코멘트는 아예 안 그린다). */
+.mtr-cmt {
+  margin-top: var(--mantine-spacing-xxs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-sm);
+  background: var(--bg-secondary); border-radius: var(--mantine-radius-sm);
+  font-size: var(--typo-caption-size); color: var(--text-secondary); line-height: 1.5;
+}
 
 /* ── MobileDecisionBar ── */
 /* 하단 결정 바 — 셸 bottom 슬롯에 산다. 자기 패딩을 갖는다(슬롯은 선만 준다 — MobileComposer와 같은 규율).

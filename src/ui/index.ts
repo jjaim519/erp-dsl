@@ -125,6 +125,7 @@ export { MobileComposer } from './MobileComposer';
 export { MobileFileRow } from './MobileFileRow';   // 데스크탑 CalendarPage와 events/encoding/annotations 타입 공유
 export { MobileSegment, type MobileSegmentItem } from './MobileSegment';
 export { MobileDecisionBar } from './MobileDecisionBar';
+export { MobileStepTrail, type TrailStep, type StepState } from './MobileStepTrail';
 // 첨부 뷰어 — 데스크탑·모바일 두 부품이 _attachment 계약 한 벌을 공유한다.
 export { AttachmentViewer } from './AttachmentViewer';
 export { MobileAttachmentViewer } from './MobileAttachmentViewer';
