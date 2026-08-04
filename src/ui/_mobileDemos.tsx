@@ -38,6 +38,7 @@ import { MobileSegment } from './MobileSegment';
 import { MobileDecisionBar } from './MobileDecisionBar';
 import { MobileAttachmentViewer } from './MobileAttachmentViewer';
 import { MobileStepTrail, type TrailStep } from './MobileStepTrail';
+import { MobileList } from './MobileList';
 import { TextInput } from './TextInput';
 import { Textarea } from './Textarea';
 import { Text } from './Text';
@@ -538,6 +539,64 @@ function BulkSelectDemo() {
   );
 }
 
+type Job = { id: string; name: string; site: string; stage: string; owner: string; done: boolean };
+const JOBS: Job[] = [
+  { id: 'j1', name: '대명물산 주방 시공', site: '대명물산', stage: '진행', owner: '옥성훈', done: false },
+  { id: 'j2', name: '대명물산 팬트리 추가', site: '대명물산', stage: '진행', owner: '옥성훈', done: false },
+  { id: 'j3', name: '한빛산업 실측', site: '한빛산업', stage: '대기', owner: '김민지', done: false },
+  { id: 'j4', name: '세종테크 납품', site: '세종테크', stage: '대기', owner: '김민지', done: false },
+  { id: 'j5', name: '누수 보수', site: '대명물산', stage: '완료', owner: '옥성훈', done: true },
+];
+
+function ListDemo() {
+  const [mode, setMode] = useState<'flat' | 'sections' | 'groups' | 'loading' | 'empty'>('flat');
+  const shown = mode === 'empty' ? [] : mode === 'loading' ? [] : JOBS;
+  const row = (j: Job) => (
+    <MobileListRow title={j.name} meta={`${j.site} · ${j.owner}`}
+      badges={<Badge color={j.done ? 'success' : 'neutral'}>{j.stage}</Badge>} onClick={() => {}} />
+  );
+  return (
+    <>
+      <MobileSection title="보기 전환" >
+        <MobileChoice
+          ariaLabel="보기"
+          value={mode}
+          onChange={(v) => setMode(v as typeof mode)}
+          options={[
+            { value: 'flat', label: '평면' }, { value: 'sections', label: '섹션' },
+            { value: 'groups', label: '섹션+그룹' }, { value: 'loading', label: '로딩' }, { value: 'empty', label: '빈 상태' },
+          ]}
+        />
+      </MobileSection>
+      <MobileList<Job>
+        items={shown}
+        getKey={(j) => j.id}
+        renderRow={row}
+        sections={mode === 'sections' || mode === 'groups'
+          ? [
+              { key: 'wip', title: '진행 중', match: (j) => !j.done },
+              { key: 'done', title: '완료', match: (j) => j.done },
+            ]
+          : undefined}
+        groupBy={mode === 'groups' ? (j) => j.site : undefined}
+        renderGroupHeader={(g) => `${g[0].site} · ${g.length}건`}
+        renderGroupAction={() => <Text variant="caption" color="secondary">일괄</Text>}
+        searchQuery="" onSearchChange={() => {}} searchPlaceholder="현장·담당 검색"
+        status={mode === 'loading' ? 'loading' : 'ready'}
+        emptyState={{ title: '작업이 없습니다', description: '새 작업을 등록해 보세요' }}
+        onLoadMore={() => {}}
+        totalCount={12}
+      />
+      <MobileSection>
+        <Text variant="body" color="secondary">
+          그룹 액션(‘일괄’)은 <b>2건 이상 그룹에만</b> 뜬다 — 한빛산업·세종테크는 1건이라 안 보인다.
+          정렬은 부품이 하지 않는다(<code>items</code>를 정렬된 상태로 받는다).
+        </Text>
+      </MobileSection>
+    </>
+  );
+}
+
 /* ── 화면(유기체) ──────────────────────────────────────────────────────── */
 
 function BoardListDemo() {
@@ -734,6 +793,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileDecisionBar: { render: () => <DecisionBarDemo />, bare: true, note: '승인/반려 + ⋯ 메뉴. 결재 화면 전체 맥락' },
   MobileAttachmentViewer: { render: () => <AttachmentViewerDemo />, bare: true, note: '이미지 2 · PDF 1 · 폴백 사유 4종. 행을 눌러 연다' },
   MobileStepTrail:   { render: () => <StepTrailDemo />, note: '접힘(기본)·펼침·반려·summary 없음' },
+  MobileList:        { render: () => <ListDemo />, note: '평면·섹션·섹션+그룹·로딩·빈 상태 5모드 전환' },
 
   // 화면 — 4탭 데모를 안 거치고 직접 진입하는 자리.
   ScreenBulkApprove: { render: () => <BulkSelectDemo />, bare: true, screen: true, label: '결재함 — 일괄 승인', note: '상단 선택 → 체크 → 하단 결정 바. chevron이 사라지는지 확인' },

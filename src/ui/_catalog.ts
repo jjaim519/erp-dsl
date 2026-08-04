@@ -1165,6 +1165,23 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['CountBadge'],
       공유: ['mobilelist.css'],
     } },
+  { name: 'MobileList', layer: '유기체', role: '모바일 목록 화면의 **껍데기** — 필터·검색·로딩/빈 상태·계층·더보기를 한 계약으로 묶는다. 전에는 이 계약이 MobileBoardList 안에만 있어 v0.68.0 로딩 규율이 게시판 화면에서만 지켜졌다(다른 화면은 useState+EmptyState+Button으로 매번 다시 조립). MobileBoardList가 이 위에 얹힌다.',
+    props: [
+      { name: 'items / getKey / renderRow', kind: '기능', values: '**정렬된 상태로** 받는다 — 부품은 순서를 만들지 않는다(정렬 규칙은 화면마다 다르고 그건 데이터의 일이다, 헌법 1). 부품이 "우선순위·마감" 같은 걸 알기 시작하면 도메인 무지가 깨진다' },
+      { name: 'sections / groupBy', kind: '기능', values: '계층은 **축**이다(평면 / 섹션 / 섹션+그룹). 별도 부품으로 안 가른다 — 가르면 status·필터·더보기 계약이 두 벌이 되고 그게 이 부품이 해결한 문제의 재현이다. 섹션은 0건이어도 헤더가 남는다(구조가 안 흔들리게)' },
+      { name: 'renderGroupHeader / renderGroupAction', kind: '콘텐츠', values: '그룹 머리·액션 슬롯. 액션은 **그룹 크기 ≥ 2에서만** 렌더한다(한 건짜리에 일괄은 뜻이 없다 — 노출 판정은 부품 소관)' },
+      { name: 'filters / filter / onFilterChange', kind: '기능', values: '**축이 하나일 때**의 자리(칩 줄). 둘 이상이면 MobileFilterBar — 축 하나에 드롭다운은 한 번 더 누르게 하고, 축이 여럿인데 칩을 깔면 줄이 늘어난다' },
+      { name: 'searchQuery / onSearchChange', kind: '기능', values: 'controlled 검색(InputGroup)' },
+      { name: 'status / emptyState', kind: '기능', values: "'loading'|'empty'|'ready' — DataTable·ListPage와 같은 어휘. loading은 **400ms 지연 후 스피너**이고 **이미 행이 있으면 지우지 않는다**(06 §1-7)" },
+      { name: 'onLoadMore / loadMoreLabel / totalCount', kind: '기능', values: '더보기 노출은 **데이터가 결정**한다 — totalCount를 주면 items.length < totalCount일 때만' },
+    ],
+    composition: {
+      토큰: ['mlist-loading minHeight 240(EmptyState와 같은 자리)', 'spacing sm/md/xs'],
+      '의미 원자': ['TextInput', 'Button', 'Spinner', 'Text', 'Icon'],
+      분자: ['InputGroup', 'MobileChoice', 'MobileSection'],
+      유기체: ['EmptyState'],
+      공유: ['_useDelayedFlag(표시 지연)', 'fmtNumber(_cells)', 'mobilelist.css', 'data-section 훅 — 소비처가 특정 구획만 칠할 수 있게(raw 슬롯 대신 닫힌 키 하나)'],
+    } },
   { name: 'MobileStepTrail', layer: '분자', role: '단계의 진행 — 전자결재 *결재선*이 첫 소비처지만 부품은 결재를 모른다. MobileListRow로 대신할 수 없다(그 행은 "누르면 다른 화면으로"인데 결재선은 읽는 것이고, 무엇보다 순서·현재 위치를 말해야 한다). Timeline과도 다르다 — Timeline은 *일어난 일*의 기록이고 여기는 **아직 안 일어난 단계까지** 그린다(plan·halt). 데스크탑 결재란 격자의 모바일 짝(06 §5 "격자는 폰에서 트레일로").',
     props: [
       { name: 'steps', kind: '기능', values: "TrailStep[] = { id, role, name, meta?, state, stateLabel?, comment? }. state는 'done'|'current'|'plan'|'reject'|'halt' 닫힌 열거. 역할명·상태 문구는 도메인이라 소비처가 준다" },

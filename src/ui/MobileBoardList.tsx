@@ -12,18 +12,10 @@
 //       세그먼트는 글자가 뭉개진다. MobileCalendar 범례 칩 줄과 같은 어휘.
 //  · 하단 고정(글쓰기 CTA)은 이 부품이 아니라 셸이 소유한다 — MobileShell의 `bottom` 한 자리.
 //    부품이 자기 sticky 바를 그리면 같은 자리를 두 경로가 다툰다(v0.52.0에서 슬롯을 하나로 합친 이유).
-import { MobileChoice } from './MobileChoice';
 import { Badge } from './Badge';
-import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
-import { Button } from './Button';
-import { TextInput } from './TextInput';
-import { InputGroup } from './InputGroup';
-import { EmptyState } from './EmptyState';
-import { Spinner } from './Spinner';
-import { useDelayedFlag } from './_useDelayedFlag';
-import { MobileSection } from './MobileSection';
 import { MobileListRow } from './MobileListRow';
+import { MobileList } from './MobileList';
 import { fmtNumber } from './_cells';
 import type { BoardPost } from './BoardList';
 import './board.css';      // 공지·필독·NEW 솔리드 배지 어휘는 데스크탑과 *같은 클래스*를 쓴다(같은 신호 = 같은 형태)
@@ -56,18 +48,9 @@ export function MobileBoardList({
   searchQuery, onSearchChange, searchPlaceholder = '제목·작성자 검색',
   status = 'ready', onSelectPost, onLoadMore, loadMoreLabel = '더보기', totalCount, emptyState,
 }: Props) {
-  // **이미 보여줄 게 있으면 지우지 않는다.** 재조회 때 목록을 비우고 스피너를 띄우면 체감이 더 나빠지고,
-  //  사용자는 화면이 사라진 걸 오류로 읽는다. 스피너는 *처음 채울 때*만 자리를 갖는다.
-  const firstLoad = status === 'loading' && posts.length === 0;
-  // 표시는 늦게 켠다 — 빠른 조회에 스피너가 번쩍이지 않게(NN/g: 1초 미만엔 루프 표시를 쓰지 마라).
-  const showSpinner = useDelayedFlag(firstLoad);
-  const pinned = posts.filter((p) => p.pinned);
-  const normal = posts.filter((p) => !p.pinned);
-
-  // 더보기는 *데이터가 결정*한다 — 토글 prop이 아니다(데스크탑이 totalPages>1일 때만 Pagination을 그리는 것과 같은 규율).
-  //  `totalCount`를 주면 "아직 안 불러온 게 있을 때"만 뜬다 — 총 4건에 4건이 다 보이는데 더보기가 있으면
-  //  없는 걸 있다고 말하는 셈이다. totalCount가 없으면 부품은 남은 양을 알 수 없어, 콜백을 준 소비처를 믿는다.
-  const hasMore = onLoadMore != null && (totalCount == null || posts.length < totalCount);
+  // 껍데기(검색·필터·로딩/빈 상태·더보기·구획)는 전부 MobileList가 갖는다.
+  //  이 부품에 남는 건 **게시판 고유의 것**뿐이다: 행의 3층 배치, 공지/필독/NEW 배지, 안읽음 신호, 공지 구획.
+  //  전에는 껍데기가 여기 있었고, 그래서 v0.68.0의 로딩 규율이 게시판 화면에서만 지켜졌다.
 
   // 행 하나 — 데스크탑의 열(분류·필독·NEW·안읽음·첨부/댓글·작성자·날짜·조회)을 폰의 3층
   //  [배지 줄 / 제목 / 보조 줄]로 접는다. 잃는 정보는 없고 배치만 세로로 눕는다.
@@ -103,56 +86,29 @@ export function MobileBoardList({
   };
 
   return (
-    <>
-      {(onSearchChange || (categories && categories.length > 0)) && (
-        <MobileSection>
-          {onSearchChange && (
-            <InputGroup leftAddon={<Icon name="search" size="sm" />}>
-              <TextInput value={searchQuery ?? ''} onChange={onSearchChange} placeholder={searchPlaceholder} />
-            </InputGroup>
-          )}
-          {categories && categories.length > 0 && category != null && onCategoryChange && (
-            <div className="mb-cats">
-              <MobileChoice options={categories} value={category} onChange={onCategoryChange} ariaLabel="말머리 필터" />
-            </div>
-          )}
-        </MobileSection>
-      )}
-
-      {firstLoad ? (
-        // 지연 전에는 아무것도 안 그리되 **자리는 잡아둔다** — 스피너가 뜰 때 화면이 튀지 않게.
-        <div className="mb-loading" role="status" aria-live="polite">
-          {showSpinner && <Spinner />}
-        </div>
-      ) : posts.length === 0 ? (
-        <MobileSection>
-          <EmptyState
-            icon={emptyState?.icon ?? 'file-text'}
-            title={emptyState?.title ?? '게시글이 없습니다'}
-            description={emptyState?.description}
-          />
-        </MobileSection>
-      ) : (
-        <>
-          {/* 공지는 별도 구획으로 먼저 — 데스크탑의 '상단 고정 밴드'를 모바일에선 *섹션 하나*가 대신한다.
-              (배지만으로는 "고정"이 안 읽힌다. 구획이 곧 고정의 표현.) */}
-          {pinned.length > 0 && (
-            <div className="mb-pinned">
-              <MobileSection flush>{pinned.map(row)}</MobileSection>
-            </div>
-          )}
-          <MobileSection flush>{normal.map(row)}</MobileSection>
-
-          {(hasMore || totalCount != null) && (
-            <MobileSection>
-              {hasMore && <Button variant="secondary" fullWidth onClick={onLoadMore}>{loadMoreLabel}</Button>}
-              {totalCount != null && (
-                <div className="mb-total"><Text variant="caption" color="secondary">총 {fmtNumber(totalCount)}건</Text></div>
-              )}
-            </MobileSection>
-          )}
-        </>
-      )}
-    </>
+    <MobileList<BoardPost>
+      items={posts}
+      getKey={(p) => p.id}
+      renderRow={row}
+      /* 공지는 별도 구획으로 먼저 — 데스크탑의 '상단 고정 밴드'를 모바일에선 *섹션 하나*가 대신한다.
+         (배지만으로는 "고정"이 안 읽힌다. 구획이 곧 고정의 표현 — 틴트는 mobileboard.css가 건다.)
+         0건이면 MobileList가 헤더만 남기는데, 제목이 빈 문자열이라 실제로는 아무것도 안 그린다. */
+      sections={[
+        { key: 'pinned', title: '', match: (p) => Boolean(p.pinned) },
+        { key: 'normal', title: '', match: (p) => !p.pinned },
+      ]}
+      filters={categories}
+      filter={category}
+      onFilterChange={onCategoryChange}
+      filterLabel="말머리 필터"
+      searchQuery={searchQuery}
+      onSearchChange={onSearchChange}
+      searchPlaceholder={searchPlaceholder}
+      status={status}
+      emptyState={{ icon: emptyState?.icon ?? 'file-text', title: emptyState?.title ?? '게시글이 없습니다', description: emptyState?.description }}
+      onLoadMore={onLoadMore}
+      loadMoreLabel={loadMoreLabel}
+      totalCount={totalCount}
+    />
   );
 }

@@ -453,6 +453,29 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mseg-item:active { background: var(--bg-secondary); }
 .mseg-label { overflow: hidden; text-overflow: ellipsis; }
 
+/* ── MobileList ── */
+/* 첫 로드 자리 — 지연 전에는 비어 있고 지연 후 스피너가 들어온다.
+   높이를 미리 잡아두는 이유: 안 잡으면 스피너가 뜨는 순간 화면이 튀고, 그 튐이 곧 "느리다"로 읽힌다.
+   EmptyState의 minHeight와 같은 값 — 빈 상태와 로딩이 같은 자리를 차지해야 전환이 매끄럽다. */
+.mlist-loading {
+  min-height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+/* 검색칸과 필터 칩 줄은 같은 묶음의 두 단계라 섹션을 가르지 않고 sm(12)으로만 띄운다
+   (md면 서로 다른 묶음처럼 갈라진다). */
+.mlist-filters { margin-top: var(--mantine-spacing-sm); }
+.mlist-total { margin-top: var(--mantine-spacing-xs); text-align: center; }
+
+/* 그룹 머리 — 섹션 제목(캡션)보다 한 단 아래 위계다. 섹션은 "무엇의 묶음"이고 그룹은 "그 안의 갈래"다. */
+.mlist-group-hd {
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md) var(--mantine-spacing-xs);
+}
+.mlist-group-t { min-width: 0; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+.mlist-group-a { margin-left: auto; flex: none; }
+/* 그룹 사이는 여백으로 나눈다 — 선을 또 그으면 행 구분선과 섞여 위계가 안 읽힌다(06 §1-8). */
+.mlist-group + .mlist-group { margin-top: var(--mantine-spacing-xs); }
+
 /* ── MobileStepTrail ── */
 /* 접힌 줄 — 값(어디까지 왔나)은 접혀도 보인다. 행 리듬을 그대로 따른다(44 하한 · 좌우 md). */
 .mtr-sum {
