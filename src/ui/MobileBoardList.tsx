@@ -20,6 +20,8 @@ import { Button } from './Button';
 import { TextInput } from './TextInput';
 import { InputGroup } from './InputGroup';
 import { EmptyState } from './EmptyState';
+import { Spinner } from './Spinner';
+import { useDelayedFlag } from './_useDelayedFlag';
 import { MobileSection } from './MobileSection';
 import { MobileListRow } from './MobileListRow';
 import { fmtNumber } from './_cells';
@@ -35,6 +37,13 @@ type Props = {
   searchQuery?: string;
   onSearchChange?: (v: string) => void;
   searchPlaceholder?: string;
+  // 로딩·빈 상태 — 데스크탑 DataTable·ListPage와 **같은 어휘**를 쓴다(같은 말은 같은 뜻이어야 한다).
+  //  loading 표시는 스켈레톤이 아니라 **스피너**다. 두 가지 이유:
+  //   ① 실증이 약하다 — Viget 2017 실험에서 스켈레톤이 스피너·빈 화면 대비 *체감 대기가 가장 나빴고*,
+  //      이후 연구도 스피너 쪽 체감이 더 짧았다. NN/g 2025는 "빈 공간보다 나은 건 500ms 초과일 때뿐"이라 한다.
+  //   ② 우리 모바일 계열은 아직 배치가 움직인다 — 스켈레톤은 구조를 복제하므로 부품이 바뀔 때마다
+  //      실제와 어긋난다(스켈레톤은 구조가 굳은 자리에서만 값을 한다).
+  status?: 'loading' | 'empty' | 'ready';
   onSelectPost?: (post: BoardPost) => void;
   onLoadMore?: () => void;                            // '더보기'(폰은 번호 페이징을 안 쓴다). 노출 조건은 아래 hasMore — 데이터가 정한다
   loadMoreLabel?: string;
@@ -45,8 +54,13 @@ type Props = {
 export function MobileBoardList({
   posts, categories, category, onCategoryChange,
   searchQuery, onSearchChange, searchPlaceholder = '제목·작성자 검색',
-  onSelectPost, onLoadMore, loadMoreLabel = '더보기', totalCount, emptyState,
+  status = 'ready', onSelectPost, onLoadMore, loadMoreLabel = '더보기', totalCount, emptyState,
 }: Props) {
+  // **이미 보여줄 게 있으면 지우지 않는다.** 재조회 때 목록을 비우고 스피너를 띄우면 체감이 더 나빠지고,
+  //  사용자는 화면이 사라진 걸 오류로 읽는다. 스피너는 *처음 채울 때*만 자리를 갖는다.
+  const firstLoad = status === 'loading' && posts.length === 0;
+  // 표시는 늦게 켠다 — 빠른 조회에 스피너가 번쩍이지 않게(NN/g: 1초 미만엔 루프 표시를 쓰지 마라).
+  const showSpinner = useDelayedFlag(firstLoad);
   const pinned = posts.filter((p) => p.pinned);
   const normal = posts.filter((p) => !p.pinned);
 
@@ -105,7 +119,12 @@ export function MobileBoardList({
         </MobileSection>
       )}
 
-      {posts.length === 0 ? (
+      {firstLoad ? (
+        // 지연 전에는 아무것도 안 그리되 **자리는 잡아둔다** — 스피너가 뜰 때 화면이 튀지 않게.
+        <div className="mb-loading" role="status" aria-live="polite">
+          {showSpinner && <Spinner />}
+        </div>
+      ) : posts.length === 0 ? (
         <MobileSection>
           <EmptyState
             icon={emptyState?.icon ?? 'file-text'}

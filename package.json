@@ -1,6 +1,6 @@
 {
   "name": "@jjaim519/erp-dsl",
-  "version": "0.67.0",
+  "version": "0.68.0",
   "description": "ERP No-Code 빌더 — 닫힌 부품 DSL(원자·분자·유기체·템플릿) + 스키마 층(Zod).",
   "repository": {
     "type": "git",
@@ -29,10 +29,11 @@
     "build": "next build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "prepublishOnly": "npm run typecheck && npm run lint",
+    "prepublishOnly": "npm run typecheck && npm run lint && npm run check:drift",
     "pdfjs:assets": "node scripts/copy-pdfjs-assets.mjs",
     "predev": "node scripts/copy-pdfjs-assets.mjs",
-    "prebuild": "node scripts/copy-pdfjs-assets.mjs"
+    "prebuild": "node scripts/copy-pdfjs-assets.mjs",
+    "check:drift": "node scripts/check-catalog-drift.mjs"
   },
   "peerDependencies": {
     "@mantine/core": "^8.3.18",

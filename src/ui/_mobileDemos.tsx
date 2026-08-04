@@ -440,6 +440,23 @@ function BoardListDemo() {
   );
 }
 
+function BoardListLoadingDemo() {
+  // 지연(400ms)을 눈으로 보려면 다시 열어야 하므로, 토글로 재현할 수 있게 둔다.
+  const [loading, setLoading] = useState(true);
+  return (
+    <MobileShell tabs={TABS} activePath="/board" onNavigate={() => {}}>
+      <MobileTop title="게시판" action={{ label: loading ? '완료로' : '로딩으로', variant: 'secondary', onClick: () => setLoading((v) => !v) }} />
+      <MobileBoardList
+        posts={loading ? [] : POSTS}
+        status={loading ? 'loading' : 'ready'}
+        categories={CATS} category="all" onCategoryChange={() => {}}
+        searchQuery="" onSearchChange={() => {}}
+        onSelectPost={() => {}}
+      />
+    </MobileShell>
+  );
+}
+
 function BoardListEmptyDemo() {
   const [q, setQ] = useState('없는검색어');
   return (
@@ -605,6 +622,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   // 화면 — 4탭 데모를 안 거치고 직접 진입하는 자리.
   //  키에 콜론 같은 구분자를 안 쓴다(URL 세그먼트로 그대로 나가므로). 구분은 screen 플래그가 한다.
   ScreenBoardListEmpty: { render: () => <BoardListEmptyDemo />, bare: true, screen: true, label: '게시판 — 빈 상태', note: '조작 없이 빈 상태를 바로 본다' },
+  ScreenBoardListLoading: { render: () => <BoardListLoadingDemo />, bare: true, screen: true, label: '게시판 — 로딩', note: '400ms 지연 후 스피너. 상단 버튼으로 로딩↔완료 전환' },
   ScreenOrders:         { render: () => <OrdersDemo />, bare: true, screen: true, label: '발주 탭', note: '데스크탑 FormField를 셸 안에서 쓰는 자리 — 모바일 전용 부품 없이 성립하는지' },
   ScreenEventDetail:    { render: () => <EventDetailDemo />, bare: true, screen: true, label: '현장 — 일정 상세', note: '3뎁스 화면' },
 };

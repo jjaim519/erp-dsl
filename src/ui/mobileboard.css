@@ -141,6 +141,14 @@
 .mbw-quick { display: flex; flex-direction: column; gap: var(--mantine-spacing-xxs); }
 .mbw-quick .chips { display: flex; flex-wrap: wrap; gap: var(--mantine-spacing-xxs); }
 
+/* 첫 로드 자리 — 지연 전에는 비어 있고 지연 후 스피너가 들어온다.
+   높이를 미리 잡아두는 이유: 안 잡으면 스피너가 뜨는 순간 화면이 튀고, 그 튐이 곧 "느리다"로 읽힌다.
+   EmptyState의 minHeight(240)와 같은 값 — 빈 상태와 로딩이 같은 자리를 차지해야 전환이 매끄럽다. */
+.mb-loading {
+  min-height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+
 /* 말머리 필터 칩 줄 — 검색칸 바로 아래. MobileSection 본문은 gap 없는 블록이라 그냥 두면 **간격 0**으로
    검색칸에 그대로 붙는다(규칙이 아예 없던 자리다). 검색과 필터는 같은 묶음의 두 단계라
    섹션을 가르지 않고 sm(12) 하나로 띄운다 — md(16)면 서로 다른 묶음처럼 갈라진다. */

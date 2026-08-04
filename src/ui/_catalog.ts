@@ -1070,13 +1070,14 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'onSelectPost', kind: '기능', values: '(post) => void' },
       { name: 'onLoadMore / loadMoreLabel / totalCount', kind: '기능', values: '더보기(번호 페이징 없음) / 총 N건. **노출은 데이터가 결정** — totalCount를 주면 posts.length < totalCount일 때만 버튼이 뜬다(다 보이는데 더보기가 있으면 없는 걸 있다고 말하는 셈). totalCount가 없으면 남은 양을 알 수 없어 콜백 준 소비처를 믿는다' },
       { name: 'emptyState', kind: '콘텐츠', values: '{ icon?, title, description? }' },
+      { name: 'status', kind: '기능', values: "'loading' | 'empty' | 'ready'(기본) — DataTable·ListPage와 같은 어휘. loading은 **스켈레톤이 아니라 스피너**이고(스켈레톤은 구조가 굳은 자리에서만 — Viget 2017에서 체감 대기가 가장 나빴다), **400ms 지연 후**에 뜨며(NN/g: 1초 미만엔 표시하지 않는다), **이미 행이 있으면 지우지 않는다**(재조회는 목록을 유지). 06 §1-7" },
     ],
     composition: {
-      토큰: ['primary-0(공지 구획 톤)', 'primary-6(안읽음 점)', 'border-default(헤어라인)', '가로 스크롤 칩 줄'],
-      '의미 원자': ['Chip(legend)', 'Badge', 'Text', 'Icon', 'Button', 'TextInput'],
+      토큰: ['primary-0(공지 구획 톤)', 'primary-6(안읽음 점)', 'border-default(헤어라인)', '가로 스크롤 칩 줄', 'mb-loading minHeight 240(EmptyState와 같은 자리)'],
+      '의미 원자': ['Chip(legend)', 'Badge', 'Text', 'Icon', 'Button', 'TextInput', 'Spinner'],
       분자: ['InputGroup', 'MobileSection', 'MobileListRow(emphasis=안읽음)'],
       유기체: ['EmptyState'],
-      공유: ['BoardPost(BoardList)', 'board.css(공지·필독·NEW 솔리드 배지 — 같은 신호는 같은 형태)', 'mobileboard.css'],
+      공유: ['BoardPost(BoardList)', 'board.css(공지·필독·NEW 솔리드 배지 — 같은 신호는 같은 형태)', 'mobileboard.css', '_useDelayedFlag(로딩 표시 지연)'],
     } },
   { name: 'MobileBoardView', layer: '유기체', role: '게시판 글 보기의 모바일 화면 — 데스크탑 BoardView의 짝. 업무 기능을 전부 갖는다(필독 읽음확인 배너+진행률+CTA · 첨부 · 이전/다음글 · 조회수 · 작성자 신원 · 댓글 차단). 글 카드가 없다(면·그림자 대신 섹션 헤어라인). **댓글 작성란이 이 부품 안에 없다** — 폰은 입력이 하단 고정이라 셸 `bottom`의 MobileComposer가 받고, 답글은 *위치*가 아니라 **대상 태깅**으로 말한다(`onReply(id)`). 데스크탑은 반대로 중첩 인라인 폼 — 같은 행위, 다른 매체. 상단 액션(수정·삭제)도 셸 몫.',
     props: [
