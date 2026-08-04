@@ -155,12 +155,16 @@
 .mb-cats { margin-top: var(--mantine-spacing-sm); }
 
 /* 첨부 액션 — 섹션 헤더 우측. 보조 행위라 텍스트+글리프로 압축하되 표적은 44px을 지킨다.
-   세로 여백 대칭은 MobileSection이 책임진다(.mls-hd[data-action] — 액션 있는 헤더는 대칭 행이 된다). */
+   **박스를 44px로 키우지 않는다** — 키우면 헤더 높이가 액션 유무로 갈리고, 그걸 보정하려고
+   MobileSection이 padding을 분기하면 이번엔 글자 액션에서 여백이 사라진다(실제로 그랬다).
+   시각 크기는 글자 그대로 두고 **세로 히트 영역만** 넓힌다 — controls.css의 .erpHitTarget과 같은 수법이고,
+   폭은 이미 버튼이 갖고 있으므로 세로만 늘리면 된다.
+   inset 계산은 자기 높이에서 도출한다(%는 포함 블록 높이 기준) → 폰트 스케일이 커져도 따라온다. */
 .mbw-attach {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--mantine-spacing-xxs);
-  min-height: 44px;
   padding: 0;
   border: none;
   background: none;
@@ -168,4 +172,11 @@
   font-size: var(--typo-caption-size);
   color: var(--mantine-color-primary-6);
   cursor: pointer;
+}
+.mbw-attach::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  top: calc((100% - var(--erp-touch-target)) / 2);
+  bottom: calc((100% - var(--erp-touch-target)) / 2);
 }

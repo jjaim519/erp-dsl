@@ -43,13 +43,14 @@
   letter-spacing: .02em;
 }
 .mls-hd-a { margin-left: auto; font-size: var(--typo-caption-size); color: var(--text-secondary); }
-/* 액션이 있는 헤더는 *대칭 행*이 된다 — 액션은 44px 터치타깃이라, 캡션용 비대칭 여백(위 24/아래 8)을
-   그대로 두면 컨트롤 기준으로 위18/아래9가 된다(실화면 지적). 세로 중앙 정렬도 함께(baseline은 텍스트끼리의 규칙). */
-.mls-hd[data-action] {
-  align-items: center;
-  padding-top: var(--mantine-spacing-xs);
-  padding-bottom: var(--mantine-spacing-xs);
-}
+/* 액션이 있어도 **여백은 그대로다**. 세로 중앙 정렬만 바꾼다(baseline은 텍스트끼리의 규칙이라
+   아이콘이 섞이면 어긋난다).
+   ※ 전에는 여기서 padding을 24/8 → 8/8로 줄였다. 사유가 "액션은 44px 터치타깃이니 보정한다"였는데
+     **부품은 소비처가 이 슬롯에 뭘 넣을지 모른다** — 글자를 넣으면 보정할 게 없는데 위 여백만 사라져
+     같은 화면의 다른 섹션과 리듬이 갈렸다(실화면 지적). 모르는 것에 분기하면 안 된다.
+     터치타깃이 필요한 액션은 **액션 자신이 히트 영역으로 해결한다**(헤더 박스를 키우지 않는다).
+     그 기제는 이미 있다 — controls.css의 .erpHitTarget(Checkbox·Radio·Switch가 쓴다). */
+.mls-hd[data-action] { align-items: center; }
 
 /* 본문 — 기본은 사방 여백(자유 콘텐츠). 상단도 반드시 준다: 제목 없는 섹션이 기본이라
    상단만 비우면 내용이 위 경계선(또는 내비바)에 그대로 붙는다. */
