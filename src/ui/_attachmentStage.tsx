@@ -8,11 +8,12 @@ import { Text } from './Text';
 import { Button } from './Button';
 import { Spinner } from './Spinner';
 import { openPdf, hasPdfEngine, type PdfDoc } from './_pdfEngine';
-import { UNVIEWABLE_REASON, fallbackReason, type Attachment } from './_attachment';
+import { UNVIEWABLE_REASON, fallbackReason, type Attachment, type ZoomStep } from './_attachment';
 import './attachment.css';
 
-/** 확대 단계 — 자유 배율을 안 연다(헌법 5). 맞춤/실제/2배 셋이면 문서 확인에 충분하다. */
-export type ZoomStep = 'fit' | 'actual' | 'double';
+// 확대 단계 어휘는 _attachment(공유 계약)에 있다. 여기 있는 건 **pdf.js 렌더 배율**이다 —
+//  장표 뷰어는 같은 단어에 다른 수(A4 캔버스 배율)를 쓴다.
+export type { ZoomStep };
 const ZOOM_SCALE: Record<ZoomStep, number> = { fit: 1, actual: 1.5, double: 2.5 };
 
 type Props = {

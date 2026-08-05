@@ -1153,6 +1153,21 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['Menu'],
       공유: ['_attachment(계약)', '_attachmentStage(내용 렌더)', '_pdfEngine(엔진 격리)', 'attachment.css'],
     } },
+  { name: 'MobilePaperViewer', layer: '유기체', role: '폰의 **A4 장표 뷰어** — 데스크탑 PaperModal의 *형제*(축소판 아님). A4 CANON 794px를 폰 폭 393pt에 맞추면 배율 0.495인데 캔버스는 인쇄 좌표계라 데스크탑 타이포(14px)를 써서 글자가 6.9px가 된다 → fit-to-width 하나로는 못 읽는 화면이라 **두 뷰**를 갖는다: ① 읽기(기본) = rows를 라벨-값으로 **투영**(AI 추론이 아니다 — 구조를 이미 갖고 있다. rowSpan 라벨은 그룹 머리로 내려가고 colSpan은 손실 0, image/node만 자리가 사라진다) / ② 원본 = CANON 캔버스 2D 스크롤 + 닫힌 확대 3단(WCAG 1.4.10이 2차원 배치 콘텐츠를 예외로 두는 그 자리 — 예외는 본체에만 걸리고 크롬은 rem 토큰). 업계 수렴: Word·Docs·DocuSign·Acrobat이 전부 두 뷰를 갖고, DocuSign은 리플로우가 \'재무 양식처럼 표현의 정밀함이 중요한 문서엔 늘 적합하진 않다\'고 스스로 단서를 단다. 전체 화면 커버(모달 아님) — 크롬 규범은 MobileAttachmentViewer와 한 벌.',
+    props: [
+      { name: 'opened / onClose', kind: '기능', values: 'controlled. 닫으면 뷰·배율이 초기화된다 — 다음 문서에 앞 배율이 남으면 "왜 확대돼 있지"가 된다' },
+      { name: 'title', kind: '콘텐츠', values: '문서 이름 — 헤더 행(셸 헤더와 같은 기하·h2)' },
+      { name: 'columns / rows / fields / values', kind: '기능', values: '**장표 스키마 자체**. PaperModal이 children(ReactNode)을 받는 것과 갈리는 지점 — ReactNode에는 구조가 없어 리플로우를 만들 수 없다. FieldGrid는 mode="read" 고정(06 §4-1)' },
+      { name: 'orientation', kind: '스타일', values: "'portrait'(기본) | 'landscape' — CANON은 PaperModal과 같은 값이어야 한다(같은 문서가 두 층에서 같게 보인다)" },
+      { name: 'actions', kind: '기능', values: 'MobileHeaderActions(상한 2, 첫째만 텍스트 — 셸 헤더와 같은 계약). 인쇄·내려받기 *트리거*만, 실행은 소비처' },
+    ],
+    composition: {
+      토큰: ['--bg-tertiary(종이가 놓인 바닥)', '--border-default(종이 윤곽·행 구분선)', 'desktopTypoVars(06 §1-9의 유일한 예외)'],
+      '의미 원자': ['Text', 'Icon', 'IconButton'],
+      유기체: ['FieldGrid'],
+      분자: ['MobileSegment'],
+      공유: ['_attachment(ZoomStep·ZOOM_NEXT — 첨부 뷰어와 같은 어휘)', '_cells(renderAction·fmtNumber·fmtCurrency)', 'MobileShell(MobileHeaderActions)', 'mobilepaper.css'],
+    } },
   { name: 'MobileAttachmentViewer', layer: '유기체', role: '폰 첨부 뷰어 — **불투명 전체 화면 커버**(모달 아님). counter 필수 · 크롬 auto-hide 없음 · rotate 없음 · 탈출구 2개(X + Esc) · 제스처 미사용(가로 페이징/세로 닫기 동시 개방은 NN/g 경고).',
     props: [
       { name: '(AttachmentViewer와 동일)', kind: '기능', values: '_attachment의 AttachmentViewerContract 한 벌. 추가로 onShare를 그린다(데스크탑엔 OS 공유 관습이 없다)' },

@@ -133,3 +133,43 @@ export const shiftMonth = (m: string, n: number) => {
   const i = y * 12 + (mo - 1) + n;
   return `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
 };
+
+// ── A4 장표 — MobilePaperViewer 데모(거래명세서). columns 4.
+//  colSpan·rowSpan·image를 전부 등장시킨다: 세 가지가 읽기 뷰로 어떻게 투영되는지가 이 부품의 전부다.
+export const PAPER_FIELDS: import('../schema').FieldSpec[] = [
+  { name: 'site', label: '현장주소', type: 'text' },
+  { name: 'manager', label: '발주담당자', type: 'text' },
+  { name: 'phone', label: '연락처', type: 'text', mask: 'phone' },
+  { name: 'useDate', label: '사용일', type: 'date' },
+  { name: 'door', label: '도어재작', type: 'select', options: [{ label: '케이산업', value: 'kei' }, { label: '미정', value: 'tbd' }] },
+  { name: 'usage', label: '사용용도', type: 'textarea' },
+  { name: 'bizName', label: '상호', type: 'text' },
+  { name: 'bizNo', label: '등록번호', type: 'text' },
+  { name: 'bizAddr', label: '주소', type: 'text' },
+  { name: 'amount', label: '합계', type: 'currency' },
+];
+
+export const PAPER_VALUES: Record<string, unknown> = {
+  site: '서울 성동구 왕십리로 83-21 아크로 서울포레스트 D동 2201호',
+  manager: '김현수 과장',
+  phone: '010-1234-5678',
+  useDate: '2026-08-14',
+  door: 'kei',
+  usage: 'D동 2201호 주방 상부장·하부장 교체 및 아일랜드 신설. 기존 타일 철거 포함.',
+  bizName: '㈜한빛산업',
+  bizNo: '123-45-67890',
+  bizAddr: '경기 화성시 동탄산단6길 21',
+  amount: 5960000,
+};
+
+export const PAPER_ROWS = [
+  [{ label: '현장주소' }, { field: 'site', colSpan: 3 }],
+  [{ label: '발주담당자' }, { field: 'manager' }, { label: '연락처' }, { field: 'phone' }],
+  [{ label: '사용일' }, { field: 'useDate' }, { label: '도어재작' }, { field: 'door' }],
+  [{ label: '사용용도' }, { field: 'usage', colSpan: 3 }],
+  // rowSpan 라벨 — 읽기 뷰에서 **그룹 머리**가 된다(손실 0).
+  [{ label: '공급자', rowSpan: 3 }, { label: '상호' }, { field: 'bizName', colSpan: 2 }],
+  [{ label: '등록번호' }, { field: 'bizNo', colSpan: 2 }],
+  [{ label: '주소' }, { field: 'bizAddr', colSpan: 2 }],
+  [{ label: '합계' }, { field: 'amount', colSpan: 3 }],
+];

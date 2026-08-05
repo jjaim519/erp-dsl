@@ -197,7 +197,7 @@ type FieldSpec = {
 - **OptionSetPicker** `mode: idle|pick|configure` `groups`/`selection` `onPick`/`onPickMany?`/`onQty`/`onNum` `display?` `search?` `defaultCollapsed?` `subtotal` `primary` — 정의를 읽어 *고르는* 선택 면. 표현 어휘(cards/grid/list/chips/stepper/input)는 값 개수로 **자동 도출**, `display`는 override. **값묶음(`Choice.group`)은 기하와 직교한 레이어**(기본=구획 밴드 블록 / 값>10=필터 칩)이고 **정렬 책임은 부품**(`bundleBlocks`)
 - **CompositionOutline** `sections: CompositionSection[]` `summary?` `addLabel?`/`emptyHint?` `footer?` `onAddToSection`/`onSelectLine`/`onDeleteLine` — 2-pane 우측 "작성물 카드 스택". 카드는 라인이 있거나 작성 중인 섹션만, 추가는 상단 단일 버튼 + 계층 메뉴
 
-### 모바일 계열 (15) — AppShell 계열의 *형제*(축소판 아님)
+### 모바일 계열 (16) — AppShell 계열의 *형제*(축소판 아님)
 
 > **`Mobile*` 접두가 곧 경계다.** 폼도 갈린다 — 모바일에서는 `FormField`(상자)가 아니라 **`MobileField`(밑줄)**, 작은 선택지는 `Select`가 아니라 **`MobileChoice`(칩 줄)**를 쓴다. 면·그림자를 안 쓰고 **배경 + 가로 헤어라인**으로만 나눈다(무테 지향의 반대 — 모바일의 정체성이 이긴다). 데스크탑 부품과 시각 체계가 정반대라 **섞어 쓰면 안 된다**. 입력은 전용 부품을 두지 않는다 — `FormField` + 입력 원자를 그대로 쓰고, 타이포·44pt 터치타깃은 셸 스코프가 처리한다.
 
@@ -212,6 +212,7 @@ type FieldSpec = {
 - **MobileDisclosure** `title`/`meta` `defaultOpen?` · children — 그 자리에서 펼쳐지는 행(이동=›  / 펼침=⌄)
 - **MobileStatRow** `items: MobileStatItem[]` — KPI 2~4개 균등 분할 + 세로 헤어라인
 - **MobilePhotoPicker** `value: FileItem[]`/`onChange` `max`/`disabled` — 정사각 썸네일 격자(폰엔 드래그가 없어 FileUploader를 못 쓴다)
+- **MobilePaperViewer**(유기체) `opened`/`onClose` `title` `columns`/`rows`/`fields`/`values` `orientation?` `actions?` — 폰의 **A4 장표 뷰어**(PaperModal의 형제). A4를 폰 폭에 맞추면 배율 0.495 → 글자 6.9px이라 fit-to-width 하나로는 못 읽는다. 그래서 두 뷰: **읽기**(rows를 라벨-값으로 투영 — `rowSpan` 라벨은 그룹 머리로, `colSpan`은 손실 0) / **원본**(CANON 2D 스크롤 + 확대 3단, WCAG 1.4.10 2차원 예외). children이 아니라 **장표 스키마**를 받는다 — ReactNode에는 구조가 없어 리플로우를 만들 수 없다
 - **MobileCalendar** `month` `selected`/`onSelect` `events`/`encoding`/`annotations`/`holidays` `maxLanes?` — 월 달력. **스팬 바**로 기간을 읽는다(점 아님). 데스크탑 CalendarPage와 **같은 타입·같은 레인 알고리즘**(변환 0). 월 제목·이동은 이 부품이 아니라 **셸 헤더의 값 제목**이 갖는다
 - **MobileComment** `comment: BoardComment` `authorLabel?` `onReply?` — 1단 답글(데스크탑 BoardView와 타입 공유)
 - **MobileComposer** `value`/`onChange`/`onSubmit` `replyTo?` `placeholder`/`disabled` — 하단 고정 입력 바(셸 `bottom`에 꽂음)

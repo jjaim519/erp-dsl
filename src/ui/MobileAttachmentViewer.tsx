@@ -22,10 +22,10 @@ import { Icon } from './Icon';
 import { Text } from './Text';
 import { Menu } from './Menu';
 import { AttachmentStage, type ZoomStep } from './_attachmentStage';
+import { ZOOM_NEXT } from './_attachment';
 import { counterLabel, type AttachmentViewerContract } from './_attachment';
 import './attachment.css';
 
-const ZOOM_NEXT: Record<ZoomStep, ZoomStep> = { fit: 'actual', actual: 'double', double: 'fit' };
 const ZOOM_LABEL: Record<ZoomStep, string> = { fit: '맞춤', actual: '150%', double: '250%' };
 
 export function MobileAttachmentViewer({

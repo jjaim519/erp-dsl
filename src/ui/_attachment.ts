@@ -83,3 +83,13 @@ export function fallbackReason(item: Attachment, hasPdfEngine: boolean): Unviewa
   if (item.kind === 'pdf' && !hasPdfEngine) return 'unsupported';
   return 'unsupported';
 }
+
+/**
+ * 확대 단계 — 자유 배율을 안 연다(헌법 5). 맞춤/실제/2배 셋이면 문서 확인에 충분하다.
+ * 여기 둔 이유: 첨부 뷰어 둘과 **장표 뷰어**가 같은 어휘를 쓴다. 배율의 *실제 값*은 각 뷰어가 정한다
+ * (첨부는 pdf.js 렌더 배율, 장표는 A4 캔버스 배율 — 같은 단어가 다른 수를 가리킨다).
+ */
+export type ZoomStep = 'fit' | 'actual' | 'double';
+
+/** 단계 순환 — 버튼 하나로 돌린다. 세 뷰어에 그대로 복제돼 있던 것을 여기로 모은다. */
+export const ZOOM_NEXT: Record<ZoomStep, ZoomStep> = { fit: 'actual', actual: 'double', double: 'fit' };

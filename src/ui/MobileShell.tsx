@@ -55,6 +55,13 @@ export type MobileHeaderValue = {
 type IconAction = Action & { iconOnly: true; icon: IconName };
 
 /**
+ * 상단 액션 자리의 계약 — **상한 2, 첫째만 텍스트.**
+ * 셸 헤더 행과 전체 화면 뷰어(MobilePaperViewer·MobileAttachmentViewer)가 같은 자리를 갖는다.
+ * 타입을 공유하는 이유: 상한이 자리마다 갈리면 "여긴 3개도 되나"가 매번 생긴다.
+ */
+export type MobileHeaderActions = readonly [Action] | readonly [Action, IconAction];
+
+/**
  * 헤더 행에 **놓을 것**. 셋 다 선택이다.
  *
  * ⚠ 이름이 '헤더'지만 *제목 행*이 아니다.
@@ -74,7 +81,7 @@ export type MobileHeaderContent = {
    * 그건 하단 고정(bottom)이 받는다(06 §2 화면 유형표).
    * 왜 2인가: 좌측 ‹ 와 제목이 축을 쓰고 있어 셋째부터 제목이 밀린다. 넘치면 오버플로 메뉴다(06 §4).
    */
-  actions?: readonly [Action] | readonly [Action, IconAction];
+  actions?: MobileHeaderActions;
 };
 
 type Props = {

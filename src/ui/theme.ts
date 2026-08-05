@@ -139,14 +139,29 @@ const typographyMobile: Record<TypographyStep, { fontSize: string; fontWeight: n
   caption:       { fontSize: '0.8125rem', fontWeight: 400, lineHeight: 1.4 },  // iOS Footnote 13
 };
 
+const typoVarsOf = (t: Record<TypographyStep, { fontSize: string; fontWeight: number; lineHeight: number }>) =>
+  Object.fromEntries(
+    Object.entries(t).flatMap(([step, spec]) => [
+      [`--typo-${step}-size`, spec.fontSize],
+      [`--typo-${step}-weight`, String(spec.fontWeight)],
+      [`--typo-${step}-lh`, String(spec.lineHeight)],
+    ]),
+  ) as Record<string, string>;
+
 // 모바일 스코프에 깔 CSS 변수 묶음 — MobileShell이 루트 style로 적용한다(단일 출처는 여기).
-export const mobileTypoVars: Record<string, string> = Object.fromEntries(
-  Object.entries(typographyMobile).flatMap(([step, spec]) => [
-    [`--typo-${step}-size`, spec.fontSize],
-    [`--typo-${step}-weight`, String(spec.fontWeight)],
-    [`--typo-${step}-lh`, String(spec.lineHeight)],
-  ]),
-);
+export const mobileTypoVars: Record<string, string> = typoVarsOf(typographyMobile);
+
+/**
+ * **데스크탑 타이포로 되돌리는** 변수 묶음 — 06 §1-9(모바일 규격은 문서 단위)의 *유일한 예외* 통로다.
+ *
+ * 왜 필요한가: A4 장표는 **인쇄 좌표계**(794×1123 @96dpi)에 그려지고 그 캔버스는 데스크탑 타이포(body 14)를
+ * 전제로 짜여 있다. 모바일 스코프 안에서 그대로 그리면 body가 17px이 되어 **794px 캔버스가 깨진다**
+ * (행 높이·줄바꿈·열 폭이 전부 밀린다). 그래서 캔버스 루트에서만 데스크탑 값으로 되돌린다.
+ *
+ * ⚠ 이 예외를 다른 자리에 쓰지 말 것. 기준은 "고정 px 좌표계 위에 그려진 문서인가" 하나다 —
+ *   화면 UI는 예외 없이 모바일 타이포를 쓴다(폰에서 14px는 심각하게 작다는 게 그 스코프의 존재 이유다).
+ */
+export const desktopTypoVars: Record<string, string> = typoVarsOf(typography);
 
 const borderWidth = '1px';            // 보더 굵기 1종
 const iconBaselineShift = '-0.125em'; // 아이콘 광학정렬 보정(폰트 크기 비례 토큰, 1/8 룰)
