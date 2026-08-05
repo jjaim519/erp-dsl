@@ -121,3 +121,15 @@ export const dayLabel = (iso: string) => {
   const d = new Date(iso);
   return `${d.getMonth() + 1}월 ${d.getDate()}일 일정`;
 };
+
+// 월 이동·표기 — v0.74.0에서 MobileCalendar가 자기 헤더를 잃으면서 **소비처의 일**이 됐다.
+//  두 데모(4탭 화면 · 부품 캔버스)가 같은 값을 쓰도록 여기 한 벌만 둔다.
+export const monthLabel = (m: string) => {
+  const [y, mo] = m.split('-').map(Number);
+  return `${y}년 ${mo}월`;
+};
+export const shiftMonth = (m: string, n: number) => {
+  const [y, mo] = m.split('-').map(Number);
+  const i = y * 12 + (mo - 1) + n;
+  return `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
+};

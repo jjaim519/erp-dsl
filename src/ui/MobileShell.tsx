@@ -12,9 +12,14 @@
 //      **현행 HIG 원문에서 확인 실패**했다(구 HIG 미러에만 있는 문장). 결론은 유지하고 근거만 교체한다.
 //    ※ 단 이 규칙은 *묶음 컨테이너*에 대한 것이다. **입력칸은 예외로 면을 쓴다**(mobileshell.css 입력칸
 //      어휘 절) — M3 자신이 카드를 말리면서 filled text field는 면으로 받는 것과 같은 구분이다.
-//  · 상단은 두 층으로 본다(TDS Navigation / Top 분리): 이 셸은 **Navigation(뒤로·우측 아이콘 액션)만**
-//    소유하고, 화면 제목(Top)은 본문 첫 블록으로 *화면*이 갖는다. 데스크탑 PageHeader의 우측 CTA는
-//    여기 없다 — CTA는 헤더가 아니라 하단 고정(cta)이 받는다.
+//  · **상단은 한 층이다 — 헤더 행 하나, 고정, 항상.** 예전엔 두 층(셸 Navigation / 본문 MobileTop)이었고
+//    iOS처럼 큰 제목이 스크롤로 접히는 구성을 검토했으나 **기각**했다: iOS의 접힘은 blur/material 위에서
+//    "제목이 재질 뒤로 흘러들어간다"로 읽혀야 성립하는 문법인데, 우리는 면·그림자를 안 쓰기로 한 체계라
+//    그 재질이 없다. 없는 재질 위에 동형을 만들면 두 층이 그냥 따로 노는 두 덩어리가 된다(06 §6).
+//    → 제목은 헤더 행이 갖고, MobileTop은 폐기했다.
+//  · 헤더 행에 **무엇이 들어가는지는 소비처가 정한다**(header prop). 다만 자유 슬롯(ReactNode)이 아니라
+//    닫힌 어휘다 — 탈출구를 열면 화면마다 헤더가 달라진다. 데스크탑 PageHeader의 우측 CTA는 여기 없다:
+//    **커밋은 하단 고정(bottom)**, 헤더는 진입·조작(accent)이다(06 §2).
 //  · 탭은 3~5개(**M3**. 현행 HIG는 숫자를 안 박는다 — 3~5는 M3 규정이다). **오버플로('더보기') 없음**
 //    — HIG도 "이런 상황을 제한하라"고 말리는 패턴이라, 넘치면 좁아지는 게 그대로 드러나게 둔다
 //    (소비처가 추려서 준다).
@@ -28,21 +33,53 @@ import { Text } from './Text';
 import { CountBadge } from './CountBadge';
 import { IconButton } from './IconButton';
 import { Stack } from './Stack';
-import { type Action } from './_cells';
+import { renderAction, type Action } from './_cells';
 import './mobileshell.css';
 
 export type MobileTab = { label: string; icon: IconName; path: string; count?: number };
 
+/**
+ * ‹ › 로 바뀌는 제목 — 화면이 보고 있는 *범위*가 곧 이름인 경우(달력의 'YYYY년 M월').
+ * 스테퍼는 **제목에 붙는다**(우측 액션 존이 아니다): ‹ ›는 화면의 액션이 아니라 제목을 바꾸는 컨트롤이라,
+ * 액션 존에 두면 두 성격이 섞이고 상한 2도 다 먹는다.
+ */
+export type MobileHeaderValue = {
+  value: string;
+  onPrev: () => void;
+  onNext: () => void;
+  prevLabel?: string;   // 낭독용. 기본 '이전'
+  nextLabel?: string;   // 기본 '다음'
+};
+
+/** 둘째 액션 — 반드시 아이콘 전용. 타입으로 못박는다(주석으로 적힌 상한은 지켜지지 않는다). */
+type IconAction = Action & { iconOnly: true; icon: IconName };
+
+/**
+ * 헤더 행에 **놓을 것**. 셋 다 선택이다.
+ *
+ * ⚠ 이름이 '헤더'지만 *제목 행*이 아니다.
+ *   이 타입은 행에 **무엇을 놓을지**만 정한다 — **행의 유무를 정하지 않는다.**
+ *   `header`를 통째로 생략해도 행은 그대로 있고(고정 52px 밴드), 그래서 탭을 오갈 때 본문 시작선이 안 튄다.
+ *   **비는 게 정상인 화면이 실제로 있다** — 제목을 다른 층에서 말하는 화면이 그렇다.
+ */
+export type MobileHeaderContent = {
+  /** 화면 이름. 고정 문자열이거나, ‹ › 로 값을 바꾸는 제목이거나. **없어도 된다.** */
+  title?: string | MobileHeaderValue;
+  /** 있으면 좌측에 ‹. 없으면 그 자리는 **폭 0**(좌측 정렬이라 자리를 예약하지 않는다). */
+  onBack?: () => void;
+  backLabel?: string;   // 접근성 라벨(기본 '뒤로')
+  /**
+   * 우측 액션 — **상한 2**. 첫째만 텍스트가 될 수 있고 둘째는 아이콘 전용이다(타입이 강제한다).
+   * 텍스트 액션의 기본 variant는 `accent`(채우지 않는 진입·조작). **커밋은 여기 오지 않는다** —
+   * 그건 하단 고정(bottom)이 받는다(06 §2 화면 유형표).
+   * 왜 2인가: 좌측 ‹ 와 제목이 축을 쓰고 있어 셋째부터 제목이 밀린다. 넘치면 오버플로 메뉴다(06 §4).
+   */
+  actions?: readonly [Action] | readonly [Action, IconAction];
+};
+
 type Props = {
-  // ── Navigation(셸 크롬) ──
-  title?: string;              // 2뎁스에서 "여기가 어디인지". 최상위 화면은 생략하고 본문 Top이 제목을 갖는다.
-  onBack?: () => void;         // 있으면 ‹ 노출
-  backLabel?: string;          // 접근성 라벨(기본 '뒤로')
-  // 우측 아이콘 액션 — iconOnly 전제(텍스트 CTA 자리가 아니다). **상한 2**를 타입에 못박는다.
-  //  왜 타입인가: 주석으로 적힌 상한은 지켜지지 않는다. Base Web의 MobileHeader가 같은 자리를
-  //  [IconButton?, IconButton?] 튜플로 닫아둔 선례가 있다.
-  //  왜 2인가: 좌측 ‹ 와 제목이 축을 예약하고 있어 셋째부터 제목이 밀린다. 넘치면 오버플로 메뉴다(06 §4).
-  actions?: readonly [Action] | readonly [Action, Action];
+  /** 헤더 행의 내용. **행은 항상 렌더된다** — 생략하면 빈 행이다(사라지지 않는다). */
+  header?: MobileHeaderContent;
   // ── 탭(3~5 권장) ──
   tabs: MobileTab[];
   activePath: string;
@@ -57,9 +94,12 @@ type Props = {
 };
 
 export function MobileShell({
-  title, onBack, backLabel = '뒤로', actions,
-  tabs, activePath, onNavigate, children, bottom,
+  header, tabs, activePath, onNavigate, children, bottom,
 }: Props) {
+  const { title, onBack, backLabel = '뒤로', actions } = header ?? {};
+  // 제목은 두 모양 중 하나다 — 문자열이면 고정 제목, 객체면 ‹ › 가 딸린 값 제목.
+  const stepper = typeof title === 'object' ? title : undefined;
+  const titleText = typeof title === 'string' ? title : stepper?.value;
   // 문서 스크롤·고무줄 바운스 잠금 — 이 셸은 정의상 *화면 전체*라 문서가 따로 스크롤될 이유가 없다.
   //  CSS로 무조건 걸면 전역 부작용이 되므로, 마운트 동안만 걸고 언마운트에 되돌린다(부품이 자기 뒷정리를 한다).
   useEffect(() => {
@@ -72,27 +112,42 @@ export function MobileShell({
   //  스코프 밖이라 데스크탑 부품 얼굴로 돌아간다. 그래서 문서 루트에 건다 — 06 §1-9.
   useMobileScope();
 
-  const hasNav = Boolean(onBack || title || (actions && actions.length > 0));
-
   return (
     // 모바일 타이포 스케일을 루트에 깐다 — 자손의 Text·Title·Badge가 전부 이 값을 읽는다(역할 변수 통로).
     <div className="ms" style={mobileTypoVars as CSSProperties}>
-      {/* Navigation — 뒤로 / 제목 / 우측 아이콘 액션. 아무것도 없으면 바 자체를 렌더하지 않는다. */}
-      {hasNav && (
-        <header className="ms-nav">
-          <span className="ms-nav-lead">
-            {onBack && <IconButton icon="chevron-left" label={backLabel} variant="ghost" size="sm" onClick={onBack} />}
-          </span>
-          <span className="ms-nav-title">{title}</span>
-          <span className="ms-nav-trail">
-            {actions?.map((a, i) =>
-              a.icon ? (
-                <IconButton key={i} icon={a.icon} label={a.label} variant="ghost" size="sm" onClick={a.onClick} />
-              ) : null,
+      {/* 헤더 행 — **조건부가 아니다.** 아무것도 안 주면 빈 채로 남는다(고정 밴드).
+          예전엔 hasNav로 바 자체를 지웠는데, 그러면 최상위 탭 화면만 바가 없어져 4탭의 상단 기하가
+          서로 달라졌다(실화면 지적). 빈 띠보다 **탭을 오갈 때 본문 시작선이 안 튀는 것**이 비싸다 —
+          iOS도 같은 값을 치른다(설정 루트는 크롬 행이 완전히 비지만 큰 제목 y는 알람 화면과 같다). */}
+      <header className="ms-nav">
+        <span className="ms-nav-lead">
+          {onBack && <IconButton icon="chevron-left" label={backLabel} variant="ghost" size="sm" onClick={onBack} />}
+        </span>
+        {titleText != null && (
+          <span className="ms-nav-title">
+            {/* h2다. 폐기한 MobileTop이 Title variant="heading"(=h2)이었고, MobileSection의 기본
+                headingLevel 3이 그 전제 위에 서 있다. span으로 옮기면 화면 제목이 heading 목록에서
+                사라져 **제목 탐색이 통째로 죽는다** — 자리를 옮기는 것이 시맨틱을 버릴 이유는 아니다.
+                생김새는 CSS가 눕힌다(.mls-hd-t와 같은 수법). */}
+            <h2 className="ms-nav-title-t">{titleText}</h2>
+            {stepper && (
+              <span className="ms-nav-step">
+                <IconButton icon="chevron-left" label={stepper.prevLabel ?? '이전'} variant="ghost" size="sm" onClick={stepper.onPrev} />
+                <IconButton icon="chevron-right" label={stepper.nextLabel ?? '다음'} variant="ghost" size="sm" onClick={stepper.onNext} />
+              </span>
             )}
           </span>
-        </header>
-      )}
+        )}
+        {/* 제목과 액션 사이를 벌리는 자리. 제목이 없어도 액션은 우변에 붙는다. */}
+        <span className="ms-nav-spacer" />
+        <span className="ms-nav-trail">
+          {/* 텍스트 액션의 기본은 accent(채우지 않는 진입). 아이콘 액션은 ghost 그대로 — 아이콘까지
+              틴트를 먹이면 ⋯ 하나가 진입 액션만큼 무거워진다. */}
+          {actions?.map((a, i) =>
+            renderAction(a.iconOnly ? a : { ...a, variant: a.variant ?? 'accent' }, i, 'sm'),
+          )}
+        </span>
+      </header>
 
       {/* 본문 — 유일한 스크롤 영역. 배경은 단일 평면(--bg-primary), 구분은 안쪽 부품의 헤어라인이 맡는다. */}
       <main className="ms-body">{children}</main>

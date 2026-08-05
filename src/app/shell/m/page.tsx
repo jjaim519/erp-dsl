@@ -5,7 +5,7 @@
 //    남은 인라인(본문 문단 등)은 아직 세 번 반복되지 않아 부품으로 올리지 않는다(rule of three).
 import { useState } from 'react';
 import {
-  MobileShell, MobileTop, MobileSection, MobileListRow, MobileStatRow,
+  MobileShell, MobileSection, MobileListRow, MobileStatRow,
   MobileDisclosure, MobilePhotoPicker, MobileCalendar, MobileComposer,
   MobileBoardList, MobileBoardView, MobileBoardWrite,
   MobileField, MobileChoice, TextInput, Button, Text, Title, Badge, RichText,
@@ -15,7 +15,7 @@ import {
 //  전에는 여기 인라인으로 살았고, 그래서 부품별 예시를 만들 방법이 없어 박물관이 링크만 걸고 있었다.
 import {
   TABS, COMMENTS, POST_HTML, POSTS, CATS, AUDIENCES, ATTACHMENTS,
-  SITE_ENCODING, SITE_EVENTS, SITE_ANNOS, dayLabel,
+  SITE_ENCODING, SITE_EVENTS, SITE_ANNOS, dayLabel, monthLabel, shiftMonth,
 } from '@/ui/_devFixtures';
 
 export default function MobileShellDemo() {
@@ -59,14 +59,14 @@ export default function MobileShellDemo() {
   const post = POSTS.find((p) => p.id === open);
 
   // '현장' 탭 — 달력이 화면 전체를 갖는다(3뎁스: 달력 → 그날 일정 목록 → 일정 상세).
-  //  달력 화면엔 MobileTop을 두지 않는다 — 큰 월 제목을 달력이 직접 갖고 있어 제목이 둘이 되기 때문.
+  //  달력 화면의 헤더는 '2026년 8월' 값 제목이다 — 화면 이름('현장')은 탭 라벨이 갖는다.
   if (tab === '/sites') {
     // 3뎁스: 일정 상세
     if (openEvent) {
       const ev = SITE_EVENTS.find((e) => e.id === openEvent)!;
       return (
-        <MobileShell title={SITE_ENCODING.anchor.values[ev.attrs!.kind].label}
-          onBack={() => setOpenEvent(null)}
+        <MobileShell
+          header={{ title: SITE_ENCODING.anchor.values[ev.attrs!.kind].label, onBack: () => setOpenEvent(null) }}
           tabs={TABS} activePath={tab} onNavigate={(p) => { setOpenEvent(null); setTab(p); }}>
           <MobileSection>
             <Title variant="subheading">{ev.label}</Title>
@@ -93,8 +93,7 @@ export default function MobileShellDemo() {
     if (dayOpen) {
       const list = SITE_EVENTS.filter((e) => dayOpen >= e.start && dayOpen <= (e.end ?? e.start));
       return (
-        <MobileShell title={dayLabel(dayOpen)}
-          onBack={() => setDayOpen(null)}
+        <MobileShell header={{ title: dayLabel(dayOpen), onBack: () => setDayOpen(null) }}
           tabs={TABS} activePath={tab} onNavigate={(p) => { setDayOpen(null); setTab(p); }}>
           <MobileSection flush>
             {list.map((e) => (
@@ -110,10 +109,18 @@ export default function MobileShellDemo() {
 
     // 1뎁스: 달력이 본문의 유일한 자식 → height:100%가 성립한다.
     return (
-      <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}>
+      <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}
+        /* 달력의 '2026년 8월'이 곧 이 화면의 이름이고 ‹ › 가 그 값을 바꾼다 — 값 제목(06 §2-1).
+           '현장'이라는 화면 이름은 탭 라벨이 갖는다(헤더에 두면 제목이 둘이 된다). */
+        header={{ title: {
+          value: monthLabel(month),
+          onPrev: () => setMonth(shiftMonth(month, -1)),
+          onNext: () => setMonth(shiftMonth(month, 1)),
+          prevLabel: '이전 달', nextLabel: '다음 달',
+        } }}>
         <MobileCalendar
           fill
-          month={month} onMonthChange={setMonth}
+          month={month}
           selected={day}
           onSelect={(d) => { setDay(d); setDayOpen(d); }}
           onSelectEvent={(e) => setOpenEvent(e.id)}
@@ -130,10 +137,10 @@ export default function MobileShellDemo() {
   if (tab === '/orders') {
     return (
       <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}
+        header={{ title: '발주' }}
         bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
           <Button variant="primary" fullWidth onClick={() => {}}>발주 요청</Button>
         </div>}>
-        <MobileTop title="발주" />
         <MobileSection flush>
           <MobileStatRow items={[
             { label: '진행 중', value: '12건', onClick: () => {} },
@@ -158,10 +165,11 @@ export default function MobileShellDemo() {
   // ── 게시판 쓰기 — 부품 하나로. 등록(커밋)은 셸 하단, 취소는 뒤로가기(부품은 본문만 소유) ──
   if (writing) {
     return (
-      <MobileShell title="글쓰기" onBack={() => setWriting(false)}
-        /* 임시저장은 상단 보조 액션 — 커밋(등록)은 하단 한 자리, 안전망은 여기.
+      <MobileShell
+        /* 임시저장은 헤더의 보조 액션 — 커밋(등록)은 하단 한 자리, 안전망은 여기.
            실제 제품이라면 여기에 더해 ① 입력 blur마다 백그라운드 초안 저장 ② onBack에서 "초안을 저장할까요?"가 붙는다. */
-        actions={[{ label: '임시저장', icon: 'save', iconOnly: true, onClick: () => {} }]}
+        header={{ title: '글쓰기', onBack: () => setWriting(false),
+                  actions: [{ label: '임시저장', icon: 'save', iconOnly: true, onClick: () => {} }] }}
         tabs={TABS} activePath={tab} onNavigate={(p) => { setWriting(false); setTab(p); }}
         bottom={<div style={{ padding: 'var(--mantine-spacing-xs) var(--mantine-spacing-md)' }}>
           <Button variant="primary" fullWidth onClick={() => setWriting(false)}>등록</Button>
@@ -184,9 +192,8 @@ export default function MobileShellDemo() {
   if (post) {
     return (
       <MobileShell
-        title={post.category ?? '게시글'}
-        onBack={() => setOpen(null)}
-        actions={[{ label: '더보기', icon: 'dots-vertical', iconOnly: true, onClick: () => {} }]}
+        header={{ title: post.category ?? '게시글', onBack: () => setOpen(null),
+                  actions: [{ label: '더보기', icon: 'dots-vertical', iconOnly: true, onClick: () => {} }] }}
         tabs={TABS} activePath={tab} onNavigate={(p) => { setOpen(null); setTab(p); }}
         bottom={
           <MobileComposer
@@ -219,10 +226,9 @@ export default function MobileShellDemo() {
   }
 
   return (
-    <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}>
-      <MobileTop title="게시판"
-        action={{ label: '글쓰기', variant: 'primary', onClick: () => setWriting(true) }} />
-
+    <MobileShell tabs={TABS} activePath={tab} onNavigate={setTab}
+      /* 글쓰기는 accent(안 채움) — 게시판 목록은 조회 화면이라 강조 버튼이 0개여야 한다(06 §2). */
+      header={{ title: '게시판', actions: [{ label: '글쓰기', onClick: () => setWriting(true) }] }}>
       <MobileBoardList
         posts={POSTS}
         categories={CATS} category={cat} onCategoryChange={setCat}

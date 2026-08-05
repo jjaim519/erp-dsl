@@ -10,7 +10,9 @@
 //    그대로 넘긴다(변환 0). packLanes는 _calendarLanes에 한 벌만 둬 적층 순서가 두 화면에서 갈리지 않는다.
 //  · 바는 축을 여럿 싣는다(1차원 아님): 색=분류(anchor) / 윤곽=상태(status) / 우측 표식=두 번째 범주 축(mark).
 //    표식이 무엇인지는 부품이 모른다 — glyph·색을 소비처가 주고 부품은 자리만 내준다(헌법 1).
-//  · 큰 월 제목을 이 부품이 소유한다(MobileTop을 같이 쓰지 않는다 — 제목이 둘이 된다). iOS와 같은 구성.
+//  · **월 제목·이동을 이 부품이 갖지 않는다**(v0.74.0). 셸 헤더의 *값 제목*이 받는다 —
+//    'YYYY년 M월'은 화면이 보고 있는 범위이자 곧 그 화면의 이름이고, ‹ › 는 그 값을 바꾸는 컨트롤이다.
+//    부품이 자기 크롬을 가지면 화면마다 상단 기하가 갈린다(06 §2-1). 덤으로 fill 세로 예산이 43px 늘었다.
 //  · 오늘 = **꽉 찬 원**, 선택 = 윤곽 원. iOS와 같은 위계다: 오늘은 *항상 거기 있는* 기준점이라 가장 강한
 //    표현을 갖고, 선택은 탭하면 다른 화면으로 넘어가는 *일시적* 표시라 약하게 둔다. 둘이 겹치면 오늘이 이긴다
 //    (이미 최대 강조라 더할 게 없다). 그전엔 반대로 걸어 오늘이 윤곽뿐이라 눈에 안 띄었다.
@@ -20,14 +22,14 @@
 import { useState } from 'react';
 import dayjs from 'dayjs';
 import { Chip } from './Chip';
-import { IconButton } from './IconButton';
 import { packLanes } from './_calendarLanes';
 import type { CalendarEvent, CalendarAnnotation, CalendarEncoding, CalendarHoliday } from './CalendarPage';
 import './mobilelist.css';
 
 type Props = {
   month: string;                          // 'YYYY-MM' (controlled — 상태 주인은 소비처)
-  onMonthChange: (month: string) => void;
+  // ⚠ onMonthChange는 여기 없다. 월 이동은 셸 헤더의 값 제목(MobileShell.header.title)이 받는다 —
+  //   소비처가 이미 month state를 쥐고 있으므로 거기서 배선한다. 이 부품은 받은 달을 그릴 뿐이다.
   selected?: string;                      // 'YYYY-MM-DD'
   onSelect: (date: string) => void;       // 빈 곳(날짜) 선택
   onSelectEvent?: (e: CalendarEvent) => void;  // 바 선택 — 없으면 바는 표시 전용
@@ -52,7 +54,7 @@ const NUM_ROW = 44;   // 날짜 줄 확보 — 숫자(28) + 위 여백(4) + **�
 const LANE_H = 26;    // 알약 22 + 간격 4
 
 export function MobileCalendar({
-  month, onMonthChange, selected, onSelect, onSelectEvent,
+  month, selected, onSelect, onSelectEvent,
   events = [], encoding, annotations = [], holidays = [],
   fill = false, maxLanes = 6,
 }: Props) {
@@ -126,14 +128,9 @@ export function MobileCalendar({
 
   return (
     <div className={fill ? 'mcal fill' : 'mcal'}>
-      {/* 헤더 — 큰 월 제목을 달력이 소유한다(iOS 구성). 화면 제목을 따로 두지 않는다. */}
-      <div className="mcal-hd">
-        <IconButton icon="chevron-left" label="이전 달" variant="ghost" size="sm"
-          onClick={() => onMonthChange(base.subtract(1, 'month').format('YYYY-MM'))} />
-        <span className="mcal-title">{base.format('YYYY년 M월')}</span>
-        <IconButton icon="chevron-right" label="다음 달" variant="ghost" size="sm"
-          onClick={() => onMonthChange(base.add(1, 'month').format('YYYY-MM'))} />
-      </div>
+      {/* 월 제목·이동은 여기 없다 — 셸 헤더의 *값 제목*이 받는다(MobileShell.header.title).
+          부품이 자기 크롬을 갖지 않는다는 규율(06 §2-1): 그러면 화면마다 상단 기하가 갈리고,
+          이 부품에선 그 크롬이 fill 세로 예산에서 43px을 상시 떼어가고 있었다. */}
 
       {/* 범례 겸 필터 — 가로 스크롤(줄바꿈 대신 옆으로). 두 축은 세로 divider로 가른다. */}
       <div className="mcal-kinds">

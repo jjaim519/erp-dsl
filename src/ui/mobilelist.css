@@ -222,16 +222,8 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mst-sub[data-tone='warning'] { color: var(--mantine-color-warning-7); }
 .mst-sub[data-tone='danger']  { color: var(--text-danger); }
 
-/* ── MobileTop ── */
-/* 화면 제목 영역 — 아래 내용과의 간격은 여기서 주고, 경계선은 두지 않는다(다음 섹션이 자기 선을 갖는다).
-   진입 액션은 제목과 *같은 줄* 우측에 얹는다(전용 행을 만들지 않는다 — 진입 하나에 한 행은 낭비). */
-.mtop {
-  display: flex;
-  align-items: center;
-  gap: var(--mantine-spacing-sm);
-  padding: var(--mantine-spacing-lg) var(--mantine-spacing-md) var(--mantine-spacing-sm);
-}
-.mtop-action { margin-left: auto; flex: none; }
+/* MobileTop(.mtop)은 v0.74.0에서 폐기했다 — 화면 제목이 셸 헤더 행으로 올라갔다.
+   제목이 두 층에 살면 뎁스마다 어느 층이 갖는지가 갈리고(최상위=본문 / 2뎁스=셸), 실제로 그랬다. */
 
 /* ── MobilePhotoPicker ── */
 /* 정사각 썸네일 격자 — 칸 수는 폭이 정한다(minmax + auto-fill). 카드 면 없이 이미지 자체가 면이다. */
@@ -309,19 +301,16 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mcal { display: flex; flex-direction: column; }
 .mcal.fill { height: 100%; }
 
-.mcal-hd {
-  flex: none;
-  display: flex; align-items: center; justify-content: space-between; gap: var(--mantine-spacing-xs);
-  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);   /* 좌우 md — 계열 단일 인셋 */
-}
-.mcal-title { font-size: var(--typo-subheading-size); font-weight: var(--typo-display-weight); }
+/* .mcal-hd / .mcal-title 은 v0.74.0에서 지웠다 — 월 제목·이동이 셸 헤더의 값 제목으로 올라갔다.
+   부품은 자기 크롬을 갖지 않는다(06 §2-1). */
 
-/* 분류 칩 줄 — 가로 스크롤(줄바꿈 금지). 스크롤바는 숨기고 손가락으로 민다. */
+/* 분류 칩 줄 — 가로 스크롤(줄바꿈 금지). 스크롤바는 숨기고 손가락으로 민다.
+   위 여백을 스스로 갖는다: 예전엔 .mcal-hd의 아래 패딩에 얹혀 있어서 헤더가 나가자 칩이 셸 헤어라인에 붙었다. */
 .mcal-kinds {
   flex: none;
   display: flex; flex-wrap: nowrap; gap: var(--mantine-spacing-xxs);
   overflow-x: auto; scrollbar-width: none;
-  padding: 0 var(--mantine-spacing-md) var(--mantine-spacing-xs);   /* 좌우 md — 위 헤더와 같은 세로선 */
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-md);   /* 좌우 md — 계열 단일 인셋 */
   border-bottom: var(--border-width) solid var(--border-default);
 }
 .mcal-kinds::-webkit-scrollbar { display: none; }

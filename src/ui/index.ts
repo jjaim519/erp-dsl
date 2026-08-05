@@ -115,7 +115,6 @@ export { MobileShell, type MobileTab } from './MobileShell';
 export { MobileSection } from './MobileSection';
 export { MobileField } from './MobileField';   // 모바일 폼의 한 칸(밑줄 필드) — 데스크탑 FormField의 짝이자 모바일 대체
 export { MobileChoice } from './MobileChoice'; // 닫힌 선택지 하나 고르기(가로 스크롤 칩 줄) — 폰에서 Select 대신
-export { MobileTop } from './MobileTop';
 export { MobileListRow } from './MobileListRow';
 export { MobileStatRow, type MobileStatItem } from './MobileStatRow';
 export { MobileDisclosure } from './MobileDisclosure';

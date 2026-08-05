@@ -983,10 +983,11 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton', 'Menu'],
       공유: ['_cells(Action)'],
     } },
-  { name: 'MobileShell', layer: '유기체', role: '모바일 셸 — AppShell의 *형제*(축소판 아님). 면·그림자를 안 쓰고 배경 + 가로 헤어라인으로만 나누는 네이티브 리스트 체계. 상단 Navigation(뒤로·제목·아이콘 액션)만 셸이 소유하고 화면 제목(Top)은 본문이 갖는다. CTA는 헤더가 아니라 하단 고정.',
+  { name: 'MobileShell', layer: '유기체', role: '모바일 셸 — AppShell의 *형제*(축소판 아님). 면·그림자를 안 쓰고 배경 + 가로 헤어라인으로만 나누는 네이티브 리스트 체계. **상단은 헤더 행 하나**(고정·항상): 화면 제목이 여기 산다(v0.74.0 — MobileTop 폐기, iOS식 큰 제목 접힘은 blur/material 전제라 기각). CTA는 헤더가 아니라 하단 고정.',
     props: [
-      { name: 'title / onBack / backLabel', kind: '콘텐츠', values: 'Navigation — 2뎁스에서 "여기가 어디인지" + 뒤로. 최상위 화면은 생략(본문 Top이 제목을 가짐)' },
-      { name: 'actions', kind: '기능', values: '[Action] | [Action, Action] — 우측 아이콘 액션(icon 필수). **상한 2를 타입에 못박음**(Base Web MobileHeader 선례): 좌측 ‹ 와 제목이 축을 예약해 셋째부터 제목이 밀린다. 넘치면 오버플로 메뉴. 텍스트 CTA 자리가 아니다' },
+      { name: 'header', kind: '콘텐츠', values: 'MobileHeaderContent(선택) = { title?, onBack?, backLabel?, actions? } — **행에 무엇을 놓을지만 정한다. 행의 유무는 정하지 않는다**: 생략해도 행은 남는다(고정 52px 밴드). 비는 게 정상인 화면이 있다' },
+      { name: 'header.title', kind: '콘텐츠', values: "string(고정 제목) | MobileHeaderValue = { value, onPrev, onNext, prevLabel?, nextLabel? }(‹ › 로 바뀌는 **값 제목** — 달력의 'YYYY년 M월'처럼 보고 있는 범위가 곧 이름인 경우). 스테퍼는 제목에 붙는다(액션 존이 아니다 — 화면의 액션이 아니라 제목을 바꾸는 컨트롤이다). h2로 렌더(제목 탐색 보존)" },
+      { name: 'header.actions', kind: '기능', values: '[Action] | [Action, IconAction] — **상한 2를 타입에 못박음**(Base Web MobileHeader 선례). 둘째는 아이콘 전용도 타입이 강제한다. 첫째 텍스트 액션의 기본 variant는 **accent**(안 채움) — 채운 버튼은 하단 커밋 전용이다(06 §2 조회 화면 강조 0개)' },
       { name: 'tabs / activePath / onNavigate', kind: '기능', values: 'MobileTab[] = { label, icon, path, count? } — 3~5개(HIG). 오버플로(더보기) 없음: HIG가 "숨은 탭은 도달·인지가 어렵다"며 말리는 패턴이라 소비처가 추려서 준다' },
       { name: 'bottom', kind: '콘텐츠', values: 'ReactNode (선택) — 탭 위 고정 한 칸. CTA 버튼이든 입력 바(MobileComposer)든 여기 들어간다. 자리를 하나로 둔 이유: 둘 다 "탭 위 고정"이라 슬롯을 나누면 같은 자리를 두 경로가 다툰다. 없으면 렌더 0' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (유일한 스크롤 영역)' },
@@ -1036,12 +1037,6 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon'],
       공유: ['mobilelist.css — 마지막 행 선 제거는 MobileSection이 소유'],
     } },
-  { name: 'MobileTop', layer: '분자', role: '모바일 화면 제목 영역 — 데스크탑 PageHeader에서 *우측 CTA를 뗀* 자리. 셸이 아니라 화면이 소유(TDS의 Navigation/Top 2층 구분).',
-    props: [
-      { name: 'title', kind: '콘텐츠', values: '제목. **보조 설명 슬롯 없음** — 설명이 필요하면 본문 섹션이 갖는다' },
-      { name: 'action', kind: '기능', values: "Action(선택) — 제목과 *같은 줄* 우측의 **진입** 액션('글쓰기'처럼 다른 화면으로). 화면의 **커밋** 액션(등록·요청)은 여전히 셸 하단 고정이 받는다 — 역할이 달라 경쟁 경로가 아니다. 전용 행을 만들지 않는 이유: 진입 하나에 한 행은 낭비" },
-    ],
-    composition: { 토큰: ['heading(모바일 28px)', 'spacing'], '의미 원자': ['Title'], 공유: ['_cells(renderAction)', 'mobilelist.css'] } },
   { name: 'MobileStatRow', layer: '분자', role: '모바일 KPI 행 — 지표 2~4개 균등 분할 + 항목 사이 세로 헤어라인. 데스크탑 Stat·SummaryCard는 카드 면 위 물건이라 모바일 체계에 못 쓴다.',
     props: [
       { name: 'items', kind: '기능', values: 'MobileStatItem[] = { label, value(포맷된 문자열 — 숫자 포맷은 소비처), sub?(델타·보조), tone?(sub 색), onClick?(그 칸만 눌림 — 보통 걸러진 목록으로) }' },
@@ -1070,7 +1065,7 @@ export const CATALOG: CatalogEntry[] = [
     } },
   { name: 'MobileCalendar', layer: '분자', role: '모바일 월 달력 — **스팬 바**로 기간을 읽는다(점 아님). 여러 날 일정은 하나의 연속 알약이라 "언제부터 언제까지"·겹침·연속이 보인다(iOS 18이 월 뷰를 Compact/**Stacked**/Details로 재편하며 iOS 17의 점 표기를 교체 — 취한 건 Stacked). 바는 pointer-events 없음: 폰에서 7px 바는 터치 표적이 못 되므로 일정 선택은 아젠다 목록이 받는다. 달력만 그린다.',
     props: [
-      { name: 'month / onMonthChange', kind: '기능', values: "'YYYY-MM' controlled — 상태 주인은 소비처" },
+      { name: 'month', kind: '기능', values: "'YYYY-MM' controlled — 상태 주인은 소비처. **onMonthChange는 없다**: 월 제목·이동이 셸 헤더의 값 제목(MobileShell.header.title)으로 올라갔다(v0.74.0). 부품은 받은 달을 그릴 뿐이다" },
       { name: 'selected / onSelect', kind: '기능', values: "'YYYY-MM-DD'" },
       { name: 'events / encoding / annotations / holidays', kind: '기능', values: '**데스크탑 CalendarPage와 같은 타입**(CalendarEvent·CalendarEncoding·CalendarAnnotation·CalendarHoliday) — 소비처가 한 벌을 두 화면에 그대로 넘긴다(변환 0). 색·적층 순서도 같은 규칙(anchor/status 정의 순서)' },
       { name: 'maxLanes', kind: '스타일', values: 'number(기본 3) — 폰 높이 한계로 끊는 레인 수. 넘치면 그 칸에 +N' },

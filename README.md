@@ -197,12 +197,14 @@ type FieldSpec = {
 - **OptionSetPicker** `mode: idle|pick|configure` `groups`/`selection` `onPick`/`onPickMany?`/`onQty`/`onNum` `display?` `search?` `defaultCollapsed?` `subtotal` `primary` — 정의를 읽어 *고르는* 선택 면. 표현 어휘(cards/grid/list/chips/stepper/input)는 값 개수로 **자동 도출**, `display`는 override. **값묶음(`Choice.group`)은 기하와 직교한 레이어**(기본=구획 밴드 블록 / 값>10=필터 칩)이고 **정렬 책임은 부품**(`bundleBlocks`)
 - **CompositionOutline** `sections: CompositionSection[]` `summary?` `addLabel?`/`emptyHint?` `footer?` `onAddToSection`/`onSelectLine`/`onDeleteLine` — 2-pane 우측 "작성물 카드 스택". 카드는 라인이 있거나 작성 중인 섹션만, 추가는 상단 단일 버튼 + 계층 메뉴
 
-### 모바일 계열 (16) — AppShell 계열의 *형제*(축소판 아님)
+### 모바일 계열 (15) — AppShell 계열의 *형제*(축소판 아님)
 
 > **`Mobile*` 접두가 곧 경계다.** 폼도 갈린다 — 모바일에서는 `FormField`(상자)가 아니라 **`MobileField`(밑줄)**, 작은 선택지는 `Select`가 아니라 **`MobileChoice`(칩 줄)**를 쓴다. 면·그림자를 안 쓰고 **배경 + 가로 헤어라인**으로만 나눈다(무테 지향의 반대 — 모바일의 정체성이 이긴다). 데스크탑 부품과 시각 체계가 정반대라 **섞어 쓰면 안 된다**. 입력은 전용 부품을 두지 않는다 — `FormField` + 입력 원자를 그대로 쓰고, 타이포·44pt 터치타깃은 셸 스코프가 처리한다.
 
-- **MobileShell**(유기체) `title`/`onBack`/`backLabel`(Navigation) `actions`(아이콘만) `tabs: MobileTab[]`(3~5개, 오버플로 없음) `activePath`/`onNavigate` `bottom?`(탭 위 고정 한 칸 — CTA든 입력 바든) · children=유일한 스크롤 영역
-- **MobileTop** `title` `action?` — 화면 제목(셸이 아니라 화면이 소유). 우측은 **진입** 액션 전용(커밋 액션은 셸 `bottom`)
+- **MobileShell**(유기체) `header?: { title?, onBack?, backLabel?, actions? }` `tabs: MobileTab[]`(3~5개, 오버플로 없음) `activePath`/`onNavigate` `bottom?`(탭 위 고정 한 칸 — CTA든 입력 바든) · children=유일한 스크롤 영역
+  - **헤더 행은 하나이고 항상 있다.** `header`는 *행에 무엇을 놓을지*만 정한다 — 생략해도 행은 남는다(고정 52px). 그래서 탭을 오가도 본문 시작선이 안 튄다
+  - `title`은 문자열이거나 **값 제목** `{ value, onPrev, onNext }`(달력의 'YYYY년 M월'처럼 보고 있는 범위가 곧 이름인 경우 — ‹ ›는 제목에 붙는다)
+  - `actions` 상한 2, 첫째만 텍스트(기본 `accent` — 안 채움). **커밋은 `bottom`**
 - **MobileSection** `title`/`action?` `flush?` · children — 묶음을 카드가 아니라 경계선이 만든다. **내용이 없으면 본문을 안 그린다**(제목만 남는 빈 여백 블록 금지)
 - **MobileField** `label` `required?` `error?` · children — 모바일 폼의 한 칸(**밑줄 필드**). 라벨은 위(모바일 inline 라벨 금지 — Baymard), 포커스·에러는 **밑줄 색**으로 말한다
 - **MobileChoice** `options` `value`/`onChange` — 닫힌 선택지 하나 고르기(**가로 스크롤 칩 줄**). 폰에서 Select는 두 동작 + 오버레이라, 선택지가 몇 개면 전부 보여주고 한 번에 고른다. 꺽쇠(⌄)는 *펼침*에만 남는다
@@ -210,7 +212,7 @@ type FieldSpec = {
 - **MobileDisclosure** `title`/`meta` `defaultOpen?` · children — 그 자리에서 펼쳐지는 행(이동=›  / 펼침=⌄)
 - **MobileStatRow** `items: MobileStatItem[]` — KPI 2~4개 균등 분할 + 세로 헤어라인
 - **MobilePhotoPicker** `value: FileItem[]`/`onChange` `max`/`disabled` — 정사각 썸네일 격자(폰엔 드래그가 없어 FileUploader를 못 쓴다)
-- **MobileCalendar** `month`/`onMonthChange` `selected`/`onSelect` `events`/`encoding`/`annotations`/`holidays` `maxLanes?` — 월 달력. **스팬 바**로 기간을 읽는다(점 아님). 데스크탑 CalendarPage와 **같은 타입·같은 레인 알고리즘**(변환 0)
+- **MobileCalendar** `month` `selected`/`onSelect` `events`/`encoding`/`annotations`/`holidays` `maxLanes?` — 월 달력. **스팬 바**로 기간을 읽는다(점 아님). 데스크탑 CalendarPage와 **같은 타입·같은 레인 알고리즘**(변환 0). 월 제목·이동은 이 부품이 아니라 **셸 헤더의 값 제목**이 갖는다
 - **MobileComment** `comment: BoardComment` `authorLabel?` `onReply?` — 1단 답글(데스크탑 BoardView와 타입 공유)
 - **MobileComposer** `value`/`onChange`/`onSubmit` `replyTo?` `placeholder`/`disabled` — 하단 고정 입력 바(셸 `bottom`에 꽂음)
 - **MobileFileRow** `name`/`size` `onDownload?` — 첨부 행(말줄임을 왼쪽에서 — 확장자가 끝에 있다)

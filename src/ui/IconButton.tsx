@@ -7,7 +7,7 @@
 import { ButtonBase } from './Button';
 import { Icon, type IconName } from './Icon';
 
-type Variant = 'primary' | 'secondary' | 'danger' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'accent';
 type Props = {
   icon: IconName;
   label: string;            // aria-label(필수)
@@ -18,11 +18,14 @@ type Props = {
 };
 
 // IconButton variant → (Button variant, Icon 색). primary/secondary는 currentColor 상속(색 생략).
+//  accent는 danger와 같은 짜임이다 — 배경은 안 깔고(ghost) 글리프에만 색을 준다. 아이콘 뒤에 틴트를
+//  깔면 상시 노출되는 헤더 액션이 화면에서 제일 무거운 물건이 된다(06 §2 강조 예산).
 const MAP: Record<Variant, { btn: Variant; iconColor?: 'primary' | 'secondary' | 'danger' }> = {
   primary:   { btn: 'primary' },
   secondary: { btn: 'secondary' },
   danger:    { btn: 'ghost', iconColor: 'danger' },
   ghost:     { btn: 'ghost', iconColor: 'secondary' },
+  accent:    { btn: 'ghost', iconColor: 'primary' },
 };
 
 export function IconButton({ icon, label, variant = 'ghost', size = 'md', disabled, onClick }: Props) {

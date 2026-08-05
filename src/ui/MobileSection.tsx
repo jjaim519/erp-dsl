@@ -15,7 +15,7 @@ import './mobilelist.css';
 
 type Props = {
   title?: string;      // 섹션 제목(TDS ListHeader 자리). 없으면 제목 줄 자체를 렌더하지 않는다.
-  headingLevel?: 2 | 3; // 제목의 heading 단계. 기본 3 — 화면 제목(MobileTop)이 h2 자리를 갖는 전제.
+  headingLevel?: 2 | 3; // 제목의 heading 단계. 기본 3 — 화면 제목(MobileShell 헤더 행의 h2)이 h2 자리를 갖는 전제.
                         //  스크린리더 사용자는 heading을 타고 화면을 훑는다. 제목이 <span>이면 그 목록에
                         //  아무것도 안 잡혀 **제목 탐색이 통째로 죽는다**(06 §1, 접근성 구멍).
                         //  단계를 닫힌 두 값으로만 연다 — 열어두면 소비처마다 계층이 어긋난다(헌법 5).
