@@ -12,7 +12,15 @@
 //  passive: touchmove만 passive:false다. preventDefault를 부르려면 그래야 하고,
 //   나머지(start/end/cancel)를 passive:true로 두면 스크롤 성능을 안 깎는다.
 //   그리고 preventDefault는 **최상단 + 아래로 당길 때만** 부른다 — 아니면 평소 스크롤이 막힌다.
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+//
+//  ⚠ **함수형 업데이터 안에서는 setState도 콜백 호출도 하지 않는다 — 이전 값이 필요하면 ref로 든다.**
+//   `setPull(fn)`의 `fn`은 React가 *다음 렌더에서 상태를 계산할 때* 부른다. 업데이터는 순수해야 하고
+//   부수효과는 이벤트 핸들러에 있어야 한다. 이 부품이 onEnd에서 업데이터 안에 `setBusy(true)`와
+//   `cb.current()`를 두고 있었고, 그래서 새로고침이 **렌더 단계에서** 실행됐다.
+//   증상이 소비처의 Router 경고로 터져서 원인이 부품에 있다는 게 안 보였다. StrictMode(dev)에서는
+//   업데이터가 두 번 불려 `onRefresh`가 두 번 나갔다 — 서버 액션을 부르는 소비처면 요청이 두 번 간다.
+//   → 값은 ref, 그리기는 state. 부수효과는 핸들러.
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Spinner } from './Spinner';
 import { Icon } from './Icon';
 import './mobilesheet.css';
@@ -47,6 +55,12 @@ export function MobilePullToRefresh({ onRefresh, refreshing, children }: Props) 
   const rootRef = useRef<HTMLDivElement>(null);
   const [pull, setPull] = useState(0);
   const [busy, setBusy] = useState(false);
+  // 당김값을 ref로도 든다 — onEnd가 "지금 얼마나 당겨졌나"를 알아야 하는데, 그걸 함수형 업데이터로
+  //  읽으면 부수효과가 렌더 단계로 들어간다(위 헤더 주석). **값은 ref, 그리기는 state.**
+  const pullRef = useRef(0);
+  const setPullBoth = useCallback((v: number) => { pullRef.current = v; setPull(v); }, []);
+  // 진행 중 재진입 방지 — busy(state)는 리스너 클로저에서 낡는다(effect deps가 []이라 한 번만 붙는다).
+  const busyRef = useRef(false);
   // 콜백을 ref로 들고 있는다 — 리스너를 매 렌더 새로 붙였다 떼면 터치 도중에 끊긴다.
   const cb = useRef(onRefresh);
   cb.current = onRefresh;
@@ -78,23 +92,28 @@ export function MobilePullToRefresh({ onRefresh, refreshing, children }: Props) 
       if (!pulling) return;
       const dy = e.touches[0].clientY - startY;
       // 위로 미는 건 평소 스크롤이다 — 넘긴다(preventDefault도 안 부른다).
-      if (dy <= 0) { pulling = false; setPull(0); return; }
+      if (dy <= 0) { pulling = false; setPullBoth(0); return; }
       // 당기는 동안에도 최상단이어야 한다(관성으로 내려갔으면 그만둔다).
-      if (scroller.scrollTop > 0) { pulling = false; setPull(0); return; }
+      if (scroller.scrollTop > 0) { pulling = false; setPullBoth(0); return; }
       e.preventDefault();                       // 최상단 + 아래로일 때만 — 평소 스크롤 방해 0
-      setPull(Math.min(dy * DAMPING, THRESHOLD * 1.5));
+      setPullBoth(Math.min(dy * DAMPING, THRESHOLD * 1.5));
     };
 
+    // 부수효과는 전부 여기(핸들러)에 있다 — 업데이터 안이 아니다.
     const onEnd = () => {
       if (!pulling) return;
       pulling = false;
-      setPull((p) => {
-        if (p < THRESHOLD) return 0;
-        // 임계를 넘겼으면 인디케이터를 임계 위치에 붙잡아 둔 채 실행한다 —
-        //  손을 떼자마자 0으로 접히면 "눌렸나?"가 되고, 완료 신호를 볼 자리가 없다.
-        setBusy(true);
-        Promise.resolve(cb.current()).finally(() => { setBusy(false); setPull(0); });
-        return THRESHOLD;
+      if (pullRef.current < THRESHOLD) { setPullBoth(0); return; }
+      if (busyRef.current) return;              // 진행 중이면 두 번 안 부른다
+      // 임계를 넘겼으면 인디케이터를 임계 위치에 붙잡아 둔 채 실행한다 —
+      //  손을 떼자마자 0으로 접히면 "눌렸나?"가 되고, 완료 신호를 볼 자리가 없다.
+      setPullBoth(THRESHOLD);
+      busyRef.current = true;
+      setBusy(true);
+      Promise.resolve(cb.current()).finally(() => {
+        busyRef.current = false;
+        setBusy(false);
+        setPullBoth(0);
       });
     };
 

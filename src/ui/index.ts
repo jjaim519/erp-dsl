@@ -111,7 +111,11 @@ export { DescriptionList } from './DescriptionList';
 export { AppShell, APPSHELL_MIN_WIDTH } from './AppShell';   // 지원 하한(768) — 소비처가 같은 값으로 모바일 라우팅을 판정
 // 모바일 계열 — AppShell 계열의 형제(축소판 아님). 면·그림자를 안 쓰고 헤어라인으로만 나눈다.
 //  Mobile* 접두가 곧 경계다: 데스크탑 부품과 시각 체계가 정반대라 섞어 쓰면 안 된다.
-export { MobileShell, type MobileTab } from './MobileShell';
+// 헤더 타입도 같이 낸다 — header를 조건부로 조립하는 소비처(선택 모드 등)가 변수에 타입을 붙일 수 있어야 한다.
+export {
+  MobileShell,
+  type MobileTab, type MobileHeaderContent, type MobileHeaderValue, type MobileHeaderActions,
+} from './MobileShell';
 export { MobileSection } from './MobileSection';
 export { MobileField } from './MobileField';   // 모바일 폼의 한 칸(밑줄 필드) — 데스크탑 FormField의 짝이자 모바일 대체
 export { MobileChoice } from './MobileChoice'; // 닫힌 선택지 하나 고르기(가로 스크롤 칩 줄) — 폰에서 Select 대신
