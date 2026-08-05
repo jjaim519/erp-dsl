@@ -14,7 +14,7 @@
 //  표현의 정밀함이 중요한 문서에는 늘 적합하지는 않다"**. 견적서·거래명세서·발주서가 그 부류다.
 //
 //   · read(기본) — rows를 **라벨-값으로 투영**한다. 아래 project() 참조.
-//   · paper      — CANON 캔버스를 그대로 두고 2D 스크롤 + 닫힌 확대 단계.
+//   · paper      — CANON 캔버스를 그대로 두고 2D 스크롤 + 핀치 확대(아래 절).
 //     근거: WCAG **1.4.10 Reflow**는 "용도·의미상 2차원 배치가 필요한 콘텐츠"를 예외로 두고 **데이터 표를
 //     명시적으로** 그 예로 든다. 단 예외는 **그 구획에만** 적용되고 주변 크롬까지 확장되지 않는다 →
 //     크롬(헤더·세그먼트·확대 바)은 전부 rem 토큰이다. MobileAttachmentViewer가 같은 문장을 갖는다.
@@ -27,16 +27,28 @@
 //
 //  ── 크롬 규범은 MobileAttachmentViewer와 한 벌 ──────────────────────────────────
 //   · 불투명 전체 화면 커버(모달 아님) · auto-hide 없음(ERP 문서는 체류지가 아니라 경유지다)
-//   · 탈출구 2개까지(X + 뒤로) · **문서 레벨 viewport meta 불가침**(SC 1.4.4) — 확대는 부품 안 닫힌 단계
-//   · 제스처를 직접 잡지 않는다 — 2D 팬은 브라우저 기본 스크롤이다. 직접 잡으면 "가로 스와이프 vs 세로 닫기"
-//     충돌이 생기고(NN/g 직접 경고) touch-action은 제스처 *시작 후* 변경이 무효라 CSS로 중재도 안 된다.
+//   · 탈출구 2개까지(X + 뒤로) · **문서 레벨 viewport meta 불가침**(SC 1.4.4)
+//   · **팬은 브라우저 기본 스크롤**이다(직접 안 잡는다). 첨부 뷰어가 제스처를 통째로 안 쓴 이유는
+//     "가로 스와이프=페이징 vs 세로=닫기" 충돌이었는데(NN/g 직접 경고), 여기엔 페이징도 스와이프-투-닫기도
+//     없어서 그 충돌 자체가 없다. 그래서 **핀치만** 직접 잡는다(touch-action: pan-x pan-y).
+//
+//  ── 확대: 핀치 + 단일 포인터 대안 ──────────────────────────────────────────────
+//  문서에서 핀치는 사람들이 기대하는 동작이라 넣는다. 단 핀치는 **multipoint 제스처**라
+//  **WCAG 2.5.1 Pointer Gestures(Level A)** 가 단일 포인터 대안을 요구하고, 06 §1-4도 같은 말이다
+//  ("제스처는 가속기이지 유일 경로가 아니다"). → 하단 **확대율 표기 자체가 버튼**이다: 보기엔 표기,
+//  누르면 다음 단계(맞춤 → 실제 → 2배 → 맞춤). 자리를 하나도 더 안 쓰면서 경로는 남는다.
+//
+//  ⚠ 핀치는 *연속* 배율이라 "자유 배율을 안 연다(헌법 5)"와 부딪히는 것처럼 보인다. 부딪히지 않는다 —
+//    그 규율은 **API 표면**(소비처가 뭘 넘길 수 있나)에 대한 것이고, 이 부품은 `zoom` prop을 안 연다.
+//    사용자가 문서를 들여다보는 배율은 계약이 아니다. 반대로 여기서 단계를 세 개로 묶으면
+//    "고정 배치 문서를 임의로 살펴본다"는 이 뷰의 목적 자체가 안 선다.
 //
 //  ── 안 만드는 것 ─────────────────────────────────────────────────────────────
 //   · 가로 회전 — `.ms`가 100dvh 전제라 회전은 셸 전체를 건드린다. 가로 A4는 맞춤 배율이 0.35로 더 나쁘고,
 //     원본 뷰의 2D 스크롤이 이미 그걸 받는다.
 //   · 여러 장 — PaperModal이 1장 전제다(인쇄도 1장). 같은 전제를 지킨다.
 //   · 편집 — 06 §4-1(편집 능력은 읽기보다 좁다). FieldGrid는 mode="read" 고정.
-import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react';
 import { desktopTypoVars } from './theme';
 import { FieldGrid, type FieldGridCell } from './FieldGrid';
 import { MobileSegment } from './MobileSegment';
@@ -44,7 +56,6 @@ import { IconButton } from './IconButton';
 import { Icon } from './Icon';
 import { Text } from './Text';
 import { renderAction } from './_cells';
-import { ZOOM_NEXT, type ZoomStep } from './_attachment';
 import type { MobileHeaderActions } from './MobileShell';
 import type { FieldSpec } from '../schema';
 import { fmtNumber, fmtCurrency } from './_cells';
@@ -56,9 +67,10 @@ const CANON: Record<Orientation, { w: number; h: number }> = {
   portrait: { w: 794, h: 1123 },
   landscape: { w: 1123, h: 794 },
 };
-/** 확대 배율 — 첨부 뷰어와 *같은 단어, 다른 수*다(거긴 pdf.js 렌더 배율). fit은 실측해서 채운다. */
-const ZOOM_SCALE: Record<Exclude<ZoomStep, 'fit'>, number> = { actual: 1, double: 2 };
-const ZOOM_LABEL: Record<ZoomStep, string> = { fit: '맞춤', actual: '실제', double: '2배' };
+/** 단일 포인터 경로가 밟는 단계 — 맞춤(실측)/실제/2배. 핀치는 이 사이를 연속으로 지난다. */
+const STEPS = [1, 2];
+/** 상한 — 넘어가면 문서가 아니라 픽셀을 보게 된다. 하한은 맞춤 배율(그보다 작을 이유가 없다). */
+const MAX_SCALE = 4;
 
 type Values = Record<string, unknown>;
 
@@ -136,26 +148,101 @@ export function MobilePaperViewer({
   columns, rows, fields, values, actions,
 }: Props) {
   const [view, setView] = useState<'read' | 'paper'>('read');
-  const [zoom, setZoom] = useState<ZoomStep>('fit');
-  const stageRef = useRef<HTMLDivElement>(null);
-  const [fitScale, setFitScale] = useState(0);
   const canon = CANON[orientation];
+
+  const stageRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const spacerRef = useRef<HTMLDivElement>(null);
+  const readoutRef = useRef<HTMLSpanElement>(null);
+  const fitRef = useRef(0);        // 맞춤 배율 — 실측값
+  const scaleRef = useRef(0);      // 지금 배율(연속). **state가 아니다**: 핀치는 프레임마다 바뀌는데
+  const atFitRef = useRef(true);   //  리렌더하면 손가락이 미끄러진다. DOM에 직접 쓰고 표기만 갱신한다.
+
+  /** 배율 적용 — 앵커(두 손가락 사이 지점) 아래의 문서 좌표를 붙잡아 둔다. 안 그러면 확대할 때마다
+   *  보던 자리가 달아나서 "내가 잡은 곳"이 유지되지 않는다. */
+  const apply = useCallback((next: number, anchor?: { x: number; y: number }) => {
+    const stage = stageRef.current, canvas = canvasRef.current, spacer = spacerRef.current;
+    if (!stage || !canvas || !spacer) return;
+    const min = fitRef.current || 0.1;
+    const s = Math.min(MAX_SCALE, Math.max(min, next));
+    const prev = scaleRef.current || s;
+    const ax = anchor ? anchor.x : stage.clientWidth / 2;
+    const ay = anchor ? anchor.y : stage.clientHeight / 2;
+    const cx = (stage.scrollLeft + ax) / prev;   // 앵커 아래의 문서 좌표
+    const cy = (stage.scrollTop + ay) / prev;
+    scaleRef.current = s;
+    atFitRef.current = Math.abs(s - min) < 0.005;
+    canvas.style.transform = `scale(${s})`;
+    spacer.style.width = `${canon.w * s}px`;     // transform은 레이아웃 크기를 안 바꾼다 — 스크롤 범위는 이게 만든다
+    spacer.style.height = `${canon.h * s}px`;
+    stage.scrollLeft = cx * s - ax;
+    stage.scrollTop = cy * s - ay;
+    if (readoutRef.current) readoutRef.current.textContent = `${Math.round(s * 100)}%`;
+  }, [canon.w, canon.h]);
 
   // 맞춤 배율은 **실측**이다 — 폰 폭은 기기마다 다르고(375/390/430) 폰트 스케일도 크롬 높이를 바꾼다.
   //  ResizeObserver인 이유: 회전·폰트 스케일 변경에도 따라와야 한다(PaperModal의 fitA4와 같은 접근).
+  //  이미 확대해 둔 상태면 건드리지 않는다 — 사용자가 맞춰 둔 배율을 폭 변화가 뺏으면 안 된다.
   useEffect(() => {
     const el = stageRef.current;
     if (!el || view !== 'paper') return;
-    const measure = () => setFitScale(el.clientWidth / canon.w);
+    const measure = () => {
+      fitRef.current = el.clientWidth / canon.w;
+      // 읽기↔원본을 오가면 캔버스가 재마운트돼 transform이 날아간다 — 들고 있던 배율을 다시 입힌다.
+      //  맞춤 상태였으면 새로 잰 맞춤값으로(폭이 변했을 수 있다), 아니면 사용자가 맞춰 둔 배율 그대로.
+      apply(atFitRef.current ? fitRef.current : scaleRef.current);
+    };
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [view, canon.w]);
+  }, [view, canon.w, apply]);
 
   // 닫으면 뷰·배율을 되돌린다 — 다음에 열었을 때 앞 문서의 배율이 남아 있으면 "왜 확대돼 있지"가 된다
   //  (MobileAttachmentViewer가 장을 넘길 때 하는 것과 같은 규율).
-  useEffect(() => { if (!opened) { setView('read'); setZoom('fit'); } }, [opened]);
+  useEffect(() => {
+    if (!opened) { setView('read'); scaleRef.current = 0; atFitRef.current = true; }
+  }, [opened]);
+
+  /* ── 핀치 ────────────────────────────────────────────────────────────────
+     두 포인터만 본다. 하나면 브라우저 기본 스크롤(팬)이 그대로 일한다 — 우리가 가로채지 않는다.
+     touch-action: pan-x pan-y가 브라우저의 요소 내 핀치만 끄고 팬은 남겨둔다(mobilepaper.css). */
+  const ptrs = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; scale: number } | null>(null);
+  const two = () => [...ptrs.current.values()];
+  const distOf = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  const onPointerDown = (e: ReactPointerEvent) => {
+    if (e.pointerType !== 'touch') return;
+    ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (ptrs.current.size === 2) {
+      const [a, b] = two();
+      pinch.current = { dist: distOf(a, b) || 1, scale: scaleRef.current };
+    }
+  };
+  const onPointerMove = (e: ReactPointerEvent) => {
+    if (!ptrs.current.has(e.pointerId)) return;
+    ptrs.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (!pinch.current || ptrs.current.size !== 2) return;
+    const [a, b] = two();
+    const stage = stageRef.current;
+    if (!stage) return;
+    const rect = stage.getBoundingClientRect();
+    apply(pinch.current.scale * (distOf(a, b) / pinch.current.dist), {
+      x: (a.x + b.x) / 2 - rect.left,
+      y: (a.y + b.y) / 2 - rect.top,
+    });
+  };
+  const onPointerUp = (e: ReactPointerEvent) => {
+    ptrs.current.delete(e.pointerId);
+    if (ptrs.current.size < 2) pinch.current = null;
+  };
+
+  /** 단일 포인터 경로(WCAG 2.5.1) — 지금 배율보다 큰 첫 단계로, 없으면 맞춤으로 돌아간다. */
+  const stepUp = () => {
+    const steps = [fitRef.current, ...STEPS].filter((v) => v > 0).sort((a, b) => a - b);
+    apply(steps.find((v) => v > scaleRef.current + 0.01) ?? steps[0]);
+  };
 
   const close = useCallback(() => onClose(), [onClose]);
   useEffect(() => {
@@ -166,8 +253,6 @@ export function MobilePaperViewer({
   }, [opened, close]);
 
   if (!opened) return null;
-
-  const scale = zoom === 'fit' ? fitScale : ZOOM_SCALE[zoom];
 
   const readRow = (r: ReadRow) => {
     // image/node 셀은 라벨 아래 통째로 — 값이 한 줄에 안 들어가는 유일한 종류다.
@@ -221,30 +306,32 @@ export function MobilePaperViewer({
         </div>
       ) : (
         <>
-          {/* 2D 무대 — 팬은 **브라우저 기본 스크롤**이다(제스처를 직접 잡지 않는다, 위 헤더 주석). */}
-          <div className="mpv-stage" ref={stageRef}>
+          {/* 2D 무대 — 팬은 브라우저 기본 스크롤, 핀치만 우리가 잡는다(위 헤더 주석). */}
+          <div
+            className="mpv-stage"
+            ref={stageRef}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={onPointerUp}
+            onPointerCancel={onPointerUp}
+          >
             {/* 캔버스만 데스크탑 타이포로 되돌린다 — 06 §1-9의 유일한 예외(theme.desktopTypoVars 주석).
-                안 되돌리면 17px 글자가 794px 인쇄 좌표계를 깨뜨린다. */}
-            <div
-              className="mpv-canvas"
-              style={{
-                ...(desktopTypoVars as CSSProperties),
-                width: canon.w,
-                height: canon.h,
-                transform: `scale(${scale || 0.0001})`,
-              }}
-            >
+                안 되돌리면 17px 글자가 794px 인쇄 좌표계를 깨뜨린다.
+                transform·크기는 apply()가 직접 쓴다(핀치 중 리렌더 금지). */}
+            <div className="mpv-canvas" ref={canvasRef}
+              style={{ ...(desktopTypoVars as CSSProperties), width: canon.w, height: canon.h }}>
               <div className="mpv-paper" style={{ width: canon.w, height: canon.h }}>
                 <FieldGrid columns={columns} rows={rows} fields={fields} values={values} mode="read" />
               </div>
             </div>
-            {/* 스크롤 영역이 스케일된 캔버스 크기를 알도록 — transform은 레이아웃 크기를 안 바꾼다. */}
-            <div className="mpv-spacer" style={{ width: canon.w * scale, height: canon.h * scale }} />
+            <div className="mpv-spacer" ref={spacerRef} />
           </div>
+          {/* 하단은 **표기**다. 다만 누를 수 있다 — 핀치는 multipoint라 단일 포인터 대안이 있어야 한다
+              (WCAG 2.5.1 Level A · 06 §1-4). 자리를 더 쓰지 않고 경로만 남기는 방법이 이것이다. */}
           <div className="mpv-bar">
-            <button type="button" className="mpv-zoom" onClick={() => setZoom(ZOOM_NEXT[zoom])}>
+            <button type="button" className="mpv-zoom" onClick={stepUp} aria-label="확대 배율 — 눌러서 다음 단계">
               <Icon name="search" size="sm" />
-              <Text variant="body">{ZOOM_LABEL[zoom]}</Text>
+              <Text variant="body"><span ref={readoutRef}>100%</span></Text>
             </button>
           </div>
         </>

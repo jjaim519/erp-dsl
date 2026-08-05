@@ -212,7 +212,7 @@ type FieldSpec = {
 - **MobileDisclosure** `title`/`meta` `defaultOpen?` · children — 그 자리에서 펼쳐지는 행(이동=›  / 펼침=⌄)
 - **MobileStatRow** `items: MobileStatItem[]` — KPI 2~4개 균등 분할 + 세로 헤어라인
 - **MobilePhotoPicker** `value: FileItem[]`/`onChange` `max`/`disabled` — 정사각 썸네일 격자(폰엔 드래그가 없어 FileUploader를 못 쓴다)
-- **MobilePaperViewer**(유기체) `opened`/`onClose` `title` `columns`/`rows`/`fields`/`values` `orientation?` `actions?` — 폰의 **A4 장표 뷰어**(PaperModal의 형제). A4를 폰 폭에 맞추면 배율 0.495 → 글자 6.9px이라 fit-to-width 하나로는 못 읽는다. 그래서 두 뷰: **읽기**(rows를 라벨-값으로 투영 — `rowSpan` 라벨은 그룹 머리로, `colSpan`은 손실 0) / **원본**(CANON 2D 스크롤 + 확대 3단, WCAG 1.4.10 2차원 예외). children이 아니라 **장표 스키마**를 받는다 — ReactNode에는 구조가 없어 리플로우를 만들 수 없다
+- **MobilePaperViewer**(유기체) `opened`/`onClose` `title` `columns`/`rows`/`fields`/`values` `orientation?` `actions?` — 폰의 **A4 장표 뷰어**(PaperModal의 형제). A4를 폰 폭에 맞추면 배율 0.495 → 글자 6.9px이라 fit-to-width 하나로는 못 읽는다. 그래서 두 뷰: **읽기**(rows를 라벨-값으로 투영 — `rowSpan` 라벨은 그룹 머리로, `colSpan`은 손실 0) / **원본**(CANON 2D 스크롤 + **핀치 확대**, WCAG 1.4.10 2차원 예외). 하단 확대율 표기가 곧 단일 포인터 대안 버튼이다(WCAG 2.5.1). children이 아니라 **장표 스키마**를 받는다 — ReactNode에는 구조가 없어 리플로우를 만들 수 없다
 - **MobileCalendar** `month` `selected`/`onSelect` `events`/`encoding`/`annotations`/`holidays` `maxLanes?` — 월 달력. **스팬 바**로 기간을 읽는다(점 아님). 데스크탑 CalendarPage와 **같은 타입·같은 레인 알고리즘**(변환 0). 월 제목·이동은 이 부품이 아니라 **셸 헤더의 값 제목**이 갖는다
 - **MobileComment** `comment: BoardComment` `authorLabel?` `onReply?` — 1단 답글(데스크탑 BoardView와 타입 공유)
 - **MobileComposer** `value`/`onChange`/`onSubmit` `replyTo?` `placeholder`/`disabled` — 하단 고정 입력 바(셸 `bottom`에 꽂음)

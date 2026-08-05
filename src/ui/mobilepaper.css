@@ -98,6 +98,11 @@
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  /* 팬은 브라우저가, 핀치는 우리가. pan-x pan-y가 요소 내 브라우저 핀치만 끄고 스크롤은 남긴다.
+     touch-action: none으로 막으면 팬까지 우리가 구현해야 하고, 그건 관성·바운스까지 손으로 짜는 일이다.
+     ⚠ OS 레벨 페이지 확대(visual viewport)는 여전히 살아 있다 — viewport meta 불가침(SC 1.4.4)의 결과이고,
+       접근성 관점에서 그게 맞다(우리 핀치가 안 먹는 상황에도 확대 경로가 하나 남는다). */
+  touch-action: pan-x pan-y;
   background: var(--bg-tertiary);   /* 종이가 놓인 바닥 — 종이(흰 면)와 구분되어야 "한 장"으로 읽힌다 */
 }
 .mpv-canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
@@ -110,7 +115,9 @@
   padding: 48px;                    /* 문서 여백 — PaperModal 데모와 같은 값(인쇄 좌표계 기준 px) */
 }
 
-/* 확대 바 — 하단 크롬. 단계는 버튼 하나로 순환한다(맞춤 → 실제 → 2배 → 맞춤). */
+/* 확대 바 — 하단 크롬. **표기**다(핀치가 주 경로). 다만 누를 수 있다: 핀치는 multipoint라
+   단일 포인터 대안이 있어야 하고(WCAG 2.5.1 Level A · 06 §1-4), 자리를 더 안 쓰는 방법이 이것이다.
+   누르면 맞춤 → 실제 → 2배 → 맞춤으로 올라간다. */
 .mpv-bar {
   flex: none;
   display: flex;

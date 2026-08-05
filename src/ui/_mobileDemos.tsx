@@ -967,7 +967,7 @@ function PaperViewerDemo() {
       rows={PAPER_ROWS}
       fields={PAPER_FIELDS}
       values={PAPER_VALUES}
-      actions={[{ label: '인쇄', icon: 'print', iconOnly: true, onClick: () => {} }]}
+      actions={[{ label: '내려받기', icon: 'download', iconOnly: true, onClick: () => {} }]}
     />
   );
 }
