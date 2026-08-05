@@ -201,10 +201,12 @@ type FieldSpec = {
 
 > **`Mobile*` 접두가 곧 경계다.** 폼도 갈린다 — 모바일에서는 `FormField`(상자)가 아니라 **`MobileField`(밑줄)**, 작은 선택지는 `Select`가 아니라 **`MobileChoice`(칩 줄)**를 쓴다. 면·그림자를 안 쓰고 **배경 + 가로 헤어라인**으로만 나눈다(무테 지향의 반대 — 모바일의 정체성이 이긴다). 데스크탑 부품과 시각 체계가 정반대라 **섞어 쓰면 안 된다**. 입력은 전용 부품을 두지 않는다 — `FormField` + 입력 원자를 그대로 쓰고, 타이포·44pt 터치타깃은 셸 스코프가 처리한다.
 
-- **MobileShell**(유기체) `header?: { title?, onBack?, backLabel?, actions? }` `tabs: MobileTab[]`(3~5개, 오버플로 없음) `activePath`/`onNavigate` `bottom?`(탭 위 고정 한 칸 — CTA든 입력 바든) · children=유일한 스크롤 영역
+- **MobileShell**(유기체) `header?: { title?, onBack?, backLabel?, actions? }` `tabs: MobileTab[]`(**상한 5**) `activePath`/`onNavigate` `bottom?`(탭 위 고정 한 칸 — CTA든 입력 바든) · children=유일한 스크롤 영역
   - **헤더 행은 하나이고 항상 있다.** `header`는 *행에 무엇을 놓을지*만 정한다 — 생략해도 행은 남는다(고정 52px). 그래서 탭을 오가도 본문 시작선이 안 튄다
   - `title`은 문자열이거나 **값 제목** `{ value, onPrev, onNext }`(달력의 'YYYY년 M월'처럼 보고 있는 범위가 곧 이름인 경우 — ‹ ›는 제목에 붙는다)
   - `actions` 상한 2, 첫째만 텍스트(기본 `accent` — 안 채움). **커밋은 `bottom`**
+  - **목적지가 5를 넘으면 허브**(「전체」 탭). 허브는 넘친 것을 담는 통이 아니라 **전체 목적지 색인**이고, 탭은 그중 상위 K개로 가는 바로가기다. **부품이 아니라 화면** — `MobileSection` + `MobileListRow`로 조립한다(06 §2-4)
+  - `activePath`는 **어느 탭이 활성인가**를 정한다(현재 화면 경로가 아니다) — 허브를 거쳐 들어간 화면은 허브 탭의 path를 넘긴다
 - **MobileSection** `title`/`action?` `flush?` · children — 묶음을 카드가 아니라 경계선이 만든다. **내용이 없으면 본문을 안 그린다**(제목만 남는 빈 여백 블록 금지)
 - **MobileField** `label` `required?` `error?` · children — 모바일 폼의 한 칸(**밑줄 필드**). 라벨은 위(모바일 inline 라벨 금지 — Baymard), 포커스·에러는 **밑줄 색**으로 말한다
 - **MobileChoice** `options` `value`/`onChange` — 닫힌 선택지 하나 고르기(**가로 스크롤 칩 줄**). 폰에서 Select는 두 동작 + 오버레이라, 선택지가 몇 개면 전부 보여주고 한 번에 고른다. 꺽쇠(⌄)는 *펼침*에만 남는다
