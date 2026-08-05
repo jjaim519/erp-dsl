@@ -972,6 +972,37 @@ function PaperViewerDemo() {
   );
 }
 
+
+/* 당김 새로고침 **+ fill 화면** — 깨졌던 조합 그대로다(회귀 가드).
+   기존 PullToRefresh 데모는 *목록*을 감싸고 있어서 이 결함이 /dev에서 안 잡혔다:
+   래퍼(.mptr)에 height 규칙이 없어 높이 사슬이 끊기고, .mcal.fill의 height:100%가
+   auto를 가리켜 달력이 내용 높이로 쪼그라들었다(소비처 현장·일정 탭에서 터졌다).
+   → 여기서 주 행이 화면을 꽉 채우는지가 그 사슬이 살아 있다는 증거다. */
+function PullFillDemo() {
+  const [month, setMonth] = useState('2026-07');
+  const [day, setDay] = useState('2026-07-27');
+  const [n, setN] = useState(0);
+  return (
+    <MobileShell tabs={TABS} activePath="/sites" onNavigate={() => {}}
+      header={{ title: {
+        value: `${monthLabel(month)}${n ? ` · 새로고침 ${n}` : ''}`,
+        onPrev: () => setMonth(shiftMonth(month, -1)),
+        onNext: () => setMonth(shiftMonth(month, 1)),
+        prevLabel: '이전 달', nextLabel: '다음 달',
+      } }}>
+      <MobilePullToRefresh onRefresh={() => new Promise((r) => setTimeout(() => { setN((v) => v + 1); r(); }, 900))}>
+        <MobileCalendar
+          fill
+          month={month}
+          selected={day} onSelect={setDay}
+          onSelectEvent={() => {}}
+          events={SITE_EVENTS} encoding={SITE_ENCODING} annotations={SITE_ANNOS}
+        />
+      </MobilePullToRefresh>
+    </MobileShell>
+  );
+}
+
 /* ── 등록부 ────────────────────────────────────────────────────────────── */
 
 export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
@@ -1010,6 +1041,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   //  키에 콜론 같은 구분자를 안 쓴다(URL 세그먼트로 그대로 나가므로). 구분은 screen 플래그가 한다.
   ScreenBoardListEmpty: { render: () => <BoardListEmptyDemo />, bare: true, screen: true, label: '게시판 — 빈 상태', note: '조작 없이 빈 상태를 바로 본다' },
   ScreenBoardListLoading: { render: () => <BoardListLoadingDemo />, bare: true, screen: true, label: '게시판 — 로딩', note: '400ms 지연 후 스피너. 상단 버튼으로 로딩↔완료 전환' },
+  ScreenPullFill:       { render: () => <PullFillDemo />, bare: true, screen: true, label: '현장 — 당김 + fill 달력', note: '**높이 사슬 회귀 가드.** 주 행이 화면을 꽉 채우면 통과, 쪼그라들면 래퍼가 사슬을 끊은 것이다' },
   ScreenOrders:         { render: () => <OrdersDemo />, bare: true, screen: true, label: '발주 탭', note: '데스크탑 FormField를 셸 안에서 쓰는 자리 — 모바일 전용 부품 없이 성립하는지' },
   ScreenEventDetail:    { render: () => <EventDetailDemo />, bare: true, screen: true, label: '현장 — 일정 상세', note: '3뎁스 화면' },
 };

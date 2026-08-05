@@ -119,6 +119,18 @@
 
 
 /* ── MobilePullToRefresh ── */
+/* 래퍼는 높이 사슬에 **투명해야 한다** — 셸 본문과 화면 사이에 끼는 층이라,
+   여기서 height:auto 가 되면 fill 로 그리는 화면(달력 등)이 통째로 쪼그라든다.
+
+   끊긴 지점: .ms-body{flex:1;min-height:0}가 높이를 확정 → 그 아래 .mptr에 **규칙이 아예 없어서**
+   height:auto → 그 아래 .mcal.fill{height:100%}의 100%가 auto를 가리켜 "내용 높이"로 풀린다.
+   전에는 .mcal.fill이 .ms-body의 직접 자식이라 성립했는데, 소비처가 그 사이에 이 래퍼를 끼우면서 끊겼다.
+
+   ⚠ min-height:100%로는 안 된다 — min-height는 부모 높이를 **definite로 만들지 않아서** 자식의
+     height:100%가 여전히 auto로 떨어진다. height여야 한다.
+   내용이 더 길면 .ms-body가 스크롤하므로 부작용은 없다(당김 중에는 preventDefault가 스크롤을 막는다). */
+.mptr { height: 100%; }
+
 /* 인디케이터가 자리를 *밀어서* 만든다 — 겹치면 첫 행 글자를 가린다.
    높이는 인라인(당긴 거리라 런타임 값)이고 여기서는 그 안의 정렬만 맡는다. */
 .mptr-ind {
