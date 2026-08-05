@@ -20,9 +20,10 @@ type Props = {
                         //  아무것도 안 잡혀 **제목 탐색이 통째로 죽는다**(06 §1, 접근성 구멍).
                         //  단계를 닫힌 두 값으로만 연다 — 열어두면 소비처마다 계층이 어긋난다(헌법 5).
   action?: ReactNode;  // 제목 우측 보조(‘전체보기’·‘＋ 첨부’ 등). CTA 자리는 아니다 — CTA는 셸 하단 고정.
-                       //  액션이 있으면 헤더가 *대칭 행*으로 바뀐다(아래 data-action):
-                       //  캡션 헤더의 기본 여백은 위 lg(24)/아래 xs(8)로 일부러 비대칭인데(자기 본문에 붙으라고),
-                       //  거기 44px 컨트롤이 들어가면 그 비대칭을 뒤집어써 위18/아래9로 보인다(실화면 지적).
+                       //  ⚠ 액션이 있어도 **여백은 안 바뀐다**(세로 중앙 정렬만 바뀐다 — mobilelist.css .mls-hd).
+                       //   예전 주석이 "대칭 행으로 바뀐다"고 적혀 있었는데 그 구현은 되돌려졌고 주석만 남아 있었다.
+                       //   머리 여백은 위 lg(24)/아래 xs(8)로 **일부러 비대칭**이다 — 자기 본문에 붙으라고.
+                       //   대칭이 되는 건 액션 유무가 아니라 **본문 유무**다(.mls-hd:only-child).
   flush?: boolean;     // true=본문 좌우 여백 0(행이 끝까지 닿음). 기본 false=여백 있음(자유 콘텐츠).
   // 앞 구간과 무엇으로 나뉘는가. **옵션이 아니라 축이다** — M3가 implicit containment(여백)와
   //  explicit containment(선·카드)를 다른 수단으로 명시하고, TDS `Border`도 `full` / `padding24`(들여쓴 선) /
@@ -45,6 +46,11 @@ export function MobileSection({
 }: Props) {
   // 빈 배열·false·null은 "내용 없음"이다(조건부 렌더의 흔한 산출물). 그때는 본문 div 자체를 안 만든다.
   const hasBody = Children.toArray(children).length > 0;
+  // 제목도 액션도 내용도 없으면 **섹션 자체를 안 그린다.** 위 규율("내용 없으면 본문 안 그림")의 연장이다:
+  //  안 그리면 남는 게 껍데기 <section>인데, separator='line'이면 그 껍데기가 **경계선 하나를 그린다**.
+  //  화면 한가운데에 아무것도 안 나누는 헤어라인이 남는 것 — 조건부 슬롯(`{cond && <X/>}`)을 통째로
+  //  섹션에 넘기는 소비처에서 그대로 나온다. 자리를 잡아두는 이유가 없으면 자리도 없어야 한다.
+  if (!title && !action && !hasBody) return null;
   const H = (headingLevel === 2 ? 'h2' : 'h3') as 'h2' | 'h3';
   return (
     <section className="mls" data-separator={separator} data-density={density}>

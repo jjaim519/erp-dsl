@@ -117,11 +117,14 @@ export function BoardView({
         {/* 글 카드 */}
         <article className="boardview-card">
           <div className="boardview-head">
-            <div className="boardview-badges">
-              {notice && <Badge color="info" strength="fill">공지</Badge>}
-              {mustRead && <Badge color="danger" strength="fill">필독</Badge>}
-              {!notice && category && <Text variant="caption" color="secondary">{category}</Text>}
-            </div>
+            {/* 셋 다 없으면 줄 자체를 안 그린다 — 껍데기만 남으면 margin-bottom(12)이 제목 위 정체불명 여백이 된다. */}
+            {(notice || mustRead || category) && (
+              <div className="boardview-badges">
+                {notice && <Badge color="info" strength="fill">공지</Badge>}
+                {mustRead && <Badge color="danger" strength="fill">필독</Badge>}
+                {!notice && category && <Text variant="caption" color="secondary">{category}</Text>}
+              </div>
+            )}
             <Title variant="heading">{title}</Title>
             <div className="boardview-meta">
               <Avatar size="md">{initial}</Avatar>

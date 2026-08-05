@@ -44,6 +44,19 @@ html.erp-mobile-lock body {
 /* iOS 자동 확대 봉인 — 어떤 size를 쓰든 16px 아래로 안 내려간다. */
 .erp-mobile input, .erp-mobile textarea, .erp-mobile select { font-size: max(16px, var(--input-fz, 16px)); }
 
+/* 폰엔 hover가 없다 — 우리 raw 부품들이 이미 :active만 쓰는 그 규율(.mlr / .mlist-more / .mcmt-reply).
+   Mantine도 실물에선 맞게 갈라둔다: @media (hover:hover)면 :hover, (hover:none)이면 :active.
+   **문제는 박물관이다** — /dev의 폰 캔버스는 데스크탑 iframe이라 hover가 잡혀, 실물 폰에서는 절대
+   안 나올 상태가 보인다. 시각 판단이 그걸로 한 번 흐려졌다(첨부 행 hover 지적).
+   그래서 스코프 안에서 hover만 무효화한다 — **:active는 건드리지 않는다**(폰의 유일한 눌림 표현).
+   값은 Mantine 자신의 변수를 되쓴다: hover 배경 = 평상시 배경. */
+@media (hover: hover) {
+  .erp-mobile .mantine-Button-root:hover:where(:not([data-loading], :disabled, [data-disabled])) {
+    background-color: var(--button-bg, transparent);
+    color: var(--button-color);
+  }
+}
+
 /* ── 입력칸 어휘 — 윤곽이 아니라 **면** ────────────────────────────────────────────
    폰의 지배적 어휘는 밑줄도 윤곽도 아니라 **채워진 라운드 박스**다(iOS 검색·입력 필드, M3 filled).
    우리도 그쪽이다. 근거 3층:

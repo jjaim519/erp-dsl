@@ -61,7 +61,11 @@ export function BoardList({
 }: Props) {
   const pinned = posts.filter((p) => p.pinned);
   const normal = posts.filter((p) => !p.pinned);
-  const showStrip = (categories != null && categories.length > 0) || onSearchChange != null;
+  // 가드는 **안쪽 조건과 같아야 한다.** 예전엔 `categories.length > 0`만 봤는데 아래 렌더는
+  //  category·onCategoryChange까지 요구해서, 분류는 줬지만 값·핸들러를 안 준 소비처에서
+  //  띠가 spacer 하나만 든 채로 렌더됐다(검색도 없으면 통째로 빈 줄). 자리를 잡아두는 이유가 없는데 잡혔다.
+  const showCats = categories != null && categories.length > 0 && category != null && onCategoryChange != null;
+  const showStrip = showCats || onSearchChange != null;
   const isEmpty = posts.length === 0;
 
   function meta(p: BoardPost) {
@@ -109,7 +113,7 @@ export function BoardList({
 
         {showStrip && (
           <div className="board-strip">
-            {categories != null && categories.length > 0 && category != null && onCategoryChange && (
+            {showCats && (
               <SegmentedControl options={categories} value={category} onChange={onCategoryChange} size="sm" />
             )}
             <span className="board-spacer" />

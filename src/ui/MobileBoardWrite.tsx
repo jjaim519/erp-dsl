@@ -233,7 +233,8 @@ export function MobileBoardWrite({
 
       {onFilesChange && (
         // 첨부는 작성 흐름의 *보조 행위*라 헤더 우측 액션으로 접는다(`MobileSection.action`).
-        //  붙인 게 없으면 헤더 한 줄뿐이다. 액션이 있는 헤더는 MobileSection이 세로 여백을 대칭으로 바꾼다.
+        //  붙인 게 없으면 헤더 한 줄뿐이다 — 그때 MobileSection이 여백을 행 리듬으로 바꾼다
+        //  (.mls-hd:only-child). 기준은 액션 유무가 아니라 **본문 유무**다.
         <MobileSection
           title={files && files.length > 0 ? `첨부 ${files.length}` : '첨부'}
           action={

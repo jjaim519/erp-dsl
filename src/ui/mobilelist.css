@@ -52,6 +52,17 @@
      그 기제는 이미 있다 — controls.css의 .erpHitTarget(Checkbox·Radio·Switch가 쓴다). */
 .mls-hd[data-action] { align-items: center; }
 
+/* 머리가 **자기 본문 없이 혼자 남으면** 위 규칙의 전제가 깨진다 — 아래로 묶일 상대가 없는데
+   24/8을 쓰고 있으니 그냥 어긋난 행으로 보인다(첨부 0건이 그 자리다. MobileSection이 "내용이 없으면
+   본문을 아예 안 그린다"고 정해 놓아서 이 조건을 부품이 스스로 만든다).
+   그때만 행 리듬(--row-pad-y)으로 돌아간다. 위 여백이 24→16으로 줄지만 구간 분리는
+   separator='line'의 선이 이미 하고 있다.
+   ⚠ 위에서 되돌린 그 수정과 **분기 기준이 다르다**: 그때는 *액션 슬롯에 뭐가 들었나*(부품이 모르는 것)에
+     분기했고, 이건 *섹션에 본문이 있나* — MobileSection이 이미 알고 결정해 DOM 구조에 드러내는 값이다. */
+.mls-hd:only-child {
+  padding: var(--row-pad-y, var(--mantine-spacing-md)) var(--mantine-spacing-md);
+}
+
 /* 본문 — 기본은 사방 여백(자유 콘텐츠). 상단도 반드시 준다: 제목 없는 섹션이 기본이라
    상단만 비우면 내용이 위 경계선(또는 내비바)에 그대로 붙는다. */
 /* 사방 같은 값 — 아래만 lg였는데 근거가 없었다(눈으로 맞춘 값). 섹션 사이 간격은 다음 섹션의

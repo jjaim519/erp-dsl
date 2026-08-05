@@ -60,11 +60,15 @@ export function MobileBoardView({
   return (
     <>
       <MobileSection>
-        <div className="mbv-badges">
-          {notice && <Badge color="info" strength="fill">공지</Badge>}
-          {mustRead && <Badge color="danger" strength="fill">필독</Badge>}
-          {!notice && category && <Badge color="neutral">{category}</Badge>}
-        </div>
+        {/* 셋 다 없으면 줄 자체를 안 그린다 — 껍데기만 남으면 margin-bottom(8)이 제목 위 정체불명 여백이 된다.
+            (분류 없는 일반 글이 정확히 그 경우다.) */}
+        {(notice || mustRead || category) && (
+          <div className="mbv-badges">
+            {notice && <Badge color="info" strength="fill">공지</Badge>}
+            {mustRead && <Badge color="danger" strength="fill">필독</Badge>}
+            {!notice && category && <Badge color="neutral">{category}</Badge>}
+          </div>
+        )}
         <Title variant="subheading">{title}</Title>
         {/* 작성자 신원 — 폰에서도 "누가 올린 글인가"는 업무 판단의 일부라 아바타·부서·직책을 유지한다. */}
         <div className="mbv-who">
