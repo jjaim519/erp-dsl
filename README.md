@@ -123,7 +123,7 @@ type FieldSpec = {
 - **CurrencyInput** `value: number|string` — 돈 입력(₩ prefix·천단위 콤마·무소수). NumberInput 형제(표시만 통화, 저장·검증은 number)
 - **Select** `options: {label,value}[]` · `value: string`(단일)
 - **Radio** `options` · `value`(단일)
-- **DatePicker** `value`(Date/ISO) · **MultiDatePicker** `value: string[]`(개별 날짜 집합)
+- **DatePicker** `value`(Date/ISO) · **MultiDatePicker** `value: string[]`(개별 날짜 집합) — 표시 형식은 **`YYYY-MM-DD` 고정**(`DATE_FORMAT` 단일 출처, 표 셀 `type:'date'`와 같은 표기). **prop으로 안 연다** — 소비처마다 갈리면 같은 값이 화면마다 다르게 읽힌다. 달력 안쪽 한글·월요일 시작은 `Providers`의 `DatesProvider`가 세운다
 - **Checkbox** / **Switch** `checked`/`onChange` · 인라인 `label`은 유지
 - **Combobox** `options` `value`(단일) `clearable?` — 검색되는 Select(대용량 옵션 타이핑 필터)
 - **TimePicker** `value: "HH:MM"` — 시각 입력(날짜는 DatePicker)

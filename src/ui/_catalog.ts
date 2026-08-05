@@ -246,7 +246,10 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ] },
-  { name: 'DatePicker', layer: '의미 원자', role: '단일 날짜 선택(범위는 분자로).',
+  { name: 'DatePicker', layer: '의미 원자', role: "단일 날짜 선택(범위는 분자로). 표시 형식은 **DATE_FORMAT('YYYY-MM-DD') 고정** — "
+      + '표 셀(_cells.fmtDate)과 같은 표기여야 같은 값이 한 화면에서 두 얼굴이 안 된다. valueFormat을 prop으로 열지 않는다. '
+      + '달력 드롭다운 안쪽(월 이름·요일 머리)은 dayjs 로케일이라 부품이 못 고친다 — Providers의 DatesProvider(ko, firstDayOfWeek:1)가 세운다. '
+      + '주 시작이 1(월요일)인 이유: 우리 달력 셋(Calendar·CalendarPage·MobileCalendar)이 전부 월요일 시작으로 못박혀 있다.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, string | null (ISO)' },
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },

@@ -12,6 +12,7 @@ import { Avatar } from './Avatar';
 import { Anchor } from './Anchor';
 import { Image } from './Image';
 import { Icon, type IconName } from './Icon';
+import { DATE_FORMAT } from './_fieldStyles';
 import { IconButton } from './IconButton';
 import { Menu } from './Menu';
 
@@ -63,10 +64,11 @@ export function renderAction(a: Action, key: number | string, size: 'sm' | 'md' 
   );
 }
 
+// 표기는 DATE_FORMAT 하나를 본다 — 입력칸(DatePicker)과 표 셀이 갈리면 같은 값이 한 화면에서 두 얼굴이 된다.
 function fmtDate(v: unknown): string {
   if (v == null || v === '') return '';
   const d = dayjs(v as string);
-  return d.isValid() ? d.format('YYYY-MM-DD') : String(v);
+  return d.isValid() ? d.format(DATE_FORMAT) : String(v);
 }
 
 // 한국 소비자 기준(잠정 — 다국어화 시 locale은 토큰/설정으로 분리).
