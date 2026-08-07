@@ -43,8 +43,16 @@ export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
   const pages = useMemo(() => layoutPaper(spec, values), [spec, values]);
   const canon = PAPER_CANON[spec.orientation];
 
+  // 인쇄 @page — 방향별 A4 + margin 0. **margin 0이 브라우저 기본 머리말·꼬리말(URL·날짜·쪽번호)을 없앤다.**
+  //  여백은 종이 안쪽(PAPER_MARGIN)이 이미 갖고 있으므로 페이지 여백은 0이어야 1:1이 된다.
+  //  방향이 닫힌 enum이라 주입 문자열에 임의값이 안 들어간다(PaperModal 선례).
+  const pageRule = `@media print{@page{size:A4 ${spec.orientation};margin:0}`
+    + `.erpPaperSheet{width:${spec.orientation === 'landscape' ? '297mm' : '210mm'} !important;`
+    + `height:${spec.orientation === 'landscape' ? '210mm' : '297mm'} !important}}`;
+
   return (
     <div className="erpPaperDoc">
+      <style>{pageRule}</style>
       {pages.map((page, pi) => {
         const { rows, placed } = assemble(page);
         const total = rows.length;

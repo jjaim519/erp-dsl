@@ -51,43 +51,50 @@ export default function PaperDevPage() {
 
   return (
     <Stack gap="lg">
-      <Stack gap="xxs">
-        <Title variant="display">문서 렌더러</Title>
-        <Text variant="body" color="secondary">
-          서식 정의(PaperSpec) 하나에 값을 먹여 A4로 그린다. 라인 수를 늘리면 쪽이 나뉘고,
-          다음 쪽에 열 머리·그룹 머리가 다시 그려진다.
-        </Text>
-      </Stack>
+      {/* 인쇄할 때 이 화면의 크롬은 안 나가게 — 부품이 아니라 *화면*의 일이다(PaperDoc 주석 참조).
+          박물관 껍데기(넷바·패딩)는 dev/layout.tsx가 따로 걷는다. */}
+      <style>{`@media print{.dev-noprint{display:none !important}}`}</style>
+      <div className="dev-noprint">
+        <Stack gap="lg">
+          <Stack gap="xxs">
+            <Title variant="display">문서 렌더러</Title>
+            <Text variant="body" color="secondary">
+              서식 정의(PaperSpec) 하나에 값을 먹여 A4로 그린다. 라인 수를 늘리면 쪽이 나뉘고,
+              다음 쪽에 열 머리·그룹 머리가 다시 그려진다.
+            </Text>
+          </Stack>
 
-      {issues.length > 0 && (
-        <Callout tone="danger" title={`서식 검증 ${issues.length}건`}>
-          {issues.map((i) => `${i.path} — ${i.message}`).join(' / ')}
-        </Callout>
-      )}
+          {issues.length > 0 && (
+            <Callout tone="danger" title={`서식 검증 ${issues.length}건`}>
+              {issues.map((i) => `${i.path} — ${i.message}`).join(' / ')}
+            </Callout>
+          )}
 
-      <Group gap="md" align="center" wrap>
-        <Text variant="body-strong">라인 {count}건</Text>
-        <Group gap="xs">
-          {[1, 6, 12, 20, 34, 60].map((n) => (
-            <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => setCount(n)}>
-              {n}
+          <Group gap="md" align="center" wrap>
+            <Text variant="body-strong">라인 {count}건</Text>
+            <Group gap="xs">
+              {[1, 6, 12, 20, 34, 60].map((n) => (
+                <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => setCount(n)}>
+                  {n}
+                </Button>
+              ))}
+            </Group>
+            <SegmentedControl
+              size="sm"
+              value={zoom}
+              onChange={setZoom}
+              options={[
+                { label: '60%', value: '0.6' },
+                { label: '80%', value: '0.8' },
+                { label: '100%', value: '1' },
+              ]}
+            />
+            <Button variant="secondary" size="sm" onClick={() => window.print()}>
+              인쇄
             </Button>
-          ))}
-        </Group>
-        <SegmentedControl
-          size="sm"
-          value={zoom}
-          onChange={setZoom}
-          options={[
-            { label: '60%', value: '0.6' },
-            { label: '80%', value: '0.8' },
-            { label: '100%', value: '1' },
-          ]}
-        />
-        <Button variant="secondary" size="sm" onClick={() => window.print()}>
-          인쇄
-        </Button>
-      </Group>
+          </Group>
+        </Stack>
+      </div>
 
       <PaperDoc spec={tradeStatement} values={values} scale={Number(zoom)} />
     </Stack>

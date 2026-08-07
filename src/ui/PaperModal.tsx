@@ -93,6 +93,17 @@ export function PaperModal({
     return () => window.removeEventListener('resize', measure);
   }, [measure]);
 
+  // 인쇄 빌트인 스코프 — 열려 있는 동안만 <html>에 표시를 건다.
+  //  controls.css의 `body * { visibility: hidden }`은 이 클래스 안에 갇혀 있다. 안 그러면
+  //  Providers가 controls.css를 import하므로 **앱의 모든 화면이 인쇄 시 백지로 나간다**
+  //  (다른 인쇄 경로 PaperDoc을 만들다 드러난 배포 결함).
+  useEffect(() => {
+    if (typeof document === 'undefined' || !opened) return;
+    const root = document.documentElement;
+    root.classList.add('erp-paper-print');
+    return () => root.classList.remove('erp-paper-print');
+  }, [opened]);
+
   const canon = CANON[orientation];
   // 전체=본문(frame)에 contain(높이/폭 중 작은 배율) → 통째·무스크롤. 크게=폭 채움(frame.w/캔버스폭) → 확대·세로 스크롤.
   const large = view === 'large';

@@ -86,22 +86,36 @@
 .erpPaperCell.wr-vertical { justify-content: center; align-items: center; }
 
 /* ── 인쇄 ──────────────────────────────────────────────────────
-   종이만 물리 A4 1:1로 내보낸다(화면 맞춤 scale·그림자·배경 데스크 제거).
-   PaperModal의 인쇄 빌트인과 같은 사상 — 다만 여기는 쪽이 여러 장이라 각 장이 페이지를 하나씩 먹는다. */
+   종이만 물리 A4 1:1로 내보낸다. PaperModal의 인쇄 빌트인과 같은 사상이되,
+   여기는 쪽이 여러 장이라 각 장이 페이지를 하나씩 먹는다.
+   ⚠ `@page { margin: 0 }`은 PaperDoc이 방향(세로/가로)에 맞춰 <style>로 주입한다 —
+      이게 없으면 브라우저가 자기 머리말·꼬리말(URL·날짜·쪽번호)을 얹는다. */
 @media print {
-  .erpPaperDoc { display: block; gap: 0; }
+  html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
+
+  /* ⚠ 문서 *밖*을 숨기는 건 여기서 안 한다.
+     PaperDoc은 자기 바깥에 뭐가 있는지 모른다(PaperModal은 모달이라 화면 전체를 소유해서 가능했다).
+     그리고 `body *:not(:has(.erpPaperDoc))` 같은 규칙은 셀이 수백 개일 때 :has() 무효화가
+     폭발해 화면이 멈춘다 — 실제로 그랬다. 인쇄할 화면의 크롬 정리는 **소비처 몫**이고,
+     문서만 깔끔히 뽑고 싶으면 전용 라우트나 PaperModal에 담아 인쇄한다.  */
+  .erpPaperDoc { gap: 0; }
+
   .erpPaperSheet {
-    transform: none !important;
+    transform: none !important;   /* 화면 맞춤 배율 무효화 — 인쇄는 항상 1:1 */
+    margin: 0 !important;
     box-shadow: none;
     break-after: page;
     page-break-after: always;
   }
   .erpPaperSheet:last-child { break-after: auto; page-break-after: auto; }
+
   /* 인쇄 DPI에서 1px 선이 픽셀 스냅으로 사라지는 것 방지 — 물리 단위로 고정 */
-  .erpPaperCell { border-width: 0; border-color: var(--border-strong) !important; }
+  .erpPaperCell {
+    border-width: 0; border-color: var(--border-strong) !important;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+  }
   .erpPaperCell.bt { border-top-width: .2mm; }
   .erpPaperCell.bl { border-left-width: .2mm; }
   .erpPaperCell.br { border-right-width: .2mm; }
   .erpPaperCell.bb { border-bottom-width: .2mm; }
-  .erpPaperCell { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 }

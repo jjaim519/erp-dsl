@@ -123,8 +123,15 @@ export default function DevLayout({ children }: { children: ReactNode }) {
   const select = (id: string) => { if (id.startsWith('/')) router.push(id); else toggle(id); };
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-tertiary)' }}>
-      <nav style={{ width: 248, flexShrink: 0, background: 'var(--bg-primary)', borderRight: '1px solid var(--border-default)', padding: 12, position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh', overflowY: 'auto' }}>
+    <div className="dev-shell" style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg-tertiary)' }}>
+      {/* 인쇄 — 박물관 껍데기를 걷어낸다. 안 걷으면 좌측 넷바 248px가 종이(210mm)를 지면 밖으로 밀어
+          백지만 나온다. 인라인 style이라 !important로만 이긴다. /dev 어느 화면에서 인쇄해도 걸리는 문제. */}
+      <style>{`@media print{
+        .dev-shell{display:block !important;min-height:0 !important;background:#fff !important}
+        .dev-shell-nav{display:none !important}
+        .dev-shell-main{padding:0 !important;flex:none !important}
+      }`}</style>
+      <nav className="dev-shell-nav" style={{ width: 248, flexShrink: 0, background: 'var(--bg-primary)', borderRight: '1px solid var(--border-default)', padding: 12, position: 'sticky', top: 0, alignSelf: 'flex-start', height: '100vh', overflowY: 'auto' }}>
         {/* 워드마크 — ERP-DSL. dev 셸 정체성(클릭 시 박물관 홈). */}
         <Link href="/dev" style={{ display: 'inline-block', padding: '2px 8px 14px', textDecoration: 'none' }}>
           <span style={{ fontWeight: 800, fontSize: 18, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>
@@ -142,7 +149,7 @@ export default function DevLayout({ children }: { children: ReactNode }) {
         </div>
         <Tree nodes={view} selectedId={path} expandedIds={expandedIds} onSelect={select} onToggle={toggle} />
       </nav>
-      <main style={{ flex: 1, padding: 32, minWidth: 0 }}>{children}</main>
+      <main className="dev-shell-main" style={{ flex: 1, padding: 32, minWidth: 0 }}>{children}</main>
     </div>
   );
 }

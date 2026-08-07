@@ -14,24 +14,30 @@
 /* PaperModal 인쇄 빌트인 — A4 1:1 WYSIWYG. 화면 맞춤 transform:scale·모달 변형 조상을 인쇄에선 무효화하고
    종이를 물리 A4로 고정. 머리말/꼬리말은 @page margin:0(+ orientation별 size는 PaperModal이 주입)으로 제거.
    화면(자세히/전체)은 @media print 안에서만 다루므로 불변. (격리 구역 명시 예외 — 헌법 7) */
+/* ⚠ 이 블록은 전부 `html.erp-paper-print` 안에 갇혀 있다 — PaperModal이 *열려 있는 동안만* 그 클래스를 건다.
+   전에는 스코프가 없어 `body * { visibility: hidden }`이 **항상** 걸렸고, controls.css를 Providers가
+   import하므로 소비 앱의 *모든 화면*이 인쇄 시 백지로 나갔다(PaperModal이 열려 있을 때만 뭔가 찍혔다).
+   부품 하나의 인쇄 빌트인이 앱 전체의 인쇄를 삼킨 것 — 다른 인쇄 경로(PaperDoc)를 만들다 드러났다. */
 @media print {
   /* 종이만 남기고 전부 숨김(모달 백드롭·헤더·푸터·앱 화면). 배경색은 그대로 출력. */
-  body * { visibility: hidden !important; }
-  .erpPaper, .erpPaper * {
+  html.erp-paper-print body * { visibility: hidden !important; }
+  html.erp-paper-print .erpPaper, html.erp-paper-print .erpPaper * {
     visibility: visible !important;
     -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
   }
   /* 모달 content의 centering/transition transform 제거 → 종이 position:fixed 기준이 페이지(우측 잘림 방지). */
-  .mantine-Modal-root, .mantine-Modal-inner, .mantine-Modal-content { transform: none !important; box-shadow: none !important; }
+  html.erp-paper-print .mantine-Modal-root,
+  html.erp-paper-print .mantine-Modal-inner,
+  html.erp-paper-print .mantine-Modal-content { transform: none !important; box-shadow: none !important; }
   /* 종이 = 물리 A4. 화면 맞춤 scale·인라인 px 폭(794=210mm@96dpi)을 !important로 덮어 1:1·1장. */
-  .erpPaper {
+  html.erp-paper-print .erpPaper {
     position: fixed !important; top: 0 !important; left: 0 !important;
     transform: none !important;
     width: 210mm !important; height: 297mm !important;
     overflow: visible !important;
     box-shadow: none !important; border: none !important; border-radius: 0 !important;
   }
-  .erpPaper-landscape { width: 297mm !important; height: 210mm !important; }   /* 가로 문서 */
+  html.erp-paper-print .erpPaper-landscape { width: 297mm !important; height: 210mm !important; }   /* 가로 문서 */
 }
 
 /* NumberStepper(분자) — 수량 − [n] + 스테퍼. 무테 fill 알약 + 고스트 증감 버튼 + 타이핑 가능 가운데 입력.
