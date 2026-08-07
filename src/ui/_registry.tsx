@@ -54,7 +54,8 @@ import { SummaryCard } from './SummaryCard';
 import { TotalRow } from './TotalRow';
 import { Collapsible } from './Collapsible';
 import { Modal } from './Modal';
-import { DataTable } from './DataTable';
+import { DataTable, type DataTableSort } from './DataTable';
+import { DataSheet, type SheetRow } from './DataSheet';
 import { LineItemList, type LineItem } from './LineItemList';
 import { QueueList, type QueueItem } from './QueueList';
 import { DecisionPanel } from './DecisionPanel';
@@ -950,6 +951,18 @@ export function Demo({ name }: { name: string }) {
   const [month, setMonth] = useState('2026-06');
   const [form, setForm] = useState<Record<string, unknown>>({});
   const [dtSel, setDtSel] = useState<string[]>([]);
+  // DataSheet 데모 — 조합에서만 드러나는 결함을 잡으려고 **깨지기 쉬운 것들을 한 화면에** 둔다:
+  //  수정 중인 행 + 그 아래 오류 줄 + 다른 행의 확장 패널 + 초안 줄 + 하단 sticky 합계.
+  //  (부품 단독 데모로는 안 잡힌다 — 01 "조합 결함은 소비처가 먼저 본다")
+  const [dsRows, setDsRows] = useState<SheetRow[]>([
+    { id: 'd1', date: '2026-08-03', desc: '싱크대 상판 자재', party: '대성석재', kind: '매입', qty: 2, price: 840000, files: 2, memo: '상판 두께 20T, 현장 직납' },
+    { id: 'd2', date: '2026-08-04', desc: '현장 경비 정산', party: '김현수', kind: '경비', qty: 1, price: 126000, files: 0 },
+    { id: 'd3', date: '2026-08-04', desc: '반포 현장 중도금', party: '㈜한아름', kind: '매출', qty: 1, price: 12400000, files: 1 },
+    { id: 'd4', date: '2026-08-05', desc: '비품 구입', party: '오피스마트', kind: '경비', qty: 3, price: 45000, files: 0 },
+    { id: 'd5', date: '2026-08-06', desc: '계정 대체', party: '—', kind: '대체', qty: 1, price: 0, files: 0 },
+  ]);
+  const [dsExpanded, setDsExpanded] = useState<string | null>('d1');
+  const [dsSort, setDsSort] = useState<DataTableSort>({ key: 'date', direction: 'asc' });
   const [treeSel, setTreeSel] = useState<string | null>('d1');
   const [treeExp, setTreeExp] = useState<string[]>(['d1']);
   const [hxSearch, setHxSearch] = useState('');
@@ -1195,6 +1208,72 @@ export function Demo({ name }: { name: string }) {
           { id: '2', name: '목재유통', owner: { name: '이수연' }, tags: ['B2C'], rate: 47, amount: 880000 },
         ]}
         status="ready"
+      />
+    ),
+    DataSheet: (
+      <DataSheet
+        columns={[
+          { key: 'date', label: '일자', edit: 'date', sortable: true },
+          { key: 'desc', label: '적요', edit: 'text', grow: true, placeholder: '적요' },
+          { key: 'party', label: '거래처', edit: 'text', placeholder: '거래처' },
+          // read × edit 2축 — 배지로 보이고 select로 고친다(상태 열의 가장 흔한 형태).
+          { key: 'kind', label: '구분', read: 'badge', edit: 'select', placeholder: '선택',
+            options: [{ label: '매입', value: '매입' }, { label: '매출', value: '매출' }, { label: '경비', value: '경비' }, { label: '대체', value: '대체' }],
+            badgeColors: { 매입: 'info', 매출: 'success', 경비: 'warning', 대체: 'neutral' } },
+          { key: 'qty', label: '수량', edit: 'number', placeholder: '0' },
+          // editable(row) — 같은 열이라도 '대체' 줄에서는 안 열린다.
+          { key: 'price', label: '단가', edit: 'currency', placeholder: '0', editable: (r) => r.kind !== '대체' },
+          { key: 'amount', label: '금액', read: 'currency' },   // edit 없음 = 파생 칸
+        ]}
+        rows={dsRows.map((r) => ({ ...r, amount: (Number(r.qty) || 0) * (Number(r.price) || 0) }))}
+        enterOrder={['date', 'desc', 'party', 'kind', 'qty', 'price']}
+        sort={dsSort}
+        onSortChange={setDsSort}
+        onCommitRow={async (id, v) => {
+          // 거절 계약 데모 — 값을 지키고 그 칸만 오류를 문다(표 위 배너로 안 올린다).
+          if (v.kind === '경비' && Number(v.price) > 50000) return { error: '경비 단가 한도(₩50,000)를 넘습니다', key: 'price' };
+          setDsRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...v } : r)));
+        }}
+        draft={{
+          seed: { date: '', desc: '', party: '', kind: '', qty: '', price: '', files: 0 },
+          ready: (v) => !!(v.date && v.desc && v.kind),
+          onCreate: async (v) => { setDsRows((prev) => [...prev, { ...v, id: `n${prev.length + 1}` } as SheetRow]); },
+        }}
+        rowActions={(row) => [{ label: '삭제', icon: 'trash', variant: 'danger', onClick: () => setDsRows((prev) => prev.filter((r) => r.id !== row.id)) }]}
+        expand={{
+          count: (r) => Number(r.files) || 0,
+          // 초안 줄에서도 같은 패널이 열린다 — 소비처가 파일을 draft 값에 쌓아두면 onCreate가 통째로 받아간다.
+          render: (r) => (
+            <Group gap="xl" align="start">
+              <Stack gap="xs">
+                <Text variant="caption" color="secondary">첨부</Text>
+                <Group gap="xs" align="center">
+                  {Array.from({ length: Number(r.files) || 0 }).map((_, i) => (
+                    <Group key={i} gap="xxs" wrap={false}>
+                      <Icon name="file-text" size="sm" color="secondary" />
+                      <Text variant="caption">{`증빙_${String(r.id)}_${i + 1}.pdf`}</Text>
+                    </Group>
+                  ))}
+                  <Button variant="secondary" size="sm" leftIcon={<Icon name="plus" size="sm" />}
+                    onClick={() => setDsRows((prev) => prev.map((x) => (x.id === r.id ? { ...x, files: (Number(x.files) || 0) + 1 } : x)))}>
+                    파일 추가
+                  </Button>
+                </Group>
+              </Stack>
+              <Stack gap="xs">
+                <Text variant="caption" color="secondary">메모</Text>
+                {r.memo ? <Text variant="body">{String(r.memo)}</Text>
+                  : <Text variant="body" color="secondary">메모 없음</Text>}
+              </Stack>
+            </Group>
+          ),
+        }}
+        expandedId={dsExpanded}
+        onExpandChange={setDsExpanded}
+        totals={{
+          qty: dsRows.reduce((s, r) => s + (Number(r.qty) || 0), 0),
+          amount: dsRows.reduce((s, r) => s + (Number(r.qty) || 0) * (Number(r.price) || 0), 0),
+        }}
       />
     ),
     ListWidget: (
