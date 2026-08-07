@@ -56,7 +56,7 @@ export default function ImportPage() {
       </Stack>
 
       <Group gap="sm" align="center" wrap>
-        <Anchor href="/계층.xlsx">↓ 양식 .xlsx 내려받기</Anchor>
+        <Anchor href="/template-hierarchy.xlsx">↓ 양식 .xlsx 내려받기</Anchor>
         <input ref={inputRef} type="file" accept=".xlsx" style={{ display: 'none' }}
           onChange={(e) => onFile(e.currentTarget.files?.[0] ?? null)} />
         <Button variant="primary" leftIcon={<Icon name="upload" size="sm" />} onClick={() => inputRef.current?.click()}>

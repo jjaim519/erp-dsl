@@ -89,8 +89,8 @@ const treeValues = (n: number) => {
 };
 
 const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<string, unknown>; note: string }> = {
-  gabji: { spec: gabji, values: gabjiValues, note: '엑셀에서 변환 — public/갑지.xlsx → paper-import  ·  부속이 반복 + 종류 걸침' },
-  tree: { spec: treeLedger, values: treeValues, note: '엑셀에서 변환 — public/내역서.xlsx → paper-import  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
+  gabji: { spec: gabji, values: gabjiValues, note: '엑셀에서 변환 — public/kk-gabji.xlsx → paper-import  ·  부속이 반복 + 종류 걸침' },
+  tree: { spec: treeLedger, values: treeValues, note: '엑셀에서 변환 — public/template-ledger.xlsx → paper-import  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
   trade: { spec: tradeStatement, values: tradeValues, note: '손으로 적은 PaperSpec — src/forms/trade-statement.ts' },
 };
 

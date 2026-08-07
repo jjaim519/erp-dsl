@@ -358,13 +358,13 @@ npm i pdfjs-dist          # optional peer. PDF 미리보기가 필요할 때만
 
 ```bash
 # ① 서식을 꺼낸다. **빈 격자보다 실물을 고쳐 쓰는 게 빠르다** — 이름을 주면 실물이 나온다
-npx erp-paper-import --template 내역서          # → ./내역서.xlsx
+npx erp-paper-import --template 내역서          # → ./template-ledger.xlsx
 npx erp-paper-import --template                 # 이름 없이 = 빈 서식(24열 격자·표준 머리·「필드」·「안내」)
 
 # ② 엑셀에서 저작한다(아래 규칙) — 「안내」 시트가 문법을 전부 설명한다
 
 # ③ 빌드 시점에 변환한다. 산출물(JSON)만 앱이 import 하고, exceljs는 런타임에 안 들어간다
-npx erp-paper-import docs/forms/발주서.xlsx --rows 31 \
+npx erp-paper-import docs/forms/kk-baljooseo.xlsx --rows 31 \
   --out src/forms/order.paper.json --id order --name 발주서
 ```
 
@@ -410,7 +410,7 @@ npx erp-paper-import docs/forms/발주서.xlsx --rows 31 \
 ⚠ **묶음을 여는 줄은 자기 금액을 가지면 안 된다.** 소계가 딸린 줄을 다 더하므로 같은 수가 두 번 더해진다.
 그룹머리 없이 트리만 쓰면(줄마다 자기 금액을 갖는 표) 깊이 1인 줄도 항목으로 남고 소계만 붙는다.
 **깊이별 소계(레벨 2에도 소계)는 아직 안 연다** — 반복 하나에 그룹꼬리 하나가 지금 엔진의 전제다.
-실물: `public/내역서.xlsx`.
+실물: `public/template-ledger.xlsx`.
 
 `--rows`는 **쪽당 행 수**이고 이 하나가 행 높이와 글자 크기를 함께 정한다(42→10.5pt / 31→14pt).
 글자를 키우려면 이 수를 **줄인다**. 꼬리말 행이 있으면 거기서 자동으로 읽으므로 생략해도 된다.

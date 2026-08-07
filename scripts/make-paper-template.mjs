@@ -8,7 +8,7 @@
 // ⚠ **진실은 «누가 만들었나»가 가른다.** 여기서 생성한 것(paper-*.xlsx)은 이 코드가 진실이라
 //  손으로 고치면 다음 실행에 덮인다 — 표현을 바꾸려면 **이 파일을 고친다**(그래야 판단이 주석에 남는다:
 //  「16px는 사다리에 없다」·「돈 열은 4칸 아래로 못 내린다」). 반대로 엑셀에서 직접 그린 서식
-//  (갑지.xlsx 등)은 **그 xlsx가 진실**이고 여기 넣지 않는다 — 손으로 그린 걸 코드로 옮겨 적으면
+//  (kk-gabji.xlsx 등)은 **그 xlsx가 진실**이고 여기 넣지 않는다 — 손으로 그린 걸 코드로 옮겨 적으면
 //  두 벌만 생긴다.
 //  · ExcelJS는 **dev 의존성**이다. 변환은 저작 시점에 하고 런타임은 PaperSpec만 본다
 //    (SheetJS를 dev 도구에만 두는 기존 규율 그대로 — 배포 DSL 의존성 0).
@@ -122,7 +122,7 @@ const band = (ws, r, name) => {
 //  (문서번호·작성일자·결재란은 문서마다 다르다. 그건 통일 대상이 아니다.)
 //
 //  ⚠ **꼬리말은 «칸이 비어도» 있어야 한다.** 변환기가 지면 바닥을 거기서 읽기 때문이다 —
-//   없으면 쪽 높이가 내용 높이로 잡혀 글자가 두 배 넘게 커진다. 실제로 갑지(갑지.xlsx)가
+//   없으면 쪽 높이가 내용 높이로 잡혀 글자가 두 배 넘게 커진다. 실제로 갑지(kk-gabji.xlsx)가
 //   **내용 없는 꼬리말 한 줄**을 그 용도로만 쓴다(오너 결정): 현장에 나가는 한 장짜리라 쪽번호가
 //   의미 없고 발행처도 아는 사람들 사이에서 도는 종이라, 한 벌로 읽히는 일은 로고·문서명이 맡는다.
 //   **그 빈 줄을 «실수»로 보고 지우면 갑지가 조용히 깨진다.**
@@ -310,8 +310,8 @@ async function starter() {
   //  검증이 «필수 값의 자리가 없습니다»로 막는다. 이름은 남겨 둔다(되놓을 때 명단부터 만들지 않게).
   fieldSheet(wb, [], { optional: ['문서번호', '작성일자'] });
   guideSheet(wb);
-  await wb.xlsx.writeFile(`${OUT}/빈서식.xlsx`);
-  return '빈서식.xlsx';
+  await wb.xlsx.writeFile(`${OUT}/template-blank.xlsx`);
+  return 'template-blank.xlsx';
 }
 
 // ── ③ 내역서 (트리 — 구획 제목 + 깊이) ────────────────────────
@@ -395,8 +395,8 @@ async function sampleTreeLedger() {
     { n: '비고', l: '비고', t: '글자', r: '', a: '품목' },
   ], { optional: ['문서번호', '작성일자'] });
   guideSheet(wb);
-  await wb.xlsx.writeFile(`${OUT}/내역서.xlsx`);
-  return '내역서.xlsx';
+  await wb.xlsx.writeFile(`${OUT}/template-ledger.xlsx`);
+  return 'template-ledger.xlsx';
 }
 
 await mkdir(OUT, { recursive: true });
@@ -483,8 +483,8 @@ async function hierarchyTemplate() {
   line(['', '· 배지색에 적는 값: 성공 / 경고 / 위험 / 정보 / 기본. 비우면 기본입니다.']);
   line(['', '· 「품목명」 오른쪽 첫 열이 카드의 핵심값이 됩니다 — 중요한 지표를 앞에 두세요.']);
 
-  await wb.xlsx.writeFile(`${OUT}/계층.xlsx`);
-  return '계층.xlsx';
+  await wb.xlsx.writeFile(`${OUT}/template-hierarchy.xlsx`);
+  return 'template-hierarchy.xlsx';
 }
 
 const made = [await starter(), await sampleTreeLedger(), await hierarchyTemplate()];

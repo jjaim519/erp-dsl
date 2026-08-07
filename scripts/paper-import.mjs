@@ -564,11 +564,11 @@ const flag = (n) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i +
 //  처음부터 그리는 것보다 압도적으로 쉽고, 밴드·태그 어휘를 «작동하는 예»로 배운다.
 //  (package.json의 `files`에 이 셋이 다 올라 있어야 한다 — 안 그러면 설치본에 없다.)
 const TEMPLATES = {
-  '빈서식': ['빈서식.xlsx', '표준 머리·꼬리만 있는 24×42 격자'],
-  '내역서': ['내역서.xlsx', '구획 제목 + 깊이 트리 + 구획별 소계'],
+  '빈서식': ['template-blank.xlsx', '표준 머리·꼬리만 있는 24×42 격자'],
+  '내역서': ['template-ledger.xlsx', '구획 제목 + 깊이 트리 + 구획별 소계'],
   //  계층 등록표는 **문서가 아니다**(아래 «문서가 아닙니다» 참조). 같은 세 시트를 쓰고
   //  같은 명령으로 꺼내지만, 변환 대상은 아니고 소비 앱이 런타임에 읽는다.
-  '계층': ['계층.xlsx', '계층 초기 등록표 — 사용자가 채워 올리는 표(문서 아님)'],
+  '계층': ['template-hierarchy.xlsx', '계층 초기 등록표 — 사용자가 채워 올리는 표(문서 아님)'],
 };
 
 if (argv.includes('--template')) {
@@ -581,7 +581,10 @@ if (argv.includes('--template')) {
     process.exit(2);
   }
   const [srcName] = TEMPLATES[key];
-  const dest = resolve(flag('out') ?? (named ? `${key}.xlsx` : (arg && !arg.startsWith('--') ? arg : srcName)));
+  //  ⚠ 기본 출력 이름은 **원본 파일 이름**이다(`계층` → `template-hierarchy.xlsx`).
+  //   카탈로그 «이름»을 그대로 쓰면 소비처 레포에 한글 파일명이 떨어진다 — 이름은 사람이 부르는
+  //   말이고 파일 이름은 영문으로 통일돼 있다. 원하는 이름은 `--out`으로 준다.
+  const dest = resolve(flag('out') ?? (arg && !arg.startsWith('--') && !named ? arg : srcName));
   await copyFile(new URL(`../public/${srcName}`, import.meta.url), dest);
   console.error(`[paper-import] ${key} 서식을 꺼냈습니다 → ${dest}`);
   process.exit(0);
