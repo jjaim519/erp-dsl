@@ -412,6 +412,17 @@ async function convert(file, opts) {
     }
   });
 
+  // 점 경로가 **그 목록에 없는 칸**을 가리키면 그 열이 통째로 빈다 — 값이 없는 게 아니라
+  //  이름이 어긋난 것이라 데이터를 아무리 넣어도 안 나온다(「양식」은 «수량»인데 「필드」는 «개수»였다).
+  //  조용히 빈 열이라 인쇄해 보고서야 안다.
+  cells.filter((c) => c.field?.includes('.')).forEach((c) => {
+    const [an, fn] = [c.field.slice(0, c.field.indexOf('.')), c.field.slice(c.field.indexOf('.') + 1)];
+    const arr = arrays.get(an);
+    if (arr && !arr.of.some((f) => f.name === fn)) {
+      warn.push(`${c.r + 1}행의 «{{${c.field}}}»에서 «${fn}»이(가) 목록 「${an}」에 없습니다(있는 것: ${arr.of.map((f) => f.name).join('·')}) — 그 열이 통째로 빕니다`);
+    }
+  });
+
   // 칸이 «배열 이름»을 점 없이 가리키면 목록이 통째로 그 칸에 찍힌다(`[object Object]`).
   //  이름 충돌을 고칠 때 「필드」 시트만 고치고 「양식」의 태그를 안 바꾸면 딱 이 상태가 된다 —
   //  아래 «겹침» 검사는 이미 안 겹치므로 조용히 지나간다.
