@@ -85,6 +85,7 @@ export { Stepper } from './Stepper';
 export { Transfer } from './Transfer';
 export { ToastHost } from './ToastHost';
 export { DataTable } from './DataTable';
+export { DataSheet } from './DataSheet';                            // DataTable의 쓰기 형제(행 수정 + 초안 줄)
 export { ListWidget, type ListColumn, type ListRow } from './ListWidget';  // TanStack 흡수 목록 위젯(ListPage 대체 MVP)
 export { NotificationPanel, type NotifItem, type NotifTone } from './NotificationPanel';  // 알림 벨 Popover 슬롯 위젯
 export { Repeater } from './Repeater';  // 저작 툴킷 척추 — 가변 레코드 목록(추가/삭제/펼침)
@@ -178,6 +179,7 @@ export { BoardView, type BoardComment, type BoardAttachment } from './BoardView'
 export { BoardWrite, type AudienceNode } from './BoardWrite';
 export { buildHierarchyFromRows, type HierarchyImport } from './hierarchyImport';
 export type { DataTableColumn, DataTableRow, DataTableSort } from './DataTable';
+export type { SheetColumn, SheetRow, SheetEditKind, SheetCommitResult } from './DataSheet';
 
 // 유기체 공유 타입 (스키마 작성자가 쓰는 어휘)
 export type { CellType, Action, ActionVariant, BadgeColor } from './_cells';

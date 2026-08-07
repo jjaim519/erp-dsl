@@ -2,7 +2,8 @@
 import type { ReactNode, CSSProperties } from 'react';
 
 type TextVariant = 'body' | 'body-strong' | 'caption';
-type TextColor = 'primary' | 'secondary' | 'danger';
+// success = "들어온 값·확정됨". Badge·Icon·Stat엔 있는데 Text에만 없어 raw span으로 내려가던 자리를 메운다.
+type TextColor = 'primary' | 'secondary' | 'danger' | 'success';
 
 type TextProps = {
   variant?: TextVariant;

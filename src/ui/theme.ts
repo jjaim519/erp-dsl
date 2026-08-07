@@ -57,6 +57,10 @@ const semantic = {
     primary:   { light: neutral[9], dark: neutral[0] }, // 기본 본문·제목
     secondary: { light: neutral[6], dark: neutral[3] }, // 보조·흐림
     danger:    { light: danger[6],  dark: danger[4]  }, // 에러
+    // success = 텍스트 어휘의 비대칭을 메운다. Badge·Icon·Stat은 success를 쓸 수 있는데 Text만 못 썼다
+    //  (TextColor가 primary|secondary|danger 셋뿐이라, "확정됨"을 초록으로 쓰려면 raw span으로 내려가야 했다).
+    //  danger와 같은 짜임(라이트=index 6, 다크=index 4)이라 새 규칙이 아니다.
+    success:   { light: success[6], dark: success[4] },
     disabled:  { light: neutral[4], dark: neutral[6] },
   },
   bg: {
@@ -263,6 +267,7 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
     '--text-primary':   s.text.primary[mode],
     '--text-secondary': s.text.secondary[mode],
     '--text-danger':    s.text.danger[mode],
+    '--text-success':   s.text.success[mode],
     '--text-disabled':  s.text.disabled[mode],
     '--bg-primary':     s.bg.primary[mode],
     '--bg-secondary':   s.bg.secondary[mode],
