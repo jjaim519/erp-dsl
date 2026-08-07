@@ -1,0 +1,107 @@
+/* PaperDoc — A4 문서 렌더. 24열 격자 위의 셀.
+   ⚠ 여기 px 리터럴은 **인쇄 좌표계**다(794×1123 @96dpi 캔버스 위에 그린다).
+      06 §1-9가 못박은 유일한 예외와 같은 성격 — 화면 UI가 아니라 고정 px 좌표계 위의 문서라,
+      루트 font-scale(rem 줌)이 여기까지 먹으면 A4 캔버스가 깨진다(행 높이·줄바꿈·열 폭이 밀린다).
+      그래서 이 파일 안에서만 px로 못박고, 값은 종이 기준 타이포다.
+   색·선은 전부 역할 변수(raw hex 0). */
+
+.erpPaperDoc { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+.erpPaperSheet {
+  position: relative;
+  background: var(--bg-primary);
+  box-shadow: 0 1px 3px rgba(11, 26, 53, .10), 0 8px 28px rgba(11, 26, 53, .12);
+  transform-origin: top center;
+  flex: none;
+  /* 종이 안 타이포 — 인쇄 좌표계 고정값(위 주석) */
+  --paper-display: 20px;
+  --paper-heading: 15px;
+  --paper-subheading: 13px;
+  --paper-body: 11.5px;
+  --paper-caption: 10px;
+}
+
+.erpPaperGrid {
+  display: grid;
+  position: absolute;
+  /* inset은 인라인(여백 상수) */
+}
+
+.erpPaperCell {
+  min-width: 0;
+  overflow: hidden;
+  padding: 2px 5px;
+  display: flex;
+  font-size: var(--paper-body);
+  line-height: 1.35;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+  border-style: solid;
+  border-width: 0;
+}
+.erpPaperCell > span { min-width: 0; width: 100%; }
+
+/* 선 소유권 — 각 선은 정확히 한 셀이 그린다(위·왼쪽). 인접 셀이 각자 4변을 그리면 2px이 된다. */
+.erpPaperCell.bt { border-top-width: 1px; }
+.erpPaperCell.bl { border-left-width: 1px; }
+.erpPaperCell.br { border-right-width: 1px; }
+.erpPaperCell.bb { border-bottom-width: 1px; }
+
+/* 가로 정렬 */
+.erpPaperCell.ax-start  { justify-content: flex-start; }
+.erpPaperCell.ax-center { justify-content: center; text-align: center; }
+.erpPaperCell.ax-end    { justify-content: flex-end; text-align: right; font-variant-numeric: tabular-nums; }
+/* 세로 정렬 — 병합 칸이 생기는 순간 필요해진다 */
+.erpPaperCell.ay-top    { align-items: flex-start; }
+.erpPaperCell.ay-middle { align-items: center; }
+.erpPaperCell.ay-bottom { align-items: flex-end; }
+
+/* 타이포 — 닫힌 6단(임의 pt 없음) */
+.erpPaperCell.t-display    { font-size: var(--paper-display); font-weight: 700; letter-spacing: .18em; }
+.erpPaperCell.t-heading    { font-size: var(--paper-heading); font-weight: 700; }
+.erpPaperCell.t-subheading { font-size: var(--paper-subheading); font-weight: 600; }
+.erpPaperCell.t-body       { font-size: var(--paper-body); font-weight: 400; }
+.erpPaperCell.t-body-strong{ font-size: var(--paper-body); font-weight: 600; }
+.erpPaperCell.t-caption    { font-size: var(--paper-caption); font-weight: 400; }
+
+/* 글자색 — 임의 색 대신 역할 3 */
+.erpPaperCell.ink-primary   { color: var(--text-primary); }
+.erpPaperCell.ink-secondary { color: var(--text-secondary); }
+.erpPaperCell.ink-danger    { color: var(--text-danger); }
+
+/* 배경 — 임의 채우기 대신 3단 */
+.erpPaperCell.fill-shade { background: var(--bg-secondary); }
+.erpPaperCell.fill-brand { background: var(--mantine-color-primary-0); }
+
+/* 흐름 */
+.erpPaperCell.flow-wrap > span     { white-space: pre-wrap; word-break: keep-all; }
+.erpPaperCell.flow-ellipsis > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 세로쓰기 — 「공급자」처럼 세로로 쓰는 칸. CSS가 네이티브로 지원하고 인쇄까지 그대로 간다. */
+.erpPaperCell.wr-vertical > span {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: .06em;
+}
+.erpPaperCell.wr-vertical { justify-content: center; align-items: center; }
+
+/* ── 인쇄 ──────────────────────────────────────────────────────
+   종이만 물리 A4 1:1로 내보낸다(화면 맞춤 scale·그림자·배경 데스크 제거).
+   PaperModal의 인쇄 빌트인과 같은 사상 — 다만 여기는 쪽이 여러 장이라 각 장이 페이지를 하나씩 먹는다. */
+@media print {
+  .erpPaperDoc { display: block; gap: 0; }
+  .erpPaperSheet {
+    transform: none !important;
+    box-shadow: none;
+    break-after: page;
+    page-break-after: always;
+  }
+  .erpPaperSheet:last-child { break-after: auto; page-break-after: auto; }
+  /* 인쇄 DPI에서 1px 선이 픽셀 스냅으로 사라지는 것 방지 — 물리 단위로 고정 */
+  .erpPaperCell { border-width: 0; border-color: var(--border-strong) !important; }
+  .erpPaperCell.bt { border-top-width: .2mm; }
+  .erpPaperCell.bl { border-left-width: .2mm; }
+  .erpPaperCell.br { border-right-width: .2mm; }
+  .erpPaperCell.bb { border-bottom-width: .2mm; }
+  .erpPaperCell { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+}

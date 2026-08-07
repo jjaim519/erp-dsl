@@ -1,0 +1,235 @@
+// ── 문서 정의(장표) — 데이터 세계 ────────────────────────────────
+// 회사 문서(명세서·공문·계약서…)를 "24열 × N행 격자 위의 셀"로 적는 직렬화 계약.
+// 부품이 아니다. LLM이 생성하고 검증기가 관문 역할을 하는 *데이터*다(헌법 1 — 도메인은 여기로만).
+//
+// 모델은 엑셀 한 장이다. 다만 셋을 뺐고 셋을 더했다:
+//   뺀 것  : 열 너비(넓히려면 병합) · 임의 글자크기/색(닫힌 단계·역할) · 일반 수식
+//   더한 것: 데이터 자리(field) · 행 범위 이름표(bands) · 닫힌 집계(agg)
+//
+// 쪽 나눔은 저작이 아니라 렌더가 한다 — 반복 행이 몇 줄이 될지는 값이 와야 알기 때문.
+// 그래서 좌표는 "문서 전체 행 번호"이고 쪽은 도출된다(PAPER_ROWS_PER_PAGE 단위로 자름).
+import type { FieldSpec } from './fields';
+
+// ── 지면 상수 (A4 @96dpi) ──────────────────────────────────────
+// 210×297mm = 794×1123px. 여백 15mm = 57px. 행 단위 24px는 8px 베이스라인에 떨어지고
+// 11px 글자 + 상하 패딩이 딱 들어간다(더 큰 글자는 행 단위 2 = 48px를 먹인다).
+//   세로: (1123 − 114) ÷ 24 = 42.04 → 42행 × 24 = 1008px (1px 남음)
+//   가로: ( 794 − 114) ÷ 24 = 28.33 → 28행
+export const PAPER_CANON = {
+  portrait: { w: 794, h: 1123 },
+  landscape: { w: 1123, h: 794 },
+} as const;
+export const PAPER_MARGIN = 57;    // 15mm
+export const PAPER_ROW_UNIT = 24;  // 한 행 = 1단위 = 24px
+
+export type PaperOrientation = keyof typeof PAPER_CANON;
+
+/** 한 쪽에 들어가는 행 *단위* 수. 행 높이가 2단위면 그만큼 먹는다. */
+export function rowsPerPage(orientation: PaperOrientation): number {
+  const h = PAPER_CANON[orientation].h - PAPER_MARGIN * 2;
+  return Math.floor(h / PAPER_ROW_UNIT);
+}
+
+// ── 닫힌 값 ────────────────────────────────────────────────────
+// 열 수는 사다리 3단. 24가 기본이고 ×2로 무손실 승급된다(c·cs를 2배).
+// 12로 못 만드는 8등분이 24에선 되고, 48은 그보다 더 잘게 나눌 때만.
+export type PaperColumns = 12 | 24 | 48;
+
+export type PaperAlign = 'start' | 'center' | 'end';
+export type PaperVAlign = 'top' | 'middle' | 'bottom';   // 병합 칸이 생기는 순간 필수가 된다
+export type PaperTypo = 'display' | 'heading' | 'subheading' | 'body' | 'body-strong' | 'caption';
+export type PaperInk = 'primary' | 'secondary' | 'danger';   // 임의 색 대신 역할 3
+export type PaperFill = 'none' | 'shade' | 'brand';          // 임의 채우기 대신 3단
+export type PaperEdge = 't' | 'r' | 'b' | 'l';
+export type PaperFlow = 'wrap' | 'ellipsis';                 // 인쇄물은 wrap이 기본(잘리면 정보가 사라진다)
+export type PaperWriting = 'horizontal' | 'vertical';        // 「공급자」처럼 세로로 쓰는 칸(CSS writing-mode)
+export type PaperFormat = 'text' | 'number' | 'currency' | 'date' | 'percent' | 'boolean';
+
+/**
+ * 집계 — 닫힌 셋. 소비처가 계산해 넘기려면 서식의 그룹 기준을 알아야 해서 계약이 샌다.
+ * `of`가 배열인 것은 "총계 = 공급가액 + 세액"처럼 여러 열을 한 칸에서 더하는 실수요 때문.
+ */
+export type PaperAgg = { fn: 'sum' | 'count' | 'avg'; of: string | string[] };
+
+/**
+ * 시스템 값 — 서식이 쓸 수 있지만 소비처가 주지 않는 것. `@` 접두라 사용자 필드와 안 겹친다.
+ * 쪽 번호는 분배가 끝나야 알 수 있어서 값으로 받을 수가 없다(2패스).
+ */
+export const PAPER_SYSTEM_FIELDS = ['@page', '@pages', '@today'] as const;
+export type PaperSystemField = (typeof PAPER_SYSTEM_FIELDS)[number];
+
+// ── 셀 ─────────────────────────────────────────────────────────
+// 저장은 sparse — 채워진 칸만 적는다(엑셀과 같다). 빈칸은 렌더러가 격자를 채워 만든다.
+// 내용은 배타 4종: text | field | image | agg (전부 없으면 빈 칸).
+export type PaperCell = {
+  r: number;              // 문서 전체 행 번호(0-index). 쪽은 도출된다
+  c: number;              // 열(0-index)
+  rs?: number;            // 세로 병합(기본 1)
+  cs?: number;            // 가로 병합(기본 1) — 넓히는 유일한 수단(열 너비는 없다)
+  text?: string;          // 고정 글자
+  field?: string;         // 데이터 자리. 반복 안이면 점 경로("lines.qty")
+  image?: string;         // 이미지 자리(로고·도면). 필드명 또는 자산 키
+  agg?: PaperAgg;         // 집계 결과
+  format?: PaperFormat;   // 표시 형식(값 표현 — 저장값은 안 건드린다)
+  border?: PaperEdge[];   // 그릴 변. 없으면 선 없음(격자는 정렬 골격일 뿐)
+  align?: PaperAlign;     // 기본 start
+  valign?: PaperVAlign;   // 기본 middle
+  typo?: PaperTypo;       // 기본 body
+  ink?: PaperInk;         // 기본 primary
+  fill?: PaperFill;       // 기본 none
+  flow?: PaperFlow;       // 기본 wrap
+  writing?: PaperWriting; // 기본 horizontal
+};
+
+// ── 행 ─────────────────────────────────────────────────────────
+// 기본 1단위. 서명란·도장 자리처럼 "내용은 없는데 물리 크기가 필요한" 칸 때문에 연다.
+// 임의 px이 아니라 단위 수라 인쇄 높이가 예측 가능하고 쪽 계산이 정수로 떨어진다.
+export type PaperRow = { r: number; h: number };   // h = 단위 수(1~6)
+
+// ── 반복 원본 ──────────────────────────────────────────────────
+// FieldSpec에 배열 타입을 더하지 않는다 — 폼(FormSection)은 배열을 안 다루고 문서만 다루므로,
+// 오염시키지 않고 문서 스펙에 따로 둔다.
+export type PaperArray = {
+  name: string;        // "lines"
+  label: string;       // "품목"
+  of: FieldSpec[];     // 한 줄의 필드들. 셀은 "lines.qty"로 가리킨다
+};
+
+// ── 행 범위 이름표 ─────────────────────────────────────────────
+// 앞서 "블록·밴드"라 부르던 것이 전부 여기로 수렴한다 — 엑셀의 *인쇄 제목 행*과 같은 어휘.
+export type PaperBandKind =
+  | 'pageHeader'    // 매 쪽 위에 반복
+  | 'pageFooter'    // 매 쪽 아래에 반복
+  | 'columnHeader'  // 반복 표의 열 머리 — 쪽을 넘기면 다시 그린다
+  | 'groupHeader'   // 묶음이 바뀔 때 한 번(분류 밴드)
+  | 'repeat'        // 데이터 배열만큼 늘어나는 구간(detail)
+  | 'groupFooter'   // 묶음이 끝날 때 한 번(소계)
+  | 'summary';      // 총계 — 마지막 쪽에만
+
+// 그룹 머리·꼬리는 반복 *안*이 아니라 반복을 **감싸는 형제**다.
+// (Jasper·Crystal·RDL 셋 다 groupHeader / detail / groupFooter를 나란히 둔다 —
+//  머리는 묶음이 바뀔 때, 본문은 레코드마다, 꼬리는 묶음이 끝날 때 발화하므로 서로 다른 행이다.)
+export type PaperBand = {
+  kind: PaperBandKind;
+  r1: number;          // 행 범위(포함)
+  r2: number;
+  source?: string;     // repeat: PaperArray.name
+  by?: string;         // groupHeader·groupFooter: 묶는 기준("lines.category")
+  reprint?: boolean;   // columnHeader·groupHeader: 쪽 넘김 시 재출력(기본 true)
+};
+
+// ── 문서 ───────────────────────────────────────────────────────
+export type PaperSpec = {
+  id: string;
+  name: string;
+  columns: PaperColumns;
+  orientation: PaperOrientation;
+  fields: FieldSpec[];        // 문서 스코프 값(당사자·문서번호…)
+  arrays?: PaperArray[];      // 반복 원본
+  cells: PaperCell[];         // sparse
+  rows?: PaperRow[];          // 1단위가 아닌 행만
+  bands?: PaperBand[];
+};
+
+// ── 검증 ───────────────────────────────────────────────────────
+// "LLM/편집기가 뱉은 정의가 렌더러에 가기 전 관문"(buildZodSchema와 같은 자리).
+export type PaperIssue = { path: string; message: string };
+
+const BAND_LABEL: Record<PaperBandKind, string> = {
+  pageHeader: '매 쪽 머리말', pageFooter: '매 쪽 꼬리말', columnHeader: '열 머리',
+  groupHeader: '그룹 머리', repeat: '반복', groupFooter: '그룹 꼬리', summary: '합계',
+};
+
+export function validatePaper(spec: PaperSpec): PaperIssue[] {
+  const issues: PaperIssue[] = [];
+  const push = (path: string, message: string) => issues.push({ path, message });
+
+  // 필드 이름 집합 — 셀이 가리킬 수 있는 전부.
+  const scalar = new Set(spec.fields.map((f) => f.name));
+  const arrays = new Map((spec.arrays ?? []).map((a) => [a.name, new Set(a.of.map((f) => f.name))]));
+  const knows = (path: string): boolean => {
+    if (path.startsWith('@')) return (PAPER_SYSTEM_FIELDS as readonly string[]).includes(path);
+    if (scalar.has(path)) return true;
+    const dot = path.indexOf('.');
+    if (dot < 0) return false;
+    const arr = arrays.get(path.slice(0, dot));
+    return arr ? arr.has(path.slice(dot + 1)) : false;
+  };
+
+  // ① 범위 — 열을 벗어나는 셀은 렌더 시 조용히 잘린다.
+  spec.cells.forEach((cell, i) => {
+    const at = `cells[${i}]`;
+    const cs = cell.cs ?? 1;
+    const rs = cell.rs ?? 1;
+    if (cell.r < 0 || cell.c < 0) push(at, '행·열은 0 이상이어야 합니다');
+    if (cs < 1 || rs < 1) push(at, '병합 수는 1 이상이어야 합니다');
+    if (cell.c + cs > spec.columns) {
+      push(at, `열 범위를 벗어납니다 (${cell.c}+${cs} > ${spec.columns})`);
+    }
+    // ② 내용 배타 — 넷 중 하나만.
+    const filled = [cell.text != null, cell.field != null, cell.image != null, cell.agg != null]
+      .filter(Boolean).length;
+    if (filled > 1) push(at, '글자·데이터·이미지·집계는 한 칸에 하나만 놓습니다');
+    // ③ 참조 무결성 — 없는 필드를 가리키는 칸은 인쇄물에서 빈칸으로 나간다.
+    if (cell.field && !knows(cell.field)) push(at, `없는 필드를 가리킵니다: ${cell.field}`);
+    if (cell.agg) {
+      const targets = Array.isArray(cell.agg.of) ? cell.agg.of : [cell.agg.of];
+      targets.filter((t) => !knows(t)).forEach((t) => push(at, `집계 대상이 없습니다: ${t}`));
+      if (cell.agg.fn === 'avg' && targets.length > 1) push(at, '평균은 대상이 하나여야 합니다');
+    }
+  });
+
+  // ④ 겹침 0 — 같은 칸을 두 셀이 차지하면 렌더 결과가 정의되지 않는다.
+  for (let i = 0; i < spec.cells.length; i++) {
+    for (let j = i + 1; j < spec.cells.length; j++) {
+      const a = spec.cells[i], b = spec.cells[j];
+      const ar2 = a.r + (a.rs ?? 1) - 1, ac2 = a.c + (a.cs ?? 1) - 1;
+      const br2 = b.r + (b.rs ?? 1) - 1, bc2 = b.c + (b.cs ?? 1) - 1;
+      if (!(ar2 < b.r || a.r > br2 || ac2 < b.c || a.c > bc2)) {
+        push(`cells[${i}]`, `cells[${j}]와 겹칩니다 (${a.r},${a.c})`);
+      }
+    }
+  }
+
+  // ⑤ 행 범위 이름표
+  const bands = spec.bands ?? [];
+  bands.forEach((b, i) => {
+    const at = `bands[${i}]`;
+    if (b.r2 < b.r1) push(at, '행 범위가 거꾸로입니다');
+    if (b.kind === 'repeat') {
+      if (!b.source) push(at, '반복은 원본 배열이 필요합니다');
+      else if (!arrays.has(b.source)) push(at, `없는 배열을 가리킵니다: ${b.source}`);
+    }
+    if (b.kind === 'groupHeader' || b.kind === 'groupFooter') {
+      if (!b.by) push(at, '그룹은 묶는 기준이 필요합니다');
+      else if (!knows(b.by)) push(at, `없는 필드로 묶으려 합니다: ${b.by}`);
+      // 묶을 대상이 없으면 그룹은 발화하지 않는다 — 같은 배열의 반복 구간이 있어야 한다.
+      const arr = b.by ? b.by.slice(0, b.by.indexOf('.')) : '';
+      if (!bands.some((x) => x.kind === 'repeat' && x.source === arr)) {
+        push(at, `묶을 반복 구간이 없습니다: ${arr || '(배열 미지정)'}`);
+      }
+    }
+    // 같은 종류가 겹치면 어느 쪽이 이기는지 정의되지 않는다(반복 안 그룹만 예외).
+    bands.forEach((o, j) => {
+      if (j <= i || o.kind !== b.kind) return;
+      if (!(o.r2 < b.r1 || o.r1 > b.r2)) push(at, `${BAND_LABEL[b.kind]} 구간끼리 겹칩니다`);
+    });
+  });
+
+  // ⑥ 행 높이
+  (spec.rows ?? []).forEach((row, i) => {
+    if (row.h < 1 || row.h > 6) push(`rows[${i}]`, '행 높이는 1~6 단위입니다');
+  });
+
+  return issues;
+}
+
+/** 값까지 포함한 관문 — 필수 필드가 서식 어디에도 안 놓였으면 인쇄물에서 조용히 빈칸이 된다. */
+export function validatePaperCoverage(spec: PaperSpec): PaperIssue[] {
+  const placed = new Set(
+    spec.cells.flatMap((c) => (c.field ? [c.field] : c.image ? [c.image] : [])),
+  );
+  return spec.fields
+    .filter((f) => f.required && !placed.has(f.name))
+    .map((f) => ({ path: `fields.${f.name}`, message: `필수 값 «${f.label}»의 자리가 서식에 없습니다` }));
+}

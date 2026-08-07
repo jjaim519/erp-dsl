@@ -152,6 +152,10 @@ export { MobileBoardWrite } from './MobileBoardWrite';
 //  입력 *원자*는 모바일 전용을 두지 않는다(TextInput·Select…를 그대로 쓴다 — 타이포는 셸 스코프가,
 //  44pt 터치타깃은 mobileshell.css의 --input-height-* 가 처리). 다만 그 원자를 감싸는 *칸*은 갈린다:
 //  데스크탑 FormField(상자)가 아니라 MobileField(밑줄) — 상자를 벗기면 어포던스가 사라지기 때문.
+// ⚠ 문서 계열(PaperDoc·paperLayout)은 **아직 공개 배럴에 안 낸다.**
+//   파일은 레포에 있고 dev 화면(/dev/paper)이 직접 import한다. 수출하면 API를 약속하는 것인데
+//   ① 렌더러 시각 검증 미완 ② 다중 반복·2단 그룹·조건부 노출이 미해결이라 아직 약속할 수 없다.
+//   (미완성 prop을 냈다 거둔 logoMark 선례 — 「03」 11-12·11-18.)
 export { Timeline } from './Timeline';
 export { Calendar } from './Calendar';
 export { IconButton } from './IconButton';
