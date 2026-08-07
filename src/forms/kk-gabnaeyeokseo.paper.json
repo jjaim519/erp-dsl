@@ -1,0 +1,565 @@
+{
+  "id": "kk-gabnaeyeokseo",
+  "name": "갑내역서",
+  "columns": 24,
+  "orientation": "portrait",
+  "pageRows": 31,
+  "fields": [
+    {
+      "name": "고객명",
+      "label": "고객명",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "고객전화번호",
+      "label": "고객 연락처",
+      "type": "text"
+    },
+    {
+      "name": "담당자명",
+      "label": "담당자",
+      "type": "text"
+    },
+    {
+      "name": "담당자전화번호",
+      "label": "담당자 연락처",
+      "type": "text"
+    },
+    {
+      "name": "견적일",
+      "label": "견적일",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "견적일로부터7일후",
+      "label": "유효기간",
+      "type": "date"
+    },
+    {
+      "name": "공사명",
+      "label": "공사명",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "부가세",
+      "label": "부가세(10%)",
+      "type": "currency"
+    },
+    {
+      "name": "총계",
+      "label": "총계",
+      "type": "currency"
+    }
+  ],
+  "arrays": [
+    {
+      "name": "견적",
+      "label": "견적",
+      "of": [
+        {
+          "name": "종류",
+          "label": "공사",
+          "type": "text"
+        },
+        {
+          "name": "품목",
+          "label": "내용",
+          "type": "text"
+        },
+        {
+          "name": "금액",
+          "label": "금액",
+          "type": "currency"
+        },
+        {
+          "name": "비고",
+          "label": "비고",
+          "type": "text"
+        }
+      ]
+    }
+  ],
+  "images": [
+    "발행처로고"
+  ],
+  "cells": [
+    {
+      "r": 0,
+      "c": 0,
+      "rs": 2,
+      "cs": 5,
+      "image": "발행처로고",
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 0,
+      "c": 5,
+      "rs": 2,
+      "cs": 14,
+      "text": "견적서",
+      "align": "center",
+      "typo": "display"
+    },
+    {
+      "r": 2,
+      "c": 0,
+      "cs": 4,
+      "text": "고객명",
+      "border": [
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "t",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 2,
+      "c": 4,
+      "cs": 8,
+      "field": "고객명",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ]
+    },
+    {
+      "r": 2,
+      "c": 12,
+      "cs": 5,
+      "text": "고객 연락처",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 2,
+      "c": 17,
+      "cs": 7,
+      "field": "고객전화번호",
+      "border": [
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t",
+        "r"
+      ]
+    },
+    {
+      "r": 3,
+      "c": 0,
+      "cs": 4,
+      "text": "담당자",
+      "border": [
+        "t",
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 3,
+      "c": 4,
+      "cs": 8,
+      "field": "담당자명",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 3,
+      "c": 12,
+      "cs": 5,
+      "text": "담당자 연락처",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 3,
+      "c": 17,
+      "cs": 7,
+      "field": "담당자전화번호",
+      "border": [
+        "t",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "r"
+      ]
+    },
+    {
+      "r": 4,
+      "c": 0,
+      "cs": 4,
+      "text": "견적일",
+      "border": [
+        "t",
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 4,
+      "c": 4,
+      "cs": 8,
+      "field": "견적일",
+      "format": "date",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 4,
+      "c": 12,
+      "cs": 5,
+      "text": "유효기간",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 4,
+      "c": 17,
+      "cs": 7,
+      "field": "견적일로부터7일후",
+      "format": "date",
+      "border": [
+        "t",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "r"
+      ]
+    },
+    {
+      "r": 5,
+      "c": 0,
+      "cs": 4,
+      "text": "공사명",
+      "border": [
+        "t",
+        "r"
+      ],
+      "borderStrong": [
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 5,
+      "c": 4,
+      "cs": 20,
+      "field": "공사명",
+      "border": [
+        "t",
+        "l"
+      ],
+      "borderStrong": [
+        "r",
+        "b"
+      ]
+    },
+    {
+      "r": 7,
+      "c": 0,
+      "cs": 4,
+      "text": "공사",
+      "border": [
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "t",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 7,
+      "c": 4,
+      "cs": 9,
+      "text": "내용",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 7,
+      "c": 13,
+      "cs": 5,
+      "text": "금액",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 7,
+      "c": 18,
+      "cs": 6,
+      "text": "비고",
+      "border": [
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t",
+        "r"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 8,
+      "c": 0,
+      "cs": 4,
+      "field": "견적.종류",
+      "scope": "group",
+      "border": [
+        "t",
+        "r"
+      ],
+      "borderStrong": [
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 8,
+      "c": 4,
+      "cs": 9,
+      "field": "견적.품목",
+      "border": [
+        "t",
+        "r",
+        "l"
+      ]
+    },
+    {
+      "r": 8,
+      "c": 13,
+      "cs": 5,
+      "field": "견적.금액",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 8,
+      "c": 18,
+      "cs": 6,
+      "field": "견적.비고",
+      "border": [
+        "t",
+        "l"
+      ],
+      "borderStrong": [
+        "r"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 9,
+      "c": 0,
+      "cs": 13,
+      "text": "공사비",
+      "border": [
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "t",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 9,
+      "c": 13,
+      "cs": 11,
+      "agg": {
+        "fn": "sum",
+        "of": "견적.금액"
+      },
+      "format": "currency",
+      "border": [
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t",
+        "r"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 10,
+      "c": 0,
+      "cs": 13,
+      "text": "부가세(10%)",
+      "border": [
+        "t",
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 10,
+      "c": 13,
+      "cs": 11,
+      "field": "부가세",
+      "format": "currency",
+      "border": [
+        "t",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "r"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 11,
+      "c": 0,
+      "rs": 2,
+      "cs": 13,
+      "text": "총계",
+      "border": [
+        "t",
+        "r"
+      ],
+      "borderStrong": [
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "subheading"
+    },
+    {
+      "r": 11,
+      "c": 13,
+      "rs": 2,
+      "cs": 11,
+      "field": "총계",
+      "format": "currency",
+      "border": [
+        "t",
+        "l"
+      ],
+      "borderStrong": [
+        "r",
+        "b"
+      ],
+      "align": "end",
+      "typo": "subheading"
+    },
+    {
+      "r": 13,
+      "c": 0,
+      "cs": 24,
+      "text": "주의사항",
+      "typo": "caption"
+    },
+    {
+      "r": 14,
+      "c": 0,
+      "rs": 6,
+      "cs": 24,
+      "text": "* 기본 PET도어 / 무몰딩형 기준으로 견적 - 추후 디자인 및 부속의 변경, 추가에 따라 추가금이 발생합니다.\n* 공사 진행시 엘리베이터 사용료 또는 공사보증금, 보양비, 철거 비용 발생시 별도 진행됩니다.\n* 현장 상황에 따라 철거가 발생할 경우 품목에 따라 기본비 130,000 + α 가 발생됩니다.\n* 가구의 모든 몸통은 SE0 등급 기준입니다.(단, 자재 수급에 따라 변동될 수 있습니다)\n* 하드웨어류는 별도 지정 없으면 독일 헤펠레 社 제품을 적용합니다.(단, 자재 수급에 따라 변동될 수 있습니다)\n* 본 견적서를 온라인 매체나 불특정다수에게 배포시 민·형사상 책임이 있습니다.\n* 공사진행시, 엘리베이터 사용료 및 공사 예치금은 고객님 별도 부담 진행입니다.\n* 이미지를 보고 결정한 자재에 대해서는 당사 책임이 없습니다. (자재 선정은 실물 확인 후 결정)\n* 철거, 타일, 소방, 가스, 전기 등 가구 외 공정은 별도로 진행됩니다.",
+      "valign": "top",
+      "typo": "caption"
+    }
+  ],
+  "bands": [
+    {
+      "kind": "columnHeader",
+      "r1": 7,
+      "r2": 7
+    },
+    {
+      "kind": "repeat",
+      "r1": 8,
+      "r2": 8,
+      "source": "견적"
+    },
+    {
+      "kind": "pageFooter",
+      "r1": 30,
+      "r2": 30
+    }
+  ]
+}

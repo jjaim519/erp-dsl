@@ -1,38 +1,24 @@
 'use client';
 // 문서 렌더러 검증 화면 — 서식에 값을 먹여 A4 여러 장으로 그린다.
-//  서식 둘을 나란히 둔다:
-//   · 거래명세서  — 손으로 적은 PaperSpec(모델이 실물을 담는지의 증거)
-//   · 산출내역서  — **엑셀에서 변환한** PaperSpec(xlsx → CLI → json 경로의 증거)
-//  라인 수를 바꿔 쪽 나눔·열 머리 재출력·그룹 소계·총계·쪽 번호를 눈으로 확인한다.
+//  kk의 실물 서식 넷을 나란히 둔다. 전부 **엑셀에서 변환한** PaperSpec이라(xlsx → CLI → json)
+//  이 화면이 곧 그 경로의 증거다. 손으로 적은 PaperSpec(거래명세서)은 걷었다 — 저작 경로가
+//  엑셀 하나로 모인 뒤로는 «손으로도 적을 수 있다»를 증명할 자리가 아니라 두 벌을 남길 뿐이다.
+//  건수를 바꿔 쪽 나눔·열머리 재출력·묶음 걸침·소계·총계를 눈으로 확인한다.
 //  (dev 도구 — 배포 대상 밖. 샘플 데이터도 여기 산다.)
 import { useMemo, useState } from 'react';
 import { Stack, Group, Title, Text, Button, SegmentedControl, Callout, PaperDoc, PaperDocModal } from '@/ui';
 import { validatePaper, validatePaperCoverage, type PaperSpec } from '@/schema';
-import { tradeStatement } from '../../../forms/trade-statement';
 import gabjiJson from '../../../forms/kk-gabji.paper.json';
-import treeLedgerJson from '../../../forms/tree-ledger.paper.json';
+import eulJson from '../../../forms/kk-eulnaeyeokseo.paper.json';
+import gabNaeJson from '../../../forms/kk-gabnaeyeokseo.paper.json';
+import sayongJson from '../../../forms/kk-sayongnaeyeokseo.paper.json';
 
 const gabji = gabjiJson as PaperSpec;
-const treeLedger = treeLedgerJson as PaperSpec;
+const eul = eulJson as PaperSpec;
+const gabNae = gabNaeJson as PaperSpec;
+const sayong = sayongJson as PaperSpec;
 
 // ── 샘플 값 ────────────────────────────────────────────────────
-const CATS = ['주방 가구', '부자재', '시공'];
-const tradeValues = (n: number) => ({
-  docNo: 'TS-2026-0812', issueDate: '2026-08-07',
-  supplierNo: '123-45-67890', supplier: '○○산업(주)', supplierCeo: '김대표',
-  buyerNo: '210-98-76543', buyer: '△△건설(주)', buyerCeo: '이대표',
-  note: '잔금은 납품 확인 후 7일 이내 지급합니다.\n하자 발생 시 즉시 통보 바랍니다.',
-  receiver: '', receivedAt: '',
-  lines: Array.from({ length: n }, (_, i) => ({
-    no: i + 1, name: `품목 ${i + 1}`,
-    spec: `규격 ${((i % 4) + 1) * 100}×${((i % 3) + 1) * 200}`,
-    qty: (i % 5) + 1, price: 10000 * ((i % 7) + 1),
-    amount: 10000 * ((i % 7) + 1) * ((i % 5) + 1),
-    vat: 1000 * ((i % 7) + 1) * ((i % 5) + 1),
-    category: CATS[i % 3],
-  })),
-});
-
 // 갑지 — 부속을 **묶음이 지어지게** 만든다(종류가 연달아 같은 줄끼리 걸침 칸 하나로 합쳐진다).
 //  건수를 올리면 걸침이 쪽 경계에서 쪼개지는 것까지 보인다.
 const DEMO_LOGO = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgNDQiPjxyZWN0IHg9IjEiIHk9IjEiIHdpZHRoPSI0MiIgaGVpZ2h0PSI0MiIgcng9IjkiIGZpbGw9IiMxRTQxNzgiLz48cGF0aCBkPSJNMTIgMzFWMTNoNi4yYzMuNCAwIDUuNiAxLjkgNS42IDUgMCAyLjEtMSAzLjYtMi43IDQuM2wzLjQgOC43aC00bC0zLThoLTEuOHY4eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xNS43IDIwLjJoMi4xYzEuMyAwIDIuMS0uOCAyLjEtMnMtLjgtMi0yLjEtMmgtMi4xeiIgZmlsbD0iIzFFNDE3OCIvPjx0ZXh0IHg9IjUyIiB5PSIyNyIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxNjE4MUMiPlJJVkVOPC90ZXh0Pjx0ZXh0IHg9IjUyIiB5PSIzOCIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNy41IiBmaWxsPSIjNkU3NDgwIj5JTkRVU1RSSUFMIENPLjwvdGV4dD48L3N2Zz4=';
@@ -88,10 +74,52 @@ const treeValues = (n: number) => {
   };
 };
 
+// 갑내역서(견적서) — 묶음 걸침 + 표의 합을 엔진이 더한다({{합계:견적.금액}}).
+//  부가세·총계는 «비율·덧셈»이라 엔진이 못 한다 — 소비처가 계산해 넘기는 자리를 여기서 보인다.
+const 공사구획 = [
+  { 종류: '주방', 품목: ['상부장 교체 (SE0 몸통)', '하부장 교체', '싱크볼·수전'] },
+  { 종류: '거실', 품목: ['붙박이장 맞춤', '몰딩·마감'] },
+  { 종류: '침실', 품목: ['붙박이장', '가벽 시공'] },
+  { 종류: '현관', 품목: ['중문 설치', '신발장'] },
+];
+const gabNaeValues = (n: number) => {
+  const 평면 = 공사구획.flatMap((g) => g.품목.map((품목) => ({ 종류: g.종류, 품목 })));
+  const 견적 = Array.from({ length: n }, (_, i) => ({
+    ...평면[i % 평면.length], 금액: ((i % 6) + 2) * 450_000, 비고: i % 4 === 1 ? '헤펠레 하드웨어' : '',
+  }));
+  const 공사비 = 견적.reduce((s, x) => s + x.금액, 0);
+  const 부가세 = Math.round(공사비 * 0.1);
+  return {
+    발행처로고: DEMO_LOGO,
+    고객명: '박서연', 고객전화번호: '010-1234-5678',
+    담당자명: '김병준', 담당자전화번호: '010-9876-5432',
+    견적일: '2026-08-07', 견적일로부터7일후: '2026-08-14',
+    공사명: '강남 리모델링 주방·거실',
+    견적, 부가세, 총계: 공사비 + 부가세,
+  };
+};
+
+// 사용내역서 — 부속을 종류로 묶어 쓴다. ⚠ 하단 「묶음별 합계」 구간은 아직 미완이라
+//  7행이 항목마다 한 줄씩 더 나온다(묶음당 한 줄이 되려면 「묶음반복」 밴드가 필요하다).
+const sayongValues = (n: number) => {
+  const 평면 = 부속종류.flatMap((g) => g.품목.map((품목) => ({ 종류: g.종류, 품목 })));
+  const 부속 = Array.from({ length: n }, (_, i) => {
+    const 단가 = ((i % 5) + 1) * 3_000;
+    const 개수 = ((i % 6) + 1) * 2;
+    return { ...평면[i % 평면.length], 단가, 개수, 금액: 단가 * 개수 };
+  });
+  return {
+    발행처로고: DEMO_LOGO,
+    현장주소: '서울 강남구 테헤란로 123 4층',
+    부속, 총계: 부속.reduce((s, x) => s + x.금액, 0),
+  };
+};
+
 const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<string, unknown>; note: string }> = {
-  gabji: { spec: gabji, values: gabjiValues, note: '엑셀에서 변환 — public/kk-gabji.xlsx → paper-import  ·  부속이 반복 + 종류 걸침' },
-  tree: { spec: treeLedger, values: treeValues, note: '엑셀에서 변환 — public/template-ledger.xlsx → paper-import  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
-  trade: { spec: tradeStatement, values: tradeValues, note: '손으로 적은 PaperSpec — src/forms/trade-statement.ts' },
+  gabji: { spec: gabji, values: gabjiValues, note: 'public/kk-gabji.xlsx  ·  부속이 반복 + 종류 걸침' },
+  gabNae: { spec: gabNae, values: gabNaeValues, note: 'public/kk-gabnaeyeokseo.xlsx  ·  묶음 걸침 + 표의 합을 엔진이 더함' },
+  eul: { spec: eul, values: treeValues, note: 'public/kk-eulnaeyeokseo.xlsx  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
+  sayong: { spec: sayong, values: sayongValues, note: 'public/kk-sayongnaeyeokseo.xlsx  ·  ⚠ 하단 「묶음별 합계」 미완' },
 };
 
 // 데이터에서 끌어오는 값 — **소비처가 정한다.** 서식(엑셀)은 «필드가 어디 있나»만 말하고
@@ -141,9 +169,10 @@ export default function PaperDevPage() {
             <SegmentedControl
               size="sm" value={form} onChange={(v) => { setForm(v); setCount(8); setEdits(null); }}
               options={[
-                { label: '갑지 (변환)', value: 'gabji' },
-                { label: '내역서·트리 (변환)', value: 'tree' },
-                { label: '거래명세서 (손)', value: 'trade' },
+                { label: '갑지', value: 'gabji' },
+                { label: '갑내역서', value: 'gabNae' },
+                { label: '을내역서', value: 'eul' },
+                { label: '사용내역서', value: 'sayong' },
               ]}
             />
             <SegmentedControl
@@ -153,7 +182,7 @@ export default function PaperDevPage() {
                 { label: '편집', value: 'edit' },
               ]}
             />
-            <Text variant="body-strong">{({ gabji: '부속', tree: '공사' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
+            <Text variant="body-strong">{({ gabji: '부속', gabNae: '견적', eul: '구획', sayong: '부속' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
             <Group gap="xs">
               {[1, 8, 16, 24, 40].map((n) => (
                 <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => reset(setCount)(n)}>
