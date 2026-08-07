@@ -5,7 +5,7 @@
 // 쪽 나눔을 저작이 아니라 여기서 하는 근거: 반복 행이 몇 줄이 될지는 값이 와야 안다.
 // 그리고 브라우저 인쇄에 맡기면 매 쪽 머리말이 안 붙고(사파리는 첫 장만) 표가 행 중간에서 잘린다.
 import {
-  rowsPerPage, PAPER_ROW_UNIT,
+  rowsPerPage, PAPER_ROW_UNIT, PAPER_TAG,
   type PaperSpec, type PaperCell, type PaperBand, type PaperAgg,
 } from '../schema/paper';
 
@@ -46,9 +46,17 @@ function toNumber(v: unknown): number {
 }
 
 // 집계 — 서식이 선언하고 여기서 계산한다(소비처가 하면 그룹 기준을 알아야 해서 계약이 샌다).
-function aggregate(agg: PaperAgg, rows: Record<string, unknown>[]): number {
+//  대상 배열은 **집계식이 스스로 말한다**(`투입.금액` → `투입`). 그래야 문서에 반복 구간이 여럿일 때
+//  총계가 엉뚱한 배열을 더하지 않는다 — 실제로 직접경비 소계가 인건비 스코프로 계산돼 0이 나왔다.
+//  단 그룹 꼬리(소계)는 «지금 묶음»이 스코프라 그쪽이 우선한다.
+function aggregate(
+  agg: PaperAgg, values: Record<string, unknown>, scope: Scope,
+): number {
   const paths = Array.isArray(agg.of) ? agg.of : [agg.of];
   const keys = paths.map((p) => (p.includes('.') ? p.slice(p.indexOf('.') + 1) : p));
+  const arrName = paths[0]?.includes('.') ? paths[0].slice(0, paths[0].indexOf('.')) : '';
+  const rows = scope.group
+    ?? ((values[arrName] as Record<string, unknown>[] | undefined) ?? []);
   if (agg.fn === 'count') return rows.length;
   const total = rows.reduce((sum, row) => sum + keys.reduce((s, k) => s + toNumber(row[k]), 0), 0);
   return agg.fn === 'avg' ? (rows.length ? total / rows.length : 0) : total;
@@ -66,13 +74,17 @@ function buildRow(
   const cells = spec.cells
     .filter((c) => c.r === r)
     .map<OutCell>((c) => {
+      const one = (name: string): string => {
+        if (name === '@page') return String(page.n);
+        if (name === '@pages') return String(page.total);
+        if (name === '@today') return '';        // 소비처가 주입(부품은 시계를 안 본다)
+        return format(readField(name, values, scope), c.format);
+      };
       let text = '';
       if (c.text != null) text = c.text;
-      else if (c.field === '@page') text = String(page.n);
-      else if (c.field === '@pages') text = String(page.total);
-      else if (c.field === '@today') text = '';                 // 소비처가 주입(부품은 시계를 안 본다)
-      else if (c.field) text = format(readField(c.field, values, scope), c.format);
-      else if (c.agg) text = format(aggregate(c.agg, scope.group ?? []), c.format ?? 'number');
+      else if (c.template != null) text = c.template.replace(PAPER_TAG, (_, n: string) => one(n.trim()));
+      else if (c.field) text = one(c.field);
+      else if (c.agg) text = format(aggregate(c.agg, values, scope), c.format ?? 'number');
       return { spec: c, text };
     });
   return { h: rowHeight(spec, r), cells };
@@ -86,19 +98,28 @@ type Cluster = {
   from: number; to: number;
 };
 
-function findCluster(spec: PaperSpec): Cluster | null {
-  const bands = spec.bands ?? [];
-  const repeat = bands.find((b) => b.kind === 'repeat');
-  if (!repeat) return null;
-  const columnHeader = bands.find((b) => b.kind === 'columnHeader');
-  const groupHeader = bands.find((b) => b.kind === 'groupHeader');
-  const groupFooter = bands.find((b) => b.kind === 'groupFooter');
-  const all = [columnHeader, groupHeader, repeat, groupFooter].filter(Boolean) as PaperBand[];
-  return {
-    columnHeader, groupHeader, repeat, groupFooter,
-    from: Math.min(...all.map((b) => b.r1)),
-    to: Math.max(...all.map((b) => b.r2)),
-  };
+// 문서에 반복 구간이 **여럿**일 수 있다(산출내역서: 투입공수 · 직접경비).
+//  각 repeat를 축으로, 그 위의 열머리·그룹머리와 아래의 그룹꼬리를 «다음 repeat를 넘지 않는 선에서» 붙인다.
+function findClusters(spec: PaperSpec): Cluster[] {
+  const bands = [...(spec.bands ?? [])].sort((a, b) => a.r1 - b.r1);
+  const repeats = bands.filter((b) => b.kind === 'repeat');
+  return repeats.map((repeat, i) => {
+    const prev = repeats[i - 1];
+    const next = repeats[i + 1];
+    const above = (k: PaperBand['kind']) =>
+      bands.filter((b) => b.kind === k && b.r2 < repeat.r1 && (!prev || b.r1 > prev.r2)).pop();
+    const below = (k: PaperBand['kind']) =>
+      bands.find((b) => b.kind === k && b.r1 > repeat.r2 && (!next || b.r2 < next.r1));
+    const columnHeader = above('columnHeader');
+    const groupHeader = above('groupHeader');
+    const groupFooter = below('groupFooter');
+    const all = [columnHeader, groupHeader, repeat, groupFooter].filter(Boolean) as PaperBand[];
+    return {
+      columnHeader, groupHeader, repeat, groupFooter,
+      from: Math.min(...all.map((b) => b.r1)),
+      to: Math.max(...all.map((b) => b.r2)),
+    };
+  });
 }
 
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
@@ -110,7 +131,8 @@ export function layoutPaper(
 ): OutPage[] {
   const bands = spec.bands ?? [];
   const maxRow = spec.cells.reduce((m, c) => Math.max(m, c.r + (c.rs ?? 1) - 1), 0);
-  const cluster = findCluster(spec);
+  const clusters = findClusters(spec);
+  const clusterAt = new Map(clusters.map((c) => [c.from, c]));
   const pageBand = {
     header: bands.find((b) => b.kind === 'pageHeader'),
     footer: bands.find((b) => b.kind === 'pageFooter'),
@@ -121,15 +143,16 @@ export function layoutPaper(
   const pin = { n: 1, total: 1 };   // 1패스에선 임시값. 총 쪽수가 나오면 2패스에서 다시 짠다.
 
   // ① 흐름 만들기 — 반복을 값만큼 펼치고, 그룹 경계에서 머리·꼬리를 끼운다.
-  const flow: { row: OutRow; keep?: 'columnHeader' | 'groupHeader' }[] = [];
-  const allItems = (cluster
-    ? ((values[cluster.repeat.source ?? ''] as Record<string, unknown>[]) ?? [])
-    : []);
+  const flow: { row: OutRow; keep?: 'columnHeader' | 'groupHeader'; reset?: boolean }[] = [];
 
   for (let r = 0; r <= maxRow; r++) {
     if (inBand(r, pageBand.header) || inBand(r, pageBand.footer)) continue;
 
-    if (cluster && r === cluster.from) {
+    const cluster = clusterAt.get(r);
+    if (cluster) {
+      const allItems = (values[cluster.repeat.source ?? ''] as Record<string, unknown>[]) ?? [];
+      // 새 반복 묶음이 시작되면 앞 묶음의 재출력 머리를 잊는다(딴 표의 열머리를 물려주면 안 된다).
+      flow.push({ row: { h: 0, cells: [] }, reset: true });
       // 열 머리
       if (cluster.columnHeader) {
         range(cluster.columnHeader.r1, cluster.columnHeader.r2).forEach((cr) =>
@@ -165,13 +188,17 @@ export function layoutPaper(
             flow.push({ row: buildRow(spec, fr, values, scope, pin) }));
         }
       });
+      // 묶음이 끝나면 재출력 머리를 지운다 — 안 그러면 표가 끝난 뒤 쪽이 넘어갈 때
+      //  다음 쪽 머리에 «다 끝난 표의 열머리»가 딸려 나온다(실제로 그랬다).
+      flow.push({ row: { h: 0, cells: [] }, reset: true });
       r = cluster.to;
       continue;
     }
 
-    // 합계는 전체 배열을 스코프로 본다(마지막 쪽에만 나오도록 아래에서 뒤에 붙는다).
-    const scope: Scope = inBand(r, summary) ? { group: allItems } : {};
-    flow.push({ row: buildRow(spec, r, values, scope, pin) });
+    // 합계(summary)는 스코프를 안 준다 — 집계식이 자기 배열을 스스로 말하므로(aggregate 주석),
+    //  반복 구간이 여럿이어도 각 총계가 제 배열을 더한다.
+    void summary;
+    flow.push({ row: buildRow(spec, r, values, {}, pin) });
   }
 
   // ② 쪽 나누기 — 행 경계에서만 자른다(반쪽 행이 안 생긴다).
@@ -193,13 +220,11 @@ export function layoutPaper(
   const flush = () => { if (cur.length) { pages.push(cur); cur = []; used = 0; } };
 
   for (const step of flow) {
+    // 반복 묶음 경계 — 앞 표의 열머리·그룹머리를 다음 표에 물려주지 않는다.
+    if (step.reset) { lastColumnHeader = []; lastGroupHeader = []; continue; }
     if (used + step.row.h > bodyBudget) {
       flush();
-      const reprint = [
-        ...(cluster?.columnHeader?.reprint !== false ? lastColumnHeader : []),
-        ...(cluster?.groupHeader?.reprint !== false ? lastGroupHeader : []),
-      ];
-      reprint.forEach((row) => { cur.push(row); used += row.h; });
+      [...lastColumnHeader, ...lastGroupHeader].forEach((row) => { cur.push(row); used += row.h; });
     }
     cur.push(step.row);
     used += step.row.h;
@@ -210,14 +235,26 @@ export function layoutPaper(
   if (!pages.length) pages.push([]);
 
   // ③ 2패스 — 총 쪽수가 나왔으니 @page/@pages를 실제 값으로 다시 짠다.
+  //  머리말·꼬리말은 항상 문서 스코프라(반복 안이 아니다) 여기서 안전하게 다시 채운다.
   const total = pages.length;
   const rebuild = (rows: OutRow[], n: number): OutRow[] =>
     rows.map((row) => ({
       h: row.h,
-      cells: row.cells.map((c) =>
-        c.spec.field === '@page' ? { ...c, text: String(n) }
-        : c.spec.field === '@pages' ? { ...c, text: String(total) }
-        : c),
+      cells: row.cells.map((c) => {
+        if (c.spec.field === '@page') return { ...c, text: String(n) };
+        if (c.spec.field === '@pages') return { ...c, text: String(total) };
+        if (c.spec.template && /@(page|pages|쪽|총쪽)/.test(c.spec.template)) {
+          const text = c.spec.template.replace(PAPER_TAG, (_, raw: string) => {
+            const name = raw.trim();
+            if (name === '@page') return String(n);
+            if (name === '@pages') return String(total);
+            if (name === '@today') return '';
+            return format(readField(name, values, {}), c.spec.format);
+          });
+          return { ...c, text };
+        }
+        return c;
+      }),
     }));
 
   return pages.map((body, i) => {

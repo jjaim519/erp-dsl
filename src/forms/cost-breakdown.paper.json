@@ -1,0 +1,1490 @@
+{
+  "id": "cost-breakdown",
+  "name": "산 출 내 역 서",
+  "columns": 24,
+  "orientation": "portrait",
+  "fields": [
+    {
+      "name": "발행처명",
+      "label": "발행처 이름",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "발행처사업자번호",
+      "label": "발행처 사업자번호",
+      "type": "text"
+    },
+    {
+      "name": "발행처주소",
+      "label": "발행처 주소",
+      "type": "text"
+    },
+    {
+      "name": "발행처전화",
+      "label": "발행처 전화",
+      "type": "text"
+    },
+    {
+      "name": "문서번호",
+      "label": "문서번호",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "작성일자",
+      "label": "작성일자",
+      "type": "date",
+      "required": true
+    },
+    {
+      "name": "담당자",
+      "label": "담당자",
+      "type": "text"
+    },
+    {
+      "name": "검토자",
+      "label": "검토자",
+      "type": "text"
+    },
+    {
+      "name": "승인자",
+      "label": "승인자",
+      "type": "text"
+    },
+    {
+      "name": "사업명",
+      "label": "사업명",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "발주처",
+      "label": "발주처",
+      "type": "text",
+      "required": true
+    },
+    {
+      "name": "계약시작",
+      "label": "계약 시작일",
+      "type": "date"
+    },
+    {
+      "name": "계약종료",
+      "label": "계약 종료일",
+      "type": "date"
+    },
+    {
+      "name": "산정방식",
+      "label": "산정방식",
+      "type": "select"
+    },
+    {
+      "name": "직접인건비",
+      "label": "직접인건비",
+      "type": "currency",
+      "required": true
+    },
+    {
+      "name": "제경비율",
+      "label": "제경비율",
+      "type": "text"
+    },
+    {
+      "name": "제경비",
+      "label": "제경비",
+      "type": "currency"
+    },
+    {
+      "name": "기술료율",
+      "label": "기술료율",
+      "type": "text"
+    },
+    {
+      "name": "기술료",
+      "label": "기술료",
+      "type": "currency"
+    },
+    {
+      "name": "직접경비계",
+      "label": "직접경비 계",
+      "type": "currency"
+    },
+    {
+      "name": "소계",
+      "label": "소계",
+      "type": "currency"
+    },
+    {
+      "name": "부가세",
+      "label": "부가가치세",
+      "type": "currency"
+    },
+    {
+      "name": "총계",
+      "label": "총계",
+      "type": "currency",
+      "required": true
+    },
+    {
+      "name": "산정근거",
+      "label": "산정 근거",
+      "type": "textarea"
+    }
+  ],
+  "arrays": [
+    {
+      "name": "투입",
+      "label": "투입",
+      "of": [
+        {
+          "name": "단계",
+          "label": "단계",
+          "type": "text"
+        },
+        {
+          "name": "직무",
+          "label": "직무",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "등급",
+          "label": "등급",
+          "type": "text"
+        },
+        {
+          "name": "인원",
+          "label": "투입인원",
+          "type": "number"
+        },
+        {
+          "name": "기간",
+          "label": "투입기간(월)",
+          "type": "number"
+        },
+        {
+          "name": "공수",
+          "label": "투입공수(M/M)",
+          "type": "number"
+        },
+        {
+          "name": "월임금",
+          "label": "월평균임금",
+          "type": "currency"
+        },
+        {
+          "name": "금액",
+          "label": "금액",
+          "type": "currency"
+        },
+        {
+          "name": "비고",
+          "label": "비고",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "name": "경비",
+      "label": "경비",
+      "of": [
+        {
+          "name": "항목",
+          "label": "항목",
+          "type": "text"
+        },
+        {
+          "name": "규격",
+          "label": "규격",
+          "type": "text"
+        },
+        {
+          "name": "수량",
+          "label": "수량",
+          "type": "number"
+        },
+        {
+          "name": "단가",
+          "label": "단가",
+          "type": "currency"
+        },
+        {
+          "name": "금액",
+          "label": "금액",
+          "type": "currency"
+        },
+        {
+          "name": "비고",
+          "label": "비고",
+          "type": "text"
+        }
+      ]
+    }
+  ],
+  "images": [
+    "발행처로고"
+  ],
+  "cells": [
+    {
+      "r": 0,
+      "c": 0,
+      "rs": 2,
+      "cs": 3,
+      "image": "발행처로고",
+      "align": "center",
+      "ink": "secondary"
+    },
+    {
+      "r": 0,
+      "c": 3,
+      "rs": 2,
+      "cs": 14,
+      "text": "산 출 내 역 서",
+      "align": "center",
+      "typo": "display"
+    },
+    {
+      "r": 0,
+      "c": 17,
+      "cs": 3,
+      "text": "문서번호",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "fill": "shade"
+    },
+    {
+      "r": 0,
+      "c": 20,
+      "cs": 4,
+      "field": "문서번호",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "caption"
+    },
+    {
+      "r": 1,
+      "c": 17,
+      "cs": 3,
+      "text": "작성일자",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "fill": "shade"
+    },
+    {
+      "r": 1,
+      "c": 20,
+      "cs": 4,
+      "field": "작성일자",
+      "format": "date",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "caption"
+    },
+    {
+      "r": 2,
+      "c": 0,
+      "cs": 3,
+      "text": "사 업 명",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "shade"
+    },
+    {
+      "r": 2,
+      "c": 3,
+      "cs": 9,
+      "field": "사업명",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 2,
+      "c": 12,
+      "cs": 3,
+      "text": "발 주 처",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "shade"
+    },
+    {
+      "r": 2,
+      "c": 15,
+      "cs": 9,
+      "field": "발주처",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 3,
+      "c": 0,
+      "cs": 3,
+      "text": "계약기간",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "shade"
+    },
+    {
+      "r": 3,
+      "c": 3,
+      "cs": 9,
+      "template": "{{계약시작}} ~ {{계약종료}}",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 3,
+      "c": 12,
+      "cs": 3,
+      "text": "산정방식",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "shade"
+    },
+    {
+      "r": 3,
+      "c": 15,
+      "cs": 9,
+      "field": "산정방식",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 5,
+      "c": 0,
+      "cs": 24,
+      "text": "■ 1. 투입공수 (직접인건비)",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 0,
+      "rs": 2,
+      "cs": 2,
+      "text": "단계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 2,
+      "rs": 2,
+      "cs": 4,
+      "text": "직무",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 6,
+      "rs": 2,
+      "cs": 2,
+      "text": "등급",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 8,
+      "cs": 6,
+      "text": "투입공수",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 14,
+      "rs": 2,
+      "cs": 3,
+      "text": "월평균임금",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 17,
+      "rs": 2,
+      "cs": 4,
+      "text": "금액",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 6,
+      "c": 21,
+      "rs": 2,
+      "cs": 3,
+      "text": "비고",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 7,
+      "c": 8,
+      "cs": 2,
+      "text": "인원",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "fill": "shade"
+    },
+    {
+      "r": 7,
+      "c": 10,
+      "cs": 2,
+      "text": "기간(월)",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "fill": "shade"
+    },
+    {
+      "r": 7,
+      "c": 12,
+      "cs": 2,
+      "text": "M/M",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "fill": "shade"
+    },
+    {
+      "r": 8,
+      "c": 0,
+      "cs": 24,
+      "field": "투입.단계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 9,
+      "c": 0,
+      "cs": 2,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 9,
+      "c": 2,
+      "cs": 4,
+      "field": "투입.직무",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 9,
+      "c": 6,
+      "cs": 2,
+      "field": "투입.등급",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 9,
+      "c": 8,
+      "cs": 2,
+      "field": "투입.인원",
+      "format": "number",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 9,
+      "c": 10,
+      "cs": 2,
+      "field": "투입.기간",
+      "format": "number",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 9,
+      "c": 12,
+      "cs": 2,
+      "field": "투입.공수",
+      "format": "number",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 9,
+      "c": 14,
+      "cs": 3,
+      "field": "투입.월임금",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 9,
+      "c": 17,
+      "cs": 4,
+      "field": "투입.금액",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 9,
+      "c": 21,
+      "cs": 3,
+      "field": "투입.비고",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 10,
+      "c": 0,
+      "cs": 12,
+      "text": "소　계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "fill": "shade"
+    },
+    {
+      "r": 10,
+      "c": 12,
+      "cs": 2,
+      "agg": {
+        "fn": "sum",
+        "of": "투입.공수"
+      },
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 10,
+      "c": 14,
+      "cs": 3,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 10,
+      "c": 17,
+      "cs": 4,
+      "agg": {
+        "fn": "sum",
+        "of": "투입.금액"
+      },
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 10,
+      "c": 21,
+      "cs": 3,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 11,
+      "c": 0,
+      "cs": 12,
+      "text": "직접인건비 계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 11,
+      "c": 12,
+      "cs": 2,
+      "agg": {
+        "fn": "sum",
+        "of": "투입.공수"
+      },
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong"
+    },
+    {
+      "r": 11,
+      "c": 14,
+      "cs": 3,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 11,
+      "c": 17,
+      "cs": 4,
+      "agg": {
+        "fn": "sum",
+        "of": "투입.금액"
+      },
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong"
+    },
+    {
+      "r": 11,
+      "c": 21,
+      "cs": 3,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 13,
+      "c": 0,
+      "cs": 24,
+      "text": "■ 2. 원가 집계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 14,
+      "c": 0,
+      "cs": 12,
+      "text": "직접인건비",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 14,
+      "c": 12,
+      "cs": 6,
+      "text": "투입공수 × 월평균임금",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 14,
+      "c": 18,
+      "cs": 6,
+      "field": "직접인건비",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 15,
+      "c": 0,
+      "cs": 12,
+      "text": "제경비",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 15,
+      "c": 12,
+      "cs": 6,
+      "template": "직접인건비 × {{제경비율}}",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 15,
+      "c": 18,
+      "cs": 6,
+      "field": "제경비",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 16,
+      "c": 0,
+      "cs": 12,
+      "text": "기술료",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 16,
+      "c": 12,
+      "cs": 6,
+      "template": "(직접인건비 + 제경비) × {{기술료율}}",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 16,
+      "c": 18,
+      "cs": 6,
+      "field": "기술료",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 17,
+      "c": 0,
+      "cs": 12,
+      "text": "직접경비",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 17,
+      "c": 12,
+      "cs": 6,
+      "text": "아래 3항 합계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 17,
+      "c": 18,
+      "cs": 6,
+      "field": "직접경비계",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 18,
+      "c": 0,
+      "cs": 12,
+      "text": "소　계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 18,
+      "c": 12,
+      "cs": 6,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 18,
+      "c": 18,
+      "cs": 6,
+      "field": "소계",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong"
+    },
+    {
+      "r": 19,
+      "c": 0,
+      "cs": 12,
+      "text": "부가가치세",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 19,
+      "c": 12,
+      "cs": 6,
+      "text": "소계 × 10%",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 19,
+      "c": 18,
+      "cs": 6,
+      "field": "부가세",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 20,
+      "c": 0,
+      "cs": 12,
+      "text": "총　계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 20,
+      "c": 12,
+      "cs": 6,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 20,
+      "c": 18,
+      "cs": 6,
+      "field": "총계",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong"
+    },
+    {
+      "r": 22,
+      "c": 0,
+      "cs": 24,
+      "text": "■ 3. 직접경비 명세",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 23,
+      "c": 0,
+      "cs": 6,
+      "text": "항목",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 23,
+      "c": 6,
+      "cs": 6,
+      "text": "규격",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 23,
+      "c": 12,
+      "cs": 2,
+      "text": "수량",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 23,
+      "c": 14,
+      "cs": 4,
+      "text": "단가",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 23,
+      "c": 18,
+      "cs": 4,
+      "text": "금액",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 23,
+      "c": 22,
+      "cs": 2,
+      "text": "비고",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 24,
+      "c": 0,
+      "cs": 6,
+      "field": "경비.항목",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 24,
+      "c": 6,
+      "cs": 6,
+      "field": "경비.규격",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 24,
+      "c": 12,
+      "cs": 2,
+      "field": "경비.수량",
+      "format": "number",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center"
+    },
+    {
+      "r": 24,
+      "c": 14,
+      "cs": 4,
+      "field": "경비.단가",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 24,
+      "c": 18,
+      "cs": 4,
+      "field": "경비.금액",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 24,
+      "c": 22,
+      "cs": 2,
+      "field": "경비.비고",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ]
+    },
+    {
+      "r": 25,
+      "c": 0,
+      "cs": 18,
+      "text": "소　계",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong",
+      "fill": "shade"
+    },
+    {
+      "r": 25,
+      "c": 18,
+      "cs": 4,
+      "agg": {
+        "fn": "sum",
+        "of": "경비.금액"
+      },
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "typo": "body-strong"
+    },
+    {
+      "r": 25,
+      "c": 22,
+      "cs": 2,
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "fill": "shade"
+    },
+    {
+      "r": 27,
+      "c": 0,
+      "rs": 3,
+      "cs": 3,
+      "text": "산정 근거",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "valign": "top",
+      "fill": "shade"
+    },
+    {
+      "r": 27,
+      "c": 3,
+      "rs": 3,
+      "cs": 21,
+      "field": "산정근거",
+      "border": [
+        "t",
+        "r",
+        "b",
+        "l"
+      ],
+      "valign": "top"
+    },
+    {
+      "r": 41,
+      "c": 0,
+      "cs": 18,
+      "template": "{{발행처명}}　{{발행처주소}}　{{발행처전화}}",
+      "border": [
+        "t"
+      ],
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 41,
+      "c": 18,
+      "cs": 6,
+      "template": "{{@page}} / {{@pages}}",
+      "border": [
+        "t"
+      ],
+      "align": "end",
+      "typo": "caption",
+      "ink": "secondary"
+    }
+  ],
+  "bands": [
+    {
+      "kind": "columnHeader",
+      "r1": 6,
+      "r2": 7
+    },
+    {
+      "kind": "groupHeader",
+      "r1": 8,
+      "r2": 8,
+      "by": "투입.단계"
+    },
+    {
+      "kind": "repeat",
+      "r1": 9,
+      "r2": 9,
+      "source": "투입"
+    },
+    {
+      "kind": "groupFooter",
+      "r1": 10,
+      "r2": 10,
+      "by": "투입.단계"
+    },
+    {
+      "kind": "summary",
+      "r1": 11,
+      "r2": 11
+    },
+    {
+      "kind": "columnHeader",
+      "r1": 23,
+      "r2": 23
+    },
+    {
+      "kind": "repeat",
+      "r1": 24,
+      "r2": 24,
+      "source": "경비"
+    },
+    {
+      "kind": "summary",
+      "r1": 25,
+      "r2": 25
+    },
+    {
+      "kind": "pageFooter",
+      "r1": 41,
+      "r2": 41
+    }
+  ]
+}

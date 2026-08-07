@@ -68,7 +68,13 @@ export type PaperCell = {
   cs?: number;            // 가로 병합(기본 1) — 넓히는 유일한 수단(열 너비는 없다)
   text?: string;          // 고정 글자
   field?: string;         // 데이터 자리. 반복 안이면 점 경로("lines.qty")
-  image?: string;         // 이미지 자리(로고·도면). 필드명 또는 자산 키
+  /**
+   * 한 칸에 값이 여럿이거나 글자와 섞인 자리 — `"{{시작}} ~ {{끝}}"`.
+   * 실물 서식이 요구한다(계약기간·표준 꼬리 "발행처명 주소 전화"·쪽번호 "1 / 3").
+   * 자리표시자 안에는 **필드 이름만** 들어간다(식·함수 없음) — 열린 구멍이 아니라 이어붙이기다.
+   */
+  template?: string;
+  image?: string;         // 이미지 자리(로고·도면). PaperSpec.images 의 이름
   agg?: PaperAgg;         // 집계 결과
   format?: PaperFormat;   // 표시 형식(값 표현 — 저장값은 안 건드린다)
   border?: PaperEdge[];   // 그릴 변. 없으면 선 없음(격자는 정렬 골격일 뿐)
@@ -126,10 +132,21 @@ export type PaperSpec = {
   orientation: PaperOrientation;
   fields: FieldSpec[];        // 문서 스코프 값(당사자·문서번호…)
   arrays?: PaperArray[];      // 반복 원본
+  /**
+   * 이미지 자리 이름(로고·직인·도면). `FieldSpec`에 이미지 타입이 없어서 따로 둔다 —
+   * `FieldType`에 더하면 폼(FormSection)이 못 그리는 타입을 알게 되어 오염된다.
+   */
+  images?: string[];
   cells: PaperCell[];         // sparse
   rows?: PaperRow[];          // 1단위가 아닌 행만
   bands?: PaperBand[];
 };
+
+/** `"{{a}} ~ {{b}}"` 에서 이름만 뽑는다. 자리표시자 문법은 여기 한 곳에만 산다. */
+export const PAPER_TAG = /\{\{\s*([^{}]+?)\s*\}\}/g;
+export function paperTagNames(template: string): string[] {
+  return [...template.matchAll(PAPER_TAG)].map((m) => m[1]);
+}
 
 // ── 검증 ───────────────────────────────────────────────────────
 // "LLM/편집기가 뱉은 정의가 렌더러에 가기 전 관문"(buildZodSchema와 같은 자리).
@@ -147,9 +164,10 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
   // 필드 이름 집합 — 셀이 가리킬 수 있는 전부.
   const scalar = new Set(spec.fields.map((f) => f.name));
   const arrays = new Map((spec.arrays ?? []).map((a) => [a.name, new Set(a.of.map((f) => f.name))]));
+  const images = new Set(spec.images ?? []);
   const knows = (path: string): boolean => {
     if (path.startsWith('@')) return (PAPER_SYSTEM_FIELDS as readonly string[]).includes(path);
-    if (scalar.has(path)) return true;
+    if (scalar.has(path) || images.has(path)) return true;
     const dot = path.indexOf('.');
     if (dot < 0) return false;
     const arr = arrays.get(path.slice(0, dot));
@@ -166,12 +184,18 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
     if (cell.c + cs > spec.columns) {
       push(at, `열 범위를 벗어납니다 (${cell.c}+${cs} > ${spec.columns})`);
     }
-    // ② 내용 배타 — 넷 중 하나만.
-    const filled = [cell.text != null, cell.field != null, cell.image != null, cell.agg != null]
-      .filter(Boolean).length;
-    if (filled > 1) push(at, '글자·데이터·이미지·집계는 한 칸에 하나만 놓습니다');
+    // ② 내용 배타 — 다섯 중 하나만.
+    const filled = [cell.text, cell.field, cell.template, cell.image, cell.agg]
+      .filter((x) => x != null).length;
+    if (filled > 1) push(at, '글자·데이터·이어붙이기·이미지·집계는 한 칸에 하나만 놓습니다');
     // ③ 참조 무결성 — 없는 필드를 가리키는 칸은 인쇄물에서 빈칸으로 나간다.
     if (cell.field && !knows(cell.field)) push(at, `없는 필드를 가리킵니다: ${cell.field}`);
+    if (cell.image && !knows(cell.image)) push(at, `없는 이미지를 가리킵니다: ${cell.image}`);
+    if (cell.template) {
+      paperTagNames(cell.template)
+        .filter((n) => !knows(n))
+        .forEach((n) => push(at, `없는 필드를 가리킵니다: ${n}`));
+    }
     if (cell.agg) {
       const targets = Array.isArray(cell.agg.of) ? cell.agg.of : [cell.agg.of];
       targets.filter((t) => !knows(t)).forEach((t) => push(at, `집계 대상이 없습니다: ${t}`));
@@ -227,7 +251,11 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
 /** 값까지 포함한 관문 — 필수 필드가 서식 어디에도 안 놓였으면 인쇄물에서 조용히 빈칸이 된다. */
 export function validatePaperCoverage(spec: PaperSpec): PaperIssue[] {
   const placed = new Set(
-    spec.cells.flatMap((c) => (c.field ? [c.field] : c.image ? [c.image] : [])),
+    spec.cells.flatMap((c) => [
+      ...(c.field ? [c.field] : []),
+      ...(c.image ? [c.image] : []),
+      ...(c.template ? paperTagNames(c.template) : []),
+    ]),
   );
   return spec.fields
     .filter((f) => f.required && !placed.has(f.name))
