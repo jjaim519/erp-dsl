@@ -178,6 +178,15 @@ export type PaperBandKind =
   | 'groupHeader'   // 묶음이 바뀔 때 한 번(분류 밴드)
   | 'repeat'        // 데이터 배열만큼 늘어나는 구간(detail)
   | 'groupFooter'   // 묶음이 끝날 때 한 번(소계)
+  /**
+   * 묶음마다 한 줄 — **반복이 «항목» 축이면 이건 «묶음» 축이다.**
+   * 상세 표와 떨어진 자리에서 「종류별로 얼마」를 모아 보이는 구간(사용내역서 하단).
+   *
+   * `groupFooter`와 다르다: 그건 반복 클러스터 «안»에 끼어 각 묶음 뒤에 발화하고,
+   * 이건 자기 구간에서 **묶음 수만큼** 발화한다. 상세를 한 번도 안 그려도 된다.
+   * 그 줄의 `{{묶음:배열.기준}}`이 무엇으로 묶을지를 말하고, 집계는 그 묶음 범위만 더한다.
+   */
+  | 'groupRepeat'
   | 'summary';      // 총계 — 마지막 쪽에만
 
 // 그룹 머리·꼬리는 반복 *안*이 아니라 반복을 **감싸는 형제**다.
@@ -239,7 +248,8 @@ export type PaperIssue = { path: string; message: string };
 
 const BAND_LABEL: Record<PaperBandKind, string> = {
   pageHeader: '매 쪽 머리말', pageFooter: '매 쪽 꼬리말', columnHeader: '열 머리',
-  groupHeader: '그룹 머리', repeat: '반복', groupFooter: '그룹 꼬리', summary: '합계',
+  groupHeader: '그룹 머리', repeat: '반복', groupFooter: '그룹 꼬리',
+  groupRepeat: '묶음반복', summary: '합계',
 };
 
 export function validatePaper(spec: PaperSpec): PaperIssue[] {

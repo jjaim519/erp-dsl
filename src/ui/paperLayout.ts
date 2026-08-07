@@ -196,6 +196,10 @@ export function layoutPaper(
     footer: bands.find((b) => b.kind === 'pageFooter'),
   };
   const summary = bands.find((b) => b.kind === 'summary');
+  // 묶음 축의 반복 — 반복 클러스터에 안 붙는다(자기 구간이다). 시작 행으로 찾는다.
+  const groupRepeatAt = new Map(
+    bands.filter((b) => b.kind === 'groupRepeat').map((b) => [b.r1, b]),
+  );
 
   const inBand = (r: number, b?: PaperBand) => !!b && r >= b.r1 && r <= b.r2;
   const pin = { n: 1, total: 1 };   // 1패스에선 임시값. 총 쪽수가 나오면 2패스에서 다시 짠다.
@@ -208,6 +212,34 @@ export function layoutPaper(
 
   for (let r = 0; r <= maxRow; r++) {
     if (inBand(r, pageBand.header) || inBand(r, pageBand.footer)) continue;
+
+    // ── 묶음반복 — **묶음 수만큼** 한 줄씩. 반복이 «항목» 축이면 이건 «묶음» 축이다.
+    //  상세 표와 떨어진 자리에서 「종류별로 얼마」를 모아 보이는 구간(사용내역서 하단).
+    //  새로 지은 건 «자리»뿐이다 — 값은 이미 다 있었다: `{{묶음:부속.종류}}`는 scope.item에서 그 묶음의
+    //  종류를 읽고, `{{합계:부속.금액}}`은 scope.group이 있으면 **그 묶음 범위만** 더한다(aggregate 참조).
+    //  ⚠ 여기선 걸침 칸을 «걸치지» 않는다(rs=1) — 한 묶음이 한 줄이라 걸칠 대상이 없다.
+    //    그래서 groupSpans에 안 넣고 그냥 그린다.
+    const gRep = groupRepeatAt.get(r);
+    if (gRep) {
+      const by = gRep.by ?? '';
+      const dot = by.indexOf('.');
+      const items = (values[dot < 0 ? by : by.slice(0, dot)] as Record<string, unknown>[]) ?? [];
+      const key = dot < 0 ? '' : by.slice(dot + 1);
+      const order: string[] = [];
+      const map = new Map<string, Record<string, unknown>[]>();
+      items.forEach((it) => {
+        const k = String(key ? it[key] ?? '' : '');
+        if (!map.has(k)) { map.set(k, []); order.push(k); }
+        map.get(k)!.push(it);
+      });
+      order.forEach((k, i) => {
+        const group = map.get(k)!;
+        const scope: Scope = { item: group[0], group, ordinal: i + 1 };
+        range(gRep.r1, gRep.r2).forEach((rr) => flow.push({ row: buildRow(spec, rr, values, scope, pin) }));
+      });
+      r = gRep.r2;
+      continue;
+    }
 
     const cluster = clusterAt.get(r);
     if (cluster) {

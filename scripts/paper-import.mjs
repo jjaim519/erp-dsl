@@ -26,6 +26,8 @@ const COLS_FALLBACK = 24;
 const BAND_KO = {
   '머리말': 'pageHeader', '꼬리말': 'pageFooter', '열머리': 'columnHeader',
   '그룹머리': 'groupHeader', '반복': 'repeat', '그룹꼬리': 'groupFooter', '합계': 'summary',
+  //  묶음 축의 반복 — 「반복」이 항목마다면 이건 묶음마다 한 줄이다(사용내역서 하단 「종류별 합계」).
+  '묶음반복': 'groupRepeat',
 };
 const TYPE_KO = {
   '글자': 'text', '숫자': 'number', '금액': 'currency', '날짜': 'date',
@@ -450,6 +452,13 @@ async function convert(file, opts) {
       if (arr) out.source = arr;
       else warn.push(`${b.r1}행 「반복」에 배열 필드가 없습니다 — 원본을 못 정합니다`);
     }
+    // 묶음반복 — 그 줄의 `{{묶음:배열.기준}}`이 곧 묶는 기준이다. 그룹머리와 같은 규칙이되
+    //  **트리 예외를 안 탄다**: 이건 상세 표와 떨어진 «종류별» 구간이라 깊이가 아니라 값으로 묶는다.
+    if (b.kind === 'groupRepeat') {
+      const by = pathsIn(b.r1, b.r2)[0];
+      if (by) out.by = by;
+      else warn.push(`${b.r1}행 「묶음반복」에 묶음 기준이 없습니다 — {{묶음:배열.기준}}을 놓으세요`);
+    }
     // 그룹 머리만 자기 행에서 기준을 도출한다(밴드 칸이 곧 그 기준값이라).
     //  단 **트리면 기준은 깊이다** — 「1. 주방」 칸의 필드는 품명이고, 그걸 `by`로 잡으면
     //  품명이 같은 줄끼리 묶여 「상부장」이 온 문서에서 한 덩어리가 된다(구획이 무너진다).
@@ -480,6 +489,13 @@ async function convert(file, opts) {
     if (!arrays.has(b.source)) {
       warn.push(`「반복」 원본 «${b.source}»가 「필드」 시트에 배열로 없습니다 — 그 시트 「배열」 열에 «${b.source}»를 적으세요(그리기는 되지만 편집 모드에서 입력이 안 됩니다)`);
     }
+  });
+
+  // 괄호가 안 맞은 태그 — `{{총계}`처럼 닫는 중괄호가 하나면 **사람 눈엔 태그인데 기계는 글자로 읽는다.**
+  //  터지지도 비지도 않고 종이에 `{{총계}`가 그대로 인쇄된다(실제로 그랬다). 값이 안 들어온 것과
+  //  구별이 안 돼서 소비처는 배선을 뜯는다 — 저작 시점에 잡는 게 맞다.
+  cells.filter((c) => c.text?.includes('{{')).forEach((c) => {
+    warn.push(`${c.r + 1}행에 «${c.text.trim().slice(0, 24)}» — 태그로 안 읽혔습니다(중괄호가 안 맞습니다). 종이에 글자 그대로 인쇄됩니다`);
   });
 
   // 점 경로가 **그 목록에 없는 칸**을 가리키면 그 열이 통째로 빈다 — 값이 없는 게 아니라
