@@ -165,6 +165,7 @@ type FieldSpec = {
 ### 유기체 (29) — 화면 한 구획, 도메인은 스키마로만 주입
 - **Modal** `opened` `onClose` `title` `actions` `size: sm|md|lg|xl|full`(full=95vw·90vh, 풀스크린 아님) · children=본문
 - **DataTable** `columns` `rows` `status: loading|empty|ready` · controlled 정렬·페이징 · `onRowClick`
+- **DataSheet** — DataTable의 **쓰기 형제**(행 수정 + 맨 아래 초안 줄 1개). 저장된 행은 읽기다: 편집 신호를 상시로 깔지 않고 ⋮「수정」·Enter로 **행 전체**가 열린다(상시 인라인은 "어느 칸이 편집되는지 모르겠다"가 대표 불만). 「행 추가」 버튼 없음 — 미저장 줄을 N개 쌓으면 값의 주인이 rows와 둘이 된다. 열은 read×edit 2축(배지로 보이지만 select로 고치는 상태 열을 표현하려면 하나로 못 묶는다)
 - **EmptyState** `icon` `title` `description` `action?`
 - **PageHeader** `title` `description?` `actions?` · **DescriptionList** `items` `columns: 1|2|3`
 - **AppShell** `logo` `menuItems`(`count?`→CountBadge) `activePath` `onNavigate` `profile` `notification` · children=콘텐츠 · **2티어 반응형(자동)**: 데스크탑 ≥1280 풀 넷바 260(로고+메뉴+하단 유틸리티) / 태블릿 768–1279 아이콘 레일 72(로고 없음). **상단바 없음** — 알림·프로필은 넷바 하단 유틸리티 존. **폰은 범위 밖**(MobileShell이 받는다): `APPSHELL_MIN_WIDTH`(768) export를 소비처가 import해 **같은 값으로 모바일 라우팅을 판정**한다(각자 숫자를 들면 반드시 어긋난다). 하한 아래는 가로 스크롤로 예측 가능하게 무너지는 안전망
@@ -173,6 +174,8 @@ type FieldSpec = {
 - **FieldGrid** `columns` `rows: FieldGridCell[][]`(셀=`label?`|`field?`|`image?`|`node?`, `colSpan?` `rowSpan?` `align?`) `fields: FieldSpec[]` `mode: edit|read` `size: sm|md|lg`(기본 md — 타이포·행 단위·세로패딩 한 세트, 행 높이는 타이포 따라 동적) `values` `onChange` `errors?` — 테두리 셀 격자(장표/帳票). 작성·확인 양용·**같은 기하**(셀 박스 불변, read=같은 입력 원자 inert 재사용). `node`=비표준 컨트롤 통째 슬롯(4종 배타·mode 무관). 머리표(라벨:값)·명세표(헤더+값 행)·대분류 밴드 다 같은 모델
 - **Drawer** `opened` `onClose` `title` `actions?` `position: left|right|top|bottom` `size: sm|md|lg|xl|full`(full=축 95%) — 가장자리 슬라이드 패널(뒤 맥락 유지; 차단형은 Modal)
 - **PaperModal** `opened` `onClose` `title` `actions?` `orientation: portrait|landscape` · children=표준 A4 캔버스(794×1123) 기준 문서 — **순수 A4 문서 뷰어**. 종이가 자기 윤곽을 가짐(모달 아님), JS 실측 fit(transform scale). 모달 폭=가로 A4 고정, 헤더 토글 **자세히**(기본·폭 채워 확대·세로 스크롤) / **전체**(통째·무스크롤). 내용은 소비처(보통 FieldGrid). **인쇄 빌트인**(`@media print`: 종이만 물리 A4 1:1·1장·머리말꼬리말 제거·디바이더 크리스프 — 트리거 버튼만 `actions`로 소비처 배선)
+- **PaperDoc** `spec: PaperSpec` `values` `scale?` `mode: view|edit` `onChange?` `readonlyFields?` — 서식+값 → **A4 여러 장**. 배치(쪽 나눔·반복 펼침·집계·묶음 걸침)는 순수 엔진이 하고 여기는 그리기만. 격자는 *정렬 골격*이고 **선은 셀의 속성**이다(각 칸은 자기 위·왼쪽만 그린다 — 안 그러면 맞닿은 자리가 2px). 괘선은 검정 고정. `edit`이면 데이터 자리가 입력이 되되 **문서 기하는 그대로**(칸이 곧 입력의 크기). 서식은 엑셀에서 만든다 → §8-2
+- **PaperDocModal** `opened` `onClose` `title` `spec` `values` `mode: view|edit` `onSave?` `readonlyFields?` `actions?` — 문서를 **보고·인쇄하고·채우는** 모달. **보통 이걸 쓴다**(PaperDoc은 문서를 화면에 직접 박을 때). 초안·더티는 모달이 쥔다 → 소비처는 `onSave` 하나만 배선하고, 안 저장하고 닫으려 하면 푸터가 확인으로 바뀐다. 인쇄·배율은 보기에만(작성 중엔 100% 고정). `actions`=소비처 CTA 자리(발송·승인 등 — 닫기/인쇄/저장은 빌트인). **PaperModal과 헷갈리지 말 것**: 그쪽은 children을 받는 1장짜리 뷰어다
 - **Stepper** `active`(index) `steps: {label,description?}[]` `orientation?` `onStepClick?` — 다단계 진행 표시(콘텐츠는 호출측이 active로 분기)
 - **Transfer** `items: {value,label}[]` `selected: string[]` `onChange` `titles?` — 좌·우 듀얼 리스트 대량 배정(인라인 다중은 MultiSelect)
 - **ToastHost** (props 없음) — 토스트 호스트(위치·지속·스택 단일 관리). 트리거는 `notify.*`, 앱 셸에 1회 배치
@@ -344,6 +347,73 @@ npm i pdfjs-dist          # optional peer. PDF 미리보기가 필요할 때만
 
 > 우리 dev 앱은 `npm run pdfjs:assets`(predev/prebuild에 자동 연결)가 같은 복사를 한다 —
 > `scripts/copy-pdfjs-assets.mjs`가 참고할 만한 예다. CDN은 쓰지 않는다(폐쇄망 요건).
+
+### 8-2. 문서(장표) 시스템 — 계약·견적·명세·발주서 (선택)
+
+회사 문서를 화면에 그리고 **물리 A4 1:1로 인쇄**하고, 같은 기하 그대로 **채워 넣는다**.
+`PaperDocModal`(보통 이것) · `PaperDoc`(문서를 화면에 직접 박을 때)를 쓴다.
+
+**서식은 코드가 아니라 엑셀이다.** 표를 코드로 짜지 않는다 — 자연어로 지시하든 코드로 옮기든
+매번 어긋난다. 엑셀에서 그린 것이 그대로 나오고, **저작의 주체는 소비 앱**이다(도메인을 아는 쪽이므로).
+
+```bash
+# ① 빈 서식을 꺼낸다 — 24열 격자·표준 머리·「필드」·「안내」 시트가 들어 있다
+npx erp-paper-import --template docs/forms/발주서.xlsx
+
+# ② 엑셀에서 저작한다(아래 규칙) — 「안내」 시트가 문법을 전부 설명한다
+
+# ③ 빌드 시점에 변환한다. 산출물(JSON)만 앱이 import 하고, exceljs는 런타임에 안 들어간다
+npx erp-paper-import docs/forms/발주서.xlsx --rows 31 \
+  --out src/forms/order.paper.json --id order --name 발주서
+```
+
+`exceljs`는 **optional peer**다 — 이 기능을 안 쓰면 설치할 필요 없다. 변환기가 경고를 뱉으면
+**그대로 읽고 엑셀을 고친다**(그리기는 되는데 편집이 안 되는 서식이 조용히 나가는 걸 막는 장치다).
+
+**엑셀 저작 규칙 — 이 넷만 지키면 된다**
+
+| | |
+|---|---|
+| **열 너비·행 높이를 바꾸지 않는다** | 넓은 칸은 **병합**, 높은 칸은 **세로 병합**. 24열 격자가 곧 A4 폭이라 너비를 건드리면 쪽이 깨진다 |
+| **Z열에 행의 역할을 적는다** | `머리말`·`꼬리말`·`열머리`·`반복`·`그룹머리`·`그룹꼬리`·`합계`. 「반복」 줄이 데이터 개수만큼 늘어난다 |
+| **값 자리는 두 겹 중괄호** | `{{문서번호}}` · `{{품목.품명}}`(반복 줄) · `{{합계:품목.금액}}` · `{{묶음:품목.분류}}`(여러 줄에 세로로 걸치는 칸) · `{{@쪽}}` |
+| **「필드」 시트가 값의 명단이다** | 이름·라벨·종류·필수·**배열**. 반복 줄에 쓰는 필드는 **「배열」 칸에 그 목록의 이름**을 적는다 — 이게 `{{품목.품명}}`의 「품목」을 만든다. 비워 두면 그리기는 되는데 **편집 모드에서 그 표가 통째로 입력이 안 된다** |
+
+`--rows`는 **쪽당 행 수**이고 이 하나가 행 높이와 글자 크기를 함께 정한다(42→10.5pt / 31→14pt).
+글자를 키우려면 이 수를 **줄인다**. 꼬리말 행이 있으면 거기서 자동으로 읽으므로 생략해도 된다.
+
+**배선 — 값을 넘기고 저장을 받는다**
+
+```tsx
+import { PaperDocModal } from '@jjaim519/erp-dsl';
+import type { PaperSpec } from '@jjaim519/erp-dsl/schema';
+import spec from '@/forms/order.paper.json';
+
+<PaperDocModal
+  opened={open} onClose={() => setOpen(false)} title="발주서 — 작성"
+  spec={spec as PaperSpec}
+  values={{
+    발주처: row.customer, 납기: row.dueDate,          // 「필드」 시트의 «이름» 그대로
+    품목: lines.map(l => ({ 분류: l.kind, 품명: l.name, 수량: l.qty })),  // 반복은 배열
+  }}
+  mode="edit"
+  onSave={(next) => save(next)}                        // 초안·더티는 모달이 쥔다
+  readonlyFields={['발주처']}                          // 데이터에서 끌어오는 값 — 보이되 못 고친다
+  actions={[{ label: '발송', variant: 'primary', onClick: send }]}   // 닫기·인쇄·저장은 빌트인
+/>
+```
+
+**값 이름은 「필드」 시트의 «이름» 열 그대로**이고, 반복은 그 목록 이름의 배열이다.
+DB → 이 객체로 옮기는 건 소비 앱 몫이다 — 서식은 «어떤 이름이 필요한가»만 말한다.
+
+`readonlyFields`를 **서식(엑셀)이 정하지 않는 이유**: 어느 값이 어디서 오는지는 그 값을 실제로
+쥔 쪽만 안다. 반복 안은 점 경로로 적는다(`'품목.품명'`).
+
+**조건부 노출은 따로 없다** — 반복 배열을 비우면 그 줄이 사라지고 아래가 당겨 올라온다.
+고정 행도 «0/1개짜리 반복»으로 모델링하면 같다. (열머리는 남는다.)
+
+> **아직 못 하는 것** — **2단 그룹**(걸침 칸이나 그룹머리를 두 층으로 두면 안쪽이 바깥을 따라가
+> *틀린 값*이 찍힌다. 검사도 안 잡는다) · 흐름 셀(한 칸이 쪽을 못 넘는다) · 편집 모드 모바일.
 
 ---
 

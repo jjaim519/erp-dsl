@@ -18,7 +18,7 @@
     "./schema": "./src/schema/index.ts"
   },
   "bin": {
-    "erp-paper-import": "./scripts/paper-import.mjs"
+    "erp-paper-import": "scripts/paper-import.mjs"
   },
   "files": [
     "src/ui",
