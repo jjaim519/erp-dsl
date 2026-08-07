@@ -19,15 +19,27 @@ export const PAPER_CANON = {
   portrait: { w: 794, h: 1123 },
   landscape: { w: 1123, h: 794 },
 } as const;
-export const PAPER_MARGIN = 57;    // 15mm
-export const PAPER_ROW_UNIT = 24;  // 한 행 = 1단위 = 24px
+export const PAPER_MARGIN = 57;      // 15mm
+export const PAPER_PAGE_ROWS = 42;   // 쪽당 행 수 기본값 → 행 24px
 
 export type PaperOrientation = keyof typeof PAPER_CANON;
 
-/** 한 쪽에 들어가는 행 *단위* 수. 행 높이가 2단위면 그만큼 먹는다. */
-export function rowsPerPage(orientation: PaperOrientation): number {
-  const h = PAPER_CANON[orientation].h - PAPER_MARGIN * 2;
-  return Math.floor(h / PAPER_ROW_UNIT);
+/**
+ * 한 쪽에 들어가는 행 수. **서식이 선언한다.**
+ * 쪽당 행 수·행 높이·글자 크기 셋은 하나로 묶여 있어서(행수 × 행높이 = 지면 높이) 따로 박으면
+ * 하나를 키울 때 딴 게 깨진다. 그래서 **행 수만 선언하고 나머지는 도출한다**
+ * (theme.ts의 `neutral = f(primary)`와 같은 사상 — 관계만 박고 값은 안 박는다).
+ *
+ *   42행 → 24px → 본문 14px(10.5pt)    ← 기본
+ *   36행 → 28px → 본문 16px(12.2pt)
+ *   31행 → 32px → 본문 18.6px(14pt)     ← 엑셀 24pt 행 + 14pt 글자와 같은 크기
+ */
+export const pageRowsOf = (spec: { pageRows?: number }) => spec.pageRows ?? PAPER_PAGE_ROWS;
+
+/** 행 한 단위의 픽셀 높이 — 지면에서 도출된다. */
+export function rowUnitOf(spec: { pageRows?: number; orientation: PaperOrientation }): number {
+  const h = PAPER_CANON[spec.orientation].h - PAPER_MARGIN * 2;
+  return Math.floor(h / pageRowsOf(spec));
 }
 
 // ── 닫힌 값 ────────────────────────────────────────────────────
@@ -39,7 +51,15 @@ export type PaperAlign = 'start' | 'center' | 'end';
 export type PaperVAlign = 'top' | 'middle' | 'bottom';   // 병합 칸이 생기는 순간 필수가 된다
 export type PaperTypo = 'display' | 'heading' | 'subheading' | 'body' | 'body-strong' | 'caption';
 export type PaperInk = 'primary' | 'secondary' | 'danger';   // 임의 색 대신 역할 3
-export type PaperFill = 'none' | 'shade' | 'brand';          // 임의 채우기 대신 3단
+/**
+ * 채우기 — 역할 토큰 3단, 또는 **종이 절대색** `#RRGGBB`.
+ *
+ * 헥스를 여는 이유: 한 장표가 음영을 두 단계로 쓰면(열머리 25% · 라벨 15%) 토큰 하나로는 그 구분이
+ * 통째로 사라진다. 잉크(`PaperInk`)와 달리 채우기는 **서식이 말하는 뜻**이라 반올림하면 안 된다.
+ * 이건 이 파일이 A4를 px로 못박는 것과 같은 예외다 — 종이는 화면이 아니라 고정 좌표계다.
+ * 손으로 적는 서식은 토큰을 쓰고, 헥스는 엑셀에서 변환된 값이 지나는 길이다.
+ */
+export type PaperFill = 'none' | 'shade' | 'brand' | `#${string}`;
 export type PaperEdge = 't' | 'r' | 'b' | 'l';
 export type PaperFlow = 'wrap' | 'ellipsis';                 // 인쇄물은 wrap이 기본(잘리면 정보가 사라진다)
 export type PaperWriting = 'horizontal' | 'vertical';        // 「공급자」처럼 세로로 쓰는 칸(CSS writing-mode)
@@ -76,8 +96,23 @@ export type PaperCell = {
   template?: string;
   image?: string;         // 이미지 자리(로고·도면). PaperSpec.images 의 이름
   agg?: PaperAgg;         // 집계 결과
+  /**
+   * 이 칸이 «누구를 대신해 말하는가». 기본은 항목(반복 한 줄마다 한 번).
+   * `group`이면 **묶음 전체에 한 번**만 그려지고 그 묶음의 줄 수만큼 세로로 걸친다 —
+   * 「경첩」이 15T 댐퍼·무댐퍼·18T 댐퍼·무댐퍼 네 줄에 걸치는 그 칸이다.
+   *
+   * `groupHeader`와 다르다: groupHeader는 묶음이 바뀔 때 **자기 행을 하나 먹고**,
+   * 이건 반복 행들 **옆에 걸친다**. 한국 장표에서 표준이라 리포트 엔진 3사에 없어도 연다.
+   * 쪽이 묶음 중간에서 갈리면 걸침도 같이 갈린다(각 쪽이 자기 몫만큼 걸친다).
+   */
+  scope?: 'item' | 'group';
   format?: PaperFormat;   // 표시 형식(값 표현 — 저장값은 안 건드린다)
-  border?: PaperEdge[];   // 그릴 변. 없으면 선 없음(격자는 정렬 골격일 뿐)
+  border?: PaperEdge[];   // 그릴 변(얇은 선). 없으면 선 없음 — 격자는 정렬 골격일 뿐이다
+  /**
+   * 굵은 선을 그릴 변. 장표는 «표 바깥은 굵게, 안쪽은 얇게»가 관습이고 엑셀도 medium/thick을 쓴다.
+   * 굵기를 숫자로 열지 않고 **두 단(얇음·굵음)으로 닫는다** — 굵기 사다리가 열리면 문서마다 갈린다.
+   */
+  borderStrong?: PaperEdge[];
   align?: PaperAlign;     // 기본 start
   valign?: PaperVAlign;   // 기본 middle
   typo?: PaperTypo;       // 기본 body
@@ -130,6 +165,11 @@ export type PaperSpec = {
   name: string;
   columns: PaperColumns;
   orientation: PaperOrientation;
+  /**
+   * 쪽당 행 수(기본 42). 이 하나가 행 높이와 글자 크기를 함께 정한다 — `rowUnitOf` 참조.
+   * 글자를 키우려면 이 수를 **줄인다**(42 → 31이면 본문이 10.5pt → 14pt).
+   */
+  pageRows?: number;
   fields: FieldSpec[];        // 문서 스코프 값(당사자·문서번호…)
   arrays?: PaperArray[];      // 반복 원본
   /**
@@ -240,7 +280,18 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
     });
   });
 
-  // ⑥ 행 높이
+  // ⑥ 걸침 칸 — 반복 구간 밖에는 «묶음»이라는 게 없어서 걸칠 대상이 없다(조용히 안 그려진다).
+  const repeats = bands.filter((b) => b.kind === 'repeat');
+  spec.cells.forEach((cell, i) => {
+    if (cell.scope !== 'group') return;
+    const at = `cells[${i}]`;
+    if (!cell.field) push(at, '묶음에 걸치는 칸은 묶는 기준이 될 데이터 자리가 필요합니다');
+    if (!repeats.some((b) => cell.r >= b.r1 && cell.r <= b.r2)) {
+      push(at, '묶음에 걸치는 칸은 반복 구간 안에 있어야 합니다');
+    }
+  });
+
+  // ⑦ 행 높이
   (spec.rows ?? []).forEach((row, i) => {
     if (row.h < 1 || row.h > 6) push(`rows[${i}]`, '행 높이는 1~6 단위입니다');
   });

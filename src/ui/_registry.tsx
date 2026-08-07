@@ -86,6 +86,9 @@ import { Bento } from './Bento';
 import { Accordion } from './Accordion';
 import { Drawer } from './Drawer';
 import { PaperModal } from './PaperModal';
+import { PaperDoc } from './PaperDoc';
+import { PaperDocModal } from './PaperDocModal';
+import type { PaperSpec } from '../schema/paper';
 import { Skeleton } from './Skeleton';
 import { Combobox } from './Combobox';
 import { Progress } from './Progress';
@@ -332,6 +335,52 @@ function ExprFieldDemo() {
 }
 // KeyValueField 데모 — 품목 dimensions 변수집합에서 키 주입. 값은 부호 있는 델타.
 const KV_KEYS = [{ key: 'width_mm' }, { key: 'height_mm' }, { key: 'depth_mm' }];
+
+// ── 문서 계열 데모 — 실전 서식은 엑셀에서 변환하지만(`npx erp-paper-import`), 박물관은 배포되는
+//  파일이라 바깥 JSON을 물 수 없어 여기 손으로 적는다. 그래서 «손으로 적는 서식»의 본보기도 겸한다.
+//  선 소유권을 지킨 채(각 칸은 자기 위·왼쪽) 표 바깥만 굵게 — 격자·선·반복·묶음 걸침이 다 들어 있다.
+const PAPER_DEMO_SPEC: PaperSpec = {
+  id: 'demo-order', name: '발주서', columns: 24, orientation: 'portrait', pageRows: 31,
+  fields: [
+    { name: '거래처', label: '거래처', type: 'text' },
+    { name: '납기', label: '납기', type: 'date' },
+  ],
+  arrays: [{ name: '품목', label: '품목', of: [
+    { name: '분류', label: '분류', type: 'text' },
+    { name: '이름', label: '품목', type: 'text' },
+    { name: '수량', label: '수량', type: 'number' },
+  ] }],
+  bands: [
+    { kind: 'columnHeader', r1: 3, r2: 3 },
+    { kind: 'repeat', r1: 4, r2: 4, source: '품목' },
+  ],
+  cells: [
+    { r: 0, c: 0, cs: 24, text: '발 주 서', align: 'center', typo: 'display' },
+    { r: 1, c: 0, cs: 4, text: '거래처', align: 'center', fill: 'shade', border: ['r'], borderStrong: ['t', 'l', 'b'] },
+    { r: 1, c: 4, cs: 8, field: '거래처', border: ['r', 'l'], borderStrong: ['t', 'b'] },
+    { r: 1, c: 12, cs: 4, text: '납기', align: 'center', fill: 'shade', border: ['r', 'l'], borderStrong: ['t', 'b'] },
+    { r: 1, c: 16, cs: 8, field: '납기', format: 'date', border: ['l'], borderStrong: ['t', 'r', 'b'] },
+    // 열 머리 — 쪽이 넘어가면 다시 그려진다(band: columnHeader).
+    { r: 3, c: 0, cs: 5, text: '분류', align: 'center', fill: 'shade', border: ['r', 'b'], borderStrong: ['t', 'l'] },
+    { r: 3, c: 5, cs: 14, text: '품목', align: 'center', fill: 'shade', border: ['r', 'b', 'l'], borderStrong: ['t'] },
+    { r: 3, c: 19, cs: 5, text: '수량', align: 'center', fill: 'shade', border: ['b', 'l'], borderStrong: ['t', 'r'] },
+    // 반복 한 줄 — 「분류」는 `scope: 'group'`이라 값이 같은 줄끼리 **세로로 걸친다**.
+    //  아래 굵은 선은 «표 전체의 바닥»으로 읽혀 마지막 줄에만 찍힌다(줄마다 복제되지 않는다).
+    { r: 4, c: 0, cs: 5, field: '품목.분류', scope: 'group', align: 'center', border: ['t', 'r'], borderStrong: ['l', 'b'] },
+    { r: 4, c: 5, cs: 14, field: '품목.이름', border: ['t', 'r', 'l'], borderStrong: ['b'] },
+    { r: 4, c: 19, cs: 5, field: '품목.수량', align: 'end', border: ['t', 'l'], borderStrong: ['r', 'b'] },
+  ],
+};
+const PAPER_DEMO_VALUES: Record<string, unknown> = {
+  거래처: '대성건설 ㈜', 납기: '2026-09-04',
+  품목: [
+    { 분류: '경첩', 이름: '15T 댐퍼', 수량: 12 },
+    { 분류: '경첩', 이름: '18T 댐퍼', 수량: 8 },
+    { 분류: '경첩', 이름: '15T 무댐퍼', 수량: 4 },
+    { 분류: '레일', 이름: '3단 언더레일 450', 수량: 6 },
+    { 분류: '손잡이', 이름: '알루미늄 바 320', 수량: 10 },
+  ],
+};
 function KVFieldDemo() {
   const [v, setV] = useState<Record<string, number>>({ width_mm: 30, height_mm: -12 });
   return <div style={{ maxWidth: 420 }}><KeyValueField keys={KV_KEYS} value={v} onChange={setV} valueType="number" addLabel="보정 추가" /></div>;
@@ -937,6 +986,8 @@ export function Demo({ name }: { name: string }) {
   const [dwBefore, setDwBefore] = useState(false);
   const [dwAfter, setDwAfter] = useState(false);
   const [paper, setPaper] = useState(false);
+  const [docModal, setDocModal] = useState<'view' | 'edit' | null>(null);
+  const [docValues, setDocValues] = useState(PAPER_DEMO_VALUES);
   const [cbo, setCbo] = useState<string | null>(null);
   const [time, setTime] = useState('');
   const [stp, setStp] = useState(1);
@@ -1127,6 +1178,41 @@ export function Demo({ name }: { name: string }) {
         <Drawer opened={dwBefore} onClose={() => setDwBefore(false)} position="left" title="필터" actions={[{ label: '적용', variant: 'primary', onClick: () => setDwBefore(false) }]}>
           <Text variant="body">좌측 필터 패널 예시.</Text>
         </Drawer>
+      </Stack>
+    ),
+    PaperDoc: (
+      // 서식 + 값 → A4. 격자는 정렬 골격이고 선은 셀의 속성이다(선 소유권: 각 칸이 자기 위·왼쪽만 그린다).
+      <Stack gap="xs">
+        <Text variant="caption" color="secondary">
+          서식(PaperSpec)에 값을 먹여 A4로 그린다. 「경첩」이 세 줄에 세로로 걸치는 게 묶음 걸침(scope: group)이고,
+          굵은 선은 표 바깥에만 — 반복 줄에 그은 아래 변은 «표의 바닥»으로 읽혀 마지막 줄에만 찍힌다. 서식은 엑셀에서 만든다(npx erp-paper-import).
+        </Text>
+        <div style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 'var(--mantine-radius-sm)' }}>
+          <PaperDoc spec={PAPER_DEMO_SPEC} values={docValues} scale={0.42} />
+        </div>
+      </Stack>
+    ),
+    PaperDocModal: (
+      // 보기·인쇄·편집 한 부품. 초안은 모달이 쥐고 소비처는 onSave 하나만 배선한다.
+      <Stack gap="xs">
+        <Text variant="caption" color="secondary">
+          같은 문서를 보기 / 작성·편집으로 연다 — 채우는 중에도 **문서 기하는 그대로**다(칸이 곧 입력의 크기, 입력은 1px 물려 들어간다).
+          고치고 저장하면 위 미리보기에 바로 반영된다. 안 저장하고 닫으면 푸터가 확인으로 바뀐다. 인쇄는 보기에만 있고 장마다 물리 A4 1:1.
+        </Text>
+        <Group gap="xs" wrap>
+          <Button variant="secondary" onClick={() => setDocModal('view')}>보기로 열기</Button>
+          <Button variant="secondary" onClick={() => setDocModal('edit')}>작성·편집으로 열기</Button>
+        </Group>
+        <PaperDocModal
+          opened={docModal !== null}
+          onClose={() => setDocModal(null)}
+          title={`발주서 — ${docModal === 'edit' ? '작성' : '보기'}`}
+          spec={PAPER_DEMO_SPEC}
+          values={docValues}
+          mode={docModal ?? 'view'}
+          onSave={setDocValues}
+          readonlyFields={['품목.이름']}
+        />
       </Stack>
     ),
     PaperModal: (

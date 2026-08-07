@@ -6,14 +6,14 @@
 //  라인 수를 바꿔 쪽 나눔·열 머리 재출력·그룹 소계·총계·쪽 번호를 눈으로 확인한다.
 //  (dev 도구 — 배포 대상 밖. 샘플 데이터도 여기 산다.)
 import { useMemo, useState } from 'react';
-import { Stack, Group, Title, Text, Button, SegmentedControl, Callout } from '@/ui';
+import { Stack, Group, Title, Text, Button, SegmentedControl, Callout, PaperDoc, PaperDocModal } from '@/ui';
 import { validatePaper, validatePaperCoverage, type PaperSpec } from '@/schema';
-// PaperDoc은 아직 공개 배럴에 없다(미완 — src/ui/index.ts 주석 참조). dev 화면이 직접 집는다.
-import { PaperDoc } from '../../../ui/PaperDoc';
 import { tradeStatement } from '../../../forms/trade-statement';
 import costBreakdownJson from '../../../forms/cost-breakdown.paper.json';
+import gabjiJson from '../../../forms/kk-gabji.paper.json';
 
 const costBreakdown = costBreakdownJson as PaperSpec;
+const gabji = gabjiJson as PaperSpec;
 
 // ── 샘플 값 ────────────────────────────────────────────────────
 const CATS = ['주방 가구', '부자재', '시공'];
@@ -74,18 +74,53 @@ const costValues = (n: number) => {
   };
 };
 
+// 갑지 — 부속을 **묶음이 지어지게** 만든다(종류가 연달아 같은 줄끼리 걸침 칸 하나로 합쳐진다).
+//  건수를 올리면 걸침이 쪽 경계에서 쪼개지는 것까지 보인다.
+const 부속종류 = [
+  { 종류: '경첩', 품목: ['15T 댐퍼', '18T 댐퍼', '15T 무댐퍼', '각동 경첩'] },
+  { 종류: '레일', 품목: ['3단 언더레일 450', '3단 언더레일 500'] },
+  { 종류: '손잡이', 품목: ['알루미늄 바 320', '매립 손잡이'] },
+  { 종류: '다보', 품목: ['선반 다보', '고정 다보'] },
+];
+const gabjiValues = (n: number) => {
+  const 평면 = 부속종류.flatMap((g) => g.품목.map((품목) => ({ 종류: g.종류, 품목 })));
+  return {
+    현장주소: '서울 강남구 테헤란로 123 4층',
+    시공팀: '1팀 (김병준)', 시공일: '2026-08-14',
+    발주담당자: '박서연', 출입정보: '지하 2층 하역장',
+    연락처: '010-1234-5678',
+    // ⚠ 「부속」이 **배열 이름이면서 문서 필드**다(엑셀 「필드」 시트 A9). 그릇이 하나뿐이라
+    //   현장 정보의 부속 칸에 `[object Object]`가 찍힌다 — 서식에서 한쪽을 개명해야 한다.
+    부속: Array.from({ length: n }, (_, i) => ({ ...평면[i % 평면.length], 개수: ((i % 6) + 1) * 2 })),
+    시공팀요청: '엘리베이터 사용 09:00~17:00. 자재 반입 전 관리실 확인 요망.',
+    케이산업요청: '상부장 수평 재확인 후 실리콘 마감. 폐기물은 당일 반출.',
+  };
+};
+
 const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<string, unknown>; note: string }> = {
+  gabji: { spec: gabji, values: gabjiValues, note: '엑셀에서 변환 — public/kk-gabji.xlsx → paper-import  ·  부속이 반복 + 종류 걸침' },
   cost: { spec: costBreakdown, values: costValues, note: '엑셀에서 변환 — public/paper-sample-cost-breakdown.xlsx → paper-import' },
   trade: { spec: tradeStatement, values: tradeValues, note: '손으로 적은 PaperSpec — src/forms/trade-statement.ts' },
 };
 
+// 데이터에서 끌어오는 값 — **소비처가 정한다.** 서식(엑셀)은 «필드가 어디 있나»만 말하고
+//  «어디서 오나»는 그 값을 실제로 쥔 쪽만 안다. 여기서는 회사 정보를 잠가 그 통로를 보인다.
+const READONLY = ['발행처명', '발행처사업자번호', '발행처주소', '발행처전화'];
+
 export default function PaperDevPage() {
-  const [form, setForm] = useState('cost');
+  const [form, setForm] = useState('gabji');
   const [count, setCount] = useState(8);
   const [zoom, setZoom] = useState('0.8');
+  const [mode, setMode] = useState('view');
+  const [modal, setModal] = useState<'view' | 'edit' | null>(null);
+  const [saved, setSaved] = useState<Record<string, unknown> | null>(null);
+  // 편집 모드에서 고친 값. 서식·건수를 바꾸면 버린다(샘플이 다시 만들어지므로).
+  const [edits, setEdits] = useState<Record<string, unknown> | null>(null);
+  const reset = <T,>(set: (v: T) => void) => (v: T) => { set(v); setEdits(null); };
 
   const cur = FORMS[form];
-  const values = useMemo(() => cur.values(count), [cur, count]);
+  const base = useMemo(() => cur.values(count), [cur, count]);
+  const values = edits ?? base;
   const issues = useMemo(
     () => [...validatePaper(cur.spec), ...validatePaperCoverage(cur.spec)],
     [cur],
@@ -112,16 +147,24 @@ export default function PaperDevPage() {
 
           <Group gap="md" align="center" wrap>
             <SegmentedControl
-              size="sm" value={form} onChange={(v) => { setForm(v); setCount(8); }}
+              size="sm" value={form} onChange={(v) => { setForm(v); setCount(8); setEdits(null); }}
               options={[
+                { label: '갑지 (변환)', value: 'gabji' },
                 { label: '산출내역서 (변환)', value: 'cost' },
                 { label: '거래명세서 (손)', value: 'trade' },
               ]}
             />
-            <Text variant="body-strong">{form === 'cost' ? '투입' : '라인'} {count}건</Text>
+            <SegmentedControl
+              size="sm" value={mode} onChange={reset(setMode)}
+              options={[
+                { label: '보기', value: 'view' },
+                { label: '편집', value: 'edit' },
+              ]}
+            />
+            <Text variant="body-strong">{({ cost: '투입', gabji: '부속' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
             <Group gap="xs">
               {[1, 8, 16, 24, 40].map((n) => (
-                <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => setCount(n)}>
+                <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => reset(setCount)(n)}>
                   {n}
                 </Button>
               ))}
@@ -135,11 +178,42 @@ export default function PaperDevPage() {
               ]}
             />
             <Button variant="secondary" size="sm" onClick={() => window.print()}>인쇄</Button>
+            {/* 소비처가 실제로 쓰는 경로 — 모달이 초안을 쥐고 저장까지 한다.
+                여기 화면(위 인라인 PaperDoc)은 «렌더러 검증용»이고, 모달이 «배선 검증용»이다. */}
+            <Button variant="primary" size="sm" onClick={() => setModal(mode as 'view' | 'edit')}>
+              모달로 열기 ({mode === 'edit' ? '편집' : '보기'})
+            </Button>
           </Group>
         </Stack>
       </div>
 
-      <PaperDoc spec={cur.spec} values={values} scale={Number(zoom)} />
+      <PaperDoc
+        spec={cur.spec}
+        values={values}
+        scale={Number(zoom)}
+        mode={mode as 'view' | 'edit'}
+        onChange={setEdits}
+        readonlyFields={READONLY}
+      />
+
+      {/* 소비처 배선 그대로 — 저장은 setState 하나. 여기선 저장된 값을 화면 상태에 반영해 «되돌아오나»를 본다. */}
+      <PaperDocModal
+        opened={modal !== null}
+        onClose={() => setModal(null)}
+        title={`${cur.spec.name} — ${modal === 'edit' ? '편집' : '보기'}`}
+        spec={cur.spec}
+        values={values}
+        mode={modal ?? 'view'}
+        onSave={(next) => { setEdits(next); setSaved(next); }}
+        readonlyFields={READONLY}
+      />
+      {saved && (
+        <div className="dev-noprint">
+          <Callout tone="info" title="모달에서 저장됨">
+            {`${Object.keys(saved).length}개 키를 소비처가 받았습니다 — 화면 값에 반영했습니다.`}
+          </Callout>
+        </div>
+      )}
     </Stack>
   );
 }

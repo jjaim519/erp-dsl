@@ -12,3 +12,6 @@ next-env.d.ts
 # pdf.js 자산 — node_modules에서 복사해 오는 것이라 커밋하지 않는다(~4MB 바이너리).
 #  npm run pdfjs:assets 또는 predev/prebuild가 자동으로 채운다.
 public/pdfjs
+
+# 엑셀 임시 잠금 파일(열려 있는 동안 생김)
+~$*.xlsx

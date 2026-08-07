@@ -8,19 +8,40 @@
 import './paper.css';
 import { useMemo } from 'react';
 import {
-  PAPER_CANON, PAPER_MARGIN, PAPER_ROW_UNIT,
+  PAPER_CANON, PAPER_MARGIN, rowUnitOf,
   type PaperSpec, type PaperCell,
 } from '../schema/paper';
-import { layoutPaper, type OutRow } from './paperLayout';
+import type { FieldSpec } from '../schema/fields';
+import { layoutPaper, paperRead, paperWrite, type OutRow } from './paperLayout';
+import { TextInput } from './TextInput';
+import { NumberInput } from './NumberInput';
+import { CurrencyInput } from './CurrencyInput';
+import { Textarea } from './Textarea';
+import { Select } from './Select';
+import { DatePicker } from './DatePicker';
+import { Checkbox } from './Checkbox';
 
 type Props = {
   spec: PaperSpec;
   values?: Record<string, unknown>;
   /** 화면 축소 배율(1 = 원본 794px). 인쇄는 항상 물리 A4 1:1. */
   scale?: number;
+  /**
+   * `edit`이면 데이터 자리가 입력칸이 된다. **문서 기하는 그대로다** — 칸이 곧 입력의 크기고,
+   * 입력은 자기 크롬을 벗는다(칸이 이미 테두리를 그리므로 이중이 안 되게).
+   */
+  mode?: 'view' | 'edit';
+  /** `edit` 전용 — 바뀐 **값 전체**를 준다. 소비처는 setState 하나로 받는다. */
+  onChange?: (next: Record<string, unknown>) => void;
+  /**
+   * `edit` 전용 — 데이터에서 끌어오는 값(시공팀·시공일…). 보이되 못 고친다.
+   * **서식이 아니라 소비처가 정한다** — 어느 값이 어디서 오는지는 소비처만 알기 때문에
+   * 스키마(엑셀)에 「출처」를 적게 하지 않았다. 반복 안 필드는 `"부속.개수"`처럼 점 경로로 적는다.
+   */
+  readonlyFields?: string[];
 };
 
-type Placed = { cell: PaperCell; text: string; r: number };
+type Placed = { cell: PaperCell; text: string; at?: number; r: number };
 
 // 한 장 = [머리말 … 본문 … 여백 … 꼬리말]. 여백이 꼬리말을 바닥으로 민다.
 function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pad: number }) {
@@ -28,7 +49,7 @@ function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pa
   const placed: Placed[] = [];
   const push = (list: OutRow[]) => {
     list.forEach((row) => {
-      row.cells.forEach((c) => placed.push({ cell: c.spec, text: c.text, r: rows.length }));
+      row.cells.forEach((c) => placed.push({ cell: c.spec, text: c.text, at: c.at, r: rows.length }));
       rows.push(row);
     });
   };
@@ -39,9 +60,60 @@ function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pa
   return { rows, placed };
 }
 
-export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
+// 문서 자리 → 입력 부품. **컨트롤을 손으로 만들지 않는다** — 부품이 나르는 동작·키보드·낭독이
+//  전부 거기 있다. 문서가 정하는 건 «어디에 놓느냐»뿐이고, 종류는 「필드」 시트가 말한 타입에서 온다.
+function CellInput({ field, value, onChange }: {
+  field: FieldSpec; value: unknown; onChange: (v: unknown) => void;
+}) {
+  const str = value == null ? '' : String(value);
+  switch (field.type) {
+    case 'number':   return <NumberInput size="sm" value={value as number ?? ''} onChange={onChange} placeholder={field.placeholder} />;
+    case 'currency': return <CurrencyInput size="sm" value={value as number ?? ''} onChange={onChange} placeholder={field.placeholder} />;
+    case 'textarea': return <Textarea size="sm" value={str} onChange={onChange} placeholder={field.placeholder} />;
+    case 'select':   return <Select size="sm" options={field.options ?? []} value={str || null} onChange={onChange} placeholder={field.placeholder} />;
+    case 'date':     return <DatePicker size="sm" value={str || null} onChange={onChange} placeholder={field.placeholder} />;
+    case 'checkbox': return <Checkbox checked={!!value} onChange={onChange} />;
+    // lookup은 조회 배선이 소비처에 있다 — 문서 안에서는 글자 입력으로 둔다.
+    default:         return <TextInput size="sm" value={str} onChange={onChange} placeholder={field.placeholder} />;
+  }
+}
+
+export function PaperDoc({
+  spec, values = {}, scale = 1, mode = 'view', onChange, readonlyFields,
+}: Props) {
   const pages = useMemo(() => layoutPaper(spec, values), [spec, values]);
   const canon = PAPER_CANON[spec.orientation];
+  const rowUnit = rowUnitOf(spec);   // 쪽당 행 수에서 도출 — 글자 크기도 여기서 딸려온다
+
+  // 필드 이름 → 명세. 문서 스코프와 반복 안(점 경로)을 한 지도에 담는다.
+  const fieldOf = useMemo(() => {
+    const m = new Map<string, FieldSpec>();
+    spec.fields.forEach((f) => m.set(f.name, f));
+    (spec.arrays ?? []).forEach((a) => a.of.forEach((f) => m.set(`${a.name}.${f.name}`, f)));
+    return m;
+  }, [spec]);
+  const locked = useMemo(() => new Set(readonlyFields ?? []), [readonlyFields]);
+
+  // 고칠 수 있는 칸 — 데이터 자리이면서 ① 시스템 값(@쪽)이 아니고 ② 소비처가 안 잠갔고
+  //  ③ 「필드」 시트가 아는 이름이다. 집계·이어붙이기·고정 글자는 애초에 «값»이 아니라 대상이 아니다.
+  //
+  // ④ **반복 안 필드는 «몇 번째 항목인가»를 알 때만 고칠 수 있다.** 그룹 머리·꼬리의 `품목.분류`는
+  //    한 항목이 아니라 *묶음 전체*를 대표해 찍힌 값이라 되쓸 자리가 없다 — 입력으로 바꾸면
+  //    분류 이름이 빈칸으로 사라진다(실제로 그랬다). 걸침 칸(`scope: 'group'`)도 같은 이유로 제외되는데,
+  //    거기다 그건 *묶는 기준*이라 고치는 순간 표가 통째로 재편된다.
+  const editableAt = (cell: PaperCell, at?: number): FieldSpec | undefined => {
+    if (mode !== 'edit' || !onChange) return undefined;
+    if (!cell.field || cell.field.startsWith('@')) return undefined;
+    if (cell.scope === 'group' || locked.has(cell.field)) return undefined;
+    if (cell.field.includes('.') && at == null) return undefined;
+    return fieldOf.get(cell.field);
+  };
+
+  // 「보이되 못 고친다」를 **소비처가 잠근 것에만** 표시한다 — 편집 가능함은 쉼 상태를 안 건드리고
+  //  대비로 드러내는 게 표 계열의 관습이라(paper.css 주석), 죽일 대상을 정확히 골라야 한다.
+  //  고정 글자·라벨은 «잠긴 값»이 아니라 애초에 값이 아니므로 제외한다.
+  const isLocked = (cell: PaperCell) =>
+    mode === 'edit' && !!cell.field && locked.has(cell.field);
 
   // 인쇄 @page — 방향별 A4 + margin 0. **margin 0이 브라우저 기본 머리말·꼬리말(URL·날짜·쪽번호)을 없앤다.**
   //  여백은 종이 안쪽(PAPER_MARGIN)이 이미 갖고 있으므로 페이지 여백은 0이어야 1:1이 된다.
@@ -51,24 +123,29 @@ export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
     + `height:${spec.orientation === 'landscape' ? '210mm' : '297mm'} !important}}`;
 
   return (
-    <div className="erpPaperDoc">
+    <div className="erpPaperDoc" data-mode={mode}>
       <style>{pageRule}</style>
       {pages.map((page, pi) => {
         const { rows, placed } = assemble(page);
         const total = rows.length;
 
-        // ── 선 지도 — 셀이 "그리겠다"고 선언한 변을 격자선 좌표로 등록한다.
-        const h = new Set<string>();   // 가로선: 행 r 위, 열 c
-        const v = new Set<string>();   // 세로선: 열 c 왼쪽, 행 r
+        // ── 선 지도 — 셀이 "그리겠다"고 선언한 변을 격자선 좌표에 등록한다.
+        //  값은 굵기(1=얇음, 2=굵음). 같은 선을 양쪽 칸이 서로 다르게 선언하면 **굵은 쪽이 이긴다**
+        //  (표 바깥은 굵고 안쪽은 얇은 장표 관습에서, 경계선은 굵어야 맞기 때문).
+        const h = new Map<string, number>();   // 가로선: 행 r 위, 열 c
+        const v = new Map<string, number>();   // 세로선: 열 c 왼쪽, 행 r
+        const put = (m: Map<string, number>, k: string, w: number) => m.set(k, Math.max(m.get(k) ?? 0, w));
         placed.forEach(({ cell, r }) => {
           const cs = cell.cs ?? 1;
           const rs = cell.rs ?? 1;
-          (cell.border ?? []).forEach((e) => {
-            if (e === 't') for (let c = cell.c; c < cell.c + cs; c++) h.add(`${r}:${c}`);
-            if (e === 'b') for (let c = cell.c; c < cell.c + cs; c++) h.add(`${r + rs}:${c}`);
-            if (e === 'l') for (let y = r; y < r + rs; y++) v.add(`${y}:${cell.c}`);
-            if (e === 'r') for (let y = r; y < r + rs; y++) v.add(`${y}:${cell.c + cs}`);
+          const mark = (edges: PaperCell['border'], w: number) => (edges ?? []).forEach((e) => {
+            if (e === 't') for (let c = cell.c; c < cell.c + cs; c++) put(h, `${r}:${c}`, w);
+            if (e === 'b') for (let c = cell.c; c < cell.c + cs; c++) put(h, `${r + rs}:${c}`, w);
+            if (e === 'l') for (let y = r; y < r + rs; y++) put(v, `${y}:${cell.c}`, w);
+            if (e === 'r') for (let y = r; y < r + rs; y++) put(v, `${y}:${cell.c + cs}`, w);
           });
+          mark(cell.border, 1);
+          mark(cell.borderStrong, 2);
         });
 
         // ── 빈 칸 채우기 — 격자를 빠짐없이 덮는다(선 소유권이 성립하려면 아래·오른쪽 칸이 있어야 한다).
@@ -82,11 +159,12 @@ export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
           for (let c = 0; c < spec.columns; c++)
             if (!taken.has(`${r}:${c}`)) fillers.push({ r, c });
 
+        const cls1 = (side: string, w?: number) => (w ? `b${side}${w === 2 ? ' b' + side + '-s' : ''}` : '');
         const edges = (r: number, c: number, cs: number, rs: number) => [
-          h.has(`${r}:${c}`) ? 'bt' : '',
-          v.has(`${r}:${c}`) ? 'bl' : '',
-          c + cs === spec.columns && v.has(`${r}:${spec.columns}`) ? 'br' : '',
-          r + rs === total && h.has(`${total}:${c}`) ? 'bb' : '',
+          cls1('t', h.get(`${r}:${c}`)),
+          cls1('l', v.get(`${r}:${c}`)),
+          c + cs === spec.columns ? cls1('r', v.get(`${r}:${spec.columns}`)) : '',
+          r + rs === total ? cls1('b', h.get(`${total}:${c}`)) : '',
         ].filter(Boolean).join(' ');
 
         return (
@@ -95,6 +173,7 @@ export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
             className="erpPaperSheet"
             style={{
               width: canon.w, height: canon.h,
+              ['--paper-row' as string]: `${rowUnit}px`,
               transform: scale === 1 ? undefined : `scale(${scale})`,
               marginBottom: scale === 1 ? undefined : canon.h * (scale - 1),
             }}
@@ -105,12 +184,16 @@ export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
                 top: PAPER_MARGIN, left: PAPER_MARGIN,
                 right: PAPER_MARGIN, bottom: PAPER_MARGIN,
                 gridTemplateColumns: `repeat(${spec.columns}, 1fr)`,
-                gridTemplateRows: rows.map((r) => `${r.h * PAPER_ROW_UNIT}px`).join(' '),
+                gridTemplateRows: rows.map((r) => `${r.h * rowUnit}px`).join(' '),
               }}
             >
-              {placed.map(({ cell, text, r }, i) => {
+              {placed.map(({ cell, text, at, r }, i) => {
                 const cs = cell.cs ?? 1;
                 const rs = cell.rs ?? 1;
+                const field = editableAt(cell, at);
+                // 서식이 색을 **직접** 말한 칸(엑셀에서 온 헥스). 토큰이 아니라 종이 절대색이라
+                //  클래스가 아니라 인라인으로 간다 — `fill-#D9D9D9`는 클래스 이름이 될 수 없다.
+                const fillHex = cell.fill?.startsWith('#') ? cell.fill : undefined;
                 const cls = [
                   'erpPaperCell',
                   edges(r, cell.c, cs, rs),
@@ -118,17 +201,30 @@ export function PaperDoc({ spec, values = {}, scale = 1 }: Props) {
                   `ay-${cell.valign ?? 'middle'}`,
                   `t-${cell.typo ?? 'body'}`,
                   `ink-${cell.ink ?? 'primary'}`,
-                  cell.fill && cell.fill !== 'none' ? `fill-${cell.fill}` : '',
+                  fillHex ? 'fill-raw' : (cell.fill && cell.fill !== 'none' ? `fill-${cell.fill}` : ''),
                   `flow-${cell.flow ?? 'wrap'}`,
                   cell.writing === 'vertical' ? 'wr-vertical' : '',
+                  field ? 'is-edit' : '',
+                  isLocked(cell) ? 'is-locked' : '',
                 ].filter(Boolean).join(' ');
                 return (
                   <div
                     key={`c${i}`}
                     className={cls}
-                    style={{ gridArea: `${r + 1} / ${cell.c + 1} / span ${rs} / span ${cs}` }}
+                    style={{
+                      gridArea: `${r + 1} / ${cell.c + 1} / span ${rs} / span ${cs}`,
+                      ...(fillHex ? { background: fillHex } : {}),
+                    }}
                   >
-                    <span>{cell.image ? '' : text}</span>
+                    {field ? (
+                      <CellInput
+                        field={field}
+                        value={paperRead(values, cell.field!, at)}
+                        onChange={(v) => onChange!(paperWrite(values, cell.field!, at, v))}
+                      />
+                    ) : (
+                      <span>{cell.image ? '' : text}</span>
+                    )}
                   </div>
                 );
               })}

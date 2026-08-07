@@ -5,15 +5,50 @@
 // 쪽 나눔을 저작이 아니라 여기서 하는 근거: 반복 행이 몇 줄이 될지는 값이 와야 안다.
 // 그리고 브라우저 인쇄에 맡기면 매 쪽 머리말이 안 붙고(사파리는 첫 장만) 표가 행 중간에서 잘린다.
 import {
-  rowsPerPage, PAPER_ROW_UNIT, PAPER_TAG,
+  pageRowsOf, rowUnitOf, PAPER_TAG,
   type PaperSpec, type PaperCell, type PaperBand, type PaperAgg,
 } from '../schema/paper';
 
-export type OutCell = { spec: PaperCell; text: string };
-export type OutRow = { h: number; cells: OutCell[] };
+/** `at`은 반복 몇 번째 항목의 칸인가 — 편집 모드가 값을 되쓸 때 필요하다(보기에선 안 쓴다). */
+export type OutCell = { spec: PaperCell; text: string; at?: number };
+/**
+ * `group`은 이 행이 어느 묶음에 속하는지 — 걸침 칸(`scope: 'group'`)을 쪽 나눔 **뒤에** 붙이려고 남긴다.
+ * `repeat`는 어느 반복 밴드에서 나온 줄인지 — 표의 **마감선**을 쪽 나눔 뒤에 다시 잡으려고 남긴다.
+ */
+export type OutRow = { h: number; cells: OutCell[]; group?: number; repeat?: number };
 export type OutPage = { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pad: number };
 
-type Scope = { item?: Record<string, unknown>; group?: Record<string, unknown>[] };
+type Scope = {
+  item?: Record<string, unknown>;
+  group?: Record<string, unknown>[];
+  at?: number;            // 반복 원본에서의 항목 번호(묶음 안 순번이 아니라 **원본 순번**)
+};
+
+// ── 값 경로 ────────────────────────────────────────────────────
+// "부속.개수" 같은 점 경로를 읽고 쓴다. **경로 규칙은 여기 한 곳에만 산다** —
+//  배치(읽기)와 편집(쓰기)이 규칙을 따로 가지면 조용히 어긋난다.
+export function paperRead(
+  values: Record<string, unknown>, field: string, at?: number,
+): unknown {
+  const dot = field.indexOf('.');
+  if (dot < 0) return values[field];
+  if (at == null) return undefined;
+  const list = values[field.slice(0, dot)] as Record<string, unknown>[] | undefined;
+  return list?.[at]?.[field.slice(dot + 1)];
+}
+
+/** 되쓰기 — 원본은 안 건드리고 **다음 값 전체**를 만든다(소비처는 setState 하나로 받는다). */
+export function paperWrite(
+  values: Record<string, unknown>, field: string, at: number | undefined, next: unknown,
+): Record<string, unknown> {
+  const dot = field.indexOf('.');
+  if (dot < 0) return { ...values, [field]: next };
+  if (at == null) return values;
+  const name = field.slice(0, dot), key = field.slice(dot + 1);
+  const list = ((values[name] as Record<string, unknown>[] | undefined) ?? []).slice();
+  list[at] = { ...list[at], [key]: next };
+  return { ...values, [name]: list };
+}
 
 // ── 표시 형식 ──────────────────────────────────────────────────
 // 저장값은 안 건드리고 표현만 바꾼다. 통화·숫자는 기존 셀 어휘와 같은 ko-KR 포맷.
@@ -67,26 +102,35 @@ function rowHeight(spec: PaperSpec, r: number): number {
   return spec.rows?.find((x) => x.r === r)?.h ?? 1;
 }
 
+function buildCell(
+  c: PaperCell, values: Record<string, unknown>, scope: Scope,
+  page: { n: number; total: number },
+): OutCell {
+  const one = (name: string): string => {
+    if (name === '@page') return String(page.n);
+    if (name === '@pages') return String(page.total);
+    if (name === '@today') return '';        // 소비처가 주입(부품은 시계를 안 본다)
+    return format(readField(name, values, scope), c.format);
+  };
+  let text = '';
+  if (c.text != null) text = c.text;
+  else if (c.template != null) text = c.template.replace(PAPER_TAG, (_, n: string) => one(n.trim()));
+  else if (c.field) text = one(c.field);
+  else if (c.agg) text = format(aggregate(c.agg, values, scope), c.format ?? 'number');
+  return { spec: c, text, ...(scope.at != null ? { at: scope.at } : {}) };
+}
+
+/** 묶음에 걸치는 칸은 항목마다 그리지 않는다 — 쪽을 나눈 뒤에 묶음 단위로 한 번 붙인다. */
+const spansGroup = (c: PaperCell) => c.scope === 'group';
+
 function buildRow(
   spec: PaperSpec, r: number, values: Record<string, unknown>, scope: Scope,
   page: { n: number; total: number },
+  pick: (c: PaperCell) => boolean = () => true,
 ): OutRow {
   const cells = spec.cells
-    .filter((c) => c.r === r)
-    .map<OutCell>((c) => {
-      const one = (name: string): string => {
-        if (name === '@page') return String(page.n);
-        if (name === '@pages') return String(page.total);
-        if (name === '@today') return '';        // 소비처가 주입(부품은 시계를 안 본다)
-        return format(readField(name, values, scope), c.format);
-      };
-      let text = '';
-      if (c.text != null) text = c.text;
-      else if (c.template != null) text = c.template.replace(PAPER_TAG, (_, n: string) => one(n.trim()));
-      else if (c.field) text = one(c.field);
-      else if (c.agg) text = format(aggregate(c.agg, values, scope), c.format ?? 'number');
-      return { spec: c, text };
-    });
+    .filter((c) => c.r === r && pick(c))
+    .map<OutCell>((c) => buildCell(c, values, scope, page));
   return { h: rowHeight(spec, r), cells };
 }
 
@@ -144,6 +188,9 @@ export function layoutPaper(
 
   // ① 흐름 만들기 — 반복을 값만큼 펼치고, 그룹 경계에서 머리·꼬리를 끼운다.
   const flow: { row: OutRow; keep?: 'columnHeader' | 'groupHeader'; reset?: boolean }[] = [];
+  // 걸침 칸은 여기 모아 두고 쪽 나눔이 끝난 뒤에 붙인다(묶음이 쪽을 넘어가면 쪽마다 갈라야 하므로).
+  const groupSpans = new Map<number, OutCell[]>();
+  let groupSeq = 0;
 
   for (let r = 0; r <= maxRow; r++) {
     if (inBand(r, pageBand.header) || inBand(r, pageBand.footer)) continue;
@@ -158,8 +205,13 @@ export function layoutPaper(
         range(cluster.columnHeader.r1, cluster.columnHeader.r2).forEach((cr) =>
           flow.push({ row: buildRow(spec, cr, values, {}, pin), keep: 'columnHeader' }));
       }
+      // 묶음에 걸치는 칸 — 반복 구간 안의 `scope: 'group'` 칸. 이 칸이 있으면 **자기가 묶음 기준**이다
+      //  (「경첩」 칸이 곧 «종류로 묶는다»는 선언이라, 그룹 머리 밴드 없이도 묶임이 성립한다).
+      const spanSpecs = range(cluster.repeat.r1, cluster.repeat.r2)
+        .flatMap((rr) => spec.cells.filter((c) => c.r === rr && spansGroup(c)));
+
       // 그룹으로 묶어 펼치기(그룹 기준이 없으면 한 덩어리)
-      const byKey = cluster.groupHeader?.by ?? cluster.groupFooter?.by;
+      const byKey = cluster.groupHeader?.by ?? cluster.groupFooter?.by ?? spanSpecs[0]?.field;
       const key = byKey ? byKey.slice(byKey.indexOf('.') + 1) : null;
       const groups: Record<string, unknown>[][] = [];
       if (key) {
@@ -179,9 +231,22 @@ export function layoutPaper(
           range(cluster.groupHeader.r1, cluster.groupHeader.r2).forEach((gr) =>
             flow.push({ row: buildRow(spec, gr, values, scope, pin), keep: 'groupHeader' }));
         }
+        let gid: number | undefined;
+        if (spanSpecs.length) {
+          gid = ++groupSeq;
+          groupSpans.set(gid, spanSpecs.map((c) => buildCell(c, values, scope, pin)));
+        }
         items.forEach((item) => {
+          // 원본 순번을 실어 보낸다 — 묶음으로 재배열돼도 편집이 되쓸 자리는 «원본의 그 항목»이다.
+          const at = allItems.indexOf(item);
           range(cluster.repeat.r1, cluster.repeat.r2).forEach((dr) =>
-            flow.push({ row: buildRow(spec, dr, values, { item, group: items }, pin) }));
+            flow.push({
+              row: {
+                ...buildRow(spec, dr, values, { item, group: items, at }, pin, (c) => !spansGroup(c)),
+                group: gid,
+                repeat: cluster.repeat.r1,
+              },
+            }));
         });
         if (cluster.groupFooter) {
           range(cluster.groupFooter.r1, cluster.groupFooter.r2).forEach((fr) =>
@@ -201,8 +266,15 @@ export function layoutPaper(
     flow.push({ row: buildRow(spec, r, values, {}, pin) });
   }
 
+  // 문서 끝의 빈 행은 내용이 아니라 여백이다 — 그대로 두면 쪽을 넘겨 백지가 한 장 더 나온다.
+  //  (꼬리말이 42행에 있고 본문이 29행에서 끝나면 그 사이 12행이 전부 이것이다.)
+  //  «사이»의 빈 행은 저작자가 띄운 간격이라 남긴다 — 뒤쪽만 자른다.
+  while (flow.length && !flow[flow.length - 1].reset && flow[flow.length - 1].row.cells.length === 0) {
+    flow.pop();
+  }
+
   // ② 쪽 나누기 — 행 경계에서만 자른다(반쪽 행이 안 생긴다).
-  const budget = rowsPerPage(spec.orientation);
+  const budget = pageRowsOf(spec);
   const header = pageBand.header
     ? range(pageBand.header.r1, pageBand.header.r2).map((r) => buildRow(spec, r, values, {}, pin)) : [];
   const footer = pageBand.footer
@@ -234,7 +306,61 @@ export function layoutPaper(
   flush();
   if (!pages.length) pages.push([]);
 
-  // ③ 2패스 — 총 쪽수가 나왔으니 @page/@pages를 실제 값으로 다시 짠다.
+  // ③ 걸침 칸 붙이기 — **쪽을 나눈 뒤에** 한다. 쪽마다 «같은 묶음이 연달아 있는 구간»을 찾아
+  //  그 구간의 첫 행에 걸고, 걸치는 길이는 그 쪽에 남은 줄 수다. 묶음이 쪽을 넘어가면 구간이 둘로
+  //  나뉘어 각 쪽이 자기 몫만큼만 걸친다 — 인쇄 표에서 「경첩」이 다음 장에 다시 적히는 그 모양.
+  //  (나누기 *전에* rs를 박으면 쪽 경계를 뚫고 나가 종이 밖에 그려진다.)
+  if (groupSpans.size) {
+    pages.forEach((rows) => {
+      for (let i = 0; i < rows.length;) {
+        const gid = rows[i].group;
+        if (gid == null) { i++; continue; }
+        let j = i;
+        while (j + 1 < rows.length && rows[j + 1].group === gid) j++;
+        const rs = j - i + 1;
+        const spans = (groupSpans.get(gid) ?? [])
+          .map((c) => ({ ...c, spec: { ...c.spec, rs } }));
+        rows[i] = { ...rows[i], cells: [...rows[i].cells, ...spans] };
+        i = j + 1;
+      }
+    });
+  }
+
+  // ④ 표의 마감선 — **반복 밴드에 그은 «아래» 변은 그 줄이 아니라 표 전체의 바닥**을 뜻한다.
+  //  한 줄짜리 밴드를 N번 복제하면 그 굵은 선도 N번 복제돼 **행 사이마다 굵은 선이 깔린다**
+  //  (엑셀에서 본 것과 다르다 — 거기선 표 밑에 한 번 그은 선이다). 저작으로는 못 피한다:
+  //  같은 한 줄이 «첫 줄이자 마지막 줄»이라 아래 선을 빼면 표가 열린 채로 끝난다.
+  //
+  //  선 소유권(각 칸은 «자기 위·왼쪽»을 그린다)에서 답이 나온다 — 반복 줄의 아래 선은 원래
+  //  «밑 칸이 자기 윗선으로» 그릴 몫이라 중간 줄에선 군더더기고, 굵은 쪽이 이기는 규칙 때문에
+  //  그 군더더기가 얇은 구분선을 이겨 버린다. 그러니 **아래 변은 마지막 줄만 갖는다.**
+  //  쪽이 갈리면 쪽마다 자기 바닥을 갖는다(표가 장 끝에서 열린 채 끊기지 않게).
+  //
+  //  ③ **뒤에** 도는 게 중요하다 — 걸침 칸(rs>1)도 자기 아래 변을 갖고 있어서, 그게 묶음마다
+  //  찍히면 「경첩」·「레일」 밑에 굵은 선이 하나씩 생긴다. 걸침 칸은 밑변이 닿는 줄로 판정한다.
+  pages.forEach((rows) => {
+    const last = new Map<number, number>();
+    rows.forEach((row, i) => { if (row.repeat != null) last.set(row.repeat, i); });
+    if (!last.size) return;
+    rows.forEach((row, i) => {
+      if (row.repeat == null) return;
+      const bottom = last.get(row.repeat);
+      const cells = row.cells.map((c) => {
+        if (i + (c.spec.rs ?? 1) - 1 === bottom) return c;
+        const drop = (edges?: PaperCell['border']) => {
+          const kept = (edges ?? []).filter((e) => e !== 'b');
+          return kept.length === (edges ?? []).length ? edges : kept;
+        };
+        const border = drop(c.spec.border);
+        const borderStrong = drop(c.spec.borderStrong);
+        if (border === c.spec.border && borderStrong === c.spec.borderStrong) return c;
+        return { ...c, spec: { ...c.spec, border, borderStrong } };
+      });
+      rows[i] = { ...row, cells };
+    });
+  });
+
+  // ⑤ 2패스 — 총 쪽수가 나왔으니 @page/@pages를 실제 값으로 다시 짠다.
   //  머리말·꼬리말은 항상 문서 스코프라(반복 안이 아니다) 여기서 안전하게 다시 채운다.
   const total = pages.length;
   const rebuild = (rows: OutRow[], n: number): OutRow[] =>
@@ -270,6 +396,6 @@ export function layoutPaper(
 
 /** 지면 픽셀 — 렌더러가 종이 크기를 잡을 때. */
 export const paperMetrics = (spec: PaperSpec) => ({
-  rowUnit: PAPER_ROW_UNIT,
-  rowsPerPage: rowsPerPage(spec.orientation),
+  rowUnit: rowUnitOf(spec),
+  rowsPerPage: pageRowsOf(spec),
 });

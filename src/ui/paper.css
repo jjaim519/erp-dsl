@@ -3,7 +3,9 @@
       06 §1-9가 못박은 유일한 예외와 같은 성격 — 화면 UI가 아니라 고정 px 좌표계 위의 문서라,
       루트 font-scale(rem 줌)이 여기까지 먹으면 A4 캔버스가 깨진다(행 높이·줄바꿈·열 폭이 밀린다).
       그래서 이 파일 안에서만 px로 못박고, 값은 종이 기준 타이포다.
-   색·선은 전부 역할 변수(raw hex 0). */
+   ⚠ **선과 «서식이 직접 말한 색»도 같은 성격의 절대값**이다. 인쇄물의 괘선은 검정이지 «테마 경계색»이
+      아니고, 역할 변수를 태우면 옅은 회색 선이 되어 **음영 칸 위에서 통째로 사라진다**(실제로 그랬다).
+      종이 밖(그림자·바탕)만 역할 변수를 쓴다. */
 
 .erpPaperDoc { display: flex; flex-direction: column; align-items: center; gap: 16px; }
 
@@ -13,12 +15,21 @@
   box-shadow: 0 1px 3px rgba(11, 26, 53, .10), 0 8px 28px rgba(11, 26, 53, .12);
   transform-origin: top center;
   flex: none;
-  /* 종이 안 타이포 — 인쇄 좌표계 고정값(위 주석) */
-  --paper-display: 20px;
-  --paper-heading: 15px;
-  --paper-subheading: 13px;
-  --paper-body: 11.5px;
-  --paper-caption: 10px;
+  /* 종이 안 타이포 — **행 단위에서 도출된다**(PaperDoc이 --paper-row를 인라인으로 깐다).
+     쪽당 행 수 · 행 높이 · 글자 크기 셋은 하나로 묶여 있다(행수 × 행높이 = 지면 높이).
+     따로 박으면 하나를 키울 때 딴 게 깨지므로 **행 수만 선언하고 나머지는 비율로 딸려온다.**
+
+       42행 → 행 24px → 본문 14px  (10.5pt)   ← 기본
+       36행 → 행 28px → 본문 16px  (12.2pt)
+       31행 → 행 32px → 본문 18.6px(14pt)      ← 엑셀 24pt 행 + 14pt 글자와 같은 크기
+
+     0.583은 «한 줄(글자×1.3) + 상하 패딩 4px»이 행 안에 들어가는 최대치에서 온 값이다. */
+  --paper-row: 24px;
+  --paper-display:    calc(var(--paper-row) * 0.92);
+  --paper-heading:    calc(var(--paper-row) * 0.71);
+  --paper-subheading: calc(var(--paper-row) * 0.625);
+  --paper-body:       calc(var(--paper-row) * 0.583);
+  --paper-caption:    calc(var(--paper-row) * 0.48);
 }
 
 .erpPaperGrid {
@@ -33,9 +44,9 @@
   padding: 2px 5px;
   display: flex;
   font-size: var(--paper-body);
-  line-height: 1.35;
+  line-height: 1.3;   /* 행 천장 계산의 전제(위 주석) — 키우면 글자 최대치가 줄어든다 */
   color: var(--text-primary);
-  border-color: var(--border-strong);
+  border-color: #000;          /* 괘선은 무조건 검정 — 위 ⚠ 참조 */
   border-style: solid;
   border-width: 0;
 }
@@ -46,6 +57,13 @@
 .erpPaperCell.bl { border-left-width: 1px; }
 .erpPaperCell.br { border-right-width: 1px; }
 .erpPaperCell.bb { border-bottom-width: 1px; }
+
+/* 굵은 선 — 엑셀 medium·thick·double이 여기로 내려온다(변환기가 두 단으로 닫는다).
+   같은 선을 두 칸이 다르게 선언하면 굵은 쪽이 이긴다(PaperDoc의 선 지도). */
+.erpPaperCell.bt-s { border-top-width: 2px; }
+.erpPaperCell.bl-s { border-left-width: 2px; }
+.erpPaperCell.br-s { border-right-width: 2px; }
+.erpPaperCell.bb-s { border-bottom-width: 2px; }
 
 /* 가로 정렬 */
 .erpPaperCell.ax-start  { justify-content: flex-start; }
@@ -73,6 +91,11 @@
 .erpPaperCell.fill-shade { background: var(--bg-secondary); }
 .erpPaperCell.fill-brand { background: var(--mantine-color-primary-0); }
 
+/* 서식이 색을 직접 말한 칸 — 배경은 PaperDoc이 인라인으로 깐다(엑셀에서 온 절대색).
+   글자도 같이 절대값으로 못박는다: 배경만 절대값이면 어두운 테마에서 «옅은 회색 위 흰 글씨»가 되어
+   라벨이 통째로 안 읽힌다. 이 파일이 A4를 px로 못박는 것과 같은 예외 — 종이는 화면이 아니다. */
+.erpPaperCell.fill-raw { color: #16181d; }
+
 /* 흐름 */
 .erpPaperCell.flow-wrap > span     { white-space: pre-wrap; word-break: keep-all; }
 .erpPaperCell.flow-ellipsis > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -85,6 +108,63 @@
 }
 .erpPaperCell.wr-vertical { justify-content: center; align-items: center; }
 
+/* ── 편집·작성 ─────────────────────────────────────────────────
+   데이터 자리가 입력이 된다(빈 문서를 채우는 것도 같은 모드다 — 「작성」과 「편집」은 값이 있느냐 없느냐일 뿐).
+   **칸이 곧 입력의 크기**다 — 문서 기하를 입력에 맞춰 늘리지 않는다.
+   ⚠ 부품은 무수정이다. Mantine 내부(.mantine-Input-input)에 닿는 건 «칸이 입력의 크기를 정한다»를
+      위한 기하뿐이고, 윤곽은 역할 변수(`--field-border`)가 그대로 나른다 — 그래야 FormField의
+      에러 경로(위험 색으로 덮기)가 살아 있다. */
+
+/* 채울 수 있는 칸임을 말한다 — 종이엔 없는 구별이라 화면이 따로 말해야 한다.
+   답은 **입력을 칸 안에 1px 물려 넣는 것**이다. 입력이 자기 윤곽을 되찾고, 1px 틈이 그 윤곽을
+   칸의 검정 괘선에서 떼어 놓는다. 「입력칸처럼 보이게」를 흉내로 그리지 않고 *실제 입력*이 말한다.
+
+   ⚠ 여기까지 두 번 틀렸다. 둘 다 원인이 같다 —
+     ① **칠하기**(옅은 파랑 배경): 이 문서에서 `fill`은 이미 뜻을 나른다(라벨 음영·열머리, 엑셀 실제 색).
+        한 채널에 두 뜻이 겹쳤고, 그 파랑이 라벨 회색보다 **밝아서** 「덜 중요한 칸」으로 읽혔다.
+     ② **칸에 윤곽 두르기**(outline): 인접한 편집 칸이 **각자 자기 링을 그려서** 맞닿은 자리가
+        파랑–검정–파랑 3중선이 됐다. **선 소유권**(각 칸은 자기 위·왼쪽만 그린다)이 막으려던 바로 그
+        결함을 화면 층에서 되살린 것이다. 링은 소유권을 지킬 수 없다 — 링에는 «변»이 넷 다 있다.
+   1px 물려 넣기는 두 문제를 다 피한다: 채널은 «입력의 윤곽»이라 새로 안 겹치고, 틈이 있어 어느 선도
+   맞닿지 않는다. */
+.erpPaperCell.is-edit {
+  padding: 1px;               /* 이 1px이 입력 윤곽을 칸 괘선에서 떼어 놓는다 */
+  cursor: text;
+}
+
+/* 잠근 칸 — 소비처가 `readonlyFields`로 «데이터에서 온다»고 선언한 값. 잉크를 죽여 대비를 만든다.
+   보호된 시트의 잠긴 칸·그리드의 읽기 전용 열이 쓰는 그 관습이다.
+   ⚠ 고정 글자(라벨·제목)에는 안 건다 — 그건 «잠긴 값»이 아니라 애초에 값이 아니다. */
+.erpPaperDoc[data-mode="edit"] .is-locked { color: var(--text-secondary); }
+/* 칸 → 부품 뿌리 → 감싸개 → 입력, 높이를 끝까지 물려준다.
+   한 마디라도 auto면 입력이 자기 기본 높이(--input-height-sm)로 돌아가 칸을 삐져나온다. */
+.erpPaperCell.is-edit > *,
+.erpPaperCell.is-edit .mantine-Input-wrapper { width: 100%; height: 100%; }
+
+.erpPaperDoc[data-mode="edit"] .is-edit .mantine-Input-input {
+  height: 100%;
+  min-height: 0;
+  padding: 0 5px;             /* 칸의 좌우 여백(위 .erpPaperCell)을 입력이 물려받는다 */
+  font-size: inherit;
+  line-height: inherit;
+  /* 정렬은 **칸이 정한다**. 입력이 폭을 꽉 채우므로 flex 정렬(justify-content)은 더 이상 글자를 못 민다 —
+     금액이 편집 모드에서만 좌측으로 풀렸다. ax-end/ax-center가 칸에 깐 text-align을 물려받아 맞춘다
+     (ax-end의 tabular-nums도 같이 따라온다 — 숫자 자릿수가 편집 중에도 안 흔들린다). */
+  text-align: inherit;
+  background: var(--bg-primary);   /* 종이 위에 «얹힌 입력»으로 읽히게 — 칸 음영이 비쳐 오르지 않는다 */
+  border-radius: 0;
+}
+.erpPaperDoc[data-mode="edit"] .is-edit .mantine-Input-input:focus {
+  --field-border: var(--border-focus);
+  outline: none;              /* 윤곽이 이미 포커스를 말한다 — 이중 링 방지 */
+}
+
+/* 인쇄에는 «고칠 수 있음»이 없다 — 종이엔 그 구별이 존재하지 않는다. */
+@media print {
+  .erpPaperCell.is-edit { background: none; outline: none; }
+  .erpPaperDoc[data-mode="edit"] .is-locked { color: var(--text-primary); }
+}
+
 /* ── 인쇄 ──────────────────────────────────────────────────────
    종이만 물리 A4 1:1로 내보낸다. PaperModal의 인쇄 빌트인과 같은 사상이되,
    여기는 쪽이 여러 장이라 각 장이 페이지를 하나씩 먹는다.
@@ -93,11 +173,11 @@
 @media print {
   html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
 
-  /* ⚠ 문서 *밖*을 숨기는 건 여기서 안 한다.
-     PaperDoc은 자기 바깥에 뭐가 있는지 모른다(PaperModal은 모달이라 화면 전체를 소유해서 가능했다).
+  /* ⚠ 문서 *밖*을 숨기는 건 여기서(스코프 밖에서) 안 한다.
+     PaperDoc은 자기 바깥에 뭐가 있는지 모른다(모달은 화면 전체를 소유해서 가능하다).
      그리고 `body *:not(:has(.erpPaperDoc))` 같은 규칙은 셀이 수백 개일 때 :has() 무효화가
      폭발해 화면이 멈춘다 — 실제로 그랬다. 인쇄할 화면의 크롬 정리는 **소비처 몫**이고,
-     문서만 깔끔히 뽑고 싶으면 전용 라우트나 PaperModal에 담아 인쇄한다.  */
+     문서만 깔끔히 뽑고 싶으면 전용 라우트나 PaperDocModal에 담아 인쇄한다.  */
   .erpPaperDoc { gap: 0; }
 
   .erpPaperSheet {
@@ -111,11 +191,52 @@
 
   /* 인쇄 DPI에서 1px 선이 픽셀 스냅으로 사라지는 것 방지 — 물리 단위로 고정 */
   .erpPaperCell {
-    border-width: 0; border-color: var(--border-strong) !important;
+    border-width: 0; border-color: #000 !important;
     -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
   }
   .erpPaperCell.bt { border-top-width: .2mm; }
   .erpPaperCell.bl { border-left-width: .2mm; }
   .erpPaperCell.br { border-right-width: .2mm; }
   .erpPaperCell.bb { border-bottom-width: .2mm; }
+  .erpPaperCell.bt-s { border-top-width: .45mm; }
+  .erpPaperCell.bl-s { border-left-width: .45mm; }
+  .erpPaperCell.br-s { border-right-width: .45mm; }
+  .erpPaperCell.bb-s { border-bottom-width: .45mm; }
+}
+
+/* ── 모달에서 인쇄 ────────────────────────────────────────────
+   ⚠ **이 블록은 전부 `html.erp-doc-print` 안에 갇혀 있다** — PaperDocModal이 *열려 있는 동안만*
+      그 클래스를 건다. 스코프 없는 `body * { visibility: hidden }`이 paper.css를 import한
+      소비 앱의 **모든 화면**을 인쇄 시 백지로 만든 적이 있다(PaperModal 배포 결함, 커밋 22389c0).
+   위 인쇄 블록과 나누는 이유: 저건 «종이를 어떻게 그리나»(문서 전용 라우트에서도 필요하고)이고
+      여기는 «문서 밖을 어떻게 치우나»(모달이 화면을 소유할 때만 할 수 있는 일)다. */
+@media print {
+  /* 문서 밖은 **자리까지** 없앤다. `visibility: hidden`으로 감추면 높이가 그대로 남아
+     빈 페이지가 뒤에 붙는다 — 2쪽 문서가 4쪽으로 나왔다(실측). 그래서 display로 끊는다.
+     모달은 Portal이라 `body`의 직계 자식이고, 그 형제가 곧 «문서 밖»이다. */
+  html.erp-doc-print body > *:not(.mantine-Modal-root) { display: none !important; }
+  html.erp-doc-print .mantine-Modal-overlay { display: none !important; }
+  /* 모달 크롬(제목·배율·단추)도 자리째. */
+  html.erp-doc-print .erpDocChrome { display: none !important; }
+
+  /* 모달 상자의 중앙 정렬 transform·높이 캡·스크롤을 전부 푼다. 안 풀면 ① transform 조상이
+     생겨 종이가 페이지 기준을 잃고 ② maxHeight/overflow가 둘째 장부터 잘라낸다. */
+  html.erp-doc-print .mantine-Modal-root,
+  html.erp-doc-print .mantine-Modal-inner,
+  html.erp-doc-print .mantine-Modal-content {
+    position: static !important; transform: none !important;
+    width: auto !important; max-width: none !important;
+    height: auto !important; max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important; padding: 0 !important;
+    box-shadow: none !important; border: none !important; border-radius: 0 !important;
+    background: transparent !important;
+  }
+  /* 데스크(회색 바탕·스크롤 상자) — 종이만 남기고 자기 표현은 버린다.
+     ⚠ `overflow`를 안 풀면 화면에서 안 보이던 아래쪽 장이 인쇄에서도 잘린다. */
+  html.erp-doc-print .erpDocDesk {
+    height: auto !important; max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important; background: none !important;
+  }
 }

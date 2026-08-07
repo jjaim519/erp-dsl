@@ -17,9 +17,14 @@
     ".": "./src/ui/index.ts",
     "./schema": "./src/schema/index.ts"
   },
+  "bin": {
+    "erp-paper-import": "./scripts/paper-import.mjs"
+  },
   "files": [
     "src/ui",
     "src/schema",
+    "scripts/paper-import.mjs",
+    "public/paper-template.xlsx",
     "README.md",
     "!src/ui/_dev.ts",
     "!src/ui/_Dev*"
@@ -48,6 +53,7 @@
     "@tiptap/react": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.1",
     "dayjs": "^1.11.21",
+    "exceljs": "^4.4.0",
     "pdfjs-dist": "^6.2.108",
     "react": ">=19",
     "react-dom": ">=19",
@@ -90,6 +96,9 @@
   },
   "peerDependenciesMeta": {
     "pdfjs-dist": {
+      "optional": true
+    },
+    "exceljs": {
       "optional": true
     }
   }
