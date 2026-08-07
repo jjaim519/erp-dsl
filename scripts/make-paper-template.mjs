@@ -1,5 +1,15 @@
 // 24×42 문서 서식 템플릿(.xlsx) 생성 — 저작 도구는 엑셀이고, 이 파일이 그 출발점이다.
-//  · 표준 머리·꼬리가 박힌 시작 템플릿 + 실물 예제 둘(라인 문서 · 서술 문서)을 public/ 에 떨군다.
+//  · 표준 머리·꼬리가 박힌 시작 템플릿 + 실물 예제들을 public/ 에 떨군다. 패키지가 함께 배포한다.
+//
+// **여기서 나온 xlsx는 «어휘의 시연»이지 어느 회사의 문서가 아니다.** 레벨1이 공사 구획인지
+//  공종인지, 어떤 열이 필요한지는 **도메인을 아는 소비처**가 정한다(README §8-2). 이 파일이 붙잡는 것은
+//  그 반대편 — 음영 두 단·굵은 선·글자 사다리·열 배분 같은 **장표 문법**이고, 값을 열면 문서마다 갈린다.
+//
+// ⚠ **진실은 «누가 만들었나»가 가른다.** 여기서 생성한 것(paper-*.xlsx)은 이 코드가 진실이라
+//  손으로 고치면 다음 실행에 덮인다 — 표현을 바꾸려면 **이 파일을 고친다**(그래야 판단이 주석에 남는다:
+//  「16px는 사다리에 없다」·「돈 열은 4칸 아래로 못 내린다」). 반대로 엑셀에서 직접 그린 서식
+//  (kk-gabji.xlsx 등)은 **그 xlsx가 진실**이고 여기 넣지 않는다 — 손으로 그린 걸 코드로 옮겨 적으면
+//  두 벌만 생긴다.
 //  · ExcelJS는 **dev 의존성**이다. 변환은 저작 시점에 하고 런타임은 PaperSpec만 본다
 //    (SheetJS를 dev 도구에만 두는 기존 규율 그대로 — 배포 DSL 의존성 0).
 //
@@ -26,9 +36,15 @@ const COL_W = Math.round((((TARGET_COL_PX / MDW) * 256 - Math.trunc(128 / MDW)) 
 const colPx = (w) => Math.trunc(((256 * w + Math.trunc(128 / MDW)) / 256) * MDW);
 
 const GREY = 'FFE4E4E4';
+// 음영 2단 — 구획·열머리(GREY)보다 **한 단계 어두운** 합계 계열. 장표는 「머리 < 합계」로 무게를 올린다.
+//  토큰 하나로 뭉치면 그 구분이 통째로 사라져서(갑지 선례) 변환기가 헥스를 그대로 나른다.
+const GREY2 = 'FFD0D0D0';
 const HINT = 'FF9CA1AD';
 const THIN = { style: 'thin', color: { argb: 'FF6E7480' } };
 const ALL = { top: THIN, left: THIN, bottom: THIN, right: THIN };
+// 굵은 선 — 「표 바깥은 굵게, 안쪽은 얇게」. 변환기는 style만 보고 두 단으로 닫는다(medium→굵음).
+const MED = { style: 'medium', color: { argb: 'FF16181C' } };
+const SIDE = { t: 'top', l: 'left', r: 'right', b: 'bottom' };
 const BANDS = ['머리말', '꼬리말', '열머리', '그룹머리', '반복', '그룹꼬리', '합계'];
 
 // ── 골격 ───────────────────────────────────────────────────────
@@ -76,8 +92,17 @@ function put(ws, r, c, value, opt = {}) {
     textRotation: opt.vertical ? 'vertical' : undefined,
     indent: opt.indent ?? 0,
   };
-  if (opt.border !== false) cell.border = ALL;
-  if (opt.shade) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GREY } };
+  // opt.outer — 굵게 그릴 변('tlrb' 중 몇 자). 나머지는 얇게.
+  //  ⚠ 병합보다 **먼저** 걸어야 한다: ExcelJS는 mergeCells 시점에 마스터 스타일을 슬레이브에 복사하고,
+  //    변환기는 오른쪽·아래 변을 그 «슬레이브»에서 읽는다(안 그러면 두 변을 통째로 잃는다).
+  if (opt.border !== false) {
+    const b = { ...ALL };
+    for (const side of opt.outer ?? '') b[SIDE[side]] = MED;
+    cell.border = b;
+  }
+  if (opt.shade || opt.shade2) {
+    cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: opt.shade2 ? GREY2 : GREY } };
+  }
   if ((opt.cs ?? 1) > 1 || (opt.rs ?? 1) > 1) {
     ws.mergeCells(r, c, r + (opt.rs ?? 1) - 1, c + (opt.cs ?? 1) - 1);
   }
@@ -91,6 +116,17 @@ const band = (ws, r, name) => {
 };
 
 // ── 표준 머리 ──────────────────────────────────────────────────
+// **모든 문서가 같은 것 셋 — 좌상단 로고 · 가운데 문서명 · 꼬리말.** 회사의 문서들이 한 벌로 읽히게 하는
+//  최소 골격이고, 서식이 정하는 것은 «그 밖에 무엇을 더 놓느냐»뿐이다. 셋 중 하나라도 빠지면
+//  같은 회사에서 나온 종이로 안 읽힌다 — 변환기가 로고·꼬리말이 없으면 경고한다.
+//  (문서번호·작성일자·결재란은 문서마다 다르다. 그건 통일 대상이 아니다.)
+//
+//  ⚠ **꼬리말은 «칸이 비어도» 있어야 한다.** 변환기가 지면 바닥을 거기서 읽기 때문이다 —
+//   없으면 쪽 높이가 내용 높이로 잡혀 글자가 두 배 넘게 커진다. 실제로 갑지(kk-gabji.xlsx)가
+//   **내용 없는 꼬리말 한 줄**을 그 용도로만 쓴다(오너 결정): 현장에 나가는 한 장짜리라 쪽번호가
+//   의미 없고 발행처도 아는 사람들 사이에서 도는 종이라, 한 벌로 읽히는 일은 로고·문서명이 맡는다.
+//   **그 빈 줄을 «실수»로 보고 지우면 갑지가 조용히 깨진다.**
+//
 // ⚠ 행 높이를 절대 바꾸지 않는다. 높은 칸은 **세로 병합**으로 만든다.
 //   (행마다 높이를 키우면 42행이 42단위가 아니게 되어 «42행 = 한 쪽» 불변이 깨진다.
 //    첫 판이 그래서 세로로 넘쳤다: 756pt + 제목 18 + 비고 36 = 810pt > 가용 756pt.)
@@ -122,6 +158,16 @@ function standardHead(ws, title, opts = {}) {
   if (!opts.letterhead) {
     put(ws, r, 1, '{{발행처로고}}', { cs: 3, rs: 2, align: 'center', hint: true, border: false });
   }
+
+  // titleOnly — 문서번호·작성일자를 안 쓰는 문서(현장 내역서처럼 한 장짜리).
+  //  ⚠ 그 둘이 빠지면 **제목의 균형추가 사라진다** — 로고만 왼쪽에 남아 제목이 왼쪽으로 밀린다.
+  //    그래서 오른쪽에 **로고와 같은 폭의 빈자리**를 둔다: 제목 4~21의 중심(12.5)이 지면 중심과 같다.
+  //    내용으로 균형을 잡는 게 원칙이고(문서번호·작성일자), 그 값이 없는 문서에선 여백이 그 일을 한다.
+  if (opts.titleOnly) {
+    put(ws, r, 4, title, { cs: 18, rs: 2, align: 'center', bold: true, size: 18, border: false });
+    return r + 2;
+  }
+
   put(ws, r, 4, title, { cs: 14, rs: 2, align: 'center', bold: true, size: 18, border: false });
   put(ws, r,     18, '문서번호', { cs: 3, align: 'center', shade: true, size: 8 });
   put(ws, r,     21, '{{문서번호}}', { cs: 4, size: 8 });
@@ -156,7 +202,11 @@ const STANDARD_FIELDS = [
   { n: '승인자', l: '승인자', t: '글자', r: '', a: '' },
 ];
 
-function fieldSheet(wb, extra = []) {
+// opts.optional — 표준 필드에서 「필수」를 뗀다. 서식이 그 값을 안 놓는 문서에 쓴다
+//  (필수인데 자리가 없으면 검증이 «필수 값의 자리가 없습니다»로 막는다 — 이름은 남겨 둔다:
+//   지우면 나중에 다시 놓을 때 명단부터 만들어야 한다).
+function fieldSheet(wb, extra = [], opts = {}) {
+  const optional = new Set(opts.optional ?? []);
   const ws = wb.addWorksheet('필드');
   ws.columns = [
     { header: '이름', key: 'n', width: 20 },
@@ -170,7 +220,7 @@ function fieldSheet(wb, extra = []) {
 
   const mark = ws.addRow({ n: '── 표준(모든 문서 공통) ──' });
   mark.font = { size: 9, color: { argb: HINT } };
-  STANDARD_FIELDS.forEach((f) => ws.addRow(f));
+  STANDARD_FIELDS.forEach((f) => ws.addRow(optional.has(f.n) ? { ...f, r: '' } : f));
   if (extra.length) {
     const m2 = ws.addRow({ n: '── 이 문서 전용 ──' });
     m2.font = { size: 9, color: { argb: HINT } };
@@ -204,6 +254,7 @@ function guideSheet(wb) {
   line('건드리지 말 것', '', true);
   line('열 너비', '넓은 칸이 필요하면 옆 칸과 «병합»합니다. 열 너비를 바꾸면 24열 격자가 깨집니다.');
   line('행 높이', '기본 18pt(=한 칸). 높은 칸은 36pt·54pt처럼 18의 배수로 둡니다.');
+  line('세로 정렬', '엑셀은 세로 정렬을 안 정하면 «아래»에 붙여 그리지만, 인쇄물은 «가운데»로 나갑니다. 엑셀 화면과 결과를 맞추려면 세로 정렬을 «가운데»로 지정해 두세요(결과가 바뀌지는 않습니다).');
   line('', '');
   line('값이 들어갈 자리', '', true);
   line('{{문서번호}}', '「필드」 시트에 적은 이름을 두 겹 중괄호로 씁니다.');
@@ -410,13 +461,12 @@ async function sampleTreeLedger() {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'erp-dsl';
   const ws = setupSheet(wb.addWorksheet('양식'));
-  standardHead(ws, '내 역 서');
+  // 문서번호·작성일자를 안 쓴다 — 제목은 오른쪽 빈자리를 짝으로 삼아 지면 가운데에 선다.
+  standardHead(ws, '내 역 서', { titleOnly: true });
 
-  // r3 개요
-  put(ws, 3, 1,  '현 장 명', { cs: 3, align: 'center', shade: true });
-  put(ws, 3, 4,  '{{현장명}}', { cs: 9 });
-  put(ws, 3, 13, '고 객 명', { cs: 3, align: 'center', shade: true });
-  put(ws, 3, 16, '{{고객명}}', { cs: 9 });
+  // r3 개요 — 현장명 한 줄이 전 폭을 쓴다(짝이 될 값이 없어 반으로 가르면 오른쪽이 빈다).
+  put(ws, 3, 1, '현 장 명', { cs: 3, align: 'center', shade: true });
+  put(ws, 3, 4, '{{현장명}}', { cs: 21 });
 
   // 열 배분 — 품명 8 · 단위 2 · 수량 2 · 단가 4 · 금액 4 · 비고 4 = 24
   //  ⚠ 돈 열은 **4칸(112px) 아래로 못 내린다.** 3칸(84px)이면 ₩9,428,000이 끝자리부터 잘린다
@@ -424,40 +474,51 @@ async function sampleTreeLedger() {
   const COL = { name: [1, 8], unit: [9, 2], qty: [11, 2], price: [13, 4], amount: [17, 4], note: [21, 4] };
 
   // r5 구획 제목 — 「1. 주방」. 번호는 값이 아니라 **자리**에서 나온다({{번호:…}}).
-  put(ws, 5, 1, '{{번호:품목.품명}}', { cs: 24, shade: true, bold: true });
+  //  가운데 정렬 — 구획 제목은 한 칸을 채우는 «머리»지 왼쪽에서 시작하는 항목이 아니다.
+  put(ws, 5, 1, '{{번호:품목.품명}}', { cs: 24, shade: true, bold: true, align: 'center', outer: 'tlr' });
   band(ws, 5, '그룹머리');
 
   // r6 열머리 — 구획 제목 «아래»라 구획마다 다시 난다.
-  const head = (label, [c, cs]) => put(ws, 6, c, label, { cs, align: 'center', shade: true, bold: true });
-  head('공　사', COL.name); head('단위', COL.unit); head('수량', COL.qty);
-  head('단가', COL.price); head('금액', COL.amount); head('비고', COL.note);
+  //  ⚠ 굵은 세로선은 **양 끝 칸이 나눠 갖는다** — 첫 칸이 왼쪽, 끝 칸이 오른쪽.
+  const head = (label, [c, cs], outer) =>
+    put(ws, 6, c, label, { cs, align: 'center', shade: true, bold: true, ...(outer ? { outer } : {}) });
+  head('공　사', COL.name, 'l'); head('단위', COL.unit); head('수량', COL.qty);
+  head('단가', COL.price); head('금액', COL.amount); head('비고', COL.note, 'r');
   band(ws, 6, '열머리');
 
   // r7 반복 — **품명 칸 하나만** 들여쓴다. 수량·단가·금액은 제 열에 그대로 서야 세로로 읽힌다.
-  put(ws, 7, COL.name[0],   '{{들여:품목.품명}}', { cs: COL.name[1] });
+  //  이 줄이 값 개수만큼 늘어나므로 좌·우 굵은 선도 그만큼 이어져 **묶음의 옆구리**가 된다.
+  put(ws, 7, COL.name[0],   '{{들여:품목.품명}}', { cs: COL.name[1], outer: 'l' });
   put(ws, 7, COL.unit[0],   '{{품목.단위}}',      { cs: COL.unit[1], align: 'center' });
   put(ws, 7, COL.qty[0],    '{{품목.수량}}',      { cs: COL.qty[1], align: 'right' });
   put(ws, 7, COL.price[0],  '{{품목.단가}}',      { cs: COL.price[1], align: 'right' });
   put(ws, 7, COL.amount[0], '{{품목.금액}}',      { cs: COL.amount[1], align: 'right' });
-  put(ws, 7, COL.note[0],   '{{품목.비고}}',      { cs: COL.note[1] });
+  put(ws, 7, COL.note[0],   '{{품목.비고}}',      { cs: COL.note[1], outer: 'r' });
   band(ws, 7, '반복');
 
   // r8 그룹꼬리 — 소계. 구획 제목이 자기 금액을 안 갖는 대신 여기가 그 구획의 수를 말한다.
-  put(ws, 8, 1,             '소　계', { cs: COL.amount[0] - 1, align: 'right', shade: true, bold: true });
-  put(ws, 8, COL.amount[0], '{{합계:품목.금액}}', { cs: COL.amount[1], align: 'right', bold: true });
-  put(ws, 8, COL.note[0],   '', { cs: COL.note[1], shade: true });
+  //  **세 칸을 같은 음영으로** 칠한다: 금액 칸만 비면 합계 줄이 중간에서 끊어져 보인다.
+  //  아래 굵은 선이 묶음의 **바닥**이라, 구획 제목의 위 선과 만나 「제목~소계」가 한 상자가 된다.
+  put(ws, 8, 1,             '소　계', { cs: COL.amount[0] - 1, align: 'right', shade2: true, bold: true, outer: 'lb' });
+  put(ws, 8, COL.amount[0], '{{합계:품목.금액}}', { cs: COL.amount[1], align: 'right', shade2: true, bold: true, outer: 'b' });
+  put(ws, 8, COL.note[0],   '', { cs: COL.note[1], shade2: true, outer: 'rb' });
   band(ws, 8, '그룹꼬리');
 
-  // r10 총계 — 마지막 쪽에만. (오너 스케치엔 없다. 필요 없으면 이 줄과 Z열 「합계」를 지운다.)
-  put(ws, 10, 1,             '총　계', { cs: COL.amount[0] - 1, align: 'right', shade: true, bold: true });
-  put(ws, 10, COL.amount[0], '{{합계:품목.금액}}', { cs: COL.amount[1], align: 'right', bold: true });
-  put(ws, 10, COL.note[0],   '', { cs: COL.note[1], shade: true });
+  // r10~11 총계 — 마지막 쪽에만. **2행(48px)을 쓰고 글자를 한 단 올린다**(소계 14 → 17).
+  //  ⚠ 16px는 사다리에 없다 — 42행 지면의 단은 14·15·17이고, 15는 소계와 1px 차이라 안 갈린다.
+  //  (오너 스케치엔 없던 줄이다. 필요 없으면 이 세 칸과 Z10을 지운다.)
+  //  총계는 **비고를 안 쓴다** — 금액 칸이 비고까지 먹어 오른쪽 끝까지 간다(소계와 달리 두 칸).
+  //   합계 줄에 빈 비고를 남기면 문서가 거기서 안 끝난 것처럼 보인다.
+  put(ws, 10, 1,             '총　계', { cs: COL.amount[0] - 1, rs: 2, align: 'right', shade2: true, bold: true, size: 12, outer: 'tlb' });
+  put(ws, 10, COL.amount[0], '{{합계:품목.금액}}',
+    { cs: COL.amount[1] + COL.note[1], rs: 2, align: 'right', shade2: true, bold: true, size: 12, outer: 'trb' });
   band(ws, 10, '합계');
+  band(ws, 11, '합계');
 
   standardFoot(ws);
+  //  문서번호·작성일자는 이 서식이 안 놓는다 — 이름은 남기고 「필수」만 뗀다(다시 놓으면 그대로 산다).
   fieldSheet(wb, [
     { n: '현장명', l: '현장명', t: '글자', r: '필수', a: '' },
-    { n: '고객명', l: '고객명', t: '글자', r: '', a: '' },
     // ⚠ «깊이»가 이 배열을 트리로 만든다. 이 한 줄이 빠지면 들여쓰기도 구획도 통째로 죽는다.
     { n: '레벨', l: '깊이', t: '깊이', r: '', a: '품목' },
     { n: '품명', l: '품명', t: '글자', r: '필수', a: '품목' },
@@ -466,7 +527,7 @@ async function sampleTreeLedger() {
     { n: '단가', l: '단가', t: '금액', r: '', a: '품목' },
     { n: '금액', l: '금액', t: '금액', r: '', a: '품목' },
     { n: '비고', l: '비고', t: '글자', r: '', a: '품목' },
-  ]);
+  ], { optional: ['문서번호', '작성일자'] });
   guideSheet(wb);
   await wb.xlsx.writeFile(`${OUT}/paper-sample-tree-ledger.xlsx`);
   return 'paper-sample-tree-ledger.xlsx';

@@ -1,6 +1,6 @@
 {
   "id": "tree-ledger",
-  "name": "내역서(트리)",
+  "name": "내역서",
   "columns": 24,
   "orientation": "portrait",
   "fields": [
@@ -28,14 +28,12 @@
     {
       "name": "문서번호",
       "label": "문서번호",
-      "type": "text",
-      "required": true
+      "type": "text"
     },
     {
       "name": "작성일자",
       "label": "작성일자",
-      "type": "date",
-      "required": true
+      "type": "date"
     },
     {
       "name": "담당자",
@@ -57,11 +55,6 @@
       "label": "현장명",
       "type": "text",
       "required": true
-    },
-    {
-      "name": "고객명",
-      "label": "고객명",
-      "type": "text"
     }
   ],
   "arrays": [
@@ -126,67 +119,10 @@
       "r": 0,
       "c": 3,
       "rs": 2,
-      "cs": 14,
+      "cs": 18,
       "text": "내 역 서",
       "align": "center",
       "typo": "display"
-    },
-    {
-      "r": 0,
-      "c": 17,
-      "cs": 3,
-      "text": "문서번호",
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ],
-      "align": "center",
-      "typo": "caption",
-      "fill": "#E4E4E4"
-    },
-    {
-      "r": 0,
-      "c": 20,
-      "cs": 4,
-      "field": "문서번호",
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ],
-      "typo": "caption"
-    },
-    {
-      "r": 1,
-      "c": 17,
-      "cs": 3,
-      "text": "작성일자",
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ],
-      "align": "center",
-      "typo": "caption",
-      "fill": "#E4E4E4"
-    },
-    {
-      "r": 1,
-      "c": 20,
-      "cs": 4,
-      "field": "작성일자",
-      "format": "date",
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ],
-      "typo": "caption"
     },
     {
       "r": 2,
@@ -205,34 +141,8 @@
     {
       "r": 2,
       "c": 3,
-      "cs": 9,
+      "cs": 21,
       "field": "현장명",
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ]
-    },
-    {
-      "r": 2,
-      "c": 12,
-      "cs": 3,
-      "text": "고 객 명",
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ],
-      "align": "center",
-      "fill": "#E4E4E4"
-    },
-    {
-      "r": 2,
-      "c": 15,
-      "cs": 9,
-      "field": "고객명",
       "border": [
         "t",
         "r",
@@ -247,11 +157,14 @@
       "field": "품목.품명",
       "number": true,
       "border": [
+        "b"
+      ],
+      "borderStrong": [
         "t",
         "r",
-        "b",
         "l"
       ],
+      "align": "center",
       "typo": "body-strong",
       "fill": "#E4E4E4"
     },
@@ -263,7 +176,9 @@
       "border": [
         "t",
         "r",
-        "b",
+        "b"
+      ],
+      "borderStrong": [
         "l"
       ],
       "align": "center",
@@ -337,9 +252,11 @@
       "text": "비고",
       "border": [
         "t",
-        "r",
         "b",
         "l"
+      ],
+      "borderStrong": [
+        "r"
       ],
       "align": "center",
       "typo": "body-strong",
@@ -354,7 +271,9 @@
       "border": [
         "t",
         "r",
-        "b",
+        "b"
+      ],
+      "borderStrong": [
         "l"
       ]
     },
@@ -420,9 +339,11 @@
       "field": "품목.비고",
       "border": [
         "t",
-        "r",
         "b",
         "l"
+      ],
+      "borderStrong": [
+        "r"
       ]
     },
     {
@@ -432,13 +353,15 @@
       "text": "소　계",
       "border": [
         "t",
-        "r",
+        "r"
+      ],
+      "borderStrong": [
         "b",
         "l"
       ],
       "align": "end",
       "typo": "body-strong",
-      "fill": "#E4E4E4"
+      "fill": "#D0D0D0"
     },
     {
       "r": 7,
@@ -452,11 +375,14 @@
       "border": [
         "t",
         "r",
-        "b",
         "l"
       ],
+      "borderStrong": [
+        "b"
+      ],
       "align": "end",
-      "typo": "body-strong"
+      "typo": "body-strong",
+      "fill": "#D0D0D0"
     },
     {
       "r": 7,
@@ -464,56 +390,53 @@
       "cs": 4,
       "border": [
         "t",
-        "r",
-        "b",
         "l"
       ],
-      "fill": "#E4E4E4"
+      "borderStrong": [
+        "r",
+        "b"
+      ],
+      "fill": "#D0D0D0"
     },
     {
       "r": 9,
       "c": 0,
+      "rs": 2,
       "cs": 16,
       "text": "총　계",
       "border": [
+        "r"
+      ],
+      "borderStrong": [
         "t",
-        "r",
         "b",
         "l"
       ],
       "align": "end",
-      "typo": "body-strong",
-      "fill": "#E4E4E4"
+      "typo": "heading",
+      "fill": "#D0D0D0"
     },
     {
       "r": 9,
       "c": 16,
-      "cs": 4,
+      "rs": 2,
+      "cs": 8,
       "agg": {
         "fn": "sum",
         "of": "품목.금액"
       },
       "format": "currency",
       "border": [
+        "l"
+      ],
+      "borderStrong": [
         "t",
         "r",
-        "b",
-        "l"
+        "b"
       ],
       "align": "end",
-      "typo": "body-strong"
-    },
-    {
-      "r": 9,
-      "c": 20,
-      "cs": 4,
-      "border": [
-        "t",
-        "r",
-        "b",
-        "l"
-      ],
-      "fill": "#E4E4E4"
+      "typo": "heading",
+      "fill": "#D0D0D0"
     },
     {
       "r": 41,
@@ -566,7 +489,7 @@
     {
       "kind": "summary",
       "r1": 9,
-      "r2": 9
+      "r2": 10
     },
     {
       "kind": "pageFooter",

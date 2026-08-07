@@ -4,7 +4,9 @@
 //
 // ⚠ **소비처가 쓰는 도구다.** 서식을 저작하는 주체가 소비처라(패키지가 문서마다 지정해 줄 게 아니다)
 //    `bin`으로 낸다. exceljs는 여기서만 필요하니 optional peer — 문서를 안 쓰는 앱은 안 깐다.
-//    빈 서식은 `--template`이 꺼내 준다.
+//    **출발점도 같이 준다** — `--template <이름>`이 실물 서식을 꺼낸다(빈 격자만 주면 시작을 못 한다).
+//    그 실물은 «kk의 내역서»가 아니라 **어휘의 시연**이다: 레벨1이 공사 구획인지 공종인지는
+//    도메인을 아는 쪽이 정한다.
 //
 //  · **도메인을 이해하지 않는다.** `{{품목.품명}}`을 읽어 `field: "품목.품명"`으로 옮길 뿐,
 //    「품목」이 뭔지 모른다. 이름을 정하는 건 엑셀을 편집한 사람이다(= 소비처).
@@ -493,6 +495,16 @@ async function convert(file, opts) {
   const bodyPx = Math.floor((1123 - 114) / pageRows) * 0.583;
   warn.push(`쪽당 ${pageRows}행 → 행 ${Math.floor((1123 - 114) / pageRows)}px · 본문 ${bodyPx.toFixed(1)}px (인쇄 ${(bodyPx * 0.75).toFixed(1)}pt)`);
 
+  // 회사 문서가 한 벌로 읽히려면 셋은 어느 서식에나 있어야 한다 — **좌상단 로고 · 가운데 문서명 · 꼬리말.**
+  //  경고로만 둔다(실패 아님): 진짜 이 셋이 없어야 맞는 문서가 있을 수 있고, 그 판단은 저작자 몫이다.
+  //  문서명은 기계가 못 가린다(고정 글자 중 어느 것이 제목인지 모른다) — 로고·꼬리말만 본다.
+  if (!cells.some((c) => c.image)) {
+    warn.push('좌상단 **로고 자리**가 없습니다 — 모든 문서가 공유하는 셋(로고·문서명·꼬리말) 중 하나입니다');
+  }
+  if (!bands.some((b) => b.kind === 'pageFooter')) {
+    warn.push('**꼬리말**이 없습니다 — 매 쪽 발행처·쪽번호가 빠지고, 지면 바닥을 못 읽어 쪽 높이가 내용 높이로 잡힙니다');
+  }
+
   const id = opts.id ?? basename(file).replace(/\.xlsx$/i, '').replace(/^paper-(sample-)?/, '');
   const name = opts.name
     ?? cells.find((x) => x.typo === 'display' && x.text)?.text?.replace(/\s+/g, ' ').trim()
@@ -518,19 +530,38 @@ const argv = process.argv.slice(2);
 const file = argv.find((a) => !a.startsWith('--'));
 const flag = (n) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i + 1] : undefined; };
 
-// 빈 서식 꺼내기 — 저작은 여기서 시작한다(24열 격자·표준 머리·「필드」·「안내」 시트가 들어 있다).
+// 서식 꺼내기 — 저작은 여기서 시작한다(24열 격자·표준 머리·「필드」·「안내」 시트가 들어 있다).
+//
+// **빈 서식만 주면 소비처는 시작을 못 한다.** 이 시스템은 «소비처가 표를 못 만든다»에서 출발했는데,
+//  빈 격자 하나를 건네면 그 자리로 되돌아간다. 그래서 **실물 서식을 함께 낸다** — 고쳐 쓰는 게
+//  처음부터 그리는 것보다 압도적으로 쉽고, 밴드·태그 어휘를 «작동하는 예»로 배운다.
+//  (package.json의 `files`에 이 셋이 다 올라 있어야 한다 — 안 그러면 설치본에 없다.)
+const TEMPLATES = {
+  '빈서식': ['paper-template.xlsx', '표준 머리·꼬리만 있는 24×42 격자'],
+  '내역서': ['paper-sample-tree-ledger.xlsx', '구획 제목 + 깊이 트리 + 구획별 소계'],
+  '산출내역서': ['paper-sample-cost-breakdown.xlsx', '2단 병합 헤더 + 반복 구간 둘 + 그룹 소계'],
+};
+
 if (argv.includes('--template')) {
-  const src = new URL('../public/paper-template.xlsx', import.meta.url);
-  const dest = resolve(flag('template') && !flag('template').startsWith('--')
-    ? flag('template') : 'paper-template.xlsx');
-  await copyFile(src, dest);
-  console.error(`[paper-import] 빈 서식을 꺼냈습니다 → ${dest}`);
+  const arg = flag('template');
+  const named = arg && !arg.startsWith('--') && !arg.endsWith('.xlsx');   // 이름이냐 경로냐
+  const key = named ? arg : '빈서식';
+  if (!TEMPLATES[key]) {
+    console.error(`[paper-import] «${key}»라는 서식이 없습니다. 쓸 수 있는 이름:`);
+    for (const [k, [, desc]] of Object.entries(TEMPLATES)) console.error(`  ${k.padEnd(8)} ${desc}`);
+    process.exit(2);
+  }
+  const [srcName] = TEMPLATES[key];
+  const dest = resolve(flag('out') ?? (named ? `${key}.xlsx` : (arg && !arg.startsWith('--') ? arg : srcName)));
+  await copyFile(new URL(`../public/${srcName}`, import.meta.url), dest);
+  console.error(`[paper-import] ${key} 서식을 꺼냈습니다 → ${dest}`);
   process.exit(0);
 }
 
 if (!file) {
   console.error('사용법: erp-paper-import <파일.xlsx> [--out 경로.json] [--id 아이디] [--name 이름] [--rows 쪽당행수]');
-  console.error('        erp-paper-import --template [경로.xlsx]     빈 서식을 꺼냅니다');
+  console.error(`        erp-paper-import --template [이름|경로.xlsx] [--out 경로.xlsx]`);
+  console.error(`        이름: ${Object.keys(TEMPLATES).join(' · ')}   (없으면 빈 서식)`);
   process.exit(2);
 }
 

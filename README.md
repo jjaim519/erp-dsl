@@ -357,8 +357,9 @@ npm i pdfjs-dist          # optional peer. PDF 미리보기가 필요할 때만
 매번 어긋난다. 엑셀에서 그린 것이 그대로 나오고, **저작의 주체는 소비 앱**이다(도메인을 아는 쪽이므로).
 
 ```bash
-# ① 빈 서식을 꺼낸다 — 24열 격자·표준 머리·「필드」·「안내」 시트가 들어 있다
-npx erp-paper-import --template docs/forms/발주서.xlsx
+# ① 서식을 꺼낸다. **빈 격자보다 실물을 고쳐 쓰는 게 빠르다** — 이름을 주면 실물이 나온다
+npx erp-paper-import --template 내역서          # → ./내역서.xlsx
+npx erp-paper-import --template                 # 이름 없이 = 빈 서식(24열 격자·표준 머리·「필드」·「안내」)
 
 # ② 엑셀에서 저작한다(아래 규칙) — 「안내」 시트가 문법을 전부 설명한다
 
@@ -366,6 +367,15 @@ npx erp-paper-import --template docs/forms/발주서.xlsx
 npx erp-paper-import docs/forms/발주서.xlsx --rows 31 \
   --out src/forms/order.paper.json --id order --name 발주서
 ```
+
+| `--template` 이름 | 들어 있는 것 |
+|---|---|
+| *(생략)* · `빈서식` | 표준 머리·꼬리만 있는 24×42 격자 |
+| `내역서` | **구획 제목 + 깊이 트리 + 구획별 소계** — 공사 내역서·BOM의 표준형 |
+| `산출내역서` | 2단 병합 헤더 + 반복 구간 둘 + 그룹 소계 |
+
+`.xlsx`로 끝나는 인자는 **나갈 경로**로 읽는다(`--template out.xlsx` = 빈 서식을 그 자리에).
+이름과 경로를 함께 주려면 `--out`을 쓴다: `--template 내역서 --out docs/forms/견적.xlsx`.
 
 `exceljs`는 **optional peer**다 — 이 기능을 안 쓰면 설치할 필요 없다. 변환기가 경고를 뱉으면
 **그대로 읽고 엑셀을 고친다**(그리기는 되는데 편집이 안 되는 서식이 조용히 나가는 걸 막는 장치다).
