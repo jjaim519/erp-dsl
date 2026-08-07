@@ -41,7 +41,7 @@ type Props = {
   readonlyFields?: string[];
 };
 
-type Placed = { cell: PaperCell; text: string; at?: number; r: number };
+type Placed = { cell: PaperCell; text: string; at?: number; depth?: number; r: number };
 
 // 한 장 = [머리말 … 본문 … 여백 … 꼬리말]. 여백이 꼬리말을 바닥으로 민다.
 function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pad: number }) {
@@ -49,7 +49,7 @@ function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pa
   const placed: Placed[] = [];
   const push = (list: OutRow[]) => {
     list.forEach((row) => {
-      row.cells.forEach((c) => placed.push({ cell: c.spec, text: c.text, at: c.at, r: rows.length }));
+      row.cells.forEach((c) => placed.push({ cell: c.spec, text: c.text, at: c.at, depth: c.depth, r: rows.length }));
       rows.push(row);
     });
   };
@@ -201,7 +201,7 @@ export function PaperDoc({
                 gridTemplateRows: rows.map((r) => `${r.h * rowUnit}px`).join(' '),
               }}
             >
-              {placed.map(({ cell, text, at, r }, i) => {
+              {placed.map(({ cell, text, at, depth, r }, i) => {
                 const cs = cell.cs ?? 1;
                 const rs = cell.rs ?? 1;
                 const field = editableAt(cell, at);
@@ -218,6 +218,7 @@ export function PaperDoc({
                   fillHex ? 'fill-raw' : (cell.fill && cell.fill !== 'none' ? `fill-${cell.fill}` : ''),
                   `flow-${cell.flow ?? 'wrap'}`,
                   cell.writing === 'vertical' ? 'wr-vertical' : '',
+                  depth ? 'is-indent' : '',
                   field ? 'is-edit' : '',
                   isLocked(cell) ? 'is-locked' : '',
                 ].filter(Boolean).join(' ');
@@ -228,6 +229,8 @@ export function PaperDoc({
                     style={{
                       gridArea: `${r + 1} / ${cell.c + 1} / span ${rs} / span ${cs}`,
                       ...(fillHex ? { background: fillHex } : {}),
+                      // 깊이는 «수»만 넘긴다 — 한 계단이 몇 px인지는 paper.css가 정한다(서식이 못 정한다).
+                      ...(depth ? { ['--paper-depth' as string]: depth } : {}),
                     }}
                   >
                     {field ? (

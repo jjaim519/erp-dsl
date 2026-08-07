@@ -34,6 +34,8 @@ const FORMAT_OF = {
 };
 const AGG_KO = { '합계': 'sum', '개수': 'count', '평균': 'avg' };
 const SPAN_KO = '묶음';           // {{묶음:부속.종류}} — 「경첩」처럼 반복 여러 줄에 세로로 걸치는 칸
+const INDENT_KO = '들여';         // {{들여:품목.품명}} — 트리 배열에서 그 줄의 깊이만큼 밀리는 칸
+const LEVEL_KO = '깊이';          // 「필드」 시트의 종류 — 이 열이 그 배열을 «트리»로 만든다
 const SYSTEM_KO = { '@쪽': '@page', '@총쪽': '@pages', '@오늘': '@today' };
 
 const TAG = /\{\{\s*([^{}]+?)\s*\}\}/g;
@@ -206,6 +208,12 @@ function readContent(raw, fieldKind) {
     return { field: first.slice(colon + 1).trim(), scope: 'group' };
   }
 
+  // 들여쓰기 — {{들여:품목.품명}}. 그 줄의 깊이만큼 «글자만» 밀린다(격자는 안 움직인다).
+  //  묶음(scope:'group')과 같은 자리에 두는 이유: 둘 다 «이 칸이 반복 줄에서 어떻게 처신하는가»다.
+  if (tags.length === 1 && colon > 0 && first.slice(0, colon) === INDENT_KO) {
+    return { field: first.slice(colon + 1).trim(), indent: true };
+  }
+
   // 집계 — {{합계:품목.금액,품목.세액}}
   if (tags.length === 1 && colon > 0 && AGG_KO[first.slice(0, colon)]) {
     const of = first.slice(colon + 1).split(',').map((x) => x.trim()).filter(Boolean);
@@ -243,12 +251,16 @@ function readFields(ws) {
 
     if (koType === '이미지') { images.push(name); kind.set(name, 'image'); return; }
 
-    const type = TYPE_KO[koType] ?? 'text';
+    // 「깊이」는 값의 종류가 아니라 **줄의 성질**이다 — 숫자로 받되 그 배열을 트리로 만든다.
+    //  (종이에 찍히는 칸이 아니라 들여쓰기·묶음 경계가 읽어 가는 축이다.)
+    const isLevel = koType === LEVEL_KO;
+    const type = isLevel ? 'number' : (TYPE_KO[koType] ?? 'text');
     kind.set(arrayName ? `${arrayName}.${name}` : name, type);
     const spec = { name, label, type, ...(required ? { required: true } : {}) };
     if (arrayName) {
       if (!arrays.has(arrayName)) arrays.set(arrayName, { name: arrayName, label: arrayName, of: [] });
       arrays.get(arrayName).of.push(spec);
+      if (isLevel) arrays.get(arrayName).level = name;
     } else {
       fields.push(spec);
     }
@@ -333,7 +345,14 @@ async function convert(file, opts) {
 
       const typo = hasContent ? snapTypo(st.font, baseSize) : undefined;
       const ink = hasContent ? snapInk(st.font, baseSize) : undefined;
-      const fmt = content.field ? FORMAT_OF[kind.get(content.field)] : undefined;
+      // 집계 칸은 **더한 열의 서식**을 물려받는다. 안 물려받으면 같은 금액 열에서
+      //  항목은 «₩1,200,000»인데 소계만 «1200000»으로 찍힌다(합계 줄이 딴 나라 숫자가 된다).
+      //  개수(count)는 예외 — 세는 결과는 돈이 아니라 수다.
+      const aggOf = content.agg && content.agg.fn !== 'count'
+        ? (Array.isArray(content.agg.of) ? content.agg.of[0] : content.agg.of) : undefined;
+      const fmt = content.field
+        ? FORMAT_OF[kind.get(content.field)]
+        : (aggOf ? FORMAT_OF[kind.get(aggOf)] : undefined);
 
       cells.push({
         r: r - 1, c: c - 1,
@@ -400,7 +419,12 @@ async function convert(file, opts) {
   //  기준으로 오해한다 — 실제로 `투입.공수`가 잡혔었다. 그래서 도출하지 않고 무조건 물려받는다.
   bands.filter((b) => b.kind === 'groupFooter').forEach((b) => {
     const gh = bands.find((x) => x.kind === 'groupHeader' && x.by);
-    if (gh) b.by = gh.by;
+    if (gh) { b.by = gh.by; return; }
+    // 트리 반복이면 묶음 기준이 **구조**다 — 「그룹머리」 없이도 소계가 성립한다(깊이 1이 다시 나오면 끝).
+    //  그래서 깊이 1을 기본으로 준다. 저작자는 Z열에 「그룹꼬리」만 적으면 되고, 깊이를 적을 칸이 없다
+    //  (깊이별 소계는 아직 안 연다 — 반복 하나에 그룹꼬리 하나가 지금 엔진의 전제다).
+    const tree = bands.some((x) => x.kind === 'repeat' && arrays.get(x.source)?.level);
+    if (tree) b.atLevel = 1;
     else warn.push(`${b.r1 + 1}행 「그룹꼬리」에 짝이 되는 「그룹머리」가 없습니다`);
   });
 

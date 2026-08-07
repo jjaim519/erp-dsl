@@ -179,7 +179,7 @@ function fieldSheet(wb, extra = []) {
   for (let r = 2; r <= 80; r++) {
     ws.getCell(r, 3).dataValidation = {
       type: 'list', allowBlank: true,
-      formulae: ['"글자,숫자,금액,날짜,여러 줄,선택,예아니오,이미지"'],
+      formulae: ['"글자,숫자,금액,날짜,여러 줄,선택,예아니오,이미지,깊이"'],
     };
     ws.getCell(r, 4).dataValidation = { type: 'list', allowBlank: true, formulae: ['"필수"'] };
   }
@@ -209,14 +209,21 @@ function guideSheet(wb) {
   line('{{문서번호}}', '「필드」 시트에 적은 이름을 두 겹 중괄호로 씁니다.');
   line('{{품목.품명}}', '반복되는 줄의 값. 「필드」 시트에서 배열 칸에 «품목»이라 적은 필드들입니다.');
   line('{{합계:품목.금액}}', '집계. 합계 · 개수 · 평균 셋만 됩니다. 쉼표로 여러 열을 더할 수 있습니다.');
+  line('{{들여:품목.품명}}', '트리 줄. 그 줄의 «깊이»만큼 글자가 밀립니다. 보통 품명 칸 하나에만 붙입니다 — 수량·단가는 제 열에 그대로 서야 세로로 읽힙니다.');
   line('{{@쪽}} {{@총쪽}}', '쪽 번호. 값으로 줄 수 없어 시스템이 채웁니다.');
   line('', '');
   line('행의 역할 (Z열)', '', true);
   line('머리말 / 꼬리말', '매 쪽 위·아래에 반복됩니다.');
   line('열머리', '표의 제목 줄. 쪽이 넘어가면 다시 그려집니다.');
   line('그룹머리 / 그룹꼬리', '묶음이 바뀔 때 / 끝날 때 한 번. 소계 자리입니다.');
+  line('', '트리에서는 「그룹머리」 없이 「그룹꼬리」만 적어도 됩니다 — 깊이 1인 줄이 다시 나오는 것이 곧 앞 묶음의 끝이라, 묶음 기준을 구조가 이미 말하고 있습니다.');
   line('반복', '이 줄이 데이터 개수만큼 늘어납니다.');
   line('합계', '마지막 쪽에만 나옵니다.');
+  line('', '');
+  line('줄마다 깊이가 다른 표', '', true);
+  line('', '내역서처럼 「주방 › 상부장 › 옵션1」이 딸리는 표는, 깊이를 담을 열을 하나 만들고 「필드」 시트에서 그 열의 종류를 «깊이»로 둡니다(1이 가장 얕습니다).');
+  line('', '그 열은 종이에 안 찍힙니다 — 들여쓰기와 소계 경계가 읽어 가는 축입니다. 서식에는 «반복» 줄이 하나만 있고, 몇 줄이 될지는 값이 정합니다.');
+  line('', '중간 줄도 자기 금액을 갖습니다(상부장은 옵션의 합이 아닙니다). 소계는 그 묶음에 딸린 모든 줄을 더하므로, 부모를 자식의 합으로 넣으면 두 번 더해집니다.');
   line('', '');
   line('표준 머리에 있는 것', '', true);
   line('', '로고 · 발행처 이름/사업자번호/주소/전화 · 결재란(담당·검토·승인) · 문서 제목 · 문서번호 · 작성일자.');
@@ -387,8 +394,78 @@ async function sampleCostBreakdown() {
   return 'paper-sample-cost-breakdown.xlsx';
 }
 
+// ── ③ 내역서 (트리 — 깊이 3단) ─────────────────────────────────
+// 공사 내역서는 **줄마다 깊이가 다르다**: 「주방」 아래 상부장·하부장이 오고 그 아래 옵션이 붙는다.
+//  깊이를 말해 주는 열이 따로 없으면 상부장과 옵션1이 같은 줄로 읽혀 «무엇이 무엇에 딸렸는지»가 사라진다.
+//
+// **중간 줄도 자기 금액을 갖는다**(상부장은 옵션의 롤업이 아니다) — 그래서 소계는 그 묶음에
+//  딸린 모든 줄을 그냥 더한다. 부모가 자식의 합이면 두 번 더해질 자리라, 그 전제를 여기 박아 둔다.
+//
+// 저작에 필요한 건 둘뿐이다: 「필드」 시트에서 «레벨» 열의 종류를 «깊이»로 두고,
+//  품명 칸을 {{들여:품목.품명}}로 적는다. 나머지(소계 경계·들여쓰기 폭)는 전부 도출된다.
+async function sampleTreeLedger() {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'erp-dsl';
+  const ws = setupSheet(wb.addWorksheet('양식'));
+  standardHead(ws, '내 역 서');
+
+  // r3 개요
+  put(ws, 3, 1,  '현 장 명', { cs: 3, align: 'center', shade: true });
+  put(ws, 3, 4,  '{{현장명}}', { cs: 9 });
+  put(ws, 3, 13, '고 객 명', { cs: 3, align: 'center', shade: true });
+  put(ws, 3, 16, '{{고객명}}', { cs: 9 });
+
+  // r5 열머리 — 품명 8 · 단위 2 · 수량 2 · 단가 4 · 금액 4 · 비고 4 = 24
+  //  ⚠ 돈 열은 **4칸(112px) 아래로 못 내린다.** 3칸(84px)이면 ₩9,428,000이 끝자리부터 잘린다
+  //     (14px 글자로 10자 ≈ 78px + 좌우 여백 10px). 비고를 줄여 돈 쪽에 준다 — 잘린 금액은
+  //     빈칸보다 나쁘다(있는데 틀린 수로 읽힌다).
+  const COL = { name: [1, 8], unit: [9, 2], qty: [11, 2], price: [13, 4], amount: [17, 4], note: [21, 4] };
+  const head = (label, [c, cs]) => put(ws, 5, c, label, { cs, align: 'center', shade: true, bold: true });
+  head('공　사', COL.name); head('단위', COL.unit); head('수량', COL.qty);
+  head('단가', COL.price); head('금액', COL.amount); head('비고', COL.note);
+  band(ws, 5, '열머리');
+
+  // r6 반복 — **품명 칸 하나만** 들여쓴다. 수량·단가·금액은 제 열에 그대로 서야 세로로 읽힌다.
+  put(ws, 6, COL.name[0],   '{{들여:품목.품명}}', { cs: COL.name[1] });
+  put(ws, 6, COL.unit[0],   '{{품목.단위}}',      { cs: COL.unit[1], align: 'center' });
+  put(ws, 6, COL.qty[0],    '{{품목.수량}}',      { cs: COL.qty[1], align: 'right' });
+  put(ws, 6, COL.price[0],  '{{품목.단가}}',      { cs: COL.price[1], align: 'right' });
+  put(ws, 6, COL.amount[0], '{{품목.금액}}',      { cs: COL.amount[1], align: 'right' });
+  put(ws, 6, COL.note[0],   '{{품목.비고}}',      { cs: COL.note[1] });
+  band(ws, 6, '반복');
+
+  // r7 그룹꼬리 — 깊이 1이 다시 나오면 앞 묶음이 거기서 끝난다. 「그룹머리」가 없어도 성립한다.
+  put(ws, 7, 1,             '소　계', { cs: COL.amount[0] - 1, align: 'right', shade: true });
+  put(ws, 7, COL.amount[0], '{{합계:품목.금액}}', { cs: COL.amount[1], align: 'right' });
+  put(ws, 7, COL.note[0],   '', { cs: COL.note[1], shade: true });
+  band(ws, 7, '그룹꼬리');
+
+  // r8 합계 — 마지막 쪽에만.
+  put(ws, 8, 1,             '총　계', { cs: COL.amount[0] - 1, align: 'right', shade: true, bold: true });
+  put(ws, 8, COL.amount[0], '{{합계:품목.금액}}', { cs: COL.amount[1], align: 'right', bold: true });
+  put(ws, 8, COL.note[0],   '', { cs: COL.note[1], shade: true });
+  band(ws, 8, '합계');
+
+  standardFoot(ws);
+  fieldSheet(wb, [
+    { n: '현장명', l: '현장명', t: '글자', r: '필수', a: '' },
+    { n: '고객명', l: '고객명', t: '글자', r: '', a: '' },
+    // ⚠ «깊이»가 이 배열을 트리로 만든다. 이 한 줄이 빠지면 들여쓰기도 소계 경계도 통째로 죽는다.
+    { n: '레벨', l: '깊이', t: '깊이', r: '', a: '품목' },
+    { n: '품명', l: '품명', t: '글자', r: '필수', a: '품목' },
+    { n: '단위', l: '단위', t: '글자', r: '', a: '품목' },
+    { n: '수량', l: '수량', t: '숫자', r: '', a: '품목' },
+    { n: '단가', l: '단가', t: '금액', r: '', a: '품목' },
+    { n: '금액', l: '금액', t: '금액', r: '', a: '품목' },
+    { n: '비고', l: '비고', t: '글자', r: '', a: '품목' },
+  ]);
+  guideSheet(wb);
+  await wb.xlsx.writeFile(`${OUT}/paper-sample-tree-ledger.xlsx`);
+  return 'paper-sample-tree-ledger.xlsx';
+}
+
 await mkdir(OUT, { recursive: true });
-const made = [await starter(), await sampleCostBreakdown()];
+const made = [await starter(), await sampleCostBreakdown(), await sampleTreeLedger()];
 console.log(`[paper] public/ 에 생성:\n        ${made.join('\n        ')}`);
 console.log(
   `        격자 ${COLS}열 × ${ROWS}행\n` +

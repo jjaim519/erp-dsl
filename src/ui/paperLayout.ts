@@ -9,8 +9,11 @@ import {
   type PaperSpec, type PaperCell, type PaperBand, type PaperAgg,
 } from '../schema/paper';
 
-/** `at`은 반복 몇 번째 항목의 칸인가 — 편집 모드가 값을 되쓸 때 필요하다(보기에선 안 쓴다). */
-export type OutCell = { spec: PaperCell; text: string; at?: number };
+/**
+ * `at`은 반복 몇 번째 항목의 칸인가 — 편집 모드가 값을 되쓸 때 필요하다(보기에선 안 쓴다).
+ * `depth`는 들여쓸 계단 수(트리 배열의 깊이 − 1). `indent` 칸에만 실린다.
+ */
+export type OutCell = { spec: PaperCell; text: string; at?: number; depth?: number };
 /**
  * `group`은 이 행이 어느 묶음에 속하는지 — 걸침 칸(`scope: 'group'`)을 쪽 나눔 **뒤에** 붙이려고 남긴다.
  * `repeat`는 어느 반복 밴드에서 나온 줄인지 — 표의 **마감선**을 쪽 나눔 뒤에 다시 잡으려고 남긴다.
@@ -22,6 +25,7 @@ type Scope = {
   item?: Record<string, unknown>;
   group?: Record<string, unknown>[];
   at?: number;            // 반복 원본에서의 항목 번호(묶음 안 순번이 아니라 **원본 순번**)
+  depth?: number;         // 트리 배열일 때 이 줄의 깊이(1부터). 들여쓰는 칸이 읽는다
 };
 
 // ── 값 경로 ────────────────────────────────────────────────────
@@ -117,7 +121,13 @@ function buildCell(
   else if (c.template != null) text = c.template.replace(PAPER_TAG, (_, n: string) => one(n.trim()));
   else if (c.field) text = one(c.field);
   else if (c.agg) text = format(aggregate(c.agg, values, scope), c.format ?? 'number');
-  return { spec: c, text, ...(scope.at != null ? { at: scope.at } : {}) };
+  return {
+    spec: c, text,
+    ...(scope.at != null ? { at: scope.at } : {}),
+    // 밀 계단 수. 깊이 1이 기준선이라 «깊이 − 1»이다(맨 얕은 줄은 안 밀린다).
+    //  여기서 수로 굳혀 내보낸다 — 렌더가 값을 다시 읽으면 깊이 열이 어디 있는지 알아야 한다.
+    ...(c.indent && scope.depth ? { depth: Math.max(0, scope.depth - 1) } : {}),
+  };
 }
 
 /** 묶음에 걸치는 칸은 항목마다 그리지 않는다 — 쪽을 나눈 뒤에 묶음 단위로 한 번 붙인다. */
@@ -210,11 +220,25 @@ export function layoutPaper(
       const spanSpecs = range(cluster.repeat.r1, cluster.repeat.r2)
         .flatMap((rr) => spec.cells.filter((c) => c.r === rr && spansGroup(c)));
 
+      // 이 반복의 원본이 **트리인가** — 깊이 열을 가진 배열이면 줄마다 깊이가 있다.
+      const levelKey = spec.arrays?.find((a) => a.name === cluster.repeat.source)?.level;
+      const depthOf = (it: Record<string, unknown>) =>
+        (levelKey ? Number(it[levelKey]) : 0) || (levelKey ? 1 : 0);
+
       // 그룹으로 묶어 펼치기(그룹 기준이 없으면 한 덩어리)
       const byKey = cluster.groupHeader?.by ?? cluster.groupFooter?.by ?? spanSpecs[0]?.field;
       const key = byKey ? byKey.slice(byKey.indexOf('.') + 1) : null;
+      const atLevel = cluster.groupHeader?.atLevel ?? cluster.groupFooter?.atLevel;
       const groups: Record<string, unknown>[][] = [];
-      if (key) {
+      if (levelKey && atLevel != null) {
+        // 트리의 묶음은 **구조가 정한다** — 깊이 ≤ N인 줄이 나오면 앞 묶음이 거기서 끝난다.
+        //  값으로 묶는 것(아래 key)과 달리 재배열이 없다: 트리는 적힌 순서가 곧 의미다
+        //  (같은 이름의 「옵션」이 딴 공사 밑에 또 있어도 한 덩어리로 뭉치면 안 된다).
+        allItems.forEach((it) => {
+          if (!groups.length || depthOf(it) <= atLevel) groups.push([it]);
+          else groups[groups.length - 1].push(it);
+        });
+      } else if (key) {
         const order: string[] = [];
         const map = new Map<string, Record<string, unknown>[]>();
         allItems.forEach((it) => {
@@ -242,7 +266,7 @@ export function layoutPaper(
           range(cluster.repeat.r1, cluster.repeat.r2).forEach((dr) =>
             flow.push({
               row: {
-                ...buildRow(spec, dr, values, { item, group: items, at }, pin, (c) => !spansGroup(c)),
+                ...buildRow(spec, dr, values, { item, group: items, at, depth: depthOf(item) }, pin, (c) => !spansGroup(c)),
                 group: gid,
                 repeat: cluster.repeat.r1,
               },

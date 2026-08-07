@@ -11,9 +11,11 @@ import { validatePaper, validatePaperCoverage, type PaperSpec } from '@/schema';
 import { tradeStatement } from '../../../forms/trade-statement';
 import costBreakdownJson from '../../../forms/cost-breakdown.paper.json';
 import gabjiJson from '../../../forms/kk-gabji.paper.json';
+import treeLedgerJson from '../../../forms/tree-ledger.paper.json';
 
 const costBreakdown = costBreakdownJson as PaperSpec;
 const gabji = gabjiJson as PaperSpec;
+const treeLedger = treeLedgerJson as PaperSpec;
 
 // ── 샘플 값 ────────────────────────────────────────────────────
 const CATS = ['주방 가구', '부자재', '시공'];
@@ -99,9 +101,36 @@ const gabjiValues = (n: number) => {
   };
 };
 
+// 내역서(트리) — **줄마다 깊이가 다른 표.** 「주방 › 상부장 › 옵션」이 딸리고 소계는 깊이 1에서 끊긴다.
+//  ⚠ 중간 줄도 **자기 금액**을 갖는다(상부장은 옵션의 롤업이 아니다) — 그래서 소계는 딸린 줄을 다 더한다.
+//  건수를 올리면 묶음이 쪽 경계에서 갈리는 것과 열 머리 재출력이 같이 보인다.
+const 공사이름 = ['주방', '후드', '붙박이장', '현관장', '세탁실', '드레스룸'];
+const 부분이름 = ['상부장', '하부장', '키큰장'];
+const treeValues = (n: number) => {
+  const 품목: Record<string, unknown>[] = [];
+  const 줄 = (레벨: number, 품명: string, 수량: number, 단가: number) =>
+    품목.push({ 레벨, 품명, 단위: 레벨 === 1 ? '식' : 'EA', 수량, 단가, 금액: 수량 * 단가, 비고: '' });
+  for (let g = 0; g < n; g++) {
+    줄(1, 공사이름[g % 공사이름.length], 1, 1_200_000 + g * 130_000);
+    for (let b = 0; b < (g % 3) + 1; b++) {
+      줄(2, 부분이름[b % 부분이름.length], (b % 4) + 2, 180_000);
+      // 깊이 3 — 「그 부분에 딸린 옵션」. 마지막 부분에는 안 달아 깊이가 줄마다 다른 걸 보인다.
+      for (let o = 0; o <= b % 2; o++) 줄(3, `옵션${o + 1}`, o + 1, 12_000 * (o + 3));
+    }
+    줄(2, '실리콘 마감', 1, 90_000);   // 옵션 없이 깊이 2로 끝나는 줄
+  }
+  return {
+    발행처명: '○○퍼니처(주)', 발행처주소: '서울 ○○구 ○○로 1', 발행처전화: '02-000-0000',
+    문서번호: 'Q-2026-0142', 작성일자: '2026-08-07',
+    현장명: '송파 장지동 308-204', 고객명: '인연지',
+    품목,
+  };
+};
+
 const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<string, unknown>; note: string }> = {
   gabji: { spec: gabji, values: gabjiValues, note: '엑셀에서 변환 — public/kk-gabji.xlsx → paper-import  ·  부속이 반복 + 종류 걸침' },
   cost: { spec: costBreakdown, values: costValues, note: '엑셀에서 변환 — public/paper-sample-cost-breakdown.xlsx → paper-import' },
+  tree: { spec: treeLedger, values: treeValues, note: '엑셀에서 변환 — public/paper-sample-tree-ledger.xlsx → paper-import  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
   trade: { spec: tradeStatement, values: tradeValues, note: '손으로 적은 PaperSpec — src/forms/trade-statement.ts' },
 };
 
@@ -154,6 +183,7 @@ export default function PaperDevPage() {
               options={[
                 { label: '갑지 (변환)', value: 'gabji' },
                 { label: '산출내역서 (변환)', value: 'cost' },
+                { label: '내역서·트리 (변환)', value: 'tree' },
                 { label: '거래명세서 (손)', value: 'trade' },
               ]}
             />
@@ -164,7 +194,7 @@ export default function PaperDevPage() {
                 { label: '편집', value: 'edit' },
               ]}
             />
-            <Text variant="body-strong">{({ cost: '투입', gabji: '부속' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
+            <Text variant="body-strong">{({ cost: '투입', gabji: '부속', tree: '공사' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
             <Group gap="xs">
               {[1, 8, 16, 24, 40].map((n) => (
                 <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => reset(setCount)(n)}>

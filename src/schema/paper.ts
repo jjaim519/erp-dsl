@@ -106,6 +106,16 @@ export type PaperCell = {
    * 쪽이 묶음 중간에서 갈리면 걸침도 같이 갈린다(각 쪽이 자기 몫만큼 걸친다).
    */
   scope?: 'item' | 'group';
+  /**
+   * 이 칸은 그 줄의 **깊이만큼 밀린다**(트리 배열 — `PaperArray.level`).
+   *
+   * 폭을 안 여는 이유: 들여쓰기 한 단은 **문서가 정할 값이 아니다.** px를 열면 서식마다 갈리고
+   * 같은 회사 문서 둘이 다른 계단을 갖는다. 깊이는 데이터가 갖고, 칸은 «민다/안 민다»만 말한다.
+   *
+   * 격자를 옮기지 않고 **글자만** 민다 — 칸을 통째로 밀면 열이 어긋나 테두리가 계단이 된다.
+   * 그래서 보통 **품명 칸 하나에만** 붙인다(수량·단가·금액은 제 열에 그대로 선다).
+   */
+  indent?: boolean;
   format?: PaperFormat;   // 표시 형식(값 표현 — 저장값은 안 건드린다)
   border?: PaperEdge[];   // 그릴 변(얇은 선). 없으면 선 없음 — 격자는 정렬 골격일 뿐이다
   /**
@@ -134,6 +144,17 @@ export type PaperArray = {
   name: string;        // "lines"
   label: string;       // "품목"
   of: FieldSpec[];     // 한 줄의 필드들. 셀은 "lines.qty"로 가리킨다
+  /**
+   * **이 배열은 트리다.** 깊이를 담은 필드 이름(1부터 — 1이 가장 얕다).
+   *
+   * 중첩(`children`)이 아니라 **평탄 배열 + 깊이 열**로 받는다. 셋 다 그쪽을 가리킨다:
+   * ① 엑셀이 이미 그 모양이다(왼쪽 칸에 레벨을 적는다) ② `buildHierarchyFromRows`가 같은 선례다
+   * ③ 쪽 나눔은 평평한 흐름 위에서 도는데 중첩으로 받으면 엔진이 다시 펴야 한다.
+   *
+   * 깊이는 **줄의 성질이지 값이 아니다** — 인쇄물에 숫자로 찍히는 칸이 아니라
+   * 들여쓰기(`PaperCell.indent`)와 묶음 경계(`PaperBand.atLevel`)가 읽어 가는 축이다.
+   */
+  level?: string;
 };
 
 // ── 행 범위 이름표 ─────────────────────────────────────────────
@@ -156,6 +177,17 @@ export type PaperBand = {
   r2: number;
   source?: string;     // repeat: PaperArray.name
   by?: string;         // groupHeader·groupFooter: 묶는 기준("lines.category")
+  /**
+   * groupHeader·groupFooter: **트리 배열에서 이 깊이의 묶음**이 끝날 때 발화한다(`by`의 형제).
+   *
+   * 트리에선 묶음 기준이 열이 아니라 **구조**다 — 「주방」 아래 상부장·옵션1·2가 딸린 걸
+   * 말해 주는 열이 따로 없고, 깊이 1인 줄이 다시 나오는 것이 곧 앞 묶음의 끝이다.
+   * 그래서 `by`(값이 같은 줄끼리)와 달리 `atLevel`은 **깊이 ≤ N인 줄에서 자른다**.
+   *
+   * 소계는 그 묶음에 **딸린 모든 줄**을 더한다(깊이와 무관하게 전부). 중간 줄이 자기 금액을
+   * 갖는 내역서에서 그게 맞는 셈이다 — 부모가 자식의 롤업이면 두 번 더해진다.
+   */
+  atLevel?: number;
   reprint?: boolean;   // columnHeader·groupHeader: 쪽 넘김 시 재출력(기본 true)
 };
 
@@ -205,6 +237,14 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
   const scalar = new Set(spec.fields.map((f) => f.name));
   const arrays = new Map((spec.arrays ?? []).map((a) => [a.name, new Set(a.of.map((f) => f.name))]));
   const images = new Set(spec.images ?? []);
+  // 깊이 열을 가진 배열 = 트리. 깊이 열이 그 배열에 실제로 있어야 한다 —
+  //  없으면 모든 줄이 깊이 0으로 읽혀 들여쓰기도 묶음도 조용히 사라진다.
+  const treeArrays = new Set<string>();
+  (spec.arrays ?? []).forEach((a, i) => {
+    if (!a.level) return;
+    if (arrays.get(a.name)?.has(a.level)) treeArrays.add(a.name);
+    else push(`arrays[${i}]`, `깊이 열 «${a.level}»이 배열 «${a.name}»에 없습니다`);
+  });
   const knows = (path: string): boolean => {
     if (path.startsWith('@')) return (PAPER_SYSTEM_FIELDS as readonly string[]).includes(path);
     if (scalar.has(path) || images.has(path)) return true;
@@ -265,12 +305,23 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
       else if (!arrays.has(b.source)) push(at, `없는 배열을 가리킵니다: ${b.source}`);
     }
     if (b.kind === 'groupHeader' || b.kind === 'groupFooter') {
-      if (!b.by) push(at, '그룹은 묶는 기준이 필요합니다');
-      else if (!knows(b.by)) push(at, `없는 필드로 묶으려 합니다: ${b.by}`);
-      // 묶을 대상이 없으면 그룹은 발화하지 않는다 — 같은 배열의 반복 구간이 있어야 한다.
-      const arr = b.by ? b.by.slice(0, b.by.indexOf('.')) : '';
-      if (!bands.some((x) => x.kind === 'repeat' && x.source === arr)) {
-        push(at, `묶을 반복 구간이 없습니다: ${arr || '(배열 미지정)'}`);
+      // 묶는 기준은 둘 중 하나 — 값이 같은 줄끼리(`by`) 또는 트리의 깊이(`atLevel`).
+      if (!b.by && b.atLevel == null) push(at, '그룹은 묶는 기준이 필요합니다');
+      if (b.by && b.atLevel != null) push(at, '묶는 기준은 값(by)이나 깊이(atLevel) 하나만 씁니다');
+      if (b.by) {
+        if (!knows(b.by)) push(at, `없는 필드로 묶으려 합니다: ${b.by}`);
+        // 묶을 대상이 없으면 그룹은 발화하지 않는다 — 같은 배열의 반복 구간이 있어야 한다.
+        const arr = b.by.slice(0, b.by.indexOf('.'));
+        if (!bands.some((x) => x.kind === 'repeat' && x.source === arr)) {
+          push(at, `묶을 반복 구간이 없습니다: ${arr || '(배열 미지정)'}`);
+        }
+      }
+      if (b.atLevel != null) {
+        if (!Number.isInteger(b.atLevel) || b.atLevel < 1) push(at, '깊이는 1 이상의 정수입니다');
+        // 깊이로 자르려면 원본이 트리여야 한다 — 아니면 이 밴드는 한 번도 발화하지 않는다.
+        if (!bands.some((x) => x.kind === 'repeat' && treeArrays.has(x.source ?? ''))) {
+          push(at, '깊이로 묶을 트리 반복 구간이 없습니다 — 「필드」 시트에서 깊이 열을 정하세요');
+        }
       }
     }
     // 같은 종류가 겹치면 어느 쪽이 이기는지 정의되지 않는다(반복 안 그룹만 예외).
@@ -291,7 +342,17 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
     }
   });
 
-  // ⑦ 행 높이
+  // ⑦ 들여쓰는 칸 — 깊이를 아는 자리에만 산다. 아니면 밀 만큼이 없어 조용히 안 밀린다.
+  spec.cells.forEach((cell, i) => {
+    if (!cell.indent) return;
+    const band = repeats.find((b) => cell.r >= b.r1 && cell.r <= b.r2);
+    if (!band) push(`cells[${i}]`, '들여쓰는 칸은 반복 구간 안에 있어야 합니다');
+    else if (!treeArrays.has(band.source ?? '')) {
+      push(`cells[${i}]`, `«${band.source}»는 트리가 아닙니다 — 「필드」 시트에서 깊이 열을 정하세요`);
+    }
+  });
+
+  // ⑧ 행 높이
   (spec.rows ?? []).forEach((row, i) => {
     if (row.h < 1 || row.h > 6) push(`rows[${i}]`, '행 높이는 1~6 단위입니다');
   });

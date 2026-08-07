@@ -30,6 +30,11 @@
   --paper-subheading: calc(var(--paper-row) * 0.625);
   --paper-body:       calc(var(--paper-row) * 0.583);
   --paper-caption:    calc(var(--paper-row) * 0.48);
+
+  /* 들여쓰기 한 계단 — **행 단위에서 도출된다**(글자 크기와 같은 뿌리라 배율이 바뀌어도 비율이 산다).
+     0.5행 = 기본 12px. 3단이면 최대 24px로, 품명 칸(보통 7열 = 196px)의 1/8이다 —
+     깊이가 눈에 들어오면서 글자가 눌리지는 않는 폭. */
+  --paper-indent: calc(var(--paper-row) * 0.5);
 }
 
 .erpPaperGrid {
@@ -51,6 +56,11 @@
   border-width: 0;
 }
 .erpPaperCell > span { min-width: 0; width: 100%; }
+
+/* 트리 줄의 들여쓰기 — **격자가 아니라 글자를 민다.** 칸을 옮기면 열이 어긋나 테두리가 계단이 되고,
+   병합 폭이 깊이마다 달라져 표가 아니라 목록으로 읽힌다. 미는 건 왼쪽 안쪽 여백 하나뿐이다.
+   (계단 수는 PaperDoc이 --paper-depth로 깔고, 한 계단의 크기는 여기가 정한다.) */
+.erpPaperCell.is-indent { padding-inline-start: calc(5px + var(--paper-depth, 0) * var(--paper-indent)); }
 
 /* 이미지 자리(로고·도장) — **칸의 직계 자식**이다. `<span>`으로 감싸면 안 된다:
    위 span 규칙엔 높이가 없어서 가로만 차고 세로로 안 찬다. 직계면 칸이 flex라
