@@ -340,8 +340,12 @@ const KV_KEYS = [{ key: 'width_mm' }, { key: 'height_mm' }, { key: 'depth_mm' }]
 // ── 문서 계열 데모 — 실전 서식은 엑셀에서 변환하지만(`npx erp-paper-import`), 박물관은 배포되는
 //  파일이라 바깥 JSON을 물 수 없어 여기 손으로 적는다. 그래서 «손으로 적는 서식»의 본보기도 겸한다.
 //  선 소유권을 지킨 채(각 칸은 자기 위·왼쪽) 표 바깥만 굵게 — 격자·선·반복·묶음 걸침이 다 들어 있다.
+//  로고는 data URI다 — 박물관은 배포되는 파일이라 바깥 자산을 물 수 없고, 인쇄에서 원격 이미지는
+//  로드를 안 기다려 종이에서 빠질 수 있다(소비처에도 같은 이유로 data URI·동일 출처를 권한다).
+const PAPER_DEMO_LOGO = '';
 const PAPER_DEMO_SPEC: PaperSpec = {
   id: 'demo-order', name: '발주서', columns: 24, orientation: 'portrait', pageRows: 31,
+  images: ['발행처로고'],
   fields: [
     { name: '거래처', label: '거래처', type: 'text' },
     { name: '납기', label: '납기', type: 'date' },
@@ -356,7 +360,8 @@ const PAPER_DEMO_SPEC: PaperSpec = {
     { kind: 'repeat', r1: 4, r2: 4, source: '품목' },
   ],
   cells: [
-    { r: 0, c: 0, cs: 24, text: '발 주 서', align: 'center', typo: 'display' },
+    { r: 0, c: 0, cs: 5, image: '발행처로고' },
+    { r: 0, c: 5, cs: 14, text: '발 주 서', align: 'center', typo: 'display' },
     { r: 1, c: 0, cs: 4, text: '거래처', align: 'center', fill: 'shade', border: ['r'], borderStrong: ['t', 'l', 'b'] },
     { r: 1, c: 4, cs: 8, field: '거래처', border: ['r', 'l'], borderStrong: ['t', 'b'] },
     { r: 1, c: 12, cs: 4, text: '납기', align: 'center', fill: 'shade', border: ['r', 'l'], borderStrong: ['t', 'b'] },
@@ -373,6 +378,7 @@ const PAPER_DEMO_SPEC: PaperSpec = {
   ],
 };
 const PAPER_DEMO_VALUES: Record<string, unknown> = {
+  발행처로고: PAPER_DEMO_LOGO,
   거래처: '대성건설 ㈜', 납기: '2026-09-04',
   품목: [
     { 분류: '경첩', 이름: '15T 댐퍼', 수량: 12 },

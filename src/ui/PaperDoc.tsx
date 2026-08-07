@@ -109,6 +109,20 @@ export function PaperDoc({
     return fieldOf.get(cell.field);
   };
 
+  /**
+   * 이미지 자리(로고·도장·도면)의 값. **문서 스코프다** — 반복 안 이미지는 아직 없다.
+   *
+   * 값이 없으면 **빈 칸으로 둔다.** 로고 없는 발행처가 있고, 그때 자리만 비는 게 맞다 —
+   * 대체 글자를 넣으면 종이에 「발행처로고」라는 글자가 인쇄된다.
+   *
+   * ⚠ 그리는 건 `<img>`이지 배경 이미지가 아니다. 배경으로 두면 브라우저의
+   *   **「배경 그래픽 끄기」에 걸려 인쇄물에서 로고가 통째로 사라진다**(기본값이 꺼짐인 브라우저도 있다).
+   */
+  const imageSrc = (name: string): string | undefined => {
+    const v = values[name];
+    return typeof v === 'string' && v ? v : undefined;
+  };
+
   // 「보이되 못 고친다」를 **소비처가 잠근 것에만** 표시한다 — 편집 가능함은 쉼 상태를 안 건드리고
   //  대비로 드러내는 게 표 계열의 관습이라(paper.css 주석), 죽일 대상을 정확히 골라야 한다.
   //  고정 글자·라벨은 «잠긴 값»이 아니라 애초에 값이 아니므로 제외한다.
@@ -222,8 +236,12 @@ export function PaperDoc({
                         value={paperRead(values, cell.field!, at)}
                         onChange={(v) => onChange!(paperWrite(values, cell.field!, at, v))}
                       />
+                    ) : cell.image ? (
+                      imageSrc(cell.image) && (
+                        <img className="erpPaperImage" src={imageSrc(cell.image)} alt={cell.image} />
+                      )
                     ) : (
-                      <span>{cell.image ? '' : text}</span>
+                      <span>{text}</span>
                     )}
                   </div>
                 );

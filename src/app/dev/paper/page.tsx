@@ -76,6 +76,7 @@ const costValues = (n: number) => {
 
 // 갑지 — 부속을 **묶음이 지어지게** 만든다(종류가 연달아 같은 줄끼리 걸침 칸 하나로 합쳐진다).
 //  건수를 올리면 걸침이 쪽 경계에서 쪼개지는 것까지 보인다.
+const DEMO_LOGO = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMjAgNDQiPjxyZWN0IHg9IjEiIHk9IjEiIHdpZHRoPSI0MiIgaGVpZ2h0PSI0MiIgcng9IjkiIGZpbGw9IiMxRTQxNzgiLz48cGF0aCBkPSJNMTIgMzFWMTNoNi4yYzMuNCAwIDUuNiAxLjkgNS42IDUgMCAyLjEtMSAzLjYtMi43IDQuM2wzLjQgOC43aC00bC0zLThoLTEuOHY4eiIgZmlsbD0iI2ZmZiIvPjxwYXRoIGQ9Ik0xNS43IDIwLjJoMi4xYzEuMyAwIDIuMS0uOCAyLjEtMnMtLjgtMi0yLjEtMmgtMi4xeiIgZmlsbD0iIzFFNDE3OCIvPjx0ZXh0IHg9IjUyIiB5PSIyNyIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTUiIGZvbnQtd2VpZ2h0PSI3MDAiIGZpbGw9IiMxNjE4MUMiPlJJVkVOPC90ZXh0Pjx0ZXh0IHg9IjUyIiB5PSIzOCIgZm9udC1mYW1pbHk9Ii1hcHBsZS1zeXN0ZW0sSGVsdmV0aWNhLHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iNy41IiBmaWxsPSIjNkU3NDgwIj5JTkRVU1RSSUFMIENPLjwvdGV4dD48L3N2Zz4=';
 const 부속종류 = [
   { 종류: '경첩', 품목: ['15T 댐퍼', '18T 댐퍼', '15T 무댐퍼', '각동 경첩'] },
   { 종류: '레일', 품목: ['3단 언더레일 450', '3단 언더레일 500'] },
@@ -85,12 +86,13 @@ const 부속종류 = [
 const gabjiValues = (n: number) => {
   const 평면 = 부속종류.flatMap((g) => g.품목.map((품목) => ({ 종류: g.종류, 품목 })));
   return {
+    // 「필드」 시트가 종류=이미지로 선언한 자리. 값이 없으면 빈 칸이라 **로고가 빠져도 조용하다** —
+    //  그래서 여기 샘플을 둔다(dev에서 안 보이면 렌더러가 고장 난 것이다).
+    발행처로고: DEMO_LOGO,
     현장주소: '서울 강남구 테헤란로 123 4층',
     시공팀: '1팀 (김병준)', 시공일: '2026-08-14',
     발주담당자: '박서연', 출입정보: '지하 2층 하역장',
-    연락처: '010-1234-5678',
-    // ⚠ 「부속」이 **배열 이름이면서 문서 필드**다(엑셀 「필드」 시트 A9). 그릇이 하나뿐이라
-    //   현장 정보의 부속 칸에 `[object Object]`가 찍힌다 — 서식에서 한쪽을 개명해야 한다.
+    연락처: '010-1234-5678', 부속비고: '현장 지참',
     부속: Array.from({ length: n }, (_, i) => ({ ...평면[i % 평면.length], 개수: ((i % 6) + 1) * 2 })),
     시공팀요청: '엘리베이터 사용 09:00~17:00. 자재 반입 전 관리실 확인 요망.',
     케이산업요청: '상부장 수평 재확인 후 실리콘 마감. 폐기물은 당일 반출.',
@@ -105,7 +107,8 @@ const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<str
 
 // 데이터에서 끌어오는 값 — **소비처가 정한다.** 서식(엑셀)은 «필드가 어디 있나»만 말하고
 //  «어디서 오나»는 그 값을 실제로 쥔 쪽만 안다. 여기서는 회사 정보를 잠가 그 통로를 보인다.
-const READONLY = ['발행처명', '발행처사업자번호', '발행처주소', '발행처전화'];
+//  서식마다 이름이 다르므로 셋을 합쳐 둔다 — 갑지는 시공팀·시공일, 산출내역서는 회사 정보가 잠긴다.
+const READONLY = ['발행처명', '발행처사업자번호', '발행처주소', '발행처전화', '시공팀', '시공일'];
 
 export default function PaperDevPage() {
   const [form, setForm] = useState('gabji');
