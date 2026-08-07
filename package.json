@@ -1,6 +1,6 @@
 {
   "name": "@jjaim519/erp-dsl",
-  "version": "0.81.0",
+  "version": "0.82.0",
   "description": "ERP No-Code 빌더 — 닫힌 부품 DSL(원자·분자·유기체·템플릿) + 스키마 층(Zod).",
   "repository": {
     "type": "git",
