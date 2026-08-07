@@ -25,7 +25,8 @@ type Scope = {
   item?: Record<string, unknown>;
   group?: Record<string, unknown>[];
   at?: number;            // 반복 원본에서의 항목 번호(묶음 안 순번이 아니라 **원본 순번**)
-  depth?: number;         // 트리 배열일 때 이 줄의 깊이(1부터). 들여쓰는 칸이 읽는다
+  depth?: number;         // **표시 깊이**(가장 얕은 줄이 1). 들여쓰는 칸이 읽는다 — 원본 깊이가 아니다
+  ordinal?: number;       // 몇 번째 묶음인가(1부터). 번호 붙이는 칸이 읽는다
 };
 
 // ── 값 경로 ────────────────────────────────────────────────────
@@ -121,6 +122,9 @@ function buildCell(
   else if (c.template != null) text = c.template.replace(PAPER_TAG, (_, n: string) => one(n.trim()));
   else if (c.field) text = one(c.field);
   else if (c.agg) text = format(aggregate(c.agg, values, scope), c.format ?? 'number');
+  // 묶음 번호 — 「1. 주방」. **표시에만 붙는다**: 값에 섞으면 편집 모드에서 번호까지 고치게 되고,
+  //  줄을 하나 지울 때마다 데이터의 번호와 종이의 번호가 갈린다.
+  if (c.number && scope.ordinal && text) text = `${scope.ordinal}. ${text}`;
   return {
     spec: c, text,
     ...(scope.at != null ? { at: scope.at } : {}),
@@ -210,11 +214,17 @@ export function layoutPaper(
       const allItems = (values[cluster.repeat.source ?? ''] as Record<string, unknown>[]) ?? [];
       // 새 반복 묶음이 시작되면 앞 묶음의 재출력 머리를 잊는다(딴 표의 열머리를 물려주면 안 된다).
       flow.push({ row: { h: 0, cells: [] }, reset: true });
-      // 열 머리
-      if (cluster.columnHeader) {
+      const colHead = () => {
+        if (!cluster.columnHeader) return;
         range(cluster.columnHeader.r1, cluster.columnHeader.r2).forEach((cr) =>
           flow.push({ row: buildRow(spec, cr, values, {}, pin), keep: 'columnHeader' }));
-      }
+      };
+      // 열 머리 — **시트에 적힌 순서가 곧 발화 순서다.** 열머리가 그룹머리 «위»면 표 전체에 한 번이고,
+      //  «아래»면 구획 안의 줄이라 묶음마다 다시 난다(내역서: 「1. 주방」 밑에 공사·단위·수량… 이 다시 온다).
+      //  전에는 앞의 순서만 다뤘다 — 뒤 순서를 안 열면 구획형 표에서 열머리가 첫 묶음에만 붙는다.
+      const headInGroup = !!cluster.columnHeader && !!cluster.groupHeader
+        && cluster.columnHeader.r1 > cluster.groupHeader.r2;
+      if (!headInGroup) colHead();
       // 묶음에 걸치는 칸 — 반복 구간 안의 `scope: 'group'` 칸. 이 칸이 있으면 **자기가 묶음 기준**이다
       //  (「경첩」 칸이 곧 «종류로 묶는다»는 선언이라, 그룹 머리 밴드 없이도 묶임이 성립한다).
       const spanSpecs = range(cluster.repeat.r1, cluster.repeat.r2)
@@ -249,24 +259,43 @@ export function layoutPaper(
         order.forEach((k) => groups.push(map.get(k)!));
       } else if (allItems.length) groups.push(allItems);
 
-      groups.forEach((items) => {
-        const scope: Scope = { item: items[0], group: items };
+      // **묶음을 여는 줄은 머리가 가져간다.** 트리에 그룹머리가 있으면 깊이 ≤ atLevel인 그 줄이
+      //  구획 제목이 되므로(「1. 주방」), 반복에서 또 그리면 같은 이름이 두 번 나온다.
+      //  머리가 없으면 그 줄은 항목으로 남는다(줄마다 자기 금액을 갖는 표가 그렇다).
+      const headTakesFirst = !!cluster.groupHeader && !!levelKey && atLevel != null;
+      const itemsOf = (g: Record<string, unknown>[]) => (headTakesFirst ? g.slice(1) : g);
+      // 들여쓰기의 기준선 = **실제로 그려지는 줄 중 가장 얕은 깊이.** 구획 제목이 깊이 1을 가져가면
+      //  항목은 깊이 2에서 시작하는데, 그때 깊이−1을 계단으로 쓰면 표 전체가 한 칸 밀려 들어간다.
+      //  묶음별이 아니라 **표 전체**에서 잡는다 — 묶음마다 기준이 다르면 열이 묶음마다 출렁인다.
+      const drawn = groups.flatMap(itemsOf);
+      const baseDepth = drawn.length ? Math.min(...drawn.map(depthOf)) : 1;
+
+      groups.forEach((group, gi) => {
+        const items = itemsOf(group);
+        // 묶음 번호 — «몇 번째 묶음인가». 구획 제목이 있으면 그 줄이, 없으면 묶음의 첫 줄이 받는다.
+        const scope: Scope = { item: group[0], group, ordinal: gi + 1 };
         if (cluster.groupHeader) {
           range(cluster.groupHeader.r1, cluster.groupHeader.r2).forEach((gr) =>
             flow.push({ row: buildRow(spec, gr, values, scope, pin), keep: 'groupHeader' }));
         }
+        if (headInGroup) colHead();
         let gid: number | undefined;
         if (spanSpecs.length) {
           gid = ++groupSeq;
           groupSpans.set(gid, spanSpecs.map((c) => buildCell(c, values, scope, pin)));
         }
-        items.forEach((item) => {
+        items.forEach((item, ii) => {
           // 원본 순번을 실어 보낸다 — 묶음으로 재배열돼도 편집이 되쓸 자리는 «원본의 그 항목»이다.
           const at = allItems.indexOf(item);
+          const rowScope: Scope = {
+            item, group, at,
+            depth: depthOf(item) - baseDepth + 1,
+            ...(!cluster.groupHeader && ii === 0 ? { ordinal: gi + 1 } : {}),
+          };
           range(cluster.repeat.r1, cluster.repeat.r2).forEach((dr) =>
             flow.push({
               row: {
-                ...buildRow(spec, dr, values, { item, group: items, at, depth: depthOf(item) }, pin, (c) => !spansGroup(c)),
+                ...buildRow(spec, dr, values, rowScope, pin, (c) => !spansGroup(c)),
                 group: gid,
                 repeat: cluster.repeat.r1,
               },

@@ -36,6 +36,7 @@ const AGG_KO = { '합계': 'sum', '개수': 'count', '평균': 'avg' };
 const SPAN_KO = '묶음';           // {{묶음:부속.종류}} — 「경첩」처럼 반복 여러 줄에 세로로 걸치는 칸
 const INDENT_KO = '들여';         // {{들여:품목.품명}} — 트리 배열에서 그 줄의 깊이만큼 밀리는 칸
 const LEVEL_KO = '깊이';          // 「필드」 시트의 종류 — 이 열이 그 배열을 «트리»로 만든다
+const NUMBER_KO = '번호';         // {{번호:품목.품명}} — 묶음을 여는 줄 앞에 「1. 」을 붙인다
 const SYSTEM_KO = { '@쪽': '@page', '@총쪽': '@pages', '@오늘': '@today' };
 
 const TAG = /\{\{\s*([^{}]+?)\s*\}\}/g;
@@ -212,6 +213,11 @@ function readContent(raw, fieldKind) {
   //  묶음(scope:'group')과 같은 자리에 두는 이유: 둘 다 «이 칸이 반복 줄에서 어떻게 처신하는가»다.
   if (tags.length === 1 && colon > 0 && first.slice(0, colon) === INDENT_KO) {
     return { field: first.slice(colon + 1).trim(), indent: true };
+  }
+
+  // 번호 — {{번호:품목.품명}}. 구획 제목의 「1. 주방」. 묶음을 여는 줄에만 붙는다.
+  if (tags.length === 1 && colon > 0 && first.slice(0, colon) === NUMBER_KO) {
+    return { field: first.slice(colon + 1).trim(), number: true };
   }
 
   // 집계 — {{합계:품목.금액,품목.세액}}
@@ -400,6 +406,14 @@ async function convert(file, opts) {
     ])
     .filter((p) => p.includes('.'));
 
+  // 이 서식의 반복 원본이 트리인가 — 「반복」 줄이 쓰는 배열에 깊이 열이 있으면 그렇다.
+  //  (밴드를 훑기 전에 정해 둔다 — 그룹 머리·꼬리가 이 답에 따라 다른 기준을 받는다.)
+  const repeatRows = readBands(ws, maxRow).filter((b) => b.kind === 'repeat');
+  const treeRepeat = repeatRows.some((b) => {
+    const arr = pathsIn(b.r1, b.r2)[0]?.split('.')[0];
+    return !!arr && !!arrays.get(arr)?.level;
+  });
+
   const bands = readBands(ws, maxRow).map((b) => {
     const out = { kind: b.kind, r1: b.r1 - 1, r2: b.r2 - 1 };
     if (b.kind === 'repeat') {
@@ -408,7 +422,10 @@ async function convert(file, opts) {
       else warn.push(`${b.r1}행 「반복」에 배열 필드가 없습니다 — 원본을 못 정합니다`);
     }
     // 그룹 머리만 자기 행에서 기준을 도출한다(밴드 칸이 곧 그 기준값이라).
+    //  단 **트리면 기준은 깊이다** — 「1. 주방」 칸의 필드는 품명이고, 그걸 `by`로 잡으면
+    //  품명이 같은 줄끼리 묶여 「상부장」이 온 문서에서 한 덩어리가 된다(구획이 무너진다).
     if (b.kind === 'groupHeader') {
+      if (treeRepeat) { out.atLevel = 1; return out; }
       const by = pathsIn(b.r1, b.r2)[0];
       if (by) out.by = by;
       else warn.push(`${b.r1}행 「그룹머리」에 묶음 기준 필드가 없습니다`);
@@ -418,8 +435,8 @@ async function convert(file, opts) {
   // 그룹 꼬리(소계)는 **항상 그룹 머리와 같은 기준**이다. 자기 행에서 뽑으면 집계 대상(금액 등)을
   //  기준으로 오해한다 — 실제로 `투입.공수`가 잡혔었다. 그래서 도출하지 않고 무조건 물려받는다.
   bands.filter((b) => b.kind === 'groupFooter').forEach((b) => {
-    const gh = bands.find((x) => x.kind === 'groupHeader' && x.by);
-    if (gh) { b.by = gh.by; return; }
+    const gh = bands.find((x) => x.kind === 'groupHeader' && (x.by || x.atLevel != null));
+    if (gh) { if (gh.by) b.by = gh.by; else b.atLevel = gh.atLevel; return; }
     // 트리 반복이면 묶음 기준이 **구조**다 — 「그룹머리」 없이도 소계가 성립한다(깊이 1이 다시 나오면 끝).
     //  그래서 깊이 1을 기본으로 준다. 저작자는 Z열에 「그룹꼬리」만 적으면 되고, 깊이를 적을 칸이 없다
     //  (깊이별 소계는 아직 안 연다 — 반복 하나에 그룹꼬리 하나가 지금 엔진의 전제다).

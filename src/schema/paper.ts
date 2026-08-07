@@ -116,6 +116,18 @@ export type PaperCell = {
    * 그래서 보통 **품명 칸 하나에만** 붙인다(수량·단가·금액은 제 열에 그대로 선다).
    */
   indent?: boolean;
+  /**
+   * 이 칸의 값 앞에 **묶음 번호**를 붙인다 — 「1. 주방」 「2. 후드」.
+   *
+   * 번호의 주인은 «몇 번째 묶음인가»지 «몇 번째 줄인가»가 아니다. 그래서 묶음을 **여는 줄에만**
+   * 붙고(보통 깊이 1), 그 아래 딸린 줄들은 번호를 안 받는다 — 묶음 경계는 `atLevel`이 이미 정했다.
+   *
+   * 데이터로 안 받는 이유: 소비처가 번호를 열로 들고 있으면 줄을 하나 지울 때마다 다시 매겨야 하고,
+   * 그러다 종이의 번호와 데이터의 번호가 갈린다. 번호는 **그 표에서 그 줄이 있는 자리**의 성질이다.
+   *
+   * ⚠ `mode:'edit'`의 입력 칸에는 안 붙는다 — 고치는 것은 품명이지 「1. 주방」이라는 글자가 아니다.
+   */
+  number?: boolean;
   format?: PaperFormat;   // 표시 형식(값 표현 — 저장값은 안 건드린다)
   border?: PaperEdge[];   // 그릴 변(얇은 선). 없으면 선 없음 — 격자는 정렬 골격일 뿐이다
   /**
@@ -184,8 +196,9 @@ export type PaperBand = {
    * 말해 주는 열이 따로 없고, 깊이 1인 줄이 다시 나오는 것이 곧 앞 묶음의 끝이다.
    * 그래서 `by`(값이 같은 줄끼리)와 달리 `atLevel`은 **깊이 ≤ N인 줄에서 자른다**.
    *
-   * 소계는 그 묶음에 **딸린 모든 줄**을 더한다(깊이와 무관하게 전부). 중간 줄이 자기 금액을
-   * 갖는 내역서에서 그게 맞는 셈이다 — 부모가 자식의 롤업이면 두 번 더해진다.
+   * 소계는 그 묶음에 **딸린 모든 줄**을 더한다(깊이와 무관하게 전부). 그래서 묶음을 여는 줄은
+   * **자기 금액을 가지면 안 된다** — 그게 곧 소계라면 같은 수가 두 번 더해진다.
+   * `groupHeader`가 있으면 그 줄은 구획 제목이 되어 반복에서 빠지므로 자연히 값 칸이 없어진다.
    */
   atLevel?: number;
   reprint?: boolean;   // columnHeader·groupHeader: 쪽 넘김 시 재출력(기본 true)
@@ -352,7 +365,20 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
     }
   });
 
-  // ⑧ 행 높이
+  // ⑧ 번호 붙이는 칸 — 묶음이 있어야 «몇 번째»가 성립한다. 구획 제목(그룹머리)이나 반복 안에만 산다.
+  const numberable = bands.filter((b) => b.kind === 'repeat' || b.kind === 'groupHeader');
+  spec.cells.forEach((cell, i) => {
+    if (!cell.number) return;
+    if (!numberable.some((b) => cell.r >= b.r1 && cell.r <= b.r2)) {
+      push(`cells[${i}]`, '번호 붙이는 칸은 「그룹머리」나 「반복」 구간 안에 있어야 합니다');
+    }
+    if (!bands.some((b) => (b.kind === 'groupHeader' || b.kind === 'groupFooter')
+      && (b.by || b.atLevel != null))) {
+      push(`cells[${i}]`, '묶음이 없어 번호가 안 붙습니다 — 그룹 머리나 꼬리로 묶음을 정하세요');
+    }
+  });
+
+  // ⑨ 행 높이
   (spec.rows ?? []).forEach((row, i) => {
     if (row.h < 1 || row.h > 6) push(`rows[${i}]`, '행 높이는 1~6 단위입니다');
   });
