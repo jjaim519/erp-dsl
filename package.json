@@ -26,7 +26,6 @@
     "scripts/paper-import.mjs",
     "public/paper-template.xlsx",
     "public/paper-sample-tree-ledger.xlsx",
-    "public/paper-sample-cost-breakdown.xlsx",
     "README.md",
     "!src/ui/_dev.ts",
     "!src/ui/_Dev*"

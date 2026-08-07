@@ -327,9 +327,14 @@ async function convert(file, opts) {
   const warn = [];
 
   // 기준 폰트 크기 검출 — 이 파일에서 가장 흔한 크기가 곧 «본문»이다(위 snapTypo 주석).
+  //  ⚠ **병합 슬레이브를 세면 안 된다.** ExcelJS는 슬레이브에서 마스터의 값·폰트를 그대로 돌려주므로,
+  //   18pt 제목을 18칸×2행으로 병합하면 그 한 칸이 **36표**가 되어 다수결을 이긴다. 그러면 base가
+  //   제목 크기로 잡혀 **모든 글자가 한 단계씩 밀린다**(제목→body-strong, 본문→caption).
+  //   내용이 많은 손그림 서식에선 안 드러나고 **빈 템플릿처럼 글자가 적을수록 확실히 깨진다.**
   const sizeFreq = new Map();
   for (let r = 1; r <= maxRow; r++)
     for (let c = 1; c <= columns; c++) {
+      if (covered.has(`${r}:${c}`)) continue;
       const cell = ws.getCell(r, c);
       if (cell.value == null || String(cell.value).trim() === '') continue;
       const s = cell.style?.font?.size ?? 11;
@@ -539,7 +544,6 @@ const flag = (n) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i +
 const TEMPLATES = {
   '빈서식': ['paper-template.xlsx', '표준 머리·꼬리만 있는 24×42 격자'],
   '내역서': ['paper-sample-tree-ledger.xlsx', '구획 제목 + 깊이 트리 + 구획별 소계'],
-  '산출내역서': ['paper-sample-cost-breakdown.xlsx', '2단 병합 헤더 + 반복 구간 둘 + 그룹 소계'],
 };
 
 if (argv.includes('--template')) {

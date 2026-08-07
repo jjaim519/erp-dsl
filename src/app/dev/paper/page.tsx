@@ -9,11 +9,9 @@ import { useMemo, useState } from 'react';
 import { Stack, Group, Title, Text, Button, SegmentedControl, Callout, PaperDoc, PaperDocModal } from '@/ui';
 import { validatePaper, validatePaperCoverage, type PaperSpec } from '@/schema';
 import { tradeStatement } from '../../../forms/trade-statement';
-import costBreakdownJson from '../../../forms/cost-breakdown.paper.json';
 import gabjiJson from '../../../forms/kk-gabji.paper.json';
 import treeLedgerJson from '../../../forms/tree-ledger.paper.json';
 
-const costBreakdown = costBreakdownJson as PaperSpec;
 const gabji = gabjiJson as PaperSpec;
 const treeLedger = treeLedgerJson as PaperSpec;
 
@@ -34,47 +32,6 @@ const tradeValues = (n: number) => ({
     category: CATS[i % 3],
   })),
 });
-
-const STAGES = ['분석', '설계', '구현', '시험'];
-const ROLES = [
-  { 직무: '응용SW개발자', 등급: '고급', 월임금: 8_000_000 },
-  { 직무: 'IT기획자', 등급: '중급', 월임금: 7_000_000 },
-  { 직무: 'UI/UX개발자', 등급: '중급', 월임금: 6_500_000 },
-];
-const costValues = (n: number) => {
-  const 투입 = Array.from({ length: n }, (_, i) => {
-    const role = ROLES[i % ROLES.length];
-    const 인원 = (i % 2) + 1;
-    const 기간 = (i % 3) + 1;
-    const 공수 = 인원 * 기간;
-    return {
-      단계: STAGES[i % STAGES.length], ...role, 인원, 기간, 공수,
-      금액: 공수 * role.월임금, 비고: '',
-    };
-  });
-  const 인건비 = 투입.reduce((s, x) => s + x.금액, 0);
-  const 제경비 = Math.round(인건비 * 1.4);
-  const 기술료 = Math.round((인건비 + 제경비) * 0.2);
-  const 경비 = [
-    { 항목: '출장비', 규격: '왕복 8회', 수량: 8, 단가: 150_000, 금액: 1_200_000, 비고: '' },
-    { 항목: '인증서', 규격: '연 1식', 수량: 1, 단가: 3_000_000, 금액: 3_000_000, 비고: '' },
-  ];
-  const 직접경비계 = 경비.reduce((s, x) => s + x.금액, 0);
-  const 소계 = 인건비 + 제경비 + 기술료 + 직접경비계;
-  return {
-    발행처명: '○○소프트(주)', 발행처사업자번호: '123-45-67890',
-    발행처주소: '서울 ○○구 ○○로 1', 발행처전화: '02-000-0000',
-    문서번호: 'CB-2026-0087', 작성일자: '2026-08-07',
-    사업명: '그룹웨어 문서 생성기 구축', 발주처: '△△산업(주)',
-    계약시작: '2026-09-01', 계약종료: '2027-02-28', 산정방식: '투입공수(M/M)',
-    직접인건비: 인건비, 제경비율: '140%', 제경비,
-    기술료율: '20%', 기술료, 직접경비계,
-    소계, 부가세: Math.round(소계 * 0.1), 총계: Math.round(소계 * 1.1),
-    산정근거: 'SW사업 대가산정 가이드(2025) 직무별 평균임금 적용. 제경비 140%, 기술료 20%.',
-    담당자: '박○○', 검토자: '최○○', 승인자: '정○○',
-    투입, 경비,
-  };
-};
 
 // 갑지 — 부속을 **묶음이 지어지게** 만든다(종류가 연달아 같은 줄끼리 걸침 칸 하나로 합쳐진다).
 //  건수를 올리면 걸침이 쪽 경계에서 쪼개지는 것까지 보인다.
@@ -133,7 +90,6 @@ const treeValues = (n: number) => {
 
 const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<string, unknown>; note: string }> = {
   gabji: { spec: gabji, values: gabjiValues, note: '엑셀에서 변환 — public/kk-gabji.xlsx → paper-import  ·  부속이 반복 + 종류 걸침' },
-  cost: { spec: costBreakdown, values: costValues, note: '엑셀에서 변환 — public/paper-sample-cost-breakdown.xlsx → paper-import' },
   tree: { spec: treeLedger, values: treeValues, note: '엑셀에서 변환 — public/paper-sample-tree-ledger.xlsx → paper-import  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
   trade: { spec: tradeStatement, values: tradeValues, note: '손으로 적은 PaperSpec — src/forms/trade-statement.ts' },
 };
@@ -186,7 +142,6 @@ export default function PaperDevPage() {
               size="sm" value={form} onChange={(v) => { setForm(v); setCount(8); setEdits(null); }}
               options={[
                 { label: '갑지 (변환)', value: 'gabji' },
-                { label: '산출내역서 (변환)', value: 'cost' },
                 { label: '내역서·트리 (변환)', value: 'tree' },
                 { label: '거래명세서 (손)', value: 'trade' },
               ]}
@@ -198,7 +153,7 @@ export default function PaperDevPage() {
                 { label: '편집', value: 'edit' },
               ]}
             />
-            <Text variant="body-strong">{({ cost: '투입', gabji: '부속', tree: '공사' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
+            <Text variant="body-strong">{({ gabji: '부속', tree: '공사' } as Record<string, string>)[form] ?? '라인'} {count}건</Text>
             <Group gap="xs">
               {[1, 8, 16, 24, 40].map((n) => (
                 <Button key={n} variant={n === count ? 'primary' : 'secondary'} size="sm" onClick={() => reset(setCount)(n)}>

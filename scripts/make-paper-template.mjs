@@ -290,162 +290,26 @@ function guideSheet(wb) {
 
 
 // ── ① 시작 템플릿 ──────────────────────────────────────────────
+// 머리는 **로고 + 문서명**뿐이다(`titleOnly`). 문서번호·작성일자·결재란은 안 깐다 —
+//  실제로 그린 문서(갑지)가 그 셋을 다 지우고 시작했다. **틀은 모든 문서에 공통인 것만** 담는다:
+//  없는 걸 지우는 것보다 필요한 걸 더하는 게 싸고, 「필드」 시트에 이름은 남아 있어 되놓기도 쉽다.
+//  꼬리말은 남긴다 — 발행처 한 줄·쪽번호는 어느 문서에나 붙고, 무엇보다 **꼬리말 행이 곧 지면 바닥**이라
+//  이게 없으면 변환할 때마다 `--rows`를 손으로 줘야 한다(발주서가 그래서 10행으로 읽혔다).
 async function starter() {
   const wb = new ExcelJS.Workbook();
   wb.creator = 'erp-dsl';
   const ws = setupSheet(wb.addWorksheet('양식'));
-  const from = standardHead(ws, '문 서 제 목');
+  const from = standardHead(ws, '문 서 제 목', { titleOnly: true });
   put(ws, from + 1, 1,
     '▽ 여기부터 본문입니다. 칸을 병합하고 테두리를 그려 만드세요. 높은 칸은 «세로 병합»으로. (이 줄은 지우세요)',
     { cs: 24, hint: true, border: false });
   standardFoot(ws);
-  fieldSheet(wb);
+  //  머리가 안 놓는 값(문서번호·작성일자·결재)은 「필수」를 뗀다 — 필수인데 자리가 없으면
+  //  검증이 «필수 값의 자리가 없습니다»로 막는다. 이름은 남겨 둔다(되놓을 때 명단부터 만들지 않게).
+  fieldSheet(wb, [], { optional: ['문서번호', '작성일자'] });
   guideSheet(wb);
   await wb.xlsx.writeFile(`${OUT}/paper-template.xlsx`);
   return 'paper-template.xlsx';
-}
-
-// ── ② 산출내역서 (SW 개발) ─────────────────────────────────────
-// 소프트웨어 사업의 원가 구조는 건설과 다르다 — 재료비·노무비·경비가 아니라
-//   직접인건비(월평균임금 × 투입공수) + 제경비 + 기술료 + 직접경비.  (SW사업 대가산정 가이드)
-// 형식(2단 병합 헤더·단계별 그룹·소계·총계)은 건설 내역서 관습을 그대로 쓴다 — 업종 무관한 장표 문법이라.
-async function sampleCostBreakdown() {
-  const wb = new ExcelJS.Workbook();
-  wb.creator = 'erp-dsl';
-  const ws = setupSheet(wb.addWorksheet('양식'));
-  standardHead(ws, '산 출 내 역 서');
-
-  // r3~4 사업 개요
-  put(ws, 3, 1,  '사 업 명', { cs: 3, align: 'center', shade: true });
-  put(ws, 3, 4,  '{{사업명}}', { cs: 9 });
-  put(ws, 3, 13, '발 주 처', { cs: 3, align: 'center', shade: true });
-  put(ws, 3, 16, '{{발주처}}', { cs: 9 });
-  put(ws, 4, 1,  '계약기간', { cs: 3, align: 'center', shade: true });
-  put(ws, 4, 4,  '{{계약시작}} ~ {{계약종료}}', { cs: 9 });
-  put(ws, 4, 13, '산정방식', { cs: 3, align: 'center', shade: true });
-  put(ws, 4, 16, '{{산정방식}}', { cs: 9 });
-
-  // r6 구획
-  put(ws, 6, 1, '■ 1. 투입공수 (직접인건비)', { cs: 24, shade: true, bold: true });
-
-  // r7~8 두 단 헤더 — 「투입공수」가 인원·기간·M/M 셋을 거느린다(병합의 본보기)
-  put(ws, 7, 1,  '단계',   { cs: 2, rs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 7, 3,  '직무',   { cs: 4, rs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 7, 7,  '등급',   { cs: 2, rs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 7, 9,  '투입공수', { cs: 6, align: 'center', shade: true, bold: true });
-  put(ws, 7, 15, '월평균임금', { cs: 3, rs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 7, 18, '금액',   { cs: 4, rs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 7, 22, '비고',   { cs: 3, rs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 8, 9,  '인원',   { cs: 2, align: 'center', shade: true, size: 8 });
-  put(ws, 8, 11, '기간(월)', { cs: 2, align: 'center', shade: true, size: 8 });
-  put(ws, 8, 13, 'M/M',   { cs: 2, align: 'center', shade: true, size: 8 });
-  band(ws, 7, '열머리');
-  band(ws, 8, '열머리');
-
-  put(ws, 9, 1, '{{투입.단계}}', { cs: 24, shade: true, bold: true });
-  band(ws, 9, '그룹머리');
-
-  put(ws, 10, 1,  '', { cs: 2 });
-  put(ws, 10, 3,  '{{투입.직무}}', { cs: 4 });
-  put(ws, 10, 7,  '{{투입.등급}}', { cs: 2, align: 'center' });
-  put(ws, 10, 9,  '{{투입.인원}}', { cs: 2, align: 'center' });
-  put(ws, 10, 11, '{{투입.기간}}', { cs: 2, align: 'center' });
-  put(ws, 10, 13, '{{투입.공수}}', { cs: 2, align: 'right' });
-  put(ws, 10, 15, '{{투입.월임금}}', { cs: 3, align: 'right' });
-  put(ws, 10, 18, '{{투입.금액}}', { cs: 4, align: 'right' });
-  put(ws, 10, 22, '{{투입.비고}}', { cs: 3 });
-  band(ws, 10, '반복');
-
-  put(ws, 11, 1,  '소　계', { cs: 12, align: 'right', shade: true });
-  put(ws, 11, 13, '{{합계:투입.공수}}', { cs: 2, align: 'right' });
-  put(ws, 11, 15, '', { cs: 3, shade: true });
-  put(ws, 11, 18, '{{합계:투입.금액}}', { cs: 4, align: 'right' });
-  put(ws, 11, 22, '', { cs: 3, shade: true });
-  band(ws, 11, '그룹꼬리');
-
-  put(ws, 12, 1,  '직접인건비 계', { cs: 12, align: 'right', shade: true, bold: true });
-  put(ws, 12, 13, '{{합계:투입.공수}}', { cs: 2, align: 'right', bold: true });
-  put(ws, 12, 15, '', { cs: 3, shade: true });
-  put(ws, 12, 18, '{{합계:투입.금액}}', { cs: 4, align: 'right', bold: true });
-  put(ws, 12, 22, '', { cs: 3, shade: true });
-  band(ws, 12, '합계');
-
-  // r14~ 원가 집계 — 비율 계산(제경비·기술료)은 소비처가 산출해 넘긴다(§주석)
-  put(ws, 14, 1, '■ 2. 원가 집계', { cs: 24, shade: true, bold: true });
-  const cost = (r, label, formula, tag, strong) => {
-    put(ws, r, 1,  label,   { cs: 12, shade: true, bold: !!strong });
-    put(ws, r, 13, formula, { cs: 6, align: 'center', size: 8, hint: true });
-    put(ws, r, 19, tag,     { cs: 6, align: 'right', bold: !!strong });
-  };
-  cost(15, '직접인건비', '투입공수 × 월평균임금', '{{직접인건비}}');
-  cost(16, '제경비',     '직접인건비 × {{제경비율}}', '{{제경비}}');
-  cost(17, '기술료',     '(직접인건비 + 제경비) × {{기술료율}}', '{{기술료}}');
-  cost(18, '직접경비',   '아래 3항 합계', '{{직접경비계}}');
-  cost(19, '소　계',     '', '{{소계}}', true);
-  cost(20, '부가가치세', '소계 × 10%', '{{부가세}}');
-  cost(21, '총　계',     '', '{{총계}}', true);
-
-  // r23~ 직접경비 명세 — 두 번째 반복 구간
-  put(ws, 23, 1, '■ 3. 직접경비 명세', { cs: 24, shade: true, bold: true });
-  put(ws, 24, 1,  '항목', { cs: 6, align: 'center', shade: true, bold: true });
-  put(ws, 24, 7,  '규격', { cs: 6, align: 'center', shade: true, bold: true });
-  put(ws, 24, 13, '수량', { cs: 2, align: 'center', shade: true, bold: true });
-  put(ws, 24, 15, '단가', { cs: 4, align: 'center', shade: true, bold: true });
-  put(ws, 24, 19, '금액', { cs: 4, align: 'center', shade: true, bold: true });
-  put(ws, 24, 23, '비고', { cs: 2, align: 'center', shade: true, bold: true });
-  band(ws, 24, '열머리');
-  put(ws, 25, 1,  '{{경비.항목}}', { cs: 6 });
-  put(ws, 25, 7,  '{{경비.규격}}', { cs: 6 });
-  put(ws, 25, 13, '{{경비.수량}}', { cs: 2, align: 'center' });
-  put(ws, 25, 15, '{{경비.단가}}', { cs: 4, align: 'right' });
-  put(ws, 25, 19, '{{경비.금액}}', { cs: 4, align: 'right' });
-  put(ws, 25, 23, '{{경비.비고}}', { cs: 2 });
-  band(ws, 25, '반복');
-  put(ws, 26, 1,  '소　계', { cs: 18, align: 'right', shade: true, bold: true });
-  put(ws, 26, 19, '{{합계:경비.금액}}', { cs: 4, align: 'right', bold: true });
-  put(ws, 26, 23, '', { cs: 2, shade: true });
-  band(ws, 26, '합계');
-
-  // 산정 근거 — 세로 병합 3칸(행 높이를 바꾸지 않는다)
-  put(ws, 28, 1, '산정 근거', { cs: 3, rs: 3, align: 'center', shade: true, valign: 'top' });
-  put(ws, 28, 4, '{{산정근거}}', { cs: 21, rs: 3, valign: 'top', wrap: true });
-
-  standardFoot(ws);
-  fieldSheet(wb, [
-    { n: '사업명', l: '사업명', t: '글자', r: '필수', a: '' },
-    { n: '발주처', l: '발주처', t: '글자', r: '필수', a: '' },
-    { n: '계약시작', l: '계약 시작일', t: '날짜', r: '', a: '' },
-    { n: '계약종료', l: '계약 종료일', t: '날짜', r: '', a: '' },
-    { n: '산정방식', l: '산정방식', t: '선택', r: '', a: '' },
-    { n: '직접인건비', l: '직접인건비', t: '금액', r: '필수', a: '' },
-    { n: '제경비율', l: '제경비율', t: '글자', r: '', a: '' },
-    { n: '제경비', l: '제경비', t: '금액', r: '', a: '' },
-    { n: '기술료율', l: '기술료율', t: '글자', r: '', a: '' },
-    { n: '기술료', l: '기술료', t: '금액', r: '', a: '' },
-    { n: '직접경비계', l: '직접경비 계', t: '금액', r: '', a: '' },
-    { n: '소계', l: '소계', t: '금액', r: '', a: '' },
-    { n: '부가세', l: '부가가치세', t: '금액', r: '', a: '' },
-    { n: '총계', l: '총계', t: '금액', r: '필수', a: '' },
-    { n: '산정근거', l: '산정 근거', t: '여러 줄', r: '', a: '' },
-    { n: '단계', l: '단계', t: '글자', r: '', a: '투입' },
-    { n: '직무', l: '직무', t: '글자', r: '필수', a: '투입' },
-    { n: '등급', l: '등급', t: '글자', r: '', a: '투입' },
-    { n: '인원', l: '투입인원', t: '숫자', r: '', a: '투입' },
-    { n: '기간', l: '투입기간(월)', t: '숫자', r: '', a: '투입' },
-    { n: '공수', l: '투입공수(M/M)', t: '숫자', r: '', a: '투입' },
-    { n: '월임금', l: '월평균임금', t: '금액', r: '', a: '투입' },
-    { n: '금액', l: '금액', t: '금액', r: '', a: '투입' },
-    { n: '비고', l: '비고', t: '글자', r: '', a: '투입' },
-    { n: '항목', l: '항목', t: '글자', r: '', a: '경비' },
-    { n: '규격', l: '규격', t: '글자', r: '', a: '경비' },
-    { n: '수량', l: '수량', t: '숫자', r: '', a: '경비' },
-    { n: '단가', l: '단가', t: '금액', r: '', a: '경비' },
-    { n: '금액', l: '금액', t: '금액', r: '', a: '경비' },
-    { n: '비고', l: '비고', t: '글자', r: '', a: '경비' },
-  ]);
-  guideSheet(wb);
-  await wb.xlsx.writeFile(`${OUT}/paper-sample-cost-breakdown.xlsx`);
-  return 'paper-sample-cost-breakdown.xlsx';
 }
 
 // ── ③ 내역서 (트리 — 구획 제목 + 깊이) ────────────────────────
@@ -534,7 +398,7 @@ async function sampleTreeLedger() {
 }
 
 await mkdir(OUT, { recursive: true });
-const made = [await starter(), await sampleCostBreakdown(), await sampleTreeLedger()];
+const made = [await starter(), await sampleTreeLedger()];
 console.log(`[paper] public/ 에 생성:\n        ${made.join('\n        ')}`);
 console.log(
   `        격자 ${COLS}열 × ${ROWS}행\n` +
