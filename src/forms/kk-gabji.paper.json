@@ -36,24 +36,9 @@
       "type": "text"
     },
     {
-      "name": "부속",
+      "name": "부속비고",
       "label": "부속",
       "type": "text"
-    },
-    {
-      "name": "종류",
-      "label": "종류",
-      "type": "text"
-    },
-    {
-      "name": "품목",
-      "label": "품목",
-      "type": "text"
-    },
-    {
-      "name": "개수",
-      "label": "개수",
-      "type": "number"
     },
     {
       "name": "시공팀요청",
@@ -64,6 +49,29 @@
       "name": "케이산업요청",
       "label": "케이산업 요청사항",
       "type": "text"
+    }
+  ],
+  "arrays": [
+    {
+      "name": "부속",
+      "label": "부속",
+      "of": [
+        {
+          "name": "종류",
+          "label": "종류",
+          "type": "text"
+        },
+        {
+          "name": "품목",
+          "label": "품목",
+          "type": "text"
+        },
+        {
+          "name": "개수",
+          "label": "개수",
+          "type": "number"
+        }
+      ]
     }
   ],
   "images": [
@@ -289,7 +297,7 @@
       "r": 6,
       "c": 16,
       "cs": 8,
-      "field": "부속",
+      "field": "부속비고",
       "border": [
         "t",
         "l"
@@ -390,6 +398,7 @@
       "c": 20,
       "cs": 4,
       "field": "부속.개수",
+      "format": "number",
       "border": [
         "t",
         "l"
@@ -398,7 +407,7 @@
         "r",
         "b"
       ],
-      "align": "center"
+      "align": "end"
     },
     {
       "r": 12,

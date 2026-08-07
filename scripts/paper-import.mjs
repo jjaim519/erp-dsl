@@ -412,6 +412,13 @@ async function convert(file, opts) {
     }
   });
 
+  // 칸이 «배열 이름»을 점 없이 가리키면 목록이 통째로 그 칸에 찍힌다(`[object Object]`).
+  //  이름 충돌을 고칠 때 「필드」 시트만 고치고 「양식」의 태그를 안 바꾸면 딱 이 상태가 된다 —
+  //  아래 «겹침» 검사는 이미 안 겹치므로 조용히 지나간다.
+  cells.filter((c) => c.field && !c.field.includes('.') && arrays.has(c.field)).forEach((c) => {
+    warn.push(`${c.r + 1}행의 «{{${c.field}}}»는 배열 이름입니다 — 그 칸에 목록이 통째로 찍힙니다([object Object]). 태그를 다른 이름으로 바꾸세요`);
+  });
+
   // 배열 이름과 문서 필드 이름이 겹치면 **값 그릇이 하나뿐**이라 둘이 한자리를 다툰다
   //  (배열을 넘기면 문서 칸에 `[object Object]`가 찍힌다 — 갑지의 「부속」이 그랬다).
   arrays.forEach((_, an) => {
