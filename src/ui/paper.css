@@ -128,7 +128,12 @@
    1px 물려 넣기는 두 문제를 다 피한다: 채널은 «입력의 윤곽»이라 새로 안 겹치고, 틈이 있어 어느 선도
    맞닿지 않는다. */
 .erpPaperCell.is-edit {
-  padding: 1px;               /* 이 1px이 입력 윤곽을 칸 괘선에서 떼어 놓는다 */
+  /* 이 틈이 입력 윤곽을 칸 괘선에서 떼어 놓는다. **1px은 너무 작다** — 칸 괘선도 1px이라
+     둘이 뭉쳐 «좀 굵은 괘선»으로 읽히고 입력으로 안 보인다(실제로 그랬다).
+     그렇다고 고정 px로 키우면 안 된다: 42행 서식은 한 행이 24px이라 3px를 주면 입력이 18px로
+     쪼그라들어 10.5pt 글자가 안 들어간다. **행 단위에서 비율로 끌어온다** — 이 파일이 글자
+     크기를 뽑는 것과 같은 원리다(31행 → 32px 행 → 틈 3px / 42행 → 24px 행 → 2px). */
+  padding: calc(var(--paper-row) * 0.09);
   cursor: text;
 }
 
@@ -152,16 +157,25 @@
      (ax-end의 tabular-nums도 같이 따라온다 — 숫자 자릿수가 편집 중에도 안 흔들린다). */
   text-align: inherit;
   background: var(--bg-primary);   /* 종이 위에 «얹힌 입력»으로 읽히게 — 칸 음영이 비쳐 오르지 않는다 */
-  border-radius: 0;
+  /* ⚠ 모서리는 **부품 것을 그대로 둔다.** 전에 `border-radius: 0`으로 지웠더니, 틈을 아무리 벌려도
+     「표 안의 또 다른 칸」으로 읽혔다 — 컨트롤로 읽히게 하는 신호가 바로 라운드다.
+     여기서 문서가 정하는 건 «어디에 얼마만 한 크기로 놓느냐»뿐이고, 생김새는 입력 부품이 갖고 온다. */
 }
 .erpPaperDoc[data-mode="edit"] .is-edit .mantine-Input-input:focus {
   --field-border: var(--border-focus);
   outline: none;              /* 윤곽이 이미 포커스를 말한다 — 이중 링 방지 */
 }
 
-/* 인쇄에는 «고칠 수 있음»이 없다 — 종이엔 그 구별이 존재하지 않는다. */
+/* 인쇄에는 «고칠 수 있음»이 없다 — 종이엔 그 구별이 존재하지 않는다.
+   입력의 윤곽·모서리·배경을 전부 지우고, 칸이 자기 여백을 되찾는다(보기 모드와 같은 2px 5px).
+   여백을 입력 쪽에 주는 이유: 편집에선 입력이 칸을 꽉 채우고 있어서 칸에 주면 글자가 두 번 밀린다. */
 @media print {
-  .erpPaperCell.is-edit { background: none; outline: none; }
+  .erpPaperCell.is-edit { padding: 0; background: none; }
+  .erpPaperDoc[data-mode="edit"] .is-edit .mantine-Input-input {
+    border-color: transparent;
+    background: none;
+    padding: 2px 5px;
+  }
   .erpPaperDoc[data-mode="edit"] .is-locked { color: var(--text-primary); }
 }
 
