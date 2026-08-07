@@ -165,7 +165,7 @@ type FieldSpec = {
 ### 유기체 (29) — 화면 한 구획, 도메인은 스키마로만 주입
 - **Modal** `opened` `onClose` `title` `actions` `size: sm|md|lg|xl|full`(full=95vw·90vh, 풀스크린 아님) · children=본문
 - **DataTable** `columns` `rows` `status: loading|empty|ready` · controlled 정렬·페이징 · `onRowClick`
-- **DataSheet** — DataTable의 **쓰기 형제**(행 수정 + 맨 아래 초안 줄 1개). 저장된 행은 읽기다: 편집 신호를 상시로 깔지 않고 ⋮「수정」·Enter로 **행 전체**가 열린다(상시 인라인은 "어느 칸이 편집되는지 모르겠다"가 대표 불만). 「행 추가」 버튼 없음 — 미저장 줄을 N개 쌓으면 값의 주인이 rows와 둘이 된다. 열은 read×edit 2축(배지로 보이지만 select로 고치는 상태 열을 표현하려면 하나로 못 묶는다)
+- **DataSheet** — DataTable의 **쓰기 형제**(행 수정 + 맨 아래 초안 줄 1개). 저장된 행은 읽기다: 편집 신호를 상시로 깔지 않고 ⋮「수정」·Enter로 **행 전체**가 열린다(상시 인라인은 "어느 칸이 편집되는지 모르겠다"가 대표 불만). 「행 추가」 버튼 없음 — 미저장 줄을 N개 쌓으면 값의 주인이 rows와 둘이 된다. 열은 read×edit 2축(배지로 보이지만 select로 고치는 상태 열을 표현하려면 하나로 못 묶는다). `edit` 없는 열 = **파생 칸**이고, 초안 줄의 파생값은 `draft.derive(values)`가 준다 — 거래 후 잔고·금액(수량×단가)처럼 **치는 중에 대조하는 확인용 숫자**가 사는 자리(렌더 중 호출이라 순수해야 하고, 표시에만 쓰여 `onCreate`로 안 넘어간다)
 - **EmptyState** `icon` `title` `description` `action?`
 - **PageHeader** `title` `description?` `actions?` · **DescriptionList** `items` `columns: 1|2|3`
 - **AppShell** `logo` `menuItems`(`count?`→CountBadge) `activePath` `onNavigate` `profile` `notification` · children=콘텐츠 · **2티어 반응형(자동)**: 데스크탑 ≥1280 풀 넷바 260(로고+메뉴+하단 유틸리티) / 태블릿 768–1279 아이콘 레일 72(로고 없음). **상단바 없음** — 알림·프로필은 넷바 하단 유틸리티 존. **폰은 범위 밖**(MobileShell이 받는다): `APPSHELL_MIN_WIDTH`(768) export를 소비처가 import해 **같은 값으로 모바일 라우팅을 판정**한다(각자 숫자를 들면 반드시 어긋난다). 하한 아래는 가로 스크롤로 예측 가능하게 무너지는 안전망

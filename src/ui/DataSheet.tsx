@@ -17,6 +17,8 @@
 // **쓰는 자리는 맨 아래 초안 줄 하나다.** 「행 추가」 버튼을 두지 않는다. 정렬과 무관하게 늘 맨 아래.
 //  초안은 **1줄 상시**다(확정되면 rows로 편입되고 새 초안이 깔린다) — 미저장 줄을 부품이 N개 쌓으면
 //  값의 주인이 rows와 둘이 된다. 초안 값만 부품이 들고, 저장된 값은 전부 소비처 것이다.
+//  그래도 **치는 중에 확인시켜 주는** 칸은 필요하다(통장의 거래 후 잔고, 발주의 금액=수량×단가) —
+//  `draft.derive`가 그 자리다. 소비처가 계산하고 부품이 렌더 중에 당겨 쓰며, 값은 밖으로 안 나간다.
 //
 // ── 닫아 둔 것 ─────────────────────────────────────────────────────────────
 //  셀 병합 · 수식 · 열 리사이즈 · 가상 스크롤 · 다중 셀 선택/복붙 · "편집 모드" 토글 prop ·
@@ -76,6 +78,13 @@ type Props = {
     seed?: Record<string, unknown>;
     ready: (values: Record<string, unknown>) => boolean;
     onCreate: (values: Record<string, unknown>) => Promise<SheetCommitResult>;
+    /** 초안 줄의 **파생 칸** 값 — "지금 치고 있는 값으로 계산되는 확인용 숫자"(통장의 거래 후 잔고,
+     *  발주의 금액=수량×단가). 저장된 줄의 파생 칸은 소비처가 rows에 넣으면 되지만, 초안 값은
+     *  부품 안에만 있어 밖에서 계산할 길이 없었다 — 같은 열이 저장 줄에선 차고 초안 줄에선 비었다.
+     *  **렌더 중에 호출되므로 순수·저렴해야 한다**(비동기는 안 연다 — 서버가 필요한 값은 이 통로의 일이 아니다).
+     *  반환값은 **표시에만** 쓴다: ready·onCreate로 넘어가지 않으니 저장 payload로 되돌아오지 않는다.
+     *  `edit` 있는 열의 key는 **조용히 무시한다** — 편집칸의 주인은 끝까지 부품이다. */
+    derive?: (values: Record<string, unknown>) => Record<string, unknown>;
   };
   /** ⋮ 메뉴에 덧붙일 소비처 액션. 「수정」은 부품이 앞에 넣는다(편집 진입은 부품의 계약이다). */
   rowActions?: (row: SheetRow) => Action[];
@@ -125,16 +134,29 @@ export function DataSheet({
   const canEdit = (c: SheetColumn, row: SheetRow) => !!c.edit && (!c.editable || c.editable(row));
   const order = enterOrder ?? columns.filter((c) => c.edit).map((c) => c.key);
 
+  // 초안 줄의 파생 칸. **당기는 쪽이다** — 렌더 시점에 부품이 호출하고 반환값은 표시에만 쓴다.
+  //  콜백(onDraftChange)으로 값을 밖으로 밀면 소비처가 그걸 state에 담게 되고, 초안 값의 주인이 둘이 된다.
+  const derived: Record<string, unknown> = {};
+  if (draft?.derive) {
+    const d = draft.derive(draftValues);
+    // 편집칸은 덮지 못하게 거른다 — 값의 주인이 둘이 되는 걸 막는 자리다.
+    //  소비처가 돌려준 객체는 memo된 것일 수 있으므로 **손대지 않고**(delete 금지) 사본을 만든다.
+    for (const k of Object.keys(d)) if (!colOf(k)?.edit) derived[k] = d[k];
+  }
+  // 소비처에 넘기는 줄(ready·onCreate)과 그리는 줄을 가른다 — 파생값은 저장 payload로 되돌아가지 않는다.
   const draftRow: SheetRow = { id: DRAFT_ID, ...draftValues };
+  const draftView: SheetRow = { ...draftRow, ...derived };
   // 초안 줄이 **손을 탄 상태인가.** 입력 상자 자체가 "여기에 친다"를 이미 말하고 있으므로
   //  ✕/✓는 상시로 띄우지 않는다 — 아무것도 안 한 줄에 되돌릴 것도 확정할 것도 없다.
   //  판정 셋: 포커스가 안에 있거나 · 값이 하나라도 seed와 다르거나 · 딸린 패널이 열려 있거나.
   //  ("값이 있으면"이 빠지면 포커스를 옮기는 순간 친 값이 있는데 ✓가 사라진다.)
+  //  판정은 **친 값**만 본다(draftValues) — 파생값이 끼면 소비처가 seed만으로 숫자를 하나 뱉는 순간
+  //  아무도 안 건드린 초안 줄이 손 탄 것처럼 ✕/✓를 띄운다.
   const draftSeed = draft?.seed ?? {};
   const draftDirty = Object.keys({ ...draftSeed, ...draftValues })
     .some((k) => (draftValues[k] ?? '') !== (draftSeed[k] ?? ''));
   const draftEngaged = draftFocused || draftDirty || expandedId === DRAFT_ID;
-  const rowById = (id: string) => (isDraft(id) ? draftRow : rows.find((r) => r.id === id));
+  const rowById = (id: string) => (isDraft(id) ? draftView : rows.find((r) => r.id === id));
   // 편집 중인 줄은 화면값(values)이 진실, 아니면 데이터가 진실.
   const viewOf = (row: SheetRow): SheetRow =>
     editingId === row.id ? ({ ...row, ...values } as SheetRow) : row;
@@ -160,6 +182,8 @@ export function DataSheet({
     if (isDraft(id)) {
       if (!draft) return;
       // 초안 값의 주인은 draftValues 하나다 — 다른 줄을 열어 둔 채라도 values가 섞이면 안 된다.
+      //  draftView가 아니라 draftRow다: **파생값은 밖으로 안 나간다**(소비처가 계산한 값이
+      //  부품을 한 바퀴 돌아 저장 payload로 되돌아오면 값의 주인이 도로 흐려진다).
       const merged = { ...draftRow };
       if (!draft.ready(merged)) { setErr({ id, msg: '칸을 채워주세요' }); return; }
       const res = await draft.onCreate(merged);
@@ -250,7 +274,9 @@ export function DataSheet({
     // 포커스가 들어온 칸이 곧 활성 칸이다 — 마우스로 눌러 들어오든 키보드로 옮겨오든 한 경로로 잡힌다.
     if (editingThisRow && editable)
       return <div className={cls} onFocus={() => setActive({ id: row.id, key: c.key })}>{editControl(row, c)}</div>;
-    const value = editingThisRow ? cellValue(row.id, c.key) : row[c.key];
+    // 표시값은 **넘겨받은 줄** 하나에서만 나온다(편집 중이면 viewOf가 이미 화면값을 얹어 준 줄이다).
+    //  여기서 cellValue로 갈라지면 초안 줄이 draftValues만 보게 되어 **파생 칸이 영구히 빈칸**이 된다.
+    const value = row[c.key];
     // 표시는 DataTable과 **같은 renderCell** — 표현 어휘가 두 부품에서 갈리지 않는다.
     //  클릭으로 칸을 옮기는 건 **이미 열린 줄 안에서만**이다. 닫힌 줄의 칸을 눌러 편집이 열리면
     //  "저장된 행은 읽기"가 무너져 결국 상시 인라인 편집으로 돌아간다(진입은 ⋮「수정」·Enter 하나뿐).
@@ -403,7 +429,7 @@ export function DataSheet({
           </thead>
           <tbody>
             {rows.map((r) => [rowTr(r), ...extraRows(r)])}
-            {draft && [rowTr(draftRow, { draft: true }), ...extraRows(draftRow)]}
+            {draft && [rowTr(draftView, { draft: true }), ...extraRows(draftView)]}
           </tbody>
           {totals && (
             <tfoot>

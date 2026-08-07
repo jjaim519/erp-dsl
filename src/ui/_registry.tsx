@@ -1330,6 +1330,9 @@ export function Demo({ name }: { name: string }) {
           seed: { date: '', desc: '', party: '', kind: '', qty: '', price: '', files: 0 },
           ready: (v) => !!(v.date && v.desc && v.kind),
           onCreate: async (v) => { setDsRows((prev) => [...prev, { ...v, id: `n${prev.length + 1}` } as SheetRow]); },
+          // 초안 줄의 파생 칸 — **저장 줄과 같은 식으로 amount를 채운다.** 이게 없으면 같은 열이
+          //  저장 줄에선 차 있고 초안 줄에서만 비어, 치는 중에 대조할 숫자가 사라진다.
+          derive: (v) => ({ amount: (Number(v.qty) || 0) * (Number(v.price) || 0) }),
         }}
         rowActions={(row) => [{ label: '삭제', icon: 'trash', variant: 'danger', onClick: () => setDsRows((prev) => prev.filter((r) => r.id !== row.id)) }]}
         expand={{
