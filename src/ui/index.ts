@@ -140,7 +140,7 @@ export { MobilePullToRefresh } from './MobilePullToRefresh';
 // 첨부 뷰어 — 데스크탑·모바일 두 부품이 _attachment 계약 한 벌을 공유한다.
 export { AttachmentViewer } from './AttachmentViewer';
 export { MobileAttachmentViewer } from './MobileAttachmentViewer';
-export { MobilePaperViewer } from './MobilePaperViewer';  // 폰의 A4 장표 뷰어 — PaperModal의 형제. 읽기(투영)/원본(2D) 두 뷰
+export { MobilePaperViewer } from './MobilePaperViewer';  // 폰의 A4 문서 뷰어 — children(인쇄 좌표계)을 2D로. 폭맞춤 시작·더블탭 100%
 export {
   UNVIEWABLE_REASON,
   type Attachment, type AttachmentKind, type UnviewableReason, type AttachmentViewerContract,

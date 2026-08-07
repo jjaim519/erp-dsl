@@ -1,7 +1,7 @@
-/* MobilePaperViewer — 폰의 A4 장표 뷰어. 격리 구역 내 raw CSS(셸 골격과 동류의 명시 예외).
+/* MobilePaperViewer — 폰의 A4 문서 뷰어. 격리 구역 내 raw CSS(셸 골격과 동류의 명시 예외).
    시각 체계는 모바일 계열 그대로: 면·그림자 0, 구획은 헤어라인. 값은 전부 토큰.
-   ※ 예외 하나 — **원본 뷰의 종이(.mpv-paper)만 흰 면을 갖는다.** 그건 UI 표면이 아니라 *물리적 종이*의
-     재현이고, 회색 무대 위에 놓여야 "한 장"으로 읽힌다(PaperModal의 .erpPaper와 같은 판단). */
+   ※ 종이는 여기서 안 그린다 — 흰 면도 여백도 문서(children)가 갖고 온다. 이 파일이 소유하는 건
+     «종이가 놓인 바닥»(회색 무대)까지다. */
 
 /* 전체 화면 커버 — 모달이 아니다(백드롭·그림자 없음). MobileAttachmentViewer와 같은 층·같은 규범.
    셸 위에 덮으므로 fixed. 안전영역은 위아래 모두 받는다(하단 확대 바가 홈 인디케이터에 안 물리게). */
@@ -43,52 +43,7 @@
 }
 .mpv-nav-spacer { flex: 1; min-width: 0; }
 
-/* ── 읽기 뷰 — 라벨-값 행 ──────────────────────────────────────────────────────
-   행 어휘는 목록 계열을 따른다(좌우 인셋 md · 들여쓴 구분선 · 44 하한).
-   **공개 부품으로 안 낸다** — 지금 소비처가 이 뷰어 하나뿐이다. 둘째가 생기면 그때 MobileKeyRow가 된다
-   (R4에서 배운 것: 지금 만들면 쓰는 데 없는 API가 된다). */
-.mpv-read { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
-
-.mpv-kv {
-  position: relative;
-  display: flex;
-  align-items: flex-start;
-  gap: var(--mantine-spacing-md);
-  min-height: var(--erp-touch-target);
-  padding: var(--mantine-spacing-md);
-}
-.mpv-kv::after {
-  content: '';
-  position: absolute;
-  left: var(--row-divider-inset);
-  right: 0;
-  bottom: 0;
-  height: var(--border-width);
-  background: var(--border-default);
-}
-.mpv-read > .mpv-kv:last-child::after,
-.mpv-group > .mpv-kv:last-child::after { content: none; }
-
-/* 라벨 폭 고정 — 값의 시작선이 행마다 흔들리면 훑을 때 눈이 매번 다시 찾는다.
-   96px은 캡션(13px) 기준 한글 6자 + 여유. 넘치면 줄바꿈된다(자르지 않는다 — 라벨은 정보다). */
-.mpv-kv-k { flex: none; width: 96px; padding-top: 2px; }
-.mpv-kv-v { flex: 1; min-width: 0; word-break: break-word; }
-
-/* 값이 한 줄에 안 들어가는 종류(image·node) — 라벨 아래로 스택. 옆에 두면 값이 96px에 눌린다. */
-.mpv-kv.stacked { flex-direction: column; gap: var(--mantine-spacing-xxs); }
-.mpv-kv.stacked .mpv-kv-k { width: auto; padding-top: 0; }
-.mpv-img { max-width: 100%; height: auto; display: block; }
-
-/* 그룹 머리 — rowSpan 라벨이 내려온 자리. MobileList의 .mlist-group-hd와 같은 어법·같은 여백. */
-.mpv-group-hd {
-  display: flex;
-  align-items: center;
-  gap: var(--mantine-spacing-sm);
-  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md) var(--mantine-spacing-xs);
-}
-.mpv-group + .mpv-group { margin-top: var(--mantine-spacing-xs); }
-
-/* ── 원본 뷰 — 2D 무대 ────────────────────────────────────────────────────────
+/* ── 2D 무대 ──────────────────────────────────────────────────────────────────
    팬은 브라우저 기본 스크롤이다(제스처를 직접 잡지 않는다 — 부품 헤더 주석).
    transform은 레이아웃 크기를 안 바꾸므로 스크롤 범위는 .mpv-spacer가 만든다. */
 .mpv-stage {
@@ -103,21 +58,16 @@
      ⚠ OS 레벨 페이지 확대(visual viewport)는 여전히 살아 있다 — viewport meta 불가침(SC 1.4.4)의 결과이고,
        접근성 관점에서 그게 맞다(우리 핀치가 안 먹는 상황에도 확대 경로가 하나 남는다). */
   touch-action: pan-x pan-y;
-  background: var(--bg-tertiary);   /* 종이가 놓인 바닥 — 종이(흰 면)와 구분되어야 "한 장"으로 읽힌다 */
+  background: var(--bg-tertiary);   /* 종이가 놓인 바닥 — 문서(흰 면)와 구분되어야 "한 장"으로 읽힌다 */
 }
+/* 캔버스 — 폭만 인라인으로 못 박고(A4 인쇄 좌표계) **높이는 내용이 정한다.** 여러 장이 이걸로 풀린다.
+   transform(배율 + 가운데 정렬 보정)은 부품이 직접 쓴다 — 핀치 중에는 리렌더가 없어야 한다. */
 .mpv-canvas { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
 .mpv-spacer { pointer-events: none; }
-/* 종이 — 이 파일의 유일한 면. 윤곽 한 줄로 바닥과 나눈다(그림자 안 씀). */
-.mpv-paper {
-  background: var(--bg-primary);
-  border: var(--border-width) solid var(--border-default);
-  box-sizing: border-box;
-  padding: 48px;                    /* 문서 여백 — PaperModal 데모와 같은 값(인쇄 좌표계 기준 px) */
-}
 
-/* 확대 바 — 하단 크롬. **표기**다(핀치가 주 경로). 다만 누를 수 있다: 핀치는 multipoint라
+/* 확대 바 — 하단 크롬. **표기**다(핀치·더블탭이 주 경로). 다만 누를 수 있다: 핀치는 multipoint라
    단일 포인터 대안이 있어야 하고(WCAG 2.5.1 Level A · 06 §1-4), 자리를 더 안 쓰는 방법이 이것이다.
-   누르면 맞춤 → 실제 → 2배 → 맞춤으로 올라간다. */
+   누르면 폭맞춤 → 100% → 200% → 폭맞춤으로 순환한다. */
 .mpv-bar {
   flex: none;
   display: flex;
@@ -137,6 +87,7 @@
   font-family: inherit;
   color: var(--text-secondary);
   cursor: pointer;
+  font-variant-numeric: tabular-nums;   /* 배율이 바뀌어도 표기 폭이 안 흔들린다 */
   -webkit-tap-highlight-color: transparent;
 }
 .mpv-zoom:active { background: var(--bg-secondary); }

@@ -57,12 +57,13 @@ import { Button } from './Button';
 import { Icon } from './Icon';
 import { Switch } from './Switch';
 import { RichText } from './RichText';
+import { PaperDoc } from './PaperDoc';
 import type { FileItem } from './FileUploader';
 import type { BoardComment } from './BoardView';
 import {
   TABS, POSTS, CATS, COMMENTS, POST_HTML, AUDIENCES, ATTACHMENTS, VIEWER_ITEMS,
   SITE_EVENTS, SITE_ENCODING, SITE_ANNOS, monthLabel, shiftMonth,
-  PAPER_ROWS, PAPER_FIELDS, PAPER_VALUES,
+  PAPER_DEMO_SPEC, PAPER_DEMO_VALUES,
 } from './_devFixtures';
 
 export type MobileDemoDef = {
@@ -955,20 +956,21 @@ function EventDetailDemo() {
 }
 
 
-// A4 장표 뷰어 — 열린 채로 띄운다(닫히면 볼 게 없는 부품이라 '열기' 한 단계를 데모가 통과시키지 않는다).
+// A4 문서 뷰어 — 열린 채로 띄운다(닫히면 볼 게 없는 부품이라 '열기' 한 단계를 데모가 통과시키지 않는다).
 //  캔버스가 셸로 감싸지 않는 이유(bare): 이 부품은 셸 *위를 덮는* 전체 화면 커버라 셸 안에 넣으면 층이 거짓이 된다.
+//  ★ 데모가 **여러 장**인 건 일부러다 — 캔버스 높이 실측·장 이음매·쪽 번호가 이 부품에서 제일 깨지기 쉬운
+//    자리이고, 1장짜리 데모로는 그게 /dev에서 안 잡힌다(조합 결함은 소비처가 먼저 본다).
+//    문서를 **배율 없이** 넘기는 것도 계약이다: 배율은 뷰어가 소유한다.
 function PaperViewerDemo() {
   return (
     <MobilePaperViewer
       opened
       onClose={() => {}}
-      title="거래명세서 2026-0805-017"
-      columns={4}
-      rows={PAPER_ROWS}
-      fields={PAPER_FIELDS}
-      values={PAPER_VALUES}
+      title="거래명세서 TS-2026-0814-017"
       actions={[{ label: '내려받기', icon: 'download', iconOnly: true, onClick: () => {} }]}
-    />
+    >
+      <PaperDoc spec={PAPER_DEMO_SPEC} values={PAPER_DEMO_VALUES} />
+    </MobilePaperViewer>
   );
 }
 
@@ -1022,7 +1024,7 @@ export const MOBILE_DEMOS: Record<string, MobileDemoDef> = {
   MobileSegment:     { render: () => <SegmentDemo />, note: '여백 하한(md)이 균등↔스크롤을 정한다(개수 분기 아님) · countTone 2종 · 0건 표시' },
   MobileDecisionBar: { render: () => <DecisionBarDemo />, bare: true, note: '승인/반려 + ⋯ 메뉴. 결재 화면 전체 맥락' },
   MobileAttachmentViewer: { render: () => <AttachmentViewerDemo />, bare: true, note: '이미지 2 · PDF 1 · 폴백 사유 4종. 행을 눌러 연다' },
-  MobilePaperViewer: { render: () => <PaperViewerDemo />, bare: true, note: '읽기(투영)/원본(2D+확대 3단) 두 뷰. rowSpan 라벨이 그룹 머리로 내려간다 — 세그먼트를 눌러 대조하라' },
+  MobilePaperViewer: { render: () => <PaperViewerDemo />, bare: true, note: '거래명세서 여러 장(48줄). 열자마자 폭맞춤=한 장 전체 · 더블탭으로 100% ↔ 폭맞춤 · 하단 표기를 눌러도 순환. 아래로 끌면 장 이음매와 쪽 번호가 나온다' },
   MobileStepTrail:   { render: () => <StepTrailDemo />, note: '접힘(기본)·펼침·반려·summary 없음' },
   MobileList:        { render: () => <ListDemo />, note: '평면·섹션·섹션+그룹·로딩·빈 상태 5모드 전환' },
   MobileBottomSheet: { render: () => <BottomSheetDemo />, note: '필드 시트(제목+커밋 2) · 피커 시트(제목 없음). 입력칸을 누르면 키보드만큼 올라간다' },

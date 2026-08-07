@@ -134,42 +134,82 @@ export const shiftMonth = (m: string, n: number) => {
   return `${Math.floor(i / 12)}-${String((i % 12) + 1).padStart(2, '0')}`;
 };
 
-// ── A4 장표 — MobilePaperViewer 데모(거래명세서). columns 4.
-//  colSpan·rowSpan·image를 전부 등장시킨다: 세 가지가 읽기 뷰로 어떻게 투영되는지가 이 부품의 전부다.
-export const PAPER_FIELDS: import('../schema').FieldSpec[] = [
-  { name: 'site', label: '현장주소', type: 'text' },
-  { name: 'manager', label: '발주담당자', type: 'text' },
-  { name: 'phone', label: '연락처', type: 'text', mask: 'phone' },
-  { name: 'useDate', label: '사용일', type: 'date' },
-  { name: 'door', label: '도어재작', type: 'select', options: [{ label: '케이산업', value: 'kei' }, { label: '미정', value: 'tbd' }] },
-  { name: 'usage', label: '사용용도', type: 'textarea' },
-  { name: 'bizName', label: '상호', type: 'text' },
-  { name: 'bizNo', label: '등록번호', type: 'text' },
-  { name: 'bizAddr', label: '주소', type: 'text' },
-  { name: 'amount', label: '합계', type: 'currency' },
-];
+// ── A4 문서 — MobilePaperViewer 데모(거래명세서). **PaperSpec이다**(v0.77.0에서 갈렸다).
+//  뷰어가 children을 받게 되면서 데모도 실전 경로를 탄다: PaperSpec → PaperDoc → 뷰어.
+//  줄 수를 **일부러 쪽을 넘기게** 잡았다 — 여러 장(캔버스 높이 실측·이음매·쪽 번호)이 이 부품에서
+//  제일 깨지기 쉬운 자리인데, 1장짜리 데모로는 /dev에서 안 잡힌다.
+//  ⚠ 여기서 서식을 손으로 적는 이유: src/forms는 배포 대상 밖이라(package.json files) 배포되는
+//    src/ui가 그걸 import하면 소비처에 끊긴 참조가 실린다.
+const line = (i: number) => ({
+  no: i + 1,
+  name: `주방 하드웨어 품목 ${i + 1}`,
+  spec: `${((i % 4) + 1) * 100}×${((i % 3) + 1) * 200}`,
+  qty: (i % 5) + 1,
+  amount: 10_000 * ((i % 7) + 1) * ((i % 5) + 1),
+});
 
-export const PAPER_VALUES: Record<string, unknown> = {
-  site: '서울 성동구 왕십리로 83-21 아크로 서울포레스트 D동 2201호',
-  manager: '김현수 과장',
-  phone: '010-1234-5678',
-  useDate: '2026-08-14',
-  door: 'kei',
-  usage: 'D동 2201호 주방 상부장·하부장 교체 및 아일랜드 신설. 기존 타일 철거 포함.',
-  bizName: '㈜한빛산업',
-  bizNo: '123-45-67890',
-  bizAddr: '경기 화성시 동탄산단6길 21',
-  amount: 5960000,
+export const PAPER_DEMO_SPEC: import('../schema').PaperSpec = {
+  id: 'demo-trade-statement',
+  name: '거래명세서',
+  columns: 24,
+  orientation: 'portrait',
+  fields: [
+    { name: 'docNo', label: '문서번호', type: 'text' },
+    { name: 'issueDate', label: '작성일자', type: 'date' },
+    { name: 'buyer', label: '거래처', type: 'text' },
+  ],
+  arrays: [{
+    name: 'lines', label: '품목',
+    of: [
+      { name: 'no', label: 'No', type: 'number' },
+      { name: 'name', label: '품목', type: 'text' },
+      { name: 'spec', label: '규격', type: 'text' },
+      { name: 'qty', label: '수량', type: 'number' },
+      { name: 'amount', label: '금액', type: 'currency' },
+    ],
+  }],
+  cells: [
+    { r: 0, c: 0, cs: 24, text: '거래명세서', typo: 'display', align: 'center' },
+
+    { r: 2, c: 0, cs: 4, text: '문서번호', border: ['t', 'r', 'b', 'l'], align: 'center', fill: 'shade' },
+    { r: 2, c: 4, cs: 8, field: 'docNo', border: ['t', 'r', 'b', 'l'] },
+    { r: 2, c: 12, cs: 4, text: '작성일자', border: ['t', 'r', 'b', 'l'], align: 'center', fill: 'shade' },
+    { r: 2, c: 16, cs: 8, field: 'issueDate', format: 'date', border: ['t', 'r', 'b', 'l'] },
+    { r: 3, c: 0, cs: 4, text: '거래처', border: ['t', 'r', 'b', 'l'], align: 'center', fill: 'shade' },
+    { r: 3, c: 4, cs: 20, field: 'buyer', border: ['t', 'r', 'b', 'l'] },
+
+    // 열 머리 — 쪽을 넘기면 다시 그려진다(band: columnHeader).
+    { r: 5, c: 0, cs: 2, text: 'No', border: ['r', 'b', 'l'], borderStrong: ['t'], align: 'center', fill: 'shade' },
+    { r: 5, c: 2, cs: 12, text: '품목', border: ['r', 'b', 'l'], borderStrong: ['t'], align: 'center', fill: 'shade' },
+    { r: 5, c: 14, cs: 4, text: '규격', border: ['r', 'b', 'l'], borderStrong: ['t'], align: 'center', fill: 'shade' },
+    { r: 5, c: 18, cs: 2, text: '수량', border: ['r', 'b', 'l'], borderStrong: ['t'], align: 'center', fill: 'shade' },
+    { r: 5, c: 20, cs: 4, text: '금액', border: ['r', 'b', 'l'], borderStrong: ['t'], align: 'center', fill: 'shade' },
+
+    { r: 6, c: 0, cs: 2, field: 'lines.no', format: 'number', border: ['t', 'r', 'b', 'l'], align: 'center' },
+    { r: 6, c: 2, cs: 12, field: 'lines.name', border: ['t', 'r', 'b', 'l'], flow: 'ellipsis' },
+    { r: 6, c: 14, cs: 4, field: 'lines.spec', border: ['t', 'r', 'b', 'l'], align: 'center' },
+    { r: 6, c: 18, cs: 2, field: 'lines.qty', format: 'number', border: ['t', 'r', 'b', 'l'], align: 'end' },
+    { r: 6, c: 20, cs: 4, field: 'lines.amount', format: 'currency', border: ['t', 'r', 'b', 'l'], align: 'end' },
+
+    // 총계 — 마지막 쪽에만(band: summary).
+    { r: 8, c: 0, cs: 20, text: '합계', border: ['t', 'l', 'b'], borderStrong: ['b'], align: 'end', typo: 'body-strong' },
+    { r: 8, c: 20, cs: 4, agg: { fn: 'sum', of: 'lines.amount' }, format: 'currency',
+      border: ['t', 'r', 'l'], borderStrong: ['b'], align: 'end', typo: 'body-strong' },
+
+    // 쪽 번호 — 여러 장이 진짜로 갈렸는지의 증거다(band: pageFooter).
+    { r: 10, c: 0, cs: 24, template: '{{@page}} / {{@pages}}', align: 'center', typo: 'caption', ink: 'secondary' },
+  ],
+  bands: [
+    { kind: 'columnHeader', r1: 5, r2: 5 },
+    { kind: 'repeat', r1: 6, r2: 6, source: 'lines' },
+    { kind: 'summary', r1: 8, r2: 8 },
+    { kind: 'pageFooter', r1: 10, r2: 10 },
+  ],
 };
 
-export const PAPER_ROWS = [
-  [{ label: '현장주소' }, { field: 'site', colSpan: 3 }],
-  [{ label: '발주담당자' }, { field: 'manager' }, { label: '연락처' }, { field: 'phone' }],
-  [{ label: '사용일' }, { field: 'useDate' }, { label: '도어재작' }, { field: 'door' }],
-  [{ label: '사용용도' }, { field: 'usage', colSpan: 3 }],
-  // rowSpan 라벨 — 읽기 뷰에서 **그룹 머리**가 된다(손실 0).
-  [{ label: '공급자', rowSpan: 3 }, { label: '상호' }, { field: 'bizName', colSpan: 2 }],
-  [{ label: '등록번호' }, { field: 'bizNo', colSpan: 2 }],
-  [{ label: '주소' }, { field: 'bizAddr', colSpan: 2 }],
-  [{ label: '합계' }, { field: 'amount', colSpan: 3 }],
-];
+export const PAPER_DEMO_VALUES: Record<string, unknown> = {
+  docNo: 'TS-2026-0814-017',
+  issueDate: '2026-08-14',
+  buyer: '△△건설(주) — 아크로 서울포레스트 D동 2201호',
+  lines: Array.from({ length: 48 }, (_, i) => line(i)),
+};
