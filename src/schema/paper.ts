@@ -22,6 +22,20 @@ export const PAPER_CANON = {
 export const PAPER_MARGIN = 57;      // 15mm
 export const PAPER_PAGE_ROWS = 42;   // 쪽당 행 수 기본값 → 행 24px
 
+/**
+ * 타이포 단계별 «행 단위 대비 글자 크기» 비율 · 줄 간격 · 칸 좌우 여백.
+ *
+ * ⚠ **`paper.css`의 `--paper-*`·`line-height`·`padding`과 같은 수여야 한다.** 거기는 *그리는* 쪽이고
+ *   여기는 *「몇 줄이 될까」를 재는* 쪽이다 — 어긋나면 배치 엔진이 행을 잘못 키운다.
+ *   CSS가 TS를 못 읽어서 두 벌이 되는 자리라, 값의 주인은 여기로 두고 CSS에 주석을 걸어 둔다.
+ */
+export const PAPER_TYPO_RATIO: Record<PaperTypo, number> = {
+  display: 0.92, heading: 0.71, subheading: 0.625,
+  body: 0.583, 'body-strong': 0.583, caption: 0.48,
+};
+export const PAPER_LINE_HEIGHT = 1.3;
+export const PAPER_CELL_PAD_X = 5;
+
 export type PaperOrientation = keyof typeof PAPER_CANON;
 
 /**

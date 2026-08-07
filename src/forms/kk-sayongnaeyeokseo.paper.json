@@ -3,7 +3,6 @@
   "name": "사용내역서",
   "columns": 24,
   "orientation": "portrait",
-  "pageRows": 31,
   "fields": [
     {
       "name": "현장주소",
@@ -360,8 +359,8 @@
     },
     {
       "kind": "pageFooter",
-      "r1": 30,
-      "r2": 30
+      "r1": 41,
+      "r2": 41
     }
   ]
 }

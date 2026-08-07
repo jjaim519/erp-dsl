@@ -6,6 +6,7 @@
 // 그리고 브라우저 인쇄에 맡기면 매 쪽 머리말이 안 붙고(사파리는 첫 장만) 표가 행 중간에서 잘린다.
 import {
   pageRowsOf, rowUnitOf, PAPER_TAG,
+  PAPER_CANON, PAPER_MARGIN, PAPER_TYPO_RATIO, PAPER_LINE_HEIGHT, PAPER_CELL_PAD_X,
   type PaperSpec, type PaperCell, type PaperBand, type PaperAgg,
 } from '../schema/paper';
 
@@ -107,6 +108,48 @@ function rowHeight(spec: PaperSpec, r: number): number {
   return spec.rows?.find((x) => x.r === r)?.h ?? 1;
 }
 
+/**
+ * 글자 폭 어림(em 단위). 배치 엔진은 React 밖 순수 함수라 폰트 메트릭이 없어 **실측이 아니라 어림**이다.
+ *
+ * 값은 눈대중이 아니라 **캔버스로 잰 것**이다(14px, -apple-system/Apple SD Gothic Neo).
+ * 처음엔 «한글 1em · 그 밖 0.5em»으로 잡았는데 **15~29% 과대평가**라, 한 줄이면 될 칸이
+ * 죄다 두 행으로 커졌다. 네 갈래로 나누니 오차가 ±10% 안으로 들어온다:
+ *
+ *   한글 0.871 → 실측 «측면 키큰장 2700 × 350 × 650 : 도장» 213px vs 어림 215px
+ *   숫자 0.55 · 공백 0.28 · 그 밖 0.5
+ *
+ * 남은 오차는 «조금 크게» 쪽으로 기운다 — 모자라서 잘리느니 한 줄 남는 편이 낫다.
+ */
+const CJK = /[ᄀ-ᇿ　-鿿가-힯＀-￯]/;
+const emWidth = (s: string) => [...s].reduce((w, ch) => {
+  if (CJK.test(ch)) return w + 0.871;
+  if (ch === ' ') return w + 0.28;
+  if (ch >= '0' && ch <= '9') return w + 0.55;
+  return w + 0.5;
+}, 0);
+
+/**
+ * 이 칸의 글자가 **몇 행을 먹는가**. 칸 높이가 고정이라 넘치면 조용히 잘리던 것을 —
+ * 긴 품명이 두 줄이 되면 아래쪽 절반이 사라졌다 — 행을 키워 담는다.
+ *
+ * 안 늘리는 자리 셋:
+ *  · `flow: 'ellipsis'` — 저작자가 «한 줄로 자른다»고 이미 말했다
+ *  · 세로 병합(rs>1) — 저작자가 높이를 손으로 줬다. 그걸 엔진이 또 키우면 의도가 두 번 적용된다
+ *  · 이미지 — 글자가 아니다
+ */
+function wrapUnits(c: PaperCell, text: string, spec: PaperSpec): number {
+  if (!text || c.image || c.flow === 'ellipsis' || (c.rs ?? 1) > 1) return 1;
+  const rowUnit = rowUnitOf(spec);
+  const inner = PAPER_CANON[spec.orientation].w - PAPER_MARGIN * 2;
+  const width = (inner / spec.columns) * (c.cs ?? 1) - PAPER_CELL_PAD_X * 2;
+  if (width <= 0) return 1;
+  const font = rowUnit * (PAPER_TYPO_RATIO[c.typo ?? 'body'] ?? PAPER_TYPO_RATIO.body);
+  const lines = text.split('\n')
+    .reduce((n, line) => n + Math.max(1, Math.ceil((emWidth(line) * font) / width)), 0);
+  // 6단위에서 멈춘다 — 어림이 빗나가도 한 칸이 쪽을 통째로 먹지 않게 하는 안전판.
+  return Math.min(6, Math.max(1, Math.ceil((lines * font * PAPER_LINE_HEIGHT) / rowUnit)));
+}
+
 function buildCell(
   c: PaperCell, values: Record<string, unknown>, scope: Scope,
   page: { n: number; total: number },
@@ -145,7 +188,9 @@ function buildRow(
   const cells = spec.cells
     .filter((c) => c.r === r && pick(c))
     .map<OutCell>((c) => buildCell(c, values, scope, page));
-  return { h: rowHeight(spec, r), cells };
+  // 행 높이 — 저작자가 준 값과 «글자가 요구하는 값» 중 큰 쪽. 늘어난 행은 쪽 나눔에도 그대로 반영된다.
+  const need = cells.reduce((m, o) => Math.max(m, wrapUnits(o.spec, o.text, spec)), 1);
+  return { h: Math.max(rowHeight(spec, r), need), cells };
 }
 
 // ── 반복 묶음 ──────────────────────────────────────────────────

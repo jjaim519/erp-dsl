@@ -3,7 +3,6 @@
   "name": "갑지",
   "columns": 24,
   "orientation": "portrait",
-  "pageRows": 31,
   "fields": [
     {
       "name": "시공팀",
@@ -465,8 +464,8 @@
     },
     {
       "kind": "pageFooter",
-      "r1": 30,
-      "r2": 30
+      "r1": 41,
+      "r2": 41
     }
   ]
 }
