@@ -177,7 +177,7 @@ export { CalendarPage, type CalendarEvent, type CalendarEncoding, type CalendarC
 export { BoardList, type BoardPost } from './BoardList';
 export { BoardView, type BoardComment, type BoardAttachment } from './BoardView';
 export { BoardWrite, type AudienceNode } from './BoardWrite';
-export { buildHierarchyFromRows, type HierarchyImport } from './hierarchyImport';
+export { buildHierarchyFromRows, type HierarchyImport, type HierarchyField } from './hierarchyImport';
 export type { DataTableColumn, DataTableRow, DataTableSort } from './DataTable';
 export type { SheetColumn, SheetRow, SheetEditKind, SheetCommitResult } from './DataSheet';
 

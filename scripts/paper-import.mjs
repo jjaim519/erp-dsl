@@ -301,6 +301,28 @@ async function convert(file, opts) {
   const ws = wb.getWorksheet(SHEET_FORM);
   if (!ws) throw new Error(`「${SHEET_FORM}」 시트를 찾지 못했습니다.`);
 
+  // **계층 등록표는 문서가 아니다.** 세 시트 이름은 같지만(양식·필드·안내) 「양식」이 «그릴 레이아웃»이
+  //  아니라 «채울 표»다 — 태그도 Z열 역할도 없다. 그대로 변환하면 터지지 않고 **쓰레기가 나온다**
+  //  (쪽당 1행 → 441pt 글자). 조용히 이상한 걸 뱉느니 여기서 막는다. 마커를 따로 두지 않는 이유는
+  //  사용자가 새로 배울 문법을 늘리지 않기 위해서다 — 있는 것만으로 충분히 갈린다.
+  {
+    let tag = false, band = false;
+    ws.eachRow((row) => {
+      row.eachCell((cell, c) => {
+        if (c === BAND_COL && String(cell.value ?? '').trim() in BAND_KO) band = true;
+        else if (c < BAND_COL && TAG.test(String(cell.value ?? ''))) tag = true;
+        TAG.lastIndex = 0;
+      });
+    });
+    if (!tag && !band) {
+      throw new Error(
+        '이 파일은 문서 서식이 아닙니다 — 「양식」에 값 자리({{…}})도 Z열 역할도 없습니다.\n'
+        + '  계층 등록표라면 변환하지 않습니다: 소비 앱이 업로드받아 buildHierarchyFromRows로 읽습니다.\n'
+        + '  문서를 만들려면  npx erp-paper-import --template  으로 빈 서식부터 꺼내세요.',
+      );
+    }
+  }
+
   const { fields, arrays, images, kind } = readFields(wb.getWorksheet(SHEET_FIELDS));
   const theme = themePalette(wb);   // 테마 색을 헥스로 풀 때 쓴다(없으면 argb만 읽힌다)
 
@@ -544,6 +566,9 @@ const flag = (n) => { const i = argv.indexOf(`--${n}`); return i >= 0 ? argv[i +
 const TEMPLATES = {
   '빈서식': ['paper-template.xlsx', '표준 머리·꼬리만 있는 24×42 격자'],
   '내역서': ['paper-sample-tree-ledger.xlsx', '구획 제목 + 깊이 트리 + 구획별 소계'],
+  //  계층 등록표는 **문서가 아니다**(아래 «문서가 아닙니다» 참조). 같은 세 시트를 쓰고
+  //  같은 명령으로 꺼내지만, 변환 대상은 아니고 소비 앱이 런타임에 읽는다.
+  '계층': ['hierarchy-template.xlsx', '계층 초기 등록표 — 사용자가 채워 올리는 표(문서 아님)'],
 };
 
 if (argv.includes('--template')) {

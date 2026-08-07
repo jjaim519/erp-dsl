@@ -26,6 +26,7 @@
     "scripts/paper-import.mjs",
     "public/paper-template.xlsx",
     "public/paper-sample-tree-ledger.xlsx",
+    "public/hierarchy-template.xlsx",
     "README.md",
     "!src/ui/_dev.ts",
     "!src/ui/_Dev*"

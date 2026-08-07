@@ -218,19 +218,21 @@ function fieldSheet(wb, extra = [], opts = {}) {
   ws.getRow(1).font = { bold: true, size: 10 };
   ws.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GREY } };
 
-  const mark = ws.addRow({ n: '── 표준(모든 문서 공통) ──' });
-  mark.font = { size: 9, color: { argb: HINT } };
-  STANDARD_FIELDS.forEach((f) => ws.addRow(optional.has(f.n) ? { ...f, r: '' } : f));
+  if (!opts.bare) {
+    const mark = ws.addRow({ n: '── 표준(모든 문서 공통) ──' });
+    mark.font = { size: 9, color: { argb: HINT } };
+  }
+  if (!opts.bare) STANDARD_FIELDS.forEach((f) => ws.addRow(optional.has(f.n) ? { ...f, r: '' } : f));
   if (extra.length) {
-    const m2 = ws.addRow({ n: '── 이 문서 전용 ──' });
-    m2.font = { size: 9, color: { argb: HINT } };
+    if (!opts.bare) {
+      const m2 = ws.addRow({ n: '── 이 문서 전용 ──' });
+      m2.font = { size: 9, color: { argb: HINT } };
+    }
     extra.forEach((f) => ws.addRow(f));
   }
+  const types = opts.types ?? '글자,숫자,금액,날짜,여러 줄,선택,예아니오,이미지,깊이';
   for (let r = 2; r <= 80; r++) {
-    ws.getCell(r, 3).dataValidation = {
-      type: 'list', allowBlank: true,
-      formulae: ['"글자,숫자,금액,날짜,여러 줄,선택,예아니오,이미지,깊이"'],
-    };
+    ws.getCell(r, 3).dataValidation = { type: 'list', allowBlank: true, formulae: [`"${types}"`] };
     ws.getCell(r, 4).dataValidation = { type: 'list', allowBlank: true, formulae: ['"필수"'] };
   }
   return ws;
@@ -398,7 +400,94 @@ async function sampleTreeLedger() {
 }
 
 await mkdir(OUT, { recursive: true });
-const made = [await starter(), await sampleTreeLedger()];
+// ── ③ 계층 등록표 ──────────────────────────────────────────────
+// 문서 서식과 **같은 세 시트**(양식·필드·안내)를 쓴다. 다른 건 「양식」이 «그릴 레이아웃»이 아니라
+//  «채울 표»라는 것뿐이다 — 파일을 열었을 때 규칙이 하나여야 저작하는 사람이 안 헷갈린다.
+//  (문서로 렌더되지 않으므로 24열 격자·Z열 역할·인쇄 영역이 없다. 변환기는 그걸로 둘을 가른다.)
+//
+// ⚠ **「양식」에는 헤더 행만 둔다.** 예시는 「안내」에 그린다 — 예시를 데이터 시트에 두면
+//   지우라고 적어둬도 안 지우고 그대로 올려서 «남의 회사 현장»이 등록된다. 넘겨주는 파일은
+//   **그대로 올려도 0건**이 나와야 한다.
+//
+// 열의 «뜻»은 전부 「필드」가 말한다. 전에는 헤더에 `면적(숫자)`처럼 괄호로 박아 두고
+//  「헤더 글자는 바꾸지 마세요」라고 경고했는데, 그건 사람이 읽는 이름과 기계가 읽는 계약을
+//  한 칸에 욱여넣은 것이었다. 이제 헤더는 이름이고 종류는 「필드」에 있다.
+const HIERARCHY_TYPES = '분류,이름,부제,배지,배지색,썸네일,글자,숫자,금액,날짜,퍼센트,예아니오';
+const HIERARCHY_FIELDS = [
+  // 「분류」가 폴더 단계다 — 몇 개를 두든 그만큼 깊어진다(전에는 «품목명 왼쪽»이라는 암묵 규칙이었다).
+  { n: '대분류', l: '대분류', t: '분류', r: '', a: '' },
+  { n: '중분류', l: '중분류', t: '분류', r: '', a: '' },
+  { n: '품목명', l: '품목명', t: '이름', r: '필수', a: '' },
+  { n: '부제', l: '부제', t: '부제', r: '', a: '' },
+  { n: '상태', l: '상태', t: '배지', r: '', a: '' },
+  { n: '상태색', l: '상태 색', t: '배지색', r: '', a: '' },
+  { n: '썸네일', l: '썸네일', t: '썸네일', r: '', a: '' },
+  //  아래 둘은 «이 도메인의» 예다. 지우고 자기 열을 넣으면 된다 — 그게 이 표의 확장 방식이다.
+  { n: '면적', l: '면적', t: '숫자', r: '', a: '' },
+  { n: '계약일', l: '계약일', t: '날짜', r: '', a: '' },
+];
+
+async function hierarchyTemplate() {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'erp-dsl';
+
+  // 「양식」 — 헤더 한 줄. 데이터 표라 격자·인쇄 설정이 없다.
+  const ws = wb.addWorksheet('양식');
+  ws.columns = HIERARCHY_FIELDS.map((f) => ({ header: f.n, key: f.n, width: Math.max(10, f.n.length * 2 + 6) }));
+  const head = ws.getRow(1);
+  head.font = { name: '맑은 고딕', size: 10, bold: true };
+  head.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: GREY } };
+  head.border = { bottom: MED };
+  ws.views = [{ state: 'frozen', ySplit: 1 }];   // 길게 채워도 머리가 따라온다
+
+  fieldSheet(wb, HIERARCHY_FIELDS, { bare: true, types: HIERARCHY_TYPES });
+
+  // 「안내」 — 문서용과 규칙이 다르므로 여기서 직접 쓴다. 예시 표가 여기 산다.
+  const g = wb.addWorksheet('안내');
+  g.getColumn(1).width = 16;
+  for (let c = 2; c <= 8; c++) g.getColumn(c).width = 14;
+  const line = (cells, opt = {}) => {
+    const row = g.addRow(cells);
+    row.font = { name: '맑은 고딕', size: 10, bold: !!opt.bold, color: { argb: opt.hint ? HINT : 'FF16181C' } };
+    row.alignment = { vertical: 'middle', wrapText: !!opt.wrap };
+    row.height = opt.bold ? 26 : 18;
+    return row;
+  };
+  line(['이 파일 채우는 법 — 계층 등록표'], { bold: true });
+  line(['', '「양식」 시트 한 장만 채우면 됩니다. 이 안내와 「필드」 시트는 설명·설정용입니다.']);
+  line([]);
+  line(['채우는 규칙'], { bold: true });
+  line(['', '· 왼쪽 「대분류 / 중분류」가 폴더입니다. 왼쪽이 큰 분류, 오른쪽이 작은 분류.']);
+  line(['', '· 같은 폴더에 품목이 여럿이면 폴더 칸을 똑같이 반복해 적으세요.']);
+  line(['', '· 폴더만 먼저 만들려면 폴더 칸만 적고 「품목명」을 비워 두세요.']);
+  line(['', '· 더 깊은 분류가 필요하면 「필드」 시트에 종류가 「분류」인 줄을 더하고, 「양식」에 그 열을 넣으세요.']);
+  line([]);
+  line(['예시 — 이 표를 「양식」 시트에 옮겨 적으면 이렇게 됩니다'], { bold: true });
+  const ex = [
+    ['대분류', '중분류', '품목명', '부제', '상태', '상태색', '면적', '계약일'],
+    ['현장', '강남 현장', '거실 도면', 'rev.2', '승인', '성공', 32, '2026-05-02'],
+    ['현장', '강남 현장', '주방 도면', 'rev.1', '검토중', '경고', 18, '2026-05-10'],
+    ['현장', '판교 현장', '', '', '', '', '', ''],
+    ['거래처', '가구상사', '계약서', '', '확정', '성공', '', '2026-04-01'],
+  ];
+  ex.forEach((cells, i) => {
+    const row = line(cells, { hint: true });
+    if (i === 0) row.font = { name: '맑은 고딕', size: 10, bold: true, color: { argb: HINT } };
+    row.eachCell((c) => { c.border = { top: THIN, left: THIN, bottom: THIN, right: THIN }; });
+  });
+  line(['', '「판교 현장」 줄처럼 품목명을 비우면 폴더만 생깁니다.'], { hint: true });
+  line([]);
+  line(['「필드」 시트'], { bold: true });
+  line(['', '· 「양식」의 각 열이 무엇인지 여기서 말합니다. 「이름」이 「양식」의 헤더와 같아야 합니다.']);
+  line(['', '· 종류: 분류(폴더) · 글자 · 숫자 · 금액 · 날짜 · 퍼센트 · 예아니오 · 배지 · 배지색 · 썸네일']);
+  line(['', '· 배지색에 적는 값: 성공 / 경고 / 위험 / 정보 / 기본. 비우면 기본입니다.']);
+  line(['', '· 「품목명」 오른쪽 첫 열이 카드의 핵심값이 됩니다 — 중요한 지표를 앞에 두세요.']);
+
+  await wb.xlsx.writeFile(`${OUT}/hierarchy-template.xlsx`);
+  return 'hierarchy-template.xlsx';
+}
+
+const made = [await starter(), await sampleTreeLedger(), await hierarchyTemplate()];
 console.log(`[paper] public/ 에 생성:\n        ${made.join('\n        ')}`);
 console.log(
   `        격자 ${COLS}열 × ${ROWS}행\n` +

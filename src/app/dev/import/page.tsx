@@ -1,6 +1,6 @@
 'use client';
 // 초기 등록(엑셀 가져오기) dev 도구 — 미숙자가 양식(.xlsx)을 채워 업로드하면 분류·오브젝트가 익스플로러로 즉시 보인다.
-//  · 파일 해독(SheetJS)은 여기(도구)에서만 — 배포 DSL은 의존성 0 유지. 변환은 라이브러리의 buildHierarchyFromRows(순수, 단일 '등록' 시트).
+//  · 파일 해독(SheetJS)은 여기(도구)에서만 — 배포 DSL은 의존성 0 유지. 변환은 라이브러리의 buildHierarchyFromRows(순수) — 「필드」(열의 뜻) + 「양식」(채운 표) 두 장을 넘긴다.
 //  · 저장은 소비 앱 몫(여기선 미리보기). HierarchyExplorer는 editable 안 줌 = 보기 전용.
 import { useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
@@ -20,11 +20,20 @@ export default function ImportPage() {
     if (!file) return;
     try {
       const wb = XLSX.read(await file.arrayBuffer());
-      // '등록' 시트 우선, 없으면 마지막 시트(맨 앞 '안내' 시트는 피한다).
-      const name = wb.SheetNames.includes('등록') ? '등록' : wb.SheetNames[wb.SheetNames.length - 1];
-      const ws = wb.Sheets[name];
-      const rows = ws ? (XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false }) as string[][]) : [];
-      const result = buildHierarchyFromRows(rows);
+      // 계층 등록표도 문서 서식과 **같은 세 시트**다 — 「양식」이 채우는 표, 「필드」가 열의 뜻.
+      const sheet = (n: string) => {
+        const ws = wb.Sheets[n];
+        if (!ws) throw new Error(`「${n}」 시트를 찾지 못했습니다 — 양식·필드·안내 세 장이 있어야 합니다.`);
+        return XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false }) as string[][];
+      };
+      // 「필드」는 1행이 헤더(이름·라벨·종류·필수·배열), 2행부터가 선언이다.
+      const fields = sheet('필드').slice(1)
+        .filter((r) => String(r[0] ?? '').trim() && !String(r[0]).startsWith('──'))
+        .map((r) => ({
+          name: String(r[0]).trim(), label: String(r[1] ?? '').trim() || undefined,
+          type: String(r[2] ?? '').trim(), required: String(r[3] ?? '').trim() === '필수',
+        }));
+      const result = buildHierarchyFromRows(fields, sheet('양식'));
       setData(result);
       setErr(null);
       setExp(result.nodes.map((n) => n.id));        // 최상위 펼침
@@ -42,7 +51,7 @@ export default function ImportPage() {
       <Stack gap="xxs">
         <Title variant="display">초기 등록 (엑셀 가져오기)</Title>
         <Text variant="body" color="secondary">
-          ‘등록’ 시트 한 장(왼쪽 분류 칸 + ‘품목명’부터의 정보)을 채워 업로드하면 아래 익스플로러로 즉시 보입니다. (미리보기 — 실제 저장은 소비 앱이 담당)
+          「양식」 시트를 채워 업로드하면 아래 익스플로러로 즉시 보입니다. 열의 뜻은 「필드」 시트가 말합니다. (미리보기 — 실제 저장은 소비 앱이 담당)
         </Text>
       </Stack>
 
@@ -70,7 +79,7 @@ export default function ImportPage() {
         />
       ) : (
         <Callout tone="info" title="양식을 업로드하세요">
-          ‘등록’ 시트 한 장만 채우면 됩니다 — ‘품목명’ 열 왼쪽에 분류(대분류·중분류) 칸, 오른쪽에 품목 정보. 자세한 건 양식의 ‘안내’ 시트를 보세요.
+          「양식」 시트만 채우면 됩니다 — 종류가 「분류」인 열이 폴더, 「이름」인 열이 품목 제목입니다. 자세한 건 파일의 「안내」 시트를 보세요.
         </Callout>
       )}
     </Stack>

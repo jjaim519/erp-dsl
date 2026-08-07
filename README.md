@@ -448,6 +448,48 @@ DB → 이 객체로 옮기는 건 소비 앱 몫이다 — 서식은 «어떤 �
 > **아직 못 하는 것** — **2단 그룹**(걸침 칸이나 그룹머리를 두 층으로 두면 안쪽이 바깥을 따라가
 > *틀린 값*이 찍힌다. 검사도 안 잡는다) · 흐름 셀(한 칸이 쪽을 못 넘는다) · 편집 모드 모바일.
 
+### 8-3. 계층 초기 등록 — 엑셀로 트리를 세운다 (선택)
+
+품목 계층(`HierarchyExplorer`)의 초기 데이터를 **사용자가 엑셀로 채워 올린다.** 8-2의 문서 서식과
+**같은 세 시트**(양식·필드·안내)를 쓰지만 **문서가 아니다** — 「양식」이 «그릴 레이아웃»이 아니라
+«채울 표»이고, 빌드 시점이 아니라 **런타임에** 읽는다. 문서 변환기에 넣으면 거부한다.
+
+```bash
+npx erp-paper-import --template 계층 --out public/hierarchy-form.xlsx   # 빈 등록표를 꺼내 앱에 둔다
+```
+
+사용자가 「양식」을 채워 올리면, 그 파일에서 **두 장을 읽어** 넘긴다. 파일 해독 라이브러리는
+소비 앱이 고른다(SheetJS 등) — 패키지는 파일을 안 읽는다.
+
+```ts
+import { buildHierarchyFromRows, HierarchyExplorer, type HierarchyField } from '@jjaim519/erp-dsl';
+
+const sheet = (n: string) => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, defval: '', raw: false });
+const fields: HierarchyField[] = sheet('필드').slice(1)
+  .filter((r) => String(r[0] ?? '').trim() && !String(r[0]).startsWith('──'))
+  .map((r) => ({ name: String(r[0]).trim(), label: String(r[1] ?? '').trim() || undefined,
+                 type: String(r[2] ?? '').trim(), required: String(r[3] ?? '').trim() === '필수' }));
+
+const { nodes, objectsByPath } = buildHierarchyFromRows(fields, sheet('양식'));
+
+<HierarchyExplorer nodes={nodes} objects={objectsByPath[selectedId] ?? []} … />
+```
+
+**트리를 손으로 만들지 않는다.** 경로 문자열을 파싱하거나 폴더를 직접 조립하면 규칙이 두 벌이 된다.
+
+**열의 뜻은 「필드」 시트가 정한다** — 「양식」의 헤더는 사람이 읽는 이름이고, 「필드」의 «이름»과
+같기만 하면 순서를 바꿔도 된다. 종류가 역할을 말한다:
+
+| 종류 | 뜻 |
+|---|---|
+| **분류** | 폴더 단계. **선언 순서가 곧 깊이** — 몇 개를 두든 그만큼 깊어진다 |
+| **이름** | 품목의 제목(하나·필수). 비우면 그 줄은 **빈 폴더만** 만든다 |
+| 부제 · 배지 · 배지색 · 썸네일 | `ObjectCard` 역할 슬롯. 배지색 값: 성공/경고/위험/정보/기본 |
+| 글자 · 숫자 · 금액 · 날짜 · 퍼센트 · 예아니오 | 값. **첫 번째가 핵심값**, 나머지는 보조 — 열 순서가 곧 카드의 정보 위계 |
+
+> 빈 등록표는 **「양식」에 헤더 한 줄뿐**이라 그대로 올리면 0건이 나온다(예시는 「안내」에 있다).
+> 폴더 칸이 하나도 없는 줄은 버린다 — 어디에 둘지 알 수 없는 품목이다.
+
 ---
 
 ## 9. 설계 문서
