@@ -10,7 +10,8 @@ import tseslint from 'typescript-eslint';
 // ─────────────────────────────────────────────────────────────
 
 export default tseslint.config(
-  { ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts'] },
+  // `.claude/worktrees/*`는 이 레포 자신의 체크아웃이라 훑으면 옛 커밋을 두 번 린트한다.
+  { ignores: ['.next/**', 'node_modules/**', 'next-env.d.ts', '.claude/**'] },
 
   // 본체: 두 문을 모든 .ts/.tsx에 건다.
   {

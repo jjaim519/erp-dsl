@@ -51,6 +51,14 @@ for (const name of catalog) {
   }
 }
 
+// 2b. 데스크탑 부품에 박물관 예시가 없다 — 카탈로그에만 올리고 `_registry`를 안 채우면
+//  박물관이 「예시 준비 중」만 띄운다. 부품을 낸 사람은 냈다고 생각하는데 보는 쪽은 못 본다.
+//  ⚠ 경고로만 둔다(실패 아님) — 예전부터 빈 자리가 있어 실패로 만들면 배포가 막힌다.
+const registry = read('_registry.tsx');
+const demoBody = registry.slice(registry.indexOf('const D: Record<string, ReactNode> = {'));
+const deskDemos = new Set([...demoBody.matchAll(/^ {4}([A-Za-z][\w]*):\s/gm)].map((m) => m[1]));
+const noDemo = catalog.filter((n) => !n.startsWith('Mobile') && !deskDemos.has(n));
+
 // 3. 카탈로그 중복
 const seen = new Set();
 for (const name of catalog) {
@@ -61,7 +69,10 @@ for (const name of catalog) {
 // ── 결과 ──
 const mobileParts = catalog.filter((n) => n.startsWith('Mobile'));
 console.log(`[drift] 카탈로그 ${catalog.length}건 (데스크탑 ${catalog.length - mobileParts.length} · 모바일 ${mobileParts.length})`);
-console.log(`[drift] index.ts 값 수출 ${exported.size}건 · 모바일 라이브 예시 ${demos.size}건`);
+console.log(`[drift] index.ts 값 수출 ${exported.size}건 · 모바일 라이브 예시 ${demos.size}건 · 데스크탑 박물관 예시 ${deskDemos.size}건`);
+if (noDemo.length) {
+  console.warn(`[drift] ⚠ 박물관 예시 없음 ${noDemo.length}건 — ${noDemo.join(' · ')} (박물관에 「예시 준비 중」만 뜬다)`);
+}
 
 if (problems.length) {
   console.error(`\n[drift] 불일치 ${problems.length}건:`);
