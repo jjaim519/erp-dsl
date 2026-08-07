@@ -24,9 +24,9 @@
     "src/ui",
     "src/schema",
     "scripts/paper-import.mjs",
-    "public/paper-template.xlsx",
-    "public/paper-sample-tree-ledger.xlsx",
-    "public/hierarchy-template.xlsx",
+    "public/빈서식.xlsx",
+    "public/내역서.xlsx",
+    "public/계층.xlsx",
     "README.md",
     "!src/ui/_dev.ts",
     "!src/ui/_Dev*"
