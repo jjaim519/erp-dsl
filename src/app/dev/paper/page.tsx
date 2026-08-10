@@ -130,7 +130,8 @@ const READONLY = ['발행처명', '발행처사업자번호', '발행처주소',
 export default function PaperDevPage() {
   const [form, setForm] = useState('gabji');
   const [count, setCount] = useState(8);
-  const [zoom, setZoom] = useState('0.8');
+  //  기본 100% — 소비처가 모달에서 보는 크기와 같아야 «크다/작다» 판단이 성립한다(80%면 종이보다 작게 보인다).
+  const [zoom, setZoom] = useState('1');
   const [mode, setMode] = useState('view');
   const [modal, setModal] = useState<'view' | 'edit' | null>(null);
   const [saved, setSaved] = useState<Record<string, unknown> | null>(null);

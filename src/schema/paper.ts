@@ -30,8 +30,8 @@ export const PAPER_PAGE_ROWS = 42;   // 쪽당 행 수 기본값 → 행 24px
  *   CSS가 TS를 못 읽어서 두 벌이 되는 자리라, 값의 주인은 여기로 두고 CSS에 주석을 걸어 둔다.
  */
 export const PAPER_TYPO_RATIO: Record<PaperTypo, number> = {
-  display: 0.92, heading: 0.71, subheading: 0.625,
-  body: 0.583, 'body-strong': 0.583, caption: 0.48,
+  display: 0.79, heading: 0.61, subheading: 0.54,
+  body: 0.50, 'body-strong': 0.50, caption: 0.41,
 };
 export const PAPER_LINE_HEIGHT = 1.3;
 export const PAPER_CELL_PAD_X = 5;
@@ -44,9 +44,9 @@ export type PaperOrientation = keyof typeof PAPER_CANON;
  * 하나를 키울 때 딴 게 깨진다. 그래서 **행 수만 선언하고 나머지는 도출한다**
  * (theme.ts의 `neutral = f(primary)`와 같은 사상 — 관계만 박고 값은 안 박는다).
  *
- *   42행 → 24px → 본문 14px(10.5pt)    ← 기본
- *   36행 → 28px → 본문 16px(12.2pt)
- *   31행 → 32px → 본문 18.6px(14pt)     ← 엑셀 24pt 행 + 14pt 글자와 같은 크기
+ *   42행 → 24px → 본문 12px(9pt)       ← 기본
+ *   36행 → 28px → 본문 14px(10.5pt)
+ *   31행 → 32px → 본문 16px(12pt)
  */
 export const pageRowsOf = (spec: { pageRows?: number }) => spec.pageRows ?? PAPER_PAGE_ROWS;
 
