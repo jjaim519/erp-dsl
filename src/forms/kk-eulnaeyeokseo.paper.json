@@ -171,7 +171,7 @@
     {
       "r": 5,
       "c": 0,
-      "cs": 8,
+      "cs": 10,
       "text": "공　사",
       "border": [
         "t",
@@ -187,8 +187,7 @@
     },
     {
       "r": 5,
-      "c": 8,
-      "cs": 2,
+      "c": 10,
       "text": "단위",
       "border": [
         "t",
@@ -196,14 +195,12 @@
         "b",
         "l"
       ],
-      "align": "center",
       "typo": "body-strong",
       "fill": "#E4E4E4"
     },
     {
       "r": 5,
-      "c": 10,
-      "cs": 2,
+      "c": 11,
       "text": "수량",
       "border": [
         "t",
@@ -211,7 +208,6 @@
         "b",
         "l"
       ],
-      "align": "center",
       "typo": "body-strong",
       "fill": "#E4E4E4"
     },
@@ -265,7 +261,7 @@
     {
       "r": 6,
       "c": 0,
-      "cs": 8,
+      "cs": 10,
       "field": "품목.품명",
       "indent": true,
       "border": [
@@ -275,12 +271,12 @@
       ],
       "borderStrong": [
         "l"
-      ]
+      ],
+      "align": "center"
     },
     {
       "r": 6,
-      "c": 8,
-      "cs": 2,
+      "c": 10,
       "field": "품목.단위",
       "border": [
         "t",
@@ -292,8 +288,7 @@
     },
     {
       "r": 6,
-      "c": 10,
-      "cs": 2,
+      "c": 11,
       "field": "품목.수량",
       "format": "number",
       "border": [

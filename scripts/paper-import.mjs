@@ -535,8 +535,14 @@ async function convert(file, opts) {
   const lastContent = cells.reduce((m, c) => Math.max(m, c.r + (c.rs ?? 1)), 0);
   const pageRows = opts.pageRows
     ?? (footerBand ? footerBand.r2 + 1 : Math.max(lastContent, 1));
-  const bodyPx = Math.floor((1123 - 114) / pageRows) * 0.583;
-  warn.push(`쪽당 ${pageRows}행 → 행 ${Math.floor((1123 - 114) / pageRows)}px · 본문 ${bodyPx.toFixed(1)}px (인쇄 ${(bodyPx * 0.75).toFixed(1)}pt)`);
+  // 본문 글자 = 행 단위 × 본문 비율. ⚠ **비율의 주인은 `schema/paper.ts`의 `PAPER_TYPO_RATIO.body`**이고
+  //  여기(.mjs)는 TS를 못 읽어 같은 수를 한 벌 더 든다(paper.css가 같은 처지다). **바꿀 땐 셋을 같이 바꾼다.**
+  //  0.583(행에 들어가는 최대치)을 0.50으로 내렸을 때 이 줄만 안 따라와서, CLI가 9pt로 나갈 서식을
+  //  «10.5pt»라고 보고했다 — 글자 크기를 정하는 유일한 안내판이라 저작자가 틀린 수로 판단한다.
+  const BODY_RATIO = 0.50;
+  const rowPx = Math.floor((1123 - 114) / pageRows);
+  const bodyPx = rowPx * BODY_RATIO;
+  warn.push(`쪽당 ${pageRows}행 → 행 ${rowPx}px · 본문 ${bodyPx.toFixed(1)}px (인쇄 ${(bodyPx * 0.75).toFixed(1)}pt)`);
 
   // 회사 문서가 한 벌로 읽히려면 셋은 어느 서식에나 있어야 한다 — **좌상단 로고 · 가운데 문서명 · 꼬리말.**
   //  경고로만 둔다(실패 아님): 진짜 이 셋이 없어야 맞는 문서가 있을 수 있고, 그 판단은 저작자 몫이다.

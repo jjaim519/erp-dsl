@@ -28,6 +28,10 @@ export const PAPER_PAGE_ROWS = 42;   // 쪽당 행 수 기본값 → 행 24px
  * ⚠ **`paper.css`의 `--paper-*`·`line-height`·`padding`과 같은 수여야 한다.** 거기는 *그리는* 쪽이고
  *   여기는 *「몇 줄이 될까」를 재는* 쪽이다 — 어긋나면 배치 엔진이 행을 잘못 키운다.
  *   CSS가 TS를 못 읽어서 두 벌이 되는 자리라, 값의 주인은 여기로 두고 CSS에 주석을 걸어 둔다.
+ *
+ * ⚠ **베끼는 자리가 하나 더 있다 — `scripts/paper-import.mjs`의 `BODY_RATIO`**(CLI가 「본문 몇 pt」를
+ *   보고할 때 쓴다). .mjs도 TS를 못 읽는다. 0.583 → 0.50으로 내렸을 때 그 한 곳이 안 따라와
+ *   9pt짜리 서식을 «10.5pt»라고 알려 준 적이 있다. **body를 바꾸면 셋을 같이 바꾼다.**
  */
 export const PAPER_TYPO_RATIO: Record<PaperTypo, number> = {
   display: 0.79, heading: 0.61, subheading: 0.54,
