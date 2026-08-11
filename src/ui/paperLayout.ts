@@ -136,12 +136,17 @@ const emWidth = (s: string) => [...s].reduce((w, ch) => {
  *  · `flow: 'ellipsis'` — 저작자가 «한 줄로 자른다»고 이미 말했다
  *  · 세로 병합(rs>1) — 저작자가 높이를 손으로 줬다. 그걸 엔진이 또 키우면 의도가 두 번 적용된다
  *  · 이미지 — 글자가 아니다
+ *
+ * ⚠ **들여쓴 칸은 계단만큼 좁다.** `depth`를 안 빼면 엔진이 «깊이 0의 폭»으로 재서, 깊은 줄의 긴
+ *   품명이 넘쳐도 행을 안 키운다 — 그런데 칸은 `overflow: hidden`이라 둘째 줄이 **조용히 잘린다.**
+ *   행 동적 확장(v0.82.0)이 트리 안에서만 죽어 있던 자리다. 한 계단 = `--paper-indent`이고
+ *   `paper.css`가 그걸 `--paper-row`(=`rowUnit`)로 깐다 — **둘이 같은 수여야 한다.**
  */
-function wrapUnits(c: PaperCell, text: string, spec: PaperSpec): number {
+function wrapUnits(c: PaperCell, text: string, spec: PaperSpec, depth = 0): number {
   if (!text || c.image || c.flow === 'ellipsis' || (c.rs ?? 1) > 1) return 1;
   const rowUnit = rowUnitOf(spec);
   const inner = PAPER_CANON[spec.orientation].w - PAPER_MARGIN * 2;
-  const width = (inner / spec.columns) * (c.cs ?? 1) - PAPER_CELL_PAD_X * 2;
+  const width = (inner / spec.columns) * (c.cs ?? 1) - PAPER_CELL_PAD_X * 2 - depth * rowUnit;
   if (width <= 0) return 1;
   const font = rowUnit * (PAPER_TYPO_RATIO[c.typo ?? 'body'] ?? PAPER_TYPO_RATIO.body);
   const lines = text.split('\n')
@@ -189,7 +194,8 @@ function buildRow(
     .filter((c) => c.r === r && pick(c))
     .map<OutCell>((c) => buildCell(c, values, scope, page));
   // 행 높이 — 저작자가 준 값과 «글자가 요구하는 값» 중 큰 쪽. 늘어난 행은 쪽 나눔에도 그대로 반영된다.
-  const need = cells.reduce((m, o) => Math.max(m, wrapUnits(o.spec, o.text, spec)), 1);
+  //  `o.depth`는 들여쓴 칸에만 실린다(그 칸은 계단만큼 좁다 — wrapUnits 주석).
+  const need = cells.reduce((m, o) => Math.max(m, wrapUnits(o.spec, o.text, spec, o.depth)), 1);
   return { h: Math.max(rowHeight(spec, r), need), cells };
 }
 
