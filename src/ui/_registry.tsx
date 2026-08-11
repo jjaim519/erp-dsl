@@ -60,6 +60,7 @@ import { LineItemList, type LineItem } from './LineItemList';
 import { QueueList, type QueueItem } from './QueueList';
 import { DecisionPanel } from './DecisionPanel';
 import { NoteThread, type ThreadNote } from './NoteThread';
+import type { Attachment, AttachmentKind } from './_attachment';
 import { ListDetail } from './ListDetail';
 import { EmptyState } from './EmptyState';
 import { PageHeader } from './PageHeader';
@@ -980,10 +981,47 @@ export function Demo({ name }: { name: string }) {
   const [queueSel, setQueueSel] = useState('q1');
   const [branchSel, setBranchSel] = useState('b');
   const [memoDraft, setMemoDraft] = useState('');
+  // 도면 썸네일 자리표시 — 데모용 인라인 SVG(패키지는 정적 파일을 서빙하지 않는다).
+  const PLAN_THUMB = `data:image/svg+xml;utf8,${encodeURIComponent(
+    "<svg xmlns='http://www.w3.org/2000/svg' width='160' height='120'><rect width='160' height='120' fill='#e9ecef'/><path d='M18 96h124M18 24v72M52 24v72M52 60h90' stroke='#868e96' stroke-width='2' fill='none'/></svg>",
+  )}`;
   const [notes, setNotes] = useState<ThreadNote[]>([
     { id: 'n1', body: '고객이 상판 재질 두 가지로 비교 요청.', author: '옥성훈', time: '3일 전', canEdit: true },
-    { id: 'n2', body: '토요일 오후 내방. 3인 가구, 아일랜드 원함.', author: '김지우', time: '5일 전' },
+    { id: 'n2', body: '토요일 오후 내방. 3인 가구, 아일랜드 원함.', author: '김지우', time: '5일 전',
+      attachments: [
+        { id: 'f1', kind: 'pdf', name: '1층_평면도.pdf', size: '2.4 MB' },
+        { id: 'f2', kind: 'image', name: '현장사진.jpg', src: PLAN_THUMB, alt: '주방 현장 사진' },
+      ] },
   ]);
+  // 아직 안 올라간 파일의 주인은 소비처다 — 부품은 그리기만 한다(controlled).
+  const [notePending, setNotePending] = useState<Attachment[]>([]);
+  const noteAttach = {
+    accept: '.pdf,.png,.jpg,.jpeg,.webp',
+    maxSize: 10 * 1024 * 1024,
+    pendingFiles: notePending,
+    onPickFiles: (fs: File[]) => setNotePending((p) => [
+      ...p,
+      ...fs.map((f) => ({
+        id: `${f.name}-${f.size}`,
+        name: f.name,
+        // 확장자→kind 판별은 소비처의 일(부품은 도메인·로케일을 모른다).
+        kind: (f.type.startsWith('image/') ? 'image' : f.name.toLowerCase().endsWith('.pdf') ? 'pdf' : 'document') as AttachmentKind,
+        src: f.type.startsWith('image/') ? URL.createObjectURL(f) : undefined,
+      })),
+    ]),
+    onRemovePendingFile: (id: string) => setNotePending((p) => p.filter((x) => x.id !== id)),
+    // 뷰어를 여는 건 소비처다 — 실제 앱은 여기서 <AttachmentViewer />를 연다.
+    onOpenAttachment: (id: string) => notify.info(`첨부 열기 ${id}`),
+  };
+  // 첨부까지 실어 보내는 제출 — 대기 목록을 비우는 것도 소비처의 일이다.
+  const submitNote = () => {
+    setNotes((n) => [{
+      id: String(n.length + 1), body: memoDraft, author: '나', time: '방금', canEdit: true,
+      attachments: notePending.length ? notePending : undefined,
+    }, ...n]);
+    setMemoDraft('');
+    setNotePending([]);
+  };
   const [files, setFiles] = useState<FileItem[]>([
     { id: 'a', name: '도면.pdf', status: 'done' },
     { id: 'b', name: '사양.xlsx', status: 'uploading', progress: 60 },
@@ -1503,10 +1541,9 @@ export function Demo({ name }: { name: string }) {
         subtitle="강도현 · 010-9902-6614"
         sections={[
           { key: 'memo', label: `메모 ${notes.length}`, children: (
-            <NoteThread notes={notes} draft={memoDraft} onDraftChange={setMemoDraft}
-              onSubmit={() => { setNotes((n) => [{ id: String(n.length + 1), body: memoDraft, author: '나', time: '방금', canEdit: true }, ...n]); setMemoDraft(''); }}
+            <NoteThread notes={notes} draft={memoDraft} onDraftChange={setMemoDraft} onSubmit={submitNote}
               onEdit={(id, body) => setNotes((n) => n.map((x) => (x.id === id ? { ...x, body } : x)))}
-              onDelete={(id) => setNotes((n) => n.filter((x) => x.id !== id))} />
+              onDelete={(id) => setNotes((n) => n.filter((x) => x.id !== id))} {...noteAttach} />
           ) },
           { key: 'branch', label: '견적안 2', labelExtra: <Button variant="ghost" size="sm" onClick={() => {}}>＋ 새 안</Button>, children: (
             <QueueList items={BRANCH_ITEMS.slice(0, 2)} selectedId={branchSel} onSelect={setBranchSel} selectionMark="radio" />
@@ -1519,10 +1556,9 @@ export function Demo({ name }: { name: string }) {
       />
     ),
     NoteThread: (
-      <NoteThread notes={notes} draft={memoDraft} onDraftChange={setMemoDraft}
-        onSubmit={() => { setNotes((n) => [{ id: String(n.length + 1), body: memoDraft, author: '나', time: '방금', canEdit: true }, ...n]); setMemoDraft(''); }}
+      <NoteThread notes={notes} draft={memoDraft} onDraftChange={setMemoDraft} onSubmit={submitNote}
         onEdit={(id, body) => setNotes((n) => n.map((x) => (x.id === id ? { ...x, body } : x)))}
-        onDelete={(id) => setNotes((n) => n.filter((x) => x.id !== id))} />
+        onDelete={(id) => setNotes((n) => n.filter((x) => x.id !== id))} {...noteAttach} />
     ),
     ListDetail: (
       <ListDetail

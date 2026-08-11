@@ -14,6 +14,12 @@ type Props = {
   variant?: Variant;
   size?: 'sm' | 'md';
   disabled?: boolean;
+  // Button 원자가 이미 갖고 있는데 분자가 안 흘려보내던 둘. 새 축이 아니라 *누락된 통로*다.
+  //  · type='submit' — 아이콘 전용 제출 버튼(NoteThread 컴포저). 폼 소유 부품이 Enter 제출을 form으로
+  //    푸는데 제출 버튼만 type='button'이면 그 폼에 제출구가 없다.
+  //  · loading — 제출 중 표시. 텍스트 버튼에만 있고 아이콘 버튼엔 없을 이유가 없다.
+  loading?: boolean;
+  type?: 'button' | 'submit';
   onClick?: () => void;
 };
 
@@ -28,10 +34,11 @@ const MAP: Record<Variant, { btn: Variant; iconColor?: 'primary' | 'secondary' |
   accent:    { btn: 'ghost', iconColor: 'primary' },
 };
 
-export function IconButton({ icon, label, variant = 'ghost', size = 'md', disabled, onClick }: Props) {
+export function IconButton({ icon, label, variant = 'ghost', size = 'md', disabled, loading, type, onClick }: Props) {
   const m = MAP[variant];
   return (
-    <ButtonBase variant={m.btn} size={size} iconOnly ariaLabel={label} disabled={disabled} onClick={onClick}>
+    <ButtonBase variant={m.btn} size={size} iconOnly ariaLabel={label} disabled={disabled}
+      loading={loading} type={type} onClick={onClick}>
       <Icon name={icon} size={size} color={m.iconColor} />
     </ButtonBase>
   );

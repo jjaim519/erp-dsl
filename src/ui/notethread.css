@@ -24,3 +24,54 @@
 
 .nt-edit { display: flex; gap: var(--mantine-spacing-xs); align-items: center; }
 .nt-edit > :first-child { flex: 1; min-width: 0; }
+
+/* ── 첨부 ────────────────────────────────────────────────────────────────
+   대기 파일(컴포저 아래)과 올라간 첨부(메모 아래)가 **같은 어휘**를 쓴다 — 같은 물건이 단계만 다르다.
+   첨부는 파일 이름이 주인공이 아니라 "붙어 있다"는 사실이라 캡션 크기의 조용한 알약으로 둔다. */
+
+/* 파일 다이얼로그는 클립 버튼이 연다 — input 자체는 안 보인다(FileUploader 선례). */
+.nt-file { display: none; }
+
+/* 칩과 썸네일이 한 줄에 섞이면 높이가 제각각이라 위를 맞춘다 — 가운데 맞추면 칩이 허공에 뜬 것처럼 읽힌다. */
+.nt-chips { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--mantine-spacing-xxs); }
+/* 대기 줄만 컴포저와 메모 사이를 벌린다(올라간 첨부는 Stack이 이미 간격을 준다). */
+.nt-pending { margin-bottom: var(--mantine-spacing-xs); }
+
+.nt-chip {
+  display: inline-flex; align-items: center; gap: var(--mantine-spacing-xxs);
+  max-width: 100%; min-width: 0;
+  padding: 2px var(--mantine-spacing-xs);
+  border: none; border-radius: var(--mantine-radius-sm);
+  background: var(--bg-secondary); color: var(--text-secondary);
+  font: inherit; font-size: var(--typo-caption-size); text-align: left;
+}
+.nt-chip .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nt-chip .sz { flex: none; color: var(--text-disabled); }
+/* 누를 수 있는 첨부만 커서·호버가 바뀐다. 못 여는 첨부에 손 모양이 뜨면 거짓말이 된다. */
+.nt-chip-open { cursor: pointer; transition: background var(--motion-fast) var(--easing-standard); }
+.nt-chip-open:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+/* 칩 안의 ✕ — 이 첨부를 뗀다는 뜻이 명확하도록 알약 "안"에 붙인다(Chip 원자와 같은 규율). */
+.nt-chip .x,
+.nt-thumb .x {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px;   /* 글리프(16)보다 큰 히트 영역 — 알약은 그만큼만 자란다 */
+  border: none; background: none; padding: 0; cursor: pointer;
+  color: var(--text-disabled); border-radius: var(--mantine-radius-full);
+}
+.nt-chip .x:hover, .nt-thumb .x:hover { color: var(--text-primary); }
+
+/* 이미지는 칩이 아니라 썸네일 — 도면·현장사진은 파일 이름보다 그림이 정보다.
+   (kind 판별은 소비처가 이미 했다. 부품은 확장자를 안 본다.) */
+.nt-thumb { position: relative; display: inline-flex; line-height: 0; }
+.nt-thumb-open {
+  border: none; background: none; padding: 0; cursor: pointer;
+  display: inline-flex; border-radius: var(--mantine-radius-sm);
+}
+/* 썸네일 위의 ✕는 그림 위에 뜨므로 자기 바닥을 갖는다(그림이 밝든 어둡든 보이게). */
+.nt-thumb .x {
+  position: absolute; top: 2px; right: 2px;
+  width: 20px; height: 20px;
+  background: var(--surface-raised); box-shadow: var(--elevation-raised);
+  color: var(--text-secondary);
+}

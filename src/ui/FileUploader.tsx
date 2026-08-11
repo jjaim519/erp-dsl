@@ -15,6 +15,7 @@ import { Group } from './Group';
 import { Text } from './Text';
 import { Icon } from './Icon';
 import { Button } from './Button';
+import { matchesAccept, withinSize } from './_fileAccept';
 import { Progress } from '@mantine/core';
 
 export type FileItem = {
@@ -40,25 +41,15 @@ type Props = {
   maxCount?: number;  // 최대 개수(초과분 거부)
 };
 
-// accept 매칭 — 확장자(.pdf) / 와일드카드(image/*) / 정확 MIME(application/pdf) 모두 지원.
-function matchesAccept(file: File, accept?: string): boolean {
-  if (!accept) return true;
-  const name = file.name.toLowerCase();
-  const mime = (file.type || '').toLowerCase();
-  return accept.split(',').map((s) => s.trim().toLowerCase()).filter(Boolean).some((spec) => {
-    if (spec.startsWith('.')) return name.endsWith(spec);
-    if (spec.endsWith('/*')) return mime.startsWith(spec.slice(0, -1));
-    return mime === spec;
-  });
-}
-
 // 브라우저 File → FileItem 부여 + 검증(분자 책임). 위반 시 status:'error'(스키마 제약의 결정적 적용).
+//  판정 자체는 _fileAccept가 한다 — NoteThread도 같은 accept·maxSize를 받으므로 판정이 두 벌이면
+//  같은 파일이 화면마다 다르게 거절된다. 여기 남는 건 *거절을 어떻게 표현하나*(status·문구)뿐이다.
 function toItems(files: File[], accept?: string, maxSize?: number): FileItem[] {
   return files.map((f) => {
     const id = `${f.name}-${f.size}-${f.lastModified}`;
     if (!matchesAccept(f, accept)) return { id, name: f.name, status: 'error' as const, error: '지원하지 않는 형식' };
-    if (maxSize != null && f.size > maxSize) {
-      return { id, name: f.name, status: 'error' as const, error: `용량 초과 (최대 ${Math.round(maxSize / 1024 / 1024)}MB)` };
+    if (!withinSize(f, maxSize)) {
+      return { id, name: f.name, status: 'error' as const, error: `용량 초과 (최대 ${Math.round((maxSize ?? 0) / 1024 / 1024)}MB)` };
     }
     return { id, name: f.name, status: 'pending' as const, file: f };
   });
