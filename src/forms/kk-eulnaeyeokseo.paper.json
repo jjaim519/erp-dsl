@@ -188,6 +188,7 @@
     {
       "r": 5,
       "c": 10,
+      "cs": 2,
       "text": "단위",
       "border": [
         "t",
@@ -195,12 +196,14 @@
         "b",
         "l"
       ],
+      "align": "center",
       "typo": "body-strong",
       "fill": "#E4E4E4"
     },
     {
       "r": 5,
-      "c": 11,
+      "c": 12,
+      "cs": 2,
       "text": "수량",
       "border": [
         "t",
@@ -208,13 +211,14 @@
         "b",
         "l"
       ],
+      "align": "center",
       "typo": "body-strong",
       "fill": "#E4E4E4"
     },
     {
       "r": 5,
-      "c": 12,
-      "cs": 4,
+      "c": 14,
+      "cs": 3,
       "text": "단가",
       "border": [
         "t",
@@ -228,8 +232,8 @@
     },
     {
       "r": 5,
-      "c": 16,
-      "cs": 4,
+      "c": 17,
+      "cs": 3,
       "text": "금액",
       "border": [
         "t",
@@ -271,12 +275,12 @@
       ],
       "borderStrong": [
         "l"
-      ],
-      "align": "center"
+      ]
     },
     {
       "r": 6,
       "c": 10,
+      "cs": 2,
       "field": "품목.단위",
       "border": [
         "t",
@@ -284,11 +288,12 @@
         "b",
         "l"
       ],
-      "align": "center"
+      "align": "end"
     },
     {
       "r": 6,
-      "c": 11,
+      "c": 12,
+      "cs": 2,
       "field": "품목.수량",
       "format": "number",
       "border": [
@@ -301,8 +306,8 @@
     },
     {
       "r": 6,
-      "c": 12,
-      "cs": 4,
+      "c": 14,
+      "cs": 3,
       "field": "품목.단가",
       "format": "currency",
       "border": [
@@ -315,8 +320,8 @@
     },
     {
       "r": 6,
-      "c": 16,
-      "cs": 4,
+      "c": 17,
+      "cs": 3,
       "field": "품목.금액",
       "format": "currency",
       "border": [
@@ -344,7 +349,7 @@
     {
       "r": 7,
       "c": 0,
-      "cs": 16,
+      "cs": 17,
       "text": "소　계",
       "border": [
         "t",
@@ -360,8 +365,8 @@
     },
     {
       "r": 7,
-      "c": 16,
-      "cs": 4,
+      "c": 17,
+      "cs": 3,
       "agg": {
         "fn": "sum",
         "of": "품목.금액"
