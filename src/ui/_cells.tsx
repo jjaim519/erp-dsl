@@ -13,6 +13,7 @@ import { Anchor } from './Anchor';
 import { Image } from './Image';
 import { Icon, type IconName } from './Icon';
 import { DATE_FORMAT } from './_fieldStyles';
+import { fmtNumber, fmtCurrency } from './_money';
 import { IconButton } from './IconButton';
 import { Menu } from './Menu';
 
@@ -71,18 +72,9 @@ function fmtDate(v: unknown): string {
   return d.isValid() ? d.format(DATE_FORMAT) : String(v);
 }
 
-// 한국 소비자 기준(잠정 — 다국어화 시 locale은 토큰/설정으로 분리).
-const NUM = new Intl.NumberFormat('ko-KR');
-const KRW = new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 });
-// 통화·숫자 포맷의 단일 진실 공급원 — 셀뿐 아니라 분자(SummaryCard·TotalRow)도 이걸 재사용한다.
-export function fmtNumber(v: unknown): string {
-  const n = typeof v === 'number' ? v : Number(v);
-  return v == null || v === '' || Number.isNaN(n) ? '' : NUM.format(n); // 천 단위 ,
-}
-export function fmtCurrency(v: unknown): string {
-  const n = typeof v === 'number' ? v : Number(v);
-  return v == null || v === '' || Number.isNaN(n) ? '' : KRW.format(n); // ₩ + 천 단위 ,
-}
+// 통화·숫자 포맷은 순수 모듈(`_money`)이 갖는다 — 인쇄 엔진(paperLayout)도 같은 값을 봐야 하는데
+//  이 파일은 JSX라 못 당겨 간다(그래서 복사본이 생겼었다). 여기서는 재수출만 한다: 기존 import 경로 유지.
+export { fmtNumber, fmtCurrency };
 
 // badge 값→색 매핑은 스키마 주입(컬럼/아이템이 badgeColors로 넘김).
 export function renderCell(

@@ -9,6 +9,7 @@ import {
   PAPER_CANON, PAPER_MARGIN, PAPER_TYPO_RATIO, PAPER_LINE_HEIGHT, PAPER_CELL_PAD_X,
   type PaperSpec, type PaperCell, type PaperBand, type PaperAgg,
 } from '../schema/paper';
+import { fmtNumber, fmtCurrency } from './_money';
 
 /**
  * `at`은 반복 몇 번째 항목의 칸인가 — 편집 모드가 값을 되쓸 때 필요하다(보기에선 안 쓴다).
@@ -57,9 +58,8 @@ export function paperWrite(
 }
 
 // ── 표시 형식 ──────────────────────────────────────────────────
-// 저장값은 안 건드리고 표현만 바꾼다. 통화·숫자는 기존 셀 어휘와 같은 ko-KR 포맷.
-const fmtNumber = (n: number) => n.toLocaleString('ko-KR');
-const fmtCurrency = (n: number) => `₩${n.toLocaleString('ko-KR')}`;
+// 저장값은 안 건드리고 표현만 바꾼다. 통화·숫자 포맷은 `_money`(순수 모듈) 하나를 본다 —
+//  전엔 여기 복사본이 있어서 화면(_cells)과 인쇄가 각자 포맷을 들고 있었다.
 
 function format(v: unknown, kind: PaperCell['format']): string {
   if (v == null || v === '') return '';

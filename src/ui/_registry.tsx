@@ -58,6 +58,11 @@ import { DataTable, type DataTableSort } from './DataTable';
 import { DataSheet, type SheetRow } from './DataSheet';
 import { LineItemList, type LineItem } from './LineItemList';
 import { QueueList, type QueueItem } from './QueueList';
+import { Money } from './Money';
+import { Register, type RegisterEntry } from './Register';
+import { AgingReport, type AgingBucket, type AgingRow } from './AgingReport';
+import { PaymentApply, type ApplyLine } from './PaymentApply';
+import { OpenItemList, type OpenItem } from './OpenItemList';
 import { DecisionPanel } from './DecisionPanel';
 import { NoteThread, type ThreadNote } from './NoteThread';
 import type { Attachment, AttachmentKind } from './_attachment';
@@ -950,6 +955,251 @@ function CalDemo() {
       }}
       onCreateRange={(a, b) => { window.alert(`일정 생성: ${a} ~ ${b}`); }}
     />
+  );
+}
+
+// ── 회계 골격 3종 데모 ───────────────────────────────────────────────────────
+//  각 데모는 **최소형 → 최대형** 순으로 둘을 나란히 낸다. 기준선은 최소형이다:
+//  옵션을 하나도 안 준 상태에서 부품이 온전히 서는지가 계약의 시험이고, 최대형은 다 켜면 어디까지 가는지다.
+
+const REG_ENTRIES: RegisterEntry[] = [
+  { id: 'r1', date: '08-03', ref: 'TR-0812', kind: { label: '매출', tone: 'success' },
+    label: '키친앤코', sublabel: '성수 현장 2차 중도금 · 외상매출금', in: 8_250_000, reconciled: true },
+  { id: 'r2', date: '08-05', ref: 'TR-0813', kind: { label: '매입' },
+    label: '대성목재', sublabel: '8월 1차 자재 · 원재료', out: 3_180_000, reconciled: true },
+  { id: 'r3', date: '08-10', ref: 'TR-0814', kind: { label: '고정비' },
+    label: '성수산업개발', sublabel: '공장 임대료 8월분 · 지급임차료', out: 2_400_000, reconciled: true },
+  { id: 'r4', date: '08-11', ref: 'TR-0815', kind: { label: '고정비' },
+    label: '급여', sublabel: '7월분 · 급여', out: 18_600_000, reconciled: false },
+  { id: 'r5', date: '08-12', ref: 'TR-0816', kind: { label: '매출', tone: 'success' },
+    label: '케이산업', sublabel: '잔금 · 외상매출금', in: 6_930_000, reconciled: false },
+];
+// 수불부 — 같은 부품, 열 이름과 단위만 갈린다(labels·unit). 누계·이월·대사(실사) 축은 그대로 산다.
+const STOCK_ENTRIES: RegisterEntry[] = [
+  { id: 's1', date: '08-05', ref: 'IN-0221', kind: { label: '입고', tone: 'success' },
+    label: '대성목재', sublabel: '8월 1차 · L26-0805', in: 300 },
+  { id: 's2', date: '08-08', ref: 'OT-0344', kind: { label: '출고' },
+    label: '성수 현장', sublabel: '상부장 12조 · L26-0805', out: 148 },
+];
+
+// 증빙은 **행 하나 = 거래 한 건 = 묶음 하나**. 붙은 게 없는 행은 클립이 흐리다(조용한 표).
+const REG_EVIDENCE: Record<string, Attachment[]> = {
+  r1: [{ id: 'ev1', kind: 'pdf', name: '세금계산서_키친앤코.pdf', size: '82 KB' }],
+  r2: [{ id: 'ev2', kind: 'pdf', name: '세금계산서_대성목재.pdf', size: '77 KB' },
+       { id: 'ev3', kind: 'image', name: '거래명세서.jpg', size: '340 KB' }],
+  r5: [{ id: 'ev4', kind: 'image', name: '입금증_케이산업.jpg', size: '198 KB' }],
+};
+
+function RegisterDemo() {
+  const [entries, setEntries] = useState(REG_ENTRIES);
+  const [month, setMonth] = useState(8);
+  return (
+    <Stack gap="lg">
+      {/* 최소형 — 옵션 0개. 날짜·적요·증감·잔액 네 열. 누계는 부품이 이월부터 만든다. */}
+      <Register entries={REG_ENTRIES.map(({ kind, ref, reconciled, ...e }) => e)} carryOver={{ balance: 12_480_000 }} />
+
+      {/* 최대형 — A층 전부 + 수불부 형제 */}
+      <Register
+        entries={entries}
+        carryOver={{ balance: 12_480_000 }}
+        closing={{ caption: '전월이월 ₩12,480,000' }}
+        accounts={[
+          { label: '기업은행 1234-56 · 운영', value: 'ibk', caption: '운영계좌' },
+          { label: '국민은행 7788-01', value: 'kb' },
+        ]}
+        period={`2026년 ${month}월`}
+        onPeriodChange={(d) => setMonth((m) => Math.min(12, Math.max(1, m + d)))}
+        reconciledThrough="7월 31일까지 대사됨"
+        onReconcile={(id, next) => setEntries((p) => p.map((e) => (e.id === id ? { ...e, reconciled: next } : e)))}
+        onAdd={{
+          kinds: [{ label: '매출', value: 'sale' }, { label: '매입', value: 'buy' }, { label: '고정비', value: 'fixed' }],
+          onSubmit: async (v) => {
+            if (!v.label) return { error: '적요를 입력하세요.' };
+            setEntries((p) => [...p, { id: `n${p.length}`, date: v.date ?? '08-12', label: v.label,
+              out: v.out ?? undefined, in: v.in ?? undefined, reconciled: false }]);
+          },
+        }}
+        evidence={{
+          of: (e) => REG_EVIDENCE[e.id],
+          onOpen: (id, items) => window.alert(`증빙 ${items.length}건 — ${items.map((a) => a.name).join(', ')}`),
+          onAttach: () => window.alert('첨부 선택기는 소비처가 연다(부품은 파일을 안 든다)'),
+        }}
+        actions={[{ label: '엑셀', onClick: () => {} }]}
+        periodTotals
+      />
+
+      <Register
+        entries={STOCK_ENTRIES}
+        carryOver={{ balance: 260 }}
+        closing={{ caption: '전월이월 260 장' }}
+        accounts={[{ label: '제1창고 · 미송판 18T', value: 'w1', caption: '품목 MP-018 · 단위 장' }]}
+        period="2026년 8월"
+        onPeriodChange={() => {}}
+        labels={{ out: '출고', in: '입고', balance: '현재고' }}
+        unit="장"
+      />
+    </Stack>
+  );
+}
+
+const AGING_BUCKETS: AgingBucket[] = [
+  { key: 'cur', label: '미도래' }, { key: 'b30', label: '1–30일' }, { key: 'b60', label: '31–60일' },
+  { key: 'b90', label: '61–90일' }, { key: 'b90p', label: '90일+' },
+];
+const AGING_ROWS: AgingRow[] = [
+  { id: 'a1', label: '세림건설', amounts: { b90p: 22_300_000 }, children: [
+    { id: 'a1c1', label: 'INV-0421 · 판교 오피스 1차', sublabel: '만기 06-03', amounts: { b90p: 22_300_000 } },
+  ] },
+  { id: 'a2', label: '대명하우징', amounts: { b90: 18_400_000 } },
+  { id: 'a3', label: '한울인테리어', amounts: { b30: 6_150_000, b60: 18_450_000 } },
+  { id: 'a4', label: '정우주택', amounts: { cur: 8_900_000, b30: 12_300_000, b60: 13_450_000 } },
+  { id: 'a5', label: '키친앤코', amounts: { cur: 19_250_000, b30: 8_400_000, b90: 2_770_000 } },
+  { id: 'a6', label: '그 외 3개 거래처', amounts: { cur: 34_150_000, b30: 21_900_000 } },
+];
+
+function AgingDemo() {
+  const [open, setOpen] = useState<string[]>(['a1']);
+  return (
+    <Stack gap="lg">
+      {/* 최소형 — buckets + rows만. 버킷은 필수 주입(30/60/90은 표준이 아니다). */}
+      <AgingReport buckets={AGING_BUCKETS} rows={AGING_ROWS} />
+      {/* 최대형 */}
+      <AgingReport
+        buckets={AGING_BUCKETS} rows={AGING_ROWS}
+        asOf="2026-08-12" basis="due" showRatio
+        expandedIds={open} onExpandChange={setOpen}
+        actions={[{ label: '엑셀', onClick: () => {} }]}
+      />
+    </Stack>
+  );
+}
+
+const PA_LINES: ApplyLine[] = [
+  { id: 'p1', label: 'INV-0421', sublabel: '판교 오피스 1차', date: '06-03',
+    age: { label: '70일 경과', tone: 'danger' }, gross: 22_000_000, open: 12_300_000 },
+  { id: 'p2', label: 'INV-0455', sublabel: '판교 오피스 2차', date: '06-20',
+    age: { label: '53일 경과', tone: 'warning' }, gross: 20_000_000, open: 10_000_000 },
+  { id: 'p3', label: 'INV-0470', sublabel: '판교 오피스 잔금', date: '08-31',
+    age: { label: '미도래' }, gross: 14_000_000, open: 14_000_000 },
+];
+
+function PaymentApplyDemo() {
+  const [applied, setApplied] = useState<Record<string, number>>({ p1: 12_300_000, p2: 5_000_000 });
+  const [adj, setAdj] = useState<Record<string, number>>({ p2: -300_000 });
+  const [auto, setAuto] = useState(true);
+  const [src, setSrc] = useState('inv');
+  const AMOUNT = 20_000_000;
+  const fillOldest = () => {
+    let left = AMOUNT;
+    const next: Record<string, number> = {};
+    for (const l of PA_LINES) { const v = Math.min(left, l.open); next[l.id] = v; left -= v; }
+    setApplied(next);
+  };
+  return (
+    <Stack gap="lg">
+      {/* 최소형 — 출처 하나(탭 없음) · 일괄액션 없음 · 자동배분 없음 · 조정 열 없음 · 체크박스 없음 */}
+      <PaymentApply
+        sources={[{ key: 'inv', label: '청구', lines: PA_LINES }]}
+        amount={AMOUNT} applied={applied} onApplyChange={(id, v) => setApplied((p) => ({ ...p, [id]: v }))}
+        submit={{ onSubmit: () => {} }}
+      />
+      {/* 최대형 */}
+      <PaymentApply
+        sources={[
+          { key: 'inv', label: '청구', lines: PA_LINES },
+          { key: 'cm', label: '대변메모', lines: [{ id: 'c1', label: 'CM-0033', sublabel: '하자 보수 감액', gross: 1_200_000, open: 1_200_000 }] },
+          { key: 'dep', label: '선수금', lines: [] },
+        ]}
+        activeSource={src} onSourceChange={setSrc}
+        amount={AMOUNT} applied={applied} onApplyChange={(id, v) => setApplied((p) => ({ ...p, [id]: v }))}
+        adjustments={adj} onAdjust={(id, v) => setAdj((p) => ({ ...p, [id]: v }))}
+        onToggleLine={(id, next) => setApplied((p) => ({ ...p, [id]: next ? (PA_LINES.find((l) => l.id === id)?.open ?? 0) : 0 }))}
+        bulkActions={[
+          { label: '오래된 것부터', onClick: fillOldest },
+          { label: '해제', onClick: () => setApplied({}) },
+        ]}
+        autoApply={{ checked: auto, onChange: setAuto }}
+        unapplied="warn"
+        header={<Text variant="body-strong">세림건설 · 2026-08-12 · 계좌이체 (기업은행 1234-56)</Text>}
+        submit={{ label: '수납 기록', onSubmit: () => {} }}
+        onCancel={() => {}}
+      />
+    </Stack>
+  );
+}
+
+
+// OpenItemList — 소비처 "수금" 화면의 구조 그대로: 목록(현장별 계약금액/수금/미수) → 한 건 열기 → 수납 이력·기록.
+//  **부품 둘을 페이지가 잇는다**(OpenItemList → Drawer → Register). 표면은 우리가 안 정한다.
+const OIL_ITEMS: OpenItem[] = [
+  { id: 'o1', label: '판교 오피스', sublabel: '세림건설 · 계약 2026-04-20', owner: '옥성훈',
+    gross: 56_000_000, received: 33_700_000, due: '06-03', age: { label: '70일 경과', tone: 'danger' } },
+  { id: 'o2', label: '위례 상가', sublabel: '대명하우징 · 계약 2026-05-30', owner: '김효진',
+    gross: 18_400_000, received: 0, due: '07-12', age: { label: '31일 경과', tone: 'warning' } },
+  { id: 'o3', label: '성수 현장', sublabel: '키친앤코 · 계약 2026-07-02', owner: '옥성훈',
+    gross: 27_500_000, received: 8_250_000, due: '08-31', age: { label: '미도래' } },
+];
+// 한 현장의 수납 이력 = 계약금액(이월) → 수납(감소) → 미수(누계). 통장 원장과 **같은 부품**이다.
+const OIL_HISTORY: Record<string, RegisterEntry[]> = {
+  o1: [
+    { id: 'h1', date: '05-04', ref: 'RC-0031', kind: { label: '수납', tone: 'success' },
+      label: '계약금', sublabel: '기업은행 1234-56', out: 16_800_000 },
+    { id: 'h2', date: '06-18', ref: 'RC-0044', kind: { label: '수납', tone: 'success' },
+      label: '1차 중도금', sublabel: '기업은행 1234-56', out: 16_900_000 },
+  ],
+  o2: [],
+  o3: [{ id: 'h3', date: '08-03', ref: 'RC-0058', kind: { label: '수납', tone: 'success' },
+    label: '계약금', sublabel: '기업은행 1234-56', out: 8_250_000 }],
+};
+const OIL_EVIDENCE: Record<string, Attachment[]> = {
+  h1: [{ id: 'e1', kind: 'pdf', name: '세금계산서_계약금.pdf', size: '84 KB' }],
+  h2: [{ id: 'e2', kind: 'image', name: '입금증_1차.jpg', size: '212 KB' },
+       { id: 'e3', kind: 'pdf', name: '세금계산서_1차.pdf', size: '78 KB' }],
+};
+
+function OpenItemDemo() {
+  const [sel, setSel] = useState<OpenItem>(OIL_ITEMS[0]);
+  const [hist, setHist] = useState(OIL_HISTORY);
+  const rows = hist[sel.id] ?? [];
+
+  return (
+    <Stack gap="xl">
+      {/* 최소형 — items만. 잔액 열·하단 합계는 부품이 뺀다. 제목·헤더 액션은 PageHeader의 일이라 없다. */}
+      <OpenItemList items={OIL_ITEMS.map(({ owner, due, age, ...i }) => i)} />
+
+      {/* 최대형 — 행은 클릭 대상이 아니다. **첫 셀이 링크**(그 건의 원장으로) · **액션 열은 그 자리 행동**.
+          「수금」이 여는 기록 폼은 아직 미정이라 데모에 안 붙였다(껍데기를 붙이면 그게 설계로 읽힌다). */}
+      <OpenItemList
+        items={OIL_ITEMS}
+        selectedId={sel.id}
+        onSelect={setSel}
+        itemActions={() => [{ label: '수금', variant: 'secondary', onClick: () => {} }]}
+      />
+
+      {/* 그 건의 원장 — **다른 화면**이라 전체 폭을 쓴다(위 목록 옆이 아니다). */}
+      <Stack gap="xs">
+        <Text variant="caption" color="secondary">실제 앱에서는 <b>별도 화면</b>이다(`item.href`를 주면 진짜 링크로 이동). 박물관엔 라우팅이 없어 여기 이어 그린다 — {sel.label}</Text>
+        <Register
+          entries={rows}
+          carryOver={{ label: '계약금액', balance: sel.gross }}
+          closing={{ label: '미수' }}
+          labels={{ out: '수납', in: '청구·증액', balance: '미수' }}
+          evidence={{
+            of: (e) => OIL_EVIDENCE[e.id],
+            onOpen: (id, items) => window.alert(`증빙 ${items.length}건 — ${items.map((a) => a.name).join(', ')}`),
+            onAttach: () => window.alert('첨부 선택기는 소비처가 연다(부품은 파일을 안 든다)'),
+          }}
+          onAdd={{
+            labelPlaceholder: '적요 (예: 2차 중도금)',
+            onSubmit: async (v) => {
+              if (!v.out) return { error: '수납액을 입력하세요.' };
+              setHist((p) => ({ ...p, [sel.id]: [...(p[sel.id] ?? []),
+                { id: `n${p[sel.id]?.length ?? 0}`, date: v.date ?? '08-12', label: v.label || '수납', out: v.out ?? undefined }] }));
+            },
+          }}
+        />
+      </Stack>
+    </Stack>
   );
 }
 
@@ -1999,6 +2249,19 @@ export function Demo({ name }: { name: string }) {
     BoardList: <BoardListDemo />,
     BoardView: <BoardViewDemo />,
     BoardWrite: <BoardWriteDemo />,
+    Money: (
+      <Stack gap="xs">
+        <Group gap="lg"><Money value={1284000} /><Money value={1284000} symbol={false} /><Money value={412} unit="장" /></Group>
+        {/* 음수 셋: 화면(−) / 장표(△) / 영문((n)). 관행이 하나가 아니라 셋을 닫아서 연다. */}
+        <Group gap="lg"><Money value={-3450000} /><Money value={-3450000} negative="triangle" /><Money value={-3450000} negative="paren" tone="plain" /></Group>
+        {/* 0과 없음은 다른 축: zero='dash'여도 null은 그대로 —. */}
+        <Group gap="lg"><Money value={0} /><Money value={0} zero="dash" /><Money value={null} /><Money value={1284000} emphasis /></Group>
+      </Stack>
+    ),
+    Register: <RegisterDemo />,
+    OpenItemList: <OpenItemDemo />,
+    AgingReport: <AgingDemo />,
+    PaymentApply: <PaymentApplyDemo />,
     Editor: <EditorDemo />,
     RichText: <RichTextDemo />,
   };

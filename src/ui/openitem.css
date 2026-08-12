@@ -1,0 +1,93 @@
+/* OpenItemList — 미결 항목 목록.
+ *
+ * 계약: **잔액 열이 이 목록의 주인공이다.** 원금액·수납은 근거고 잔액이 결론이라,
+ *  Register의 누계 열과 같은 규율(다른 면 + 좌측 경계선 + 굵게)로 세로로 훑히게 한다.
+ *  세 열을 같은 무게로 그리면 눈이 어디를 봐야 하는지 못 정한다.
+ */
+.erpOil {
+  background: var(--surface-default);
+  border: 1px solid var(--border-default);
+  border-radius: var(--mantine-radius-sm);
+  overflow: hidden;
+}
+
+.erpOilHead {
+  display: flex; align-items: flex-end; gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+  border-bottom: 1px solid var(--border-default);
+}
+.erpOilTitle { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.erpOilSpacer { flex: 1; }
+.erpOilGrand { text-align: right; white-space: nowrap; margin-left: var(--mantine-spacing-md); }
+.erpOilGrandVal { font-size: var(--typo-heading-size); line-height: 1.25; }
+
+.erpOilSkel {
+  display: flex; flex-direction: column; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+}
+
+.erpOilScroll { overflow-x: auto; }
+.erpOilTable { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: auto; }
+
+.erpOilTable th {
+  font-size: var(--typo-caption-size); font-weight: 600; color: var(--text-secondary);
+  text-align: left; padding: var(--mantine-spacing-xxs) var(--mantine-spacing-sm);
+  white-space: nowrap; user-select: none; vertical-align: bottom;
+}
+.erpOilTable th.is-num { text-align: right; }
+
+/* 한 건 = 한 줄. 높이가 고정이라 옆 칸의 버튼·알약이 세로로 맞는다(vertical-align:middle이 성립한다). */
+.erpOilTable td {
+  padding: 6px var(--mantine-spacing-sm);
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: middle; white-space: nowrap; height: 44px;
+  font-size: var(--typo-body-size); line-height: 22px;
+  background: var(--surface-default);
+}
+.erpOilTable td.is-num { text-align: right; }
+.erpOilTable td.is-grow { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.erpOilTable tbody tr:last-child > td { border-bottom: 0; }
+
+/* 양 끝 셀은 카드 여백(lg)에 맞춘다 — 헤더 밴드는 꽉 차고 글자 x좌표는 헤더와 같다. */
+.erpOilTable th:first-child, .erpOilTable td:first-child { padding-left: var(--mantine-spacing-lg); }
+.erpOilTable th:last-child,  .erpOilTable td:last-child  { padding-right: var(--mantine-spacing-lg); }
+
+/* 부제는 같은 줄, 흐린 글자. 위계는 색·크기가 만들고 줄바꿈이 만들지 않는다. */
+.erpOilTable .sub {
+  margin-left: var(--mantine-spacing-xs);
+  font-size: var(--typo-caption-size); color: var(--text-secondary);
+}
+/* href 없이 콜백만 있을 때의 링크 — 생김새는 Anchor와 같게. */
+.erpOilLink {
+  border: 0; background: transparent; padding: 0; cursor: pointer;
+  font: inherit; font-size: var(--typo-body-size);
+  color: var(--mantine-color-primary-6); text-decoration: underline;
+}
+
+.erpOil .w-owner { min-width: 76px; }
+.erpOil .w-money { min-width: 112px; }
+.erpOil .w-bal   { min-width: 124px; }
+.erpOil .w-age   { min-width: 104px; }
+.erpOil .w-act   { width: 1px; }
+
+/* 하단 합계 — AgingReport tfoot과 같은 규율(상단 카드 헤더를 안 갖는 대신 여기서 맺는다). */
+.erpOilTable tfoot td {
+  background: var(--surface-sunken); font-weight: 700;
+  border-top: 2px solid var(--border-strong); border-bottom: 0;
+}
+
+/* 잔액 열 — Register 누계 열과 같은 규율. */
+.erpOilTable th.w-bal,
+.erpOilTable td.erpOilBal {
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-default);
+}
+.erpOilTable tr:hover > td.erpOilBal { background: var(--bg-tertiary); }
+
+/* 선택 행 — 지금 다른 화면에서 열려 있는 건. 틴트 한 겹(면만, 좌측 띠 없음). */
+.erpOilTable tr.is-selected > td,
+.erpOilTable tr.is-selected:hover > td { background: var(--mantine-color-primary-0); }
+.erpOilTable tbody tr:hover > td { background: var(--bg-secondary); }
+
+.erpOilActs { display: flex; gap: var(--mantine-spacing-xs); justify-content: flex-end; }

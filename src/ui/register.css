@@ -1,0 +1,152 @@
+/* Register — 원장/수불부. 기하는 여기 산다(인라인이면 모바일 스코프가 못 덮는다 — 06 §1-9).
+ *
+ * 이 파일을 지배하는 계약 둘:
+ *  ① **잔액 열은 다른 면에 앉는다.** 누계는 입력도 증감도 아닌 *결과*라, 좌측 경계선 + 한 톤 낮은 배경으로
+ *     증감 열과 갈라 놓는다. 눈이 그 열만 세로로 훑을 수 있어야 "이월+Σ=기말"이 검산된다.
+ *  ② **두 줄 행에서도 숫자는 첫 줄에 정렬된다.** 보조줄(l2)이 있는 칸과 없는 칸이 섞이므로
+ *     셀은 vertical-align:top이고, 숫자 셀만 첫 줄 높이에 맞춘다. 안 그러면 금액이 행 가운데로 내려가
+ *     날짜·적요와 눈높이가 어긋난다.
+ */
+.erpReg {
+  --reg-pad: var(--mantine-spacing-sm);   /* 12 */
+  --reg-line: 22px;                        /* 첫 줄 높이 — 숫자 셀이 여기에 맞춘다 */
+
+  background: var(--surface-default);
+  border: 1px solid var(--border-default);
+  border-radius: var(--mantine-radius-sm);
+  overflow: hidden;
+}
+
+/* ── 헤더: 계좌(좌) / 기말잔액(우) ── */
+.erpRegHead {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg) var(--mantine-spacing-xs);
+}
+.erpRegAcct { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.erpRegAcct > :first-child { max-width: 260px; }
+.erpRegClose { text-align: right; white-space: nowrap; }
+/* 기말잔액만 타이포 티어를 올린다 — 이 화면에서 제일 먼저 읽혀야 하는 숫자다(QuickBooks ENDING BALANCE). */
+.erpRegCloseVal { font-size: var(--typo-heading-size); line-height: 1.25; margin-top: 1px; }
+
+/* ── 스트립: 기간 · 대사 뱃지 · 액션 ── */
+.erpRegStrip {
+  display: flex; align-items: center; gap: var(--mantine-spacing-md);
+  padding: 0 var(--mantine-spacing-lg) var(--mantine-spacing-xs);
+  border-bottom: 1px solid var(--border-default);
+}
+.erpRegSpacer { flex: 1; }
+.erpRegRecMark {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: var(--typo-caption-size); font-weight: 600;
+  color: var(--mantine-color-success-6); background: var(--mantine-color-success-0);
+  border-radius: var(--mantine-radius-full); padding: 2px 10px;
+}
+
+.erpRegScroll { overflow-x: auto; }
+.erpRegTable { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: auto; }
+
+.erpRegTable th {
+  font-size: var(--typo-caption-size); font-weight: 600;
+  color: var(--text-secondary); text-align: left;
+  padding: var(--mantine-spacing-xxs) var(--reg-pad);
+  white-space: nowrap; user-select: none; vertical-align: bottom;
+}
+.erpRegTable th.is-num { text-align: right; }
+.erpRegTable th.is-mid { text-align: center; }
+
+.erpRegTable td {
+  padding: 6px var(--reg-pad);
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: middle; white-space: nowrap; height: 40px;
+  font-size: var(--typo-body-size); line-height: var(--reg-line);
+  background: var(--surface-default);
+}
+.erpRegTable td.is-grow { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.erpRegTable td.is-num { text-align: right; }
+.erpRegTable td.is-mid { text-align: center; }
+.erpRegTable tbody tr:hover > td { background: var(--bg-secondary); }
+
+/* 보조는 **같은 줄에** 흐린 글자로. 위계는 색·크기가 만들지 줄바꿈이 만들지 않는다. */
+.erpRegTable .sub {
+  margin-left: var(--mantine-spacing-xs);
+  font-size: var(--typo-caption-size); color: var(--text-secondary);
+}
+
+/* 열 폭 — 임의 px이 아니라 그 열의 *서식*이 정한다(DataSheet w-* 선례). */
+.erpReg .w-date  { min-width: 104px; }
+.erpReg .w-ref   { min-width: 84px; }
+.erpReg .w-kind  { min-width: 88px; }
+.erpReg .w-money { min-width: 116px; }
+.erpReg .w-bal   { min-width: 128px; }
+.erpReg .w-rec   { width: 44px; }
+.erpReg .w-evi   { width: 60px; }
+
+/* ① 잔액 열 — 다른 면 + **오른쪽 고정**.
+ *  가로 스크롤이 생기면 제일 먼저 잘리는 게 마지막 열인데, 하필 그게 이 부품의 결론이다.
+ *  sticky로 붙여 두면 좁은 자리(2-pane 우측)에서도 "이월+Σ=기말"을 계속 검산할 수 있다. */
+.erpRegTable td.erpRegBal,
+.erpRegTable th.w-bal {
+  background: var(--bg-secondary);
+  border-left: 1px solid var(--border-default);
+  font-weight: 600;
+  position: sticky; right: 0; z-index: 1;
+}
+.erpRegTable tbody tr:hover > td.erpRegBal { background: var(--bg-tertiary); }
+/* 계산되는 칸은 **죽여서** 못 고친다는 걸 말한다(칠하지 않는다 — 편집 어포던스는 대비로). */
+.erpRegTable td.is-derived { color: var(--text-disabled); font-weight: 400; }
+
+/* 입금(증가) 열만 색을 갖는다 — 출금은 기본색. 둘 다 칠하면 색이 신호이길 그만둔다. */
+.erpRegTable td.is-in > span { color: var(--mantine-color-success-6); }
+
+/* 이월/기말 경계 행 */
+.erpRegCarry > td {
+  background: var(--surface-sunken); color: var(--text-secondary); font-weight: 600;
+}
+.erpRegCarry > td.erpRegBal { color: var(--text-primary); }
+
+/* 입력행 — 표 맨 위. 손을 타기 전엔 조용하고(테두리만), 타면 틴트가 들어온다. */
+.erpRegAdd > td {
+  background: var(--mantine-color-primary-0);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 5px 4px; /* 입력 상자가 그만큼 안쪽에 앉아 글자 x좌표가 읽기 행과 맞는다 */
+}
+.erpRegAdd > td.erpRegBal { background: var(--mantine-color-primary-0); }
+.erpRegAdd:not(.is-dirty) > td { background: var(--bg-secondary); }
+.erpRegAdd:not(.is-dirty) > td.erpRegBal { background: var(--bg-secondary); }
+.erpRegErr > td { padding: 4px var(--reg-pad); background: var(--mantine-color-danger-0); }
+.erpRegErr span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* 미대사 행 — 배경 한 겹(경고색 아님: 미대사는 오류가 아니라 *아직*이다). */
+.erpRegTable tr.is-unrec > td:not(.erpRegBal) { background: var(--mantine-color-warning-0); }
+.erpRegTable tr.is-unrec:hover > td:not(.erpRegBal) { background: var(--mantine-color-warning-1); }
+
+/* 증빙 — 붙은 게 없으면 **조용하다**(클립만 흐리게). 모든 행에 강한 글리프가 깔리면
+ *  "증빙 있음"이 신호이길 그만둔다(Badge 사다리와 같은 규율). */
+.erpRegEvi {
+  display: inline-flex; align-items: center; gap: 3px;
+  min-width: 30px; height: 24px; padding: 0 5px; border: 0; cursor: pointer;
+  background: transparent; border-radius: var(--mantine-radius-xs);
+  font: inherit; font-size: var(--typo-caption-size); font-weight: 600;
+  color: var(--text-secondary);
+}
+.erpRegEvi:hover { background: var(--bg-tertiary); }
+.erpRegEvi.is-quiet { opacity: .35; }
+.erpRegEvi.is-quiet:hover { opacity: 1; }
+
+.erpRegRecOpen { color: var(--border-strong); }
+.erpRegRecBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; padding: 0; border: 0; cursor: pointer;
+  background: transparent; border-radius: var(--mantine-radius-xs);
+  color: var(--mantine-color-success-6);
+}
+.erpRegRecBtn:hover { background: var(--bg-tertiary); }
+
+/* 바닥 줄 — 미대사 집계(좌) / 기간 합계(우) */
+.erpRegFoot {
+  display: flex; justify-content: space-between; gap: var(--mantine-spacing-md);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-lg);
+  background: var(--bg-secondary); border-top: 1px solid var(--border-default);
+  font-size: var(--typo-caption-size); color: var(--text-secondary);
+}

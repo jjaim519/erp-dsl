@@ -28,6 +28,8 @@ export { TextInput } from './TextInput';
 export { PasswordInput } from './PasswordInput';
 export { NumberInput } from './NumberInput';
 export { CurrencyInput } from './CurrencyInput';
+// Money = 금액·수량의 *표시* 규율(입력은 CurrencyInput). 정렬은 안 갖는다 — 그건 _cells.cellAlign 소유.
+export { Money, type MoneyZero, type MoneyNegative } from './Money';
 export { Textarea } from './Textarea';
 export { Select } from './Select';
 export { Combobox } from './Combobox';
@@ -89,6 +91,14 @@ export { Transfer } from './Transfer';
 export { ToastHost } from './ToastHost';
 export { DataTable } from './DataTable';
 export { DataSheet } from './DataSheet';                            // DataTable의 쓰기 형제(행 수정 + 초안 줄)
+// ── 회계 골격 3종 — 도메인이 아니라 *회계 구조*를 안다(부호 있는 증감·누계·연령·배분).
+//    DataSheet와 갈리는 선: 전기된 기록은 못 고친다(정정은 반대 전표) → Register엔 행 편집이 없다.
+export { Register, type RegisterEntry, type RegisterAccount, type RegisterAdd, type RegisterEvidence } from './Register';
+export { AgingReport, type AgingBucket, type AgingRow } from './AgingReport';
+export { PaymentApply, type ApplyLine, type ApplySource } from './PaymentApply';
+// OpenItemList = 미결 채권·채무의 *평면 목록 + 행동*(AgingReport는 같은 데이터의 *매트릭스 리포트*).
+//  한 건을 열었을 때의 수납 이력·기록은 Register가 그린다 — 어느 표면에 담을지는 페이지가 정한다.
+export { OpenItemList, type OpenItem } from './OpenItemList';
 export { ListWidget, type ListColumn, type ListRow } from './ListWidget';  // TanStack 흡수 목록 위젯(ListPage 대체 MVP)
 export { NotificationPanel, type NotifItem, type NotifTone } from './NotificationPanel';  // 알림 벨 Popover 슬롯 위젯
 export { Repeater } from './Repeater';  // 저작 툴킷 척추 — 가변 레코드 목록(추가/삭제/펼침)

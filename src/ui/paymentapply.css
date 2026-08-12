@@ -1,0 +1,106 @@
+/* PaymentApply — 수납 적용.
+ *
+ * 계약: **미적용(rest)이 이 화면의 신호등이다.** 0이면 초록, 남으면 경고 톤, 초과면 danger.
+ *  세 상태가 *같은 자리에서* 색만 바뀐다 — 자리가 움직이면 눈이 매번 다시 찾아야 한다.
+ *  (DecisionPanel의 "주 CTA 자리 불변"과 같은 규율.)
+ */
+.erpPa {
+  background: var(--surface-default);
+  border: 1px solid var(--border-default);
+  border-radius: var(--mantine-radius-sm);
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+
+.erpPaHeader { padding: var(--mantine-spacing-md) var(--mantine-spacing-lg); }
+.erpPaSpacer { flex: 1; }
+
+/* 탭 — 출처가 둘 이상일 때만 그려진다(하나면 부품이 아예 안 낸다). */
+.erpPaBar {
+  display: flex; align-items: center; gap: var(--mantine-spacing-md);
+  padding: 0 var(--mantine-spacing-lg);
+  border-bottom: 1px solid var(--border-default);
+}
+.erpPaTabs { display: flex; gap: var(--mantine-spacing-lg); }
+.erpPaTab {
+  border: 0; background: transparent; cursor: pointer;
+  padding: 0 0 var(--mantine-spacing-xs); margin-bottom: -1px;
+  font: inherit; font-size: var(--typo-body-size); color: var(--text-secondary);
+  border-bottom: 2px solid transparent;
+}
+.erpPaTab.is-on { color: var(--text-primary); font-weight: 600; border-bottom-color: var(--mantine-color-primary-6); }
+.erpPaTab .n { font-variant-numeric: tabular-nums; color: var(--text-disabled); margin-left: 5px; }
+
+.erpPaBulk {
+  display: flex; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+}
+
+.erpPaScroll { overflow-x: auto; }
+.erpPaTable { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: auto; }
+
+.erpPaTable th {
+  font-size: var(--typo-caption-size); font-weight: 600; color: var(--text-secondary);
+  text-align: left; padding: var(--mantine-spacing-xxs) var(--mantine-spacing-sm);
+  white-space: nowrap; user-select: none; vertical-align: bottom;
+}
+.erpPaTable th.is-num { text-align: right; }
+
+.erpPaTable td {
+  padding: 5px var(--mantine-spacing-sm);
+  border-bottom: 1px solid var(--border-default);
+  vertical-align: middle; white-space: nowrap; height: 46px;
+  font-size: var(--typo-body-size); line-height: 24px;
+  background: var(--surface-default);
+}
+.erpPaTable td.is-num { text-align: right; }
+.erpPaTable td.is-grow { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.erpPaTable tbody tr:last-child > td { border-bottom: 0; }
+/* 보조는 같은 줄, 흐린 글자 — 둘째 줄로 안 내린다(행 높이가 흔들리면 옆 칸이 세로로 안 맞는다). */
+.erpPaTable .sub {
+  margin-left: var(--mantine-spacing-xs);
+  font-size: var(--typo-caption-size); color: var(--text-secondary);
+}
+
+.erpPaTable th:first-child, .erpPaTable td:first-child { padding-left: var(--mantine-spacing-lg); }
+.erpPaTable th:last-child,  .erpPaTable td:last-child  { padding-right: var(--mantine-spacing-lg); }
+
+.erpPa .w-check { width: 36px; text-align: center; }
+.erpPa .w-date  { min-width: 168px; }
+.erpPa .w-money { min-width: 104px; }
+/* 입력이 들어가는 두 열은 *값이 안 잘리는* 폭이 최소다: ₩ + 8자리 + 콤마(+조정은 부호 한 칸 더). */
+.erpPa .w-adjust { min-width: 132px; }
+.erpPa .w-apply { min-width: 152px; }
+
+/* 적용된 줄 — 틴트 한 겹. "이 줄에 돈이 붙었다"를 표 전체에서 한눈에 세게 한다. */
+.erpPaTable tr.is-picked > td { background: var(--mantine-color-primary-0); }
+.erpPaTable tr.is-over > td { background: var(--mantine-color-danger-0); }
+.erpPaErr > td { background: var(--mantine-color-danger-0); padding: 4px var(--mantine-spacing-sm); }
+.erpPaErr span { display: inline-flex; align-items: center; gap: 5px; }
+
+/* ── 하단 고정 tally + 결정 ── */
+.erpPaFoot {
+  display: flex; align-items: stretch; gap: var(--mantine-spacing-md);
+  border-top: 1px solid var(--border-default); background: var(--bg-secondary);
+}
+.erpPaTally { display: flex; align-items: stretch; }
+.erpPaTally .c {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+  border-right: 1px solid var(--border-default);
+  min-width: 168px;
+}
+.erpPaTally .v { font-size: var(--typo-subheading-size); line-height: 1.3; }
+.erpPaRestNote { display: block; font-size: var(--typo-caption-size); color: var(--text-secondary); }
+
+/* 신호등 — 자리는 고정, 색만 바뀐다. */
+.erpPaTally .c.is-rest .v span { color: var(--mantine-color-warning-6); }
+.erpPaTally .c.is-rest .erpPaRestNote { color: var(--mantine-color-warning-6); }
+.erpPaTally .c.is-done .v span { color: var(--mantine-color-success-6); }
+.erpPaTally .c.is-done .erpPaRestNote { color: var(--mantine-color-success-6); }
+.erpPaTally .c.is-over .v span { color: var(--mantine-color-danger-6); }
+.erpPaTally .c.is-over .erpPaRestNote { color: var(--mantine-color-danger-6); }
+
+.erpPaActs {
+  display: flex; align-items: center; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-lg);
+}
