@@ -175,7 +175,8 @@ type FieldSpec = {
 - **Drawer** `opened` `onClose` `title` `actions?` `position: left|right|top|bottom` `size: sm|md|lg|xl|full`(full=축 95%) — 가장자리 슬라이드 패널(뒤 맥락 유지; 차단형은 Modal)
 - **PaperModal** ⚠ **폐기 예정(다음 minor에서 삭제) — `DocModal`의 `children` 모드로 간다.** 이 인쇄 빌트인은 `.erpPaper` 하나를 fixed로 물리 A4에 고정해서 **여러 장짜리 문서가 한 장으로 겹쳐 나간다**(고칠 게 아니라 없앨 결함이다)
 - **PaperDoc** `spec: PaperSpec` `values` `scale?` `mode: view|edit` `onChange?` `readonlyFields?` — 서식+값 → **A4 여러 장**. 배치(쪽 나눔·반복 펼침·집계·묶음 걸침)는 순수 엔진이 하고 여기는 그리기만. 격자는 *정렬 골격*이고 **선은 셀의 속성**이다(각 칸은 자기 위·왼쪽만 그린다 — 안 그러면 맞닿은 자리가 2px). 괘선은 검정 고정. `edit`이면 데이터 자리가 입력이 되되 **문서 기하는 그대로**(칸이 곧 입력의 크기). 서식은 엑셀에서 만든다 → §8-2
-- **PaperSheet** `orientation?` `children` — **종이 한 장.** 손으로 그린 문서를 `DocModal`에 넣을 때 각 장을 이걸로 감싼다. 그 한 줄이 다장 인쇄 계약의 전부다. 시트가 소유: 폭·높이(A4)·안쪽 여백 15mm·바탕·쪽 나눔 / 소비처가 소유: 그 안. 방향은 보통 `DocModal`이 문맥으로 흘려주므로 **모달 밖**(전용 인쇄 라우트)에서만 적는다
+- **PaperSheet** `orientation?` `margin?` `children` — **종이 한 장**(높이 A4 고정). 손으로 그린 문서를 `DocModal`에 넣을 때 각 장을 이걸로 감싼다. 시트가 소유: 폭·높이·안쪽 여백 15mm·바탕·쪽 나눔 / 소비처가 소유: 그 안. `margin`은 **여백이 서식의 일부인 문서**만 말한다(자기 여백에 맞춰 열 폭을 짜고 내용 폭을 재서 스스로 쪽을 나누는 문서 — 기본 15mm를 먹이면 그 계측이 어긋난다)
+- **PaperFlow** `orientation?` `margin?` `children` + **PaperKeep** — **길이가 데이터로 정해지는 서류**(계약서 약관 N개·정산 명세서 N행). 시트의 형제: 시트는 «장을 소비처가 나눈다»가 전제라 넘치면 잘리고, 여기는 **높이를 내용에 맡기고 쪽 나눔을 브라우저가** 한다. ⚠ 흐르는 요소에 `padding`을 주면 여백이 첫 장 위·마지막 장 아래에만 걸려 **2쪽부터 글이 종이 가장자리에 붙는다**(실측). `@page{margin}`은 쪽마다 걸리지만 그 자리가 브라우저 머리말 자리라 URL·날짜가 찍힌다. 그래서 **표 머리·꼬리 그룹**(쪽마다 반복되는 유일한 것)으로 자리를 예약한다 — 소비처는 몰라도 된다. 인쇄 관습 빌트인: 표 행·이미지 안 쪼갬 · 표 머리행 쪽마다 반복 · 제목 뒤 안 끊음 · orphans/widows 2. `PaperKeep`은 그 밖의 «쪼개면 안 되는 덩어리»(조항 하나·서명란)
 - **DocModal** `opened` `onClose` `title` `toolbar?` `actions?` — 회사 서류의 **껍데기 하나**(옛 이름 `PaperDocModal`, 별칭 한 릴리스). **내용은 두 갈래, 인쇄는 한 갈래다**:
   · 서식이면 `spec` `values` `mode: view|edit` `onSave?` `readonlyFields?` `withCancel?`
   · 손으로 그린 문서면 `children`(각 장 = `<PaperSheet>`) + **`orientation` 필수**
@@ -469,6 +470,23 @@ import { DocModal, PaperSheet } from '@jjaim519/erp-dsl';
   <PaperSheet><ContractPage2 /></PaperSheet>
 </DocModal>
 ```
+
+**장을 셀 수 없으면 `PaperFlow`.** 약관이 N개, 품목이 N행이면 «1장=표제, 2장=약관» 같은 고정 분할도
+데이터가 늘면 또 넘친다. 그때는 높이를 안 정하고 **쪽 나눔을 브라우저에 맡긴다.**
+
+```tsx
+import { DocModal, PaperFlow, PaperKeep } from '@jjaim519/erp-dsl';
+
+<DocModal opened={open} onClose={close} title="계약서" orientation="portrait">
+  <PaperFlow>
+    <h1>공사 계약서</h1>
+    {terms.map(t => <PaperKeep key={t.id}><Clause {...t} /></PaperKeep>)}
+    <ItemTable rows={items} />        {/* 표 행은 기본으로 안 쪼개지고 머리행은 쪽마다 반복된다 */}
+  </PaperFlow>
+</DocModal>
+```
+
+한 모달은 **시트들이거나 흐름 하나**다 — 섞지 않는다(`@page`가 하나뿐이다).
 
 **모달 밖에서 인쇄하려고 만들던 전용 라우트·`@media print` 블록은 필요 없다.**
 그것들이 갈라져 있던 이유는 「모달에서 인쇄하면 한 장만 나온다」였는데, 원인은 문서를 무엇으로

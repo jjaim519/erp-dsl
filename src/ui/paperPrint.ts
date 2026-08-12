@@ -15,7 +15,9 @@ import { type PaperOrientation } from '../schema/paper';
  */
 export function paperPageRule(orientation: PaperOrientation): string {
   const land = orientation === 'landscape';
+  const w = land ? '297mm' : '210mm';
   return `@media print{@page{size:A4 ${orientation};margin:0}`
-    + `.erpPaperSheet{width:${land ? '297mm' : '210mm'} !important;`
-    + `height:${land ? '210mm' : '297mm'} !important}}`;
+    + `.erpPaperSheet{width:${w} !important;height:${land ? '210mm' : '297mm'} !important}`
+    // 흐르는 문서는 **높이를 안 준다** — 길이가 내용에 달렸고 쪽 나눔은 브라우저가 한다.
+    + `.erpPaperFlow{width:${w} !important}}`;
 }

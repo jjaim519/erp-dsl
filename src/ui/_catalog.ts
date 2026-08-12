@@ -686,7 +686,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'opened / onClose', kind: '기능', values: 'boolean, () => void' },
       { name: 'title', kind: '콘텐츠', values: 'string' },
       { name: 'spec / values', kind: '콘텐츠', values: 'PaperSpec, Record<string, unknown> — **children과 택일**. 값↔DB 매핑은 소비처 몫이다(서식은 «어떤 이름이 필요한가»만 말한다)' },
-      { name: 'children', kind: '콘텐츠', values: 'ReactNode — **spec과 택일**. 손으로 그린 문서: 각 장을 `<PaperSheet>`로 감싼다. 껍데기는 문서 안을 모른다(FieldGrid든 JSX든). 클래스 문자열을 베끼게 두지 않으려고 시트를 부품으로 내보낸다 — 베끼는 순간 클래스 이름이 공개 API가 되어 못 바꾼다' },
+      { name: 'children', kind: '콘텐츠', values: 'ReactNode — **spec과 택일**. 손으로 그린 문서: 장 수를 아는 문서면 각 장을 `<PaperSheet>`로, **길이가 데이터로 정해지면 `<PaperFlow>` 하나로**(쪽 나눔은 브라우저가 한다). 한 모달은 시트들이거나 흐름 하나다 — 섞지 않는다(`@page`가 하나뿐이다). 껍데기는 문서 안을 모른다(FieldGrid든 JSX든). 클래스 문자열을 베끼게 두지 않으려고 시트를 부품으로 내보낸다 — 베끼는 순간 클래스 이름이 공개 API가 되어 못 바꾼다' },
       { name: 'orientation', kind: '기능', values: "'portrait' | 'landscape' — **children 모드에서 필수**(spec 모드는 서식이 말한다). 이 값이 시트 물리 치수와 `@page size`를 함께 정한다" },
       { name: 'toolbar', kind: '콘텐츠', values: 'ReactNode — 헤더 우측(제목 반대편) **열린 슬롯**. 문서의 «종류»를 고르는 자리다(견적서 갑/을). `views: {label,value}[]` 같은 모양을 못박지 않은 이유: 어떤 도메인은 토글이고 어떤 도메인은 라디오·선택이다 — 못박으면 그 도메인들이 각자 껍데기를 다시 만든다. ⚠ 행위(인쇄·닫기)는 넣지 않는다(빌트인이고, 섞으면 헤더가 두 문법이 된다)' },
       { name: 'actions', kind: '기능', values: 'Action[] — **우하단 CTA 한 자리**(「수정」·「발송」). 인쇄·저장은 빌트인이라 안 넣는다. 없으면 푸터를 통째로 안 그린다(빈 띠가 남지 않게)' },
@@ -702,9 +702,20 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Group (헤더·푸터 직접 조립)'],
       공유: ['PaperDoc', 'PaperSheet', 'paperPrint(@page 한 벌)'],
     } },
+  { name: 'PaperFlow', layer: '레이아웃 원자', role: '**길이가 데이터로 정해지는 서류**(계약서 — 약관 N개 / 정산 명세서 — 품목 N행). `PaperSheet`의 형제다: 시트는 «장을 소비처가 나눈다»가 전제라(높이 고정) 넘치면 흐르는 게 아니라 **잘린다**. 여기서는 폭·여백만 잡고 **높이를 내용에 맡긴다** — 쪽 나눔은 브라우저가 한다. ⚠ **여백이 이 부품의 전부다**(실측 3종): 흐르는 요소에 `padding`을 주면 여백이 «흐름 전체»의 위아래에만 걸려 **2쪽부터 글이 종이 가장자리에 붙는다**(위 0px). `@page{margin}`으로 주면 쪽마다 걸리지만 그 자리가 곧 브라우저 머리말·꼬리말 자리라 URL·날짜·쪽번호가 찍힌다(가구 발주서가 모달을 떠난 이유). **쪽마다 반복되는 것은 표의 머리·꼬리 그룹뿐**이라, 내용을 표 한 칸에 담고 빈 `thead`/`tfoot`으로 자리를 예약한다(실측: 1쪽 57 · 2쪽 57 · 3쪽 58px, 머리말 없음). 좌우는 표 바깥 `padding`이 맡는다(가로는 쪽이 바뀌어도 같은 상자다). 표가 한 겹 들어가지만 **보이는 계약은 `<PaperFlow>` 하나**다.',
+    props: [
+      { name: 'orientation', kind: '기능', values: "'portrait' | 'landscape' — 문맥(DocModal)이 정한 방향을 덮어쓴다. 모달 밖에서 쓸 때만 적는다" },
+      { name: 'margin', kind: '스타일', values: "number | string (기본 15mm=PAPER_MARGIN). 수는 인쇄 좌표계 px, 문자열은 CSS 길이('10mm'). 화면 px과 인쇄 mm이 같은 자다(캔버스가 96dpi라 210mm=794px)" },
+      { name: 'children', kind: '콘텐츠', values: 'ReactNode (여백 안쪽 — 소비처가 그린다. 길이는 재지 않는다)' },
+      { name: 'PaperKeep', kind: '기능', values: '**같이 나가는 부품** — 쪽 경계에서 쪼개지면 안 되는 덩어리(조항 하나·서명란)를 감싼다. 표의 `tr`과 이미지는 PaperFlow가 이미 기본으로 안 쪼갠다. ⚠ 남발하면 쪽 끝에 큰 빈자리가 생긴다' },
+    ],
+    composition: {
+      토큰: ['A4 폭(세로 794px = 210mm)·높이 없음', '여백 15mm 기본', 'min-height = 한 장(화면에서만 — 인쇄에선 푼다, 빈 장이 붙는다)', '인쇄 관습 빌트인: 표 행·이미지 안 쪼갬 · 표 머리행 쪽마다 반복 · 제목 뒤 안 끊음 · orphans/widows 2 · print-color-adjust exact'],
+    } },
   { name: 'PaperSheet', layer: '레이아웃 원자', role: '**종이 한 장.** 손으로 그린 문서를 `DocModal`에 넣을 때 각 장을 이걸로 감싼다 — 그 한 줄이 다장 인쇄 계약의 전부다(`.erpPaperSheet` + break-after). 부품으로 내보내는 이유: 클래스 문자열을 소비처가 베끼면 **그 이름이 사실상 공개 API가 되어 우리가 못 바꾼다.** 시트가 소유하는 것 = 폭·높이(A4 캔버스)·안쪽 여백 15mm·바탕·그림자·쪽 나눔. 소비처가 소유하는 것 = 그 안을 어떻게 그리나. 이 경계가 PaperDoc이 그리는 장과 **정확히 같아서** 두 종류의 문서가 같은 인쇄 경로를 탄다. 방향은 보통 DocModal이 문맥으로 흘려준다(장마다 다시 적게 하지 않는다 — 한 문서 안에서 방향이 갈리면 @page 하나로 못 찍는다).',
     props: [
       { name: 'orientation', kind: '기능', values: "'portrait' | 'landscape' — 문맥(DocModal)이 정한 방향을 덮어쓴다. **모달 밖**(문서 전용 라우트)에서 쓸 때만 적는다" },
+      { name: 'margin', kind: '스타일', values: "number | string (기본 15mm=PAPER_MARGIN — 서식 문서의 격자 여백과 한 수). ⚠ 문을 연 이유: **여백이 서식의 일부인 문서가 있다** — 자기 여백(10mm)에 맞춰 열 폭을 짜고 «내용 폭 190mm»를 재서 스스로 쪽을 나누는 문서에 15mm를 먹이면 표가 틀어지고 그 계측까지 어긋난다. `0`이면 시트는 테두리만 준다" },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (여백 안쪽 — 소비처가 그린다)' },
     ],
     composition: {

@@ -18,18 +18,28 @@ export const PaperSheetContext = createContext<PaperOrientation>('portrait');
 type Props = {
   /** 문맥(DocModal)이 정한 방향을 덮어쓴다. 모달 밖에서 쓸 때만 적는다. */
   orientation?: PaperOrientation;
+  /**
+   * 종이 안쪽 여백. 기본은 15mm(`PAPER_MARGIN`) — 서식으로 그린 장(PaperDoc의 격자 inset)과
+   * **한 수**라서 회사 서류의 여백이 하나로 모인다.
+   *
+   * ⚠ 그래도 문을 여는 이유: **여백이 서식의 일부인 문서가 있다.** 자기 여백(10mm)에 맞춰
+   *   열 폭을 짜고 «내용 폭 190mm»를 재서 스스로 쪽을 나누는 문서에 15mm를 먹이면
+   *   표가 틀어지고 그 계측까지 어긋난다. 그런 문서만 자기 수를 말한다(`0`이면 시트는 테두리만 준다).
+   *
+   * 수는 인쇄 좌표계 px(794×1123 캔버스), 문자열은 CSS 길이(`'10mm'`).
+   * **화면 px과 인쇄 mm이 같은 자다** — 캔버스가 96dpi라 210mm = 794px이 정확히 성립한다.
+   */
+  margin?: number | string;
   children?: ReactNode;
 };
 
-export function PaperSheet({ orientation, children }: Props) {
+export function PaperSheet({ orientation, margin = PAPER_MARGIN, children }: Props) {
   const ctx = useContext(PaperSheetContext);
   const canon = PAPER_CANON[orientation ?? ctx];
   return (
     <div
       className="erpPaperSheet"
-      /* 여백을 **인라인이 아니라 여기서** 주는 이유: 값의 주인이 schema(PAPER_MARGIN)라
-         서식으로 그린 장(PaperDoc의 격자 inset)과 한 수를 쓴다 — 회사 서류의 여백이 한 값이 된다. */
-      style={{ width: canon.w, height: canon.h, padding: PAPER_MARGIN }}
+      style={{ width: canon.w, height: canon.h, padding: typeof margin === 'number' ? `${margin}px` : margin }}
     >
       {children}
     </div>

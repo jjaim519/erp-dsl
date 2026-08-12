@@ -49,6 +49,42 @@
   --paper-indent: var(--paper-row);
 }
 
+/* 흐르는 문서(PaperFlow) — 길이가 데이터로 정해지는 서류. 폭·여백만 잡고 높이는 내용이 정한다.
+   여백 기제는 PaperFlow.tsx 주석 참조(표 머리·꼬리 그룹만이 쪽마다 반복된다). */
+.erpPaperFlow {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--bg-primary);
+  box-shadow: 0 1px 3px rgba(11, 26, 53, .10), 0 8px 28px rgba(11, 26, 53, .12);
+  margin-inline: auto;
+  /* 한 줄만 남기고 쪽을 넘기지 않는다 — 종이의 관습이고, 화면엔 없던 규율이라 여기서 준다. */
+  orphans: 2;
+  widows: 2;
+}
+.erpPaperFlow > table { width: 100%; border-collapse: collapse; }
+.erpPaperFlow > table > thead > tr > td,
+.erpPaperFlow > table > tfoot > tr > td,
+.erpPaperFlow > table > tbody > tr > td { padding: 0; border: 0; vertical-align: top; }
+
+/* 소비처 내용에 걸리는 인쇄 관습 — **아무도 반대하지 않을 것만** 넣는다.
+   표 행이 쪽 경계에서 반으로 잘리는 건 언제나 결함이고, 긴 표의 머리행은 쪽마다 다시 나야 읽힌다. */
+.erpPaperFlow tr,
+.erpPaperFlow img { break-inside: avoid; }
+.erpPaperFlow thead { display: table-header-group; }
+.erpPaperFlow h1, .erpPaperFlow h2, .erpPaperFlow h3, .erpPaperFlow h4 { break-after: avoid; }
+
+/* 소비처가 «여기는 쪼개지 마라»를 말하는 자리(PaperKeep). 클래스가 아니라 부품으로 나간다. */
+.erpPaperKeep { break-inside: avoid; }
+
+@media print {
+  /* 화면에서만 쓰던 것들을 푼다. 폭은 paperPrint의 주입 규칙이 물리 mm으로 덮는다. */
+  .erpPaperFlow { min-height: 0 !important; box-shadow: none; margin: 0 !important; }
+  /* 종이는 WYSIWYG이다 — 소비처가 칠한 음영·표 머리 배경이 브라우저 기본값에 지워지지 않게. */
+  .erpPaperFlow, .erpPaperSheet {
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+  }
+}
+
 .erpPaperGrid {
   display: grid;
   position: absolute;

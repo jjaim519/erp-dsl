@@ -90,6 +90,7 @@ import { Drawer } from './Drawer';
 import { PaperModal } from './PaperModal';
 import { PaperDoc } from './PaperDoc';
 import { PaperSheet } from './PaperSheet';
+import { PaperFlow, PaperKeep } from './PaperFlow';
 import { DocModal } from './DocModal';
 import type { PaperSpec } from '../schema/paper';
 import { Skeleton } from './Skeleton';
@@ -1033,7 +1034,8 @@ export function Demo({ name }: { name: string }) {
   const [dwAfter, setDwAfter] = useState(false);
   const [paper, setPaper] = useState(false);
   const [docModal, setDocModal] = useState<'view' | 'edit' | null>(null);
-  const [docFree, setDocFree] = useState(false);          // 손코딩 문서(children 모드) — 3장
+  const [docFree, setDocFree] = useState(false);
+  const [docFlow, setDocFlow] = useState(false);          // 흐르는 문서(길이가 데이터)          // 손코딩 문서(children 모드) — 3장
   const [docView, setDocView] = useState('gab');          // 헤더 toolbar 슬롯 데모(갑/을)
   const [docValues, setDocValues] = useState(PAPER_DEMO_VALUES);
   const [cbo, setCbo] = useState<string | null>(null);
@@ -1307,6 +1309,42 @@ export function Demo({ name }: { name: string }) {
               </Stack>
             </PaperSheet>
           ))}
+        </DocModal>
+      </Stack>
+    ),
+    PaperFlow: (
+      // 길이가 데이터로 정해지는 서류. 쪽 나눔은 브라우저가 하고, 여백은 쪽마다 선다.
+      <Stack gap="xs">
+        <Text variant="caption" color="secondary">
+          계약서처럼 **장을 셀 수 없는** 문서다(약관이 늘면 장이 는다). 시트와 달리 높이를 안 정한다 —
+          대신 쪽마다 위아래 여백이 서도록 부품이 표 머리·꼬리 자리를 예약한다(그것만이 쪽마다 반복된다).
+          아래 「문서 열기」로 조항 40개짜리를 넣어 뒀다 — 인쇄 미리보기를 열면 3장으로 나뉘고 **매 장에 여백이 있다.**
+        </Text>
+        <Group gap="xs" wrap>
+          <Button variant="secondary" onClick={() => setDocFlow(true)}>흐르는 문서 열기 (조항 40)</Button>
+        </Group>
+        <DocModal
+          opened={docFlow}
+          onClose={() => setDocFlow(false)}
+          title="공사 계약서 — 길이가 데이터로 정해지는 문서"
+          orientation="portrait"
+          actions={[{ label: '승인 요청', variant: 'primary', onClick: () => setDocFlow(false) }]}
+        >
+          <PaperFlow>
+            <Title variant="display">공사 계약서</Title>
+            <div style={{ height: 12 }} />
+            {Array.from({ length: 40 }, (_, i) => (
+              <PaperKeep key={i}>
+                <div style={{ marginBottom: 12 }}>
+                  <Text variant="body-strong">{`제${i + 1}조`}</Text>
+                  <Text variant="body">
+                    이 조항은 쪽 경계에서 쪼개지지 않는다(PaperKeep). 데이터가 늘면 장이 늘어난다 —
+                    소비처는 장을 세지 않는다.
+                  </Text>
+                </div>
+              </PaperKeep>
+            ))}
+          </PaperFlow>
         </DocModal>
       </Stack>
     ),

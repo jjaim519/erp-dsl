@@ -164,7 +164,9 @@ export { MobileBoardWrite } from './MobileBoardWrite';
 //  ⚠ 아직 못 하는 것: **2단 그룹**(걸침 칸이나 그룹머리가 두 층이면 안쪽이 바깥을 따라가 *틀린 값*이 찍힌다) ·
 //     흐름 셀(한 칸이 쪽을 못 넘는다) · 편집 모드 모바일. 조건부 노출은 반복 배열을 비우는 것으로 된다.
 export { PaperDoc } from './PaperDoc';
+//  종이 한 장 = `PaperSheet`(높이 고정) / 길이가 데이터로 정해지면 `PaperFlow`(높이는 내용, 쪽은 브라우저가 나눈다).
 export { PaperSheet } from './PaperSheet';
+export { PaperFlow, PaperKeep } from './PaperFlow';
 //  `PaperDocModal`은 옛 이름이다 — 한 릴리스 동안 별칭으로 남긴다(소비처가 한 번에 안 갈아도 되게).
 export { DocModal, PaperDocModal, type DocModalProps } from './DocModal';
 export { Timeline } from './Timeline';
