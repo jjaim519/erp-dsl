@@ -173,9 +173,13 @@ type FieldSpec = {
 - **Tree** `nodes` controlled 선택·펼침 · `editable`(쓰기 게이트)
 - **FieldGrid** `columns` `rows: FieldGridCell[][]`(셀=`label?`|`field?`|`image?`|`node?`, `colSpan?` `rowSpan?` `align?`) `fields: FieldSpec[]` `mode: edit|read` `size: sm|md|lg`(기본 md — 타이포·행 단위·세로패딩 한 세트, 행 높이는 타이포 따라 동적) `values` `onChange` `errors?` — 테두리 셀 격자(장표/帳票). 작성·확인 양용·**같은 기하**(셀 박스 불변, read=같은 입력 원자 inert 재사용). `node`=비표준 컨트롤 통째 슬롯(4종 배타·mode 무관). 머리표(라벨:값)·명세표(헤더+값 행)·대분류 밴드 다 같은 모델
 - **Drawer** `opened` `onClose` `title` `actions?` `position: left|right|top|bottom` `size: sm|md|lg|xl|full`(full=축 95%) — 가장자리 슬라이드 패널(뒤 맥락 유지; 차단형은 Modal)
-- **PaperModal** `opened` `onClose` `title` `actions?` `orientation: portrait|landscape` · children=표준 A4 캔버스(794×1123) 기준 문서 — **순수 A4 문서 뷰어**. 종이가 자기 윤곽을 가짐(모달 아님), JS 실측 fit(transform scale). 모달 폭=가로 A4 고정, 헤더 토글 **자세히**(기본·폭 채워 확대·세로 스크롤) / **전체**(통째·무스크롤). 내용은 소비처(보통 FieldGrid). **인쇄 빌트인**(`@media print`: 종이만 물리 A4 1:1·1장·머리말꼬리말 제거·디바이더 크리스프 — 트리거 버튼만 `actions`로 소비처 배선)
+- **PaperModal** ⚠ **폐기 예정(다음 minor에서 삭제) — `DocModal`의 `children` 모드로 간다.** 이 인쇄 빌트인은 `.erpPaper` 하나를 fixed로 물리 A4에 고정해서 **여러 장짜리 문서가 한 장으로 겹쳐 나간다**(고칠 게 아니라 없앨 결함이다)
 - **PaperDoc** `spec: PaperSpec` `values` `scale?` `mode: view|edit` `onChange?` `readonlyFields?` — 서식+값 → **A4 여러 장**. 배치(쪽 나눔·반복 펼침·집계·묶음 걸침)는 순수 엔진이 하고 여기는 그리기만. 격자는 *정렬 골격*이고 **선은 셀의 속성**이다(각 칸은 자기 위·왼쪽만 그린다 — 안 그러면 맞닿은 자리가 2px). 괘선은 검정 고정. `edit`이면 데이터 자리가 입력이 되되 **문서 기하는 그대로**(칸이 곧 입력의 크기). 서식은 엑셀에서 만든다 → §8-2
-- **PaperDocModal** `opened` `onClose` `title` `spec` `values` `mode: view|edit` `onSave?` `readonlyFields?` `actions?` — 문서를 **보고·인쇄하고·채우는** 모달. **보통 이걸 쓴다**(PaperDoc은 문서를 화면에 직접 박을 때). 초안·더티는 모달이 쥔다 → 소비처는 `onSave` 하나만 배선하고, 안 저장하고 닫으려 하면 푸터가 확인으로 바뀐다. 인쇄·배율은 보기에만(작성 중엔 100% 고정). `actions`=소비처 CTA 자리(발송·승인 등 — 닫기/인쇄/저장은 빌트인). **PaperModal과 헷갈리지 말 것**: 그쪽은 children을 받는 1장짜리 뷰어다
+- **PaperSheet** `orientation?` `children` — **종이 한 장.** 손으로 그린 문서를 `DocModal`에 넣을 때 각 장을 이걸로 감싼다. 그 한 줄이 다장 인쇄 계약의 전부다. 시트가 소유: 폭·높이(A4)·안쪽 여백 15mm·바탕·쪽 나눔 / 소비처가 소유: 그 안. 방향은 보통 `DocModal`이 문맥으로 흘려주므로 **모달 밖**(전용 인쇄 라우트)에서만 적는다
+- **DocModal** `opened` `onClose` `title` `toolbar?` `actions?` — 회사 서류의 **껍데기 하나**(옛 이름 `PaperDocModal`, 별칭 한 릴리스). **내용은 두 갈래, 인쇄는 한 갈래다**:
+  · 서식이면 `spec` `values` `mode: view|edit` `onSave?` `readonlyFields?` `withCancel?`
+  · 손으로 그린 문서면 `children`(각 장 = `<PaperSheet>`) + **`orientation` 필수**
+  둘을 합칠 수 있는 근거 — 인쇄 경로는 «무엇으로 그렸나»가 아니라 **클래스 계약**(`.erpPaperSheet` + break-after)에 걸려 있다. 껍데기가 소유: 인쇄·크롬·쪽 나눔·`@page`(margin 0 — 그게 브라우저 머리말·꼬리말을 없앤다). 초안·더티는 모달이 쥔다 → 소비처는 `onSave` 하나만 배선하고, 안 저장하고 닫으려 하면 푸터가 확인으로 바뀐다. **배율은 100% 고정**(통째로 맞춰 보는 시점은 인쇄 미리보기다). 헤더=`toolbar`(문서의 *종류*를 고르는 열린 슬롯 — 토글이든 라디오든) + 인쇄 + ✕ / 푸터=`actions` CTA 한 자리(없으면 푸터가 통째로 없다)
 - **Stepper** `active`(index) `steps: {label,description?}[]` `orientation?` `onStepClick?` — 다단계 진행 표시(콘텐츠는 호출측이 active로 분기)
 - **Transfer** `items: {value,label}[]` `selected: string[]` `onChange` `titles?` — 좌·우 듀얼 리스트 대량 배정(인라인 다중은 MultiSelect)
 - **ToastHost** (props 없음) — 토스트 호스트(위치·지속·스택 단일 관리). 트리거는 `notify.*`, 앱 셸에 1회 배치
@@ -217,7 +221,7 @@ type FieldSpec = {
 - **MobileDisclosure** `title`/`meta` `defaultOpen?` · children — 그 자리에서 펼쳐지는 행(이동=›  / 펼침=⌄)
 - **MobileStatRow** `items: MobileStatItem[]` — KPI 2~4개 균등 분할 + 세로 헤어라인
 - **MobilePhotoPicker** `value: FileItem[]`/`onChange` `max`/`disabled` — 정사각 썸네일 격자(폰엔 드래그가 없어 FileUploader를 못 쓴다)
-- **MobilePaperViewer**(유기체) `opened`/`onClose` `title` `children` `orientation?` `actions?` — 폰의 **A4 문서 뷰어**(PaperDocModal·PaperModal의 형제). 하는 일은 하나다: **인쇄 좌표계로 그려진 문서를 폰에서 훑어보게 한다**(그리지도 다시 쓰지도 않는다). `children`은 A4 폭 그대로 그린 문서 — 보통 `<PaperDoc spec values />`. **배율을 걸어서 넘기지 않는다**(배율은 이 부품이 소유 — 소비처가 자기 fit을 걸면 두 겹). 높이는 여기서 재므로 **몇 장이든 된다**. `orientation`은 **폭만** 정한다. 확대: 폰은 폭이 늘 구속조건이라 **폭맞춤이 곧 「한 장 전체」**(세로 A4 556px < 무대) → 열자마자 폭맞춤, **더블탭으로 폭맞춤↔100%**(탭 지점 앵커), 핀치가 그 사이를 연속으로. 핀치는 multipoint라 하단 확대율 표기 자체가 단일 포인터 대안 버튼이다(WCAG 2.5.1 / 1.4.10 2차원 예외). **인쇄 스코프는 없다** — 「문서 밖 치우기」는 화면을 소유한 쪽만 할 수 있고 이 커버는 앱 트리 안이라, 인쇄는 소비처 몫이다<br/>  ⚠ **v0.77.0 breaking** — v0.75의 「읽기 뷰」(장표를 라벨-값으로 투영)와 `columns`/`rows`/`fields`/`values` 계약을 걷어냈다. `PaperCell`은 좌표와 text/field/border만 갖고 라벨-값 짝은 «왼쪽 칸이 라벨»이라는 시각적 인접성 추론으로만 성립한다 — 되살리면 Adobe Liquid Mode와 같은 처지가 된다. 투영을 안 하니 구조가 필요 없어 계약이 `children`으로 돌아왔다
+- **MobilePaperViewer**(유기체) `opened`/`onClose` `title` `children` `orientation?` `actions?` — 폰의 **A4 문서 뷰어**(`DocModal`의 형제). 하는 일은 하나다: **인쇄 좌표계로 그려진 문서를 폰에서 훑어보게 한다**(그리지도 다시 쓰지도 않는다). `children`은 A4 폭 그대로 그린 문서 — 보통 `<PaperDoc spec values />`. **배율을 걸어서 넘기지 않는다**(배율은 이 부품이 소유 — 소비처가 자기 fit을 걸면 두 겹). 높이는 여기서 재므로 **몇 장이든 된다**. `orientation`은 **폭만** 정한다. 확대: 폰은 폭이 늘 구속조건이라 **폭맞춤이 곧 「한 장 전체」**(세로 A4 556px < 무대) → 열자마자 폭맞춤, **더블탭으로 폭맞춤↔100%**(탭 지점 앵커), 핀치가 그 사이를 연속으로. 핀치는 multipoint라 하단 확대율 표기 자체가 단일 포인터 대안 버튼이다(WCAG 2.5.1 / 1.4.10 2차원 예외). **인쇄 스코프는 없다** — 「문서 밖 치우기」는 화면을 소유한 쪽만 할 수 있고 이 커버는 앱 트리 안이라, 인쇄는 소비처 몫이다<br/>  ⚠ **v0.77.0 breaking** — v0.75의 「읽기 뷰」(장표를 라벨-값으로 투영)와 `columns`/`rows`/`fields`/`values` 계약을 걷어냈다. `PaperCell`은 좌표와 text/field/border만 갖고 라벨-값 짝은 «왼쪽 칸이 라벨»이라는 시각적 인접성 추론으로만 성립한다 — 되살리면 Adobe Liquid Mode와 같은 처지가 된다. 투영을 안 하니 구조가 필요 없어 계약이 `children`으로 돌아왔다
 - **MobileCalendar** `month` `selected`/`onSelect` `events`/`encoding`/`annotations`/`holidays` `maxLanes?` — 월 달력. **스팬 바**로 기간을 읽는다(점 아님). 데스크탑 CalendarPage와 **같은 타입·같은 레인 알고리즘**(변환 0). 월 제목·이동은 이 부품이 아니라 **셸 헤더의 값 제목**이 갖는다
 - **MobileComment** `comment: BoardComment` `authorLabel?` `onReply?` — 1단 답글(데스크탑 BoardView와 타입 공유)
 - **MobileComposer** `value`/`onChange`/`onSubmit` `replyTo?` `placeholder`/`disabled` — 하단 고정 입력 바(셸 `bottom`에 꽂음)
@@ -351,7 +355,7 @@ npm i pdfjs-dist          # optional peer. PDF 미리보기가 필요할 때만
 ### 8-2. 문서(장표) 시스템 — 계약·견적·명세·발주서 (선택)
 
 회사 문서를 화면에 그리고 **물리 A4 1:1로 인쇄**하고, 같은 기하 그대로 **채워 넣는다**.
-`PaperDocModal`(보통 이것) · `PaperDoc`(문서를 화면에 직접 박을 때)를 쓴다.
+`DocModal`(보통 이것) · `PaperDoc`·`PaperSheet`(문서를 화면에 직접 박을 때)를 쓴다.
 
 **서식은 코드가 아니라 엑셀이다.** 표를 코드로 짜지 않는다 — 자연어로 지시하든 코드로 옮기든
 매번 어긋난다. 엑셀에서 그린 것이 그대로 나오고, **저작의 주체는 소비 앱**이다(도메인을 아는 쪽이므로).
@@ -418,11 +422,11 @@ npx erp-paper-import docs/forms/kk-baljooseo.xlsx --rows 31 \
 **배선 — 값을 넘기고 저장을 받는다**
 
 ```tsx
-import { PaperDocModal } from '@jjaim519/erp-dsl';
+import { DocModal } from '@jjaim519/erp-dsl';
 import type { PaperSpec } from '@jjaim519/erp-dsl/schema';
 import spec from '@/forms/order.paper.json';
 
-<PaperDocModal
+<DocModal
   opened={open} onClose={() => setOpen(false)} title="발주서 — 작성"
   spec={spec as PaperSpec}
   values={{
@@ -447,6 +451,28 @@ DB → 이 객체로 옮기는 건 소비 앱 몫이다 — 서식은 «어떤 �
 
 > **아직 못 하는 것** — **2단 그룹**(걸침 칸이나 그룹머리를 두 층으로 두면 안쪽이 바깥을 따라가
 > *틀린 값*이 찍힌다. 검사도 안 잡는다) · 흐름 셀(한 칸이 쪽을 못 넘는다) · 편집 모드 모바일.
+
+**서식이 아닌 문서 — 손으로 그린 장을 같은 껍데기에 넣는다**
+
+계약서처럼 엑셀 서식으로 옮기지 않은 문서도 **같은 모달로 인쇄한다.** 지킬 계약은 하나뿐이다 —
+**한 장 = 시트 하나.** 그 한 줄이면 쪽 나눔·`@page`·크롬 감추기가 전부 딸려온다.
+
+```tsx
+import { DocModal, PaperSheet } from '@jjaim519/erp-dsl';
+
+<DocModal
+  opened={open} onClose={() => setOpen(false)} title="계약서"
+  orientation="portrait"                                  // children 모드에선 필수
+  actions={[{ label: '승인 요청', variant: 'primary', onClick: request }]}
+>
+  <PaperSheet><ContractPage1 /></PaperSheet>
+  <PaperSheet><ContractPage2 /></PaperSheet>
+</DocModal>
+```
+
+**모달 밖에서 인쇄하려고 만들던 전용 라우트·`@media print` 블록은 필요 없다.**
+그것들이 갈라져 있던 이유는 「모달에서 인쇄하면 한 장만 나온다」였는데, 원인은 문서를 무엇으로
+그렸나가 아니라 **한 종이를 fixed로 고정하던 옛 인쇄 빌트인**(`PaperModal`)이었다.
 
 ### 8-3. 계층 초기 등록 — 엑셀로 트리를 세운다 (선택)
 

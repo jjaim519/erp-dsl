@@ -89,7 +89,8 @@ import { Accordion } from './Accordion';
 import { Drawer } from './Drawer';
 import { PaperModal } from './PaperModal';
 import { PaperDoc } from './PaperDoc';
-import { PaperDocModal } from './PaperDocModal';
+import { PaperSheet } from './PaperSheet';
+import { DocModal } from './DocModal';
 import type { PaperSpec } from '../schema/paper';
 import { Skeleton } from './Skeleton';
 import { Combobox } from './Combobox';
@@ -1032,6 +1033,8 @@ export function Demo({ name }: { name: string }) {
   const [dwAfter, setDwAfter] = useState(false);
   const [paper, setPaper] = useState(false);
   const [docModal, setDocModal] = useState<'view' | 'edit' | null>(null);
+  const [docFree, setDocFree] = useState(false);          // 손코딩 문서(children 모드) — 3장
+  const [docView, setDocView] = useState('gab');          // 헤더 toolbar 슬롯 데모(갑/을)
   const [docValues, setDocValues] = useState(PAPER_DEMO_VALUES);
   const [cbo, setCbo] = useState<string | null>(null);
   const [time, setTime] = useState('');
@@ -1249,18 +1252,20 @@ export function Demo({ name }: { name: string }) {
         </div>
       </Stack>
     ),
-    PaperDocModal: (
-      // 보기·인쇄·편집 한 부품. 초안은 모달이 쥐고 소비처는 onSave 하나만 배선한다.
+    DocModal: (
+      // 껍데기 하나 — 내용은 서식(spec)이든 손코딩(children)이든, 인쇄는 한 경로다.
       <Stack gap="xs">
         <Text variant="caption" color="secondary">
           같은 문서를 보기 / 작성·편집으로 연다 — 채우는 중에도 **문서 기하는 그대로**다(칸이 곧 입력의 크기, 입력은 1px 물려 들어간다).
-          고치고 저장하면 위 미리보기에 바로 반영된다. 안 저장하고 닫으면 푸터가 확인으로 바뀐다. 인쇄는 보기에만 있고 장마다 물리 A4 1:1.
+          고치고 저장하면 위 미리보기에 바로 반영된다. 안 저장하고 닫으면 푸터가 확인으로 바뀐다. 배율은 100% 고정(맞춰 보는 시점은 인쇄 미리보기다).
+          헤더 우측은 열린 슬롯(`toolbar`) — 문서의 *종류*를 고르는 자리다(여기선 갑/을, 도메인에 따라 라디오·선택도 된다).
         </Text>
         <Group gap="xs" wrap>
-          <Button variant="secondary" onClick={() => setDocModal('view')}>보기로 열기</Button>
-          <Button variant="secondary" onClick={() => setDocModal('edit')}>작성·편집으로 열기</Button>
+          <Button variant="secondary" onClick={() => setDocModal('view')}>서식 문서 — 보기</Button>
+          <Button variant="secondary" onClick={() => setDocModal('edit')}>서식 문서 — 작성·편집</Button>
+          <Button variant="secondary" onClick={() => setDocFree(true)}>손코딩 문서 — 3장</Button>
         </Group>
-        <PaperDocModal
+        <DocModal
           opened={docModal !== null}
           onClose={() => setDocModal(null)}
           title={`발주서 — ${docModal === 'edit' ? '작성' : '보기'}`}
@@ -1269,7 +1274,60 @@ export function Demo({ name }: { name: string }) {
           mode={docModal ?? 'view'}
           onSave={setDocValues}
           readonlyFields={['품목.이름']}
+          toolbar={docModal === 'view' ? (
+            <SegmentedControl
+              size="sm" value={docView} onChange={setDocView}
+              options={[{ label: '갑지', value: 'gab' }, { label: '을지', value: 'eul' }]}
+            />
+          ) : undefined}
+          actions={docModal === 'view' ? [{ label: '수정', variant: 'primary', onClick: () => setDocModal('edit') }] : undefined}
         />
+        {/* children 모드 — **각 장을 <PaperSheet>로 감싼 것이 전부**다. 껍데기는 문서 안을 모른다.
+            세 장을 넣은 건 이 부품이 생긴 이유가 «여러 장이 한 장으로 겹쳐 나가던 것»이라서다 —
+            겹침·잘림은 한 장짜리 데모에선 절대 안 드러난다(조합 결함은 조합을 박아야 보인다). */}
+        <DocModal
+          opened={docFree}
+          onClose={() => setDocFree(false)}
+          title="계약서 — 손으로 그린 문서 3장"
+          orientation="portrait"
+          actions={[{ label: '승인 요청', variant: 'primary', onClick: () => setDocFree(false) }]}
+        >
+          {['계약 조건', '공사 범위', '특약 사항'].map((h, i) => (
+            <PaperSheet key={h}>
+              <Stack gap="lg">
+                <Group justify="between" align="start">
+                  <Title variant="display">{h}</Title>
+                  <Text variant="caption" color="secondary">{`${i + 1} / 3`}</Text>
+                </Group>
+                <Divider />
+                <Text variant="body">
+                  이 장은 서식(PaperSpec)이 아니라 소비처가 JSX로 그린 것이다. 껍데기가 하는 일은
+                  «한 장 = 시트 하나»를 지키는 것뿐이고, 인쇄에서 이 세 장은 정확히 세 페이지가 된다.
+                </Text>
+              </Stack>
+            </PaperSheet>
+          ))}
+        </DocModal>
+      </Stack>
+    ),
+    PaperSheet: (
+      // 종이 한 장 — 여백·폭·바탕·쪽 나눔은 시트가, 안은 소비처가.
+      <Stack gap="xs">
+        <Text variant="caption" color="secondary">
+          손으로 그린 문서의 **한 장**이다. 보통 `DocModal` 안에서 여러 장을 쌓고, 방향은 모달이 문맥으로 흘려준다.
+          안쪽 여백 15mm는 **서식 문서의 격자 여백과 같은 상수**다 — 회사 서류의 여백이 한 값이 된다. (아래는 0.32배로 줄여 보인 것)
+        </Text>
+        <div style={{ background: 'var(--bg-secondary)', padding: 12, borderRadius: 'var(--mantine-radius-sm)', height: 1123 * 0.32 + 24, overflow: 'hidden', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ transform: 'scale(0.32)', transformOrigin: 'top center' }}>
+            <PaperSheet>
+              <Stack gap="lg">
+                <Title variant="display">계약서</Title>
+                <Divider />
+                <Text variant="body">이 안은 소비처가 그린다 — 시트는 문서 안을 모른다.</Text>
+              </Stack>
+            </PaperSheet>
+          </div>
+        </div>
       </Stack>
     ),
     PaperModal: (

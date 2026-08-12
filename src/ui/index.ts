@@ -80,6 +80,9 @@ export { RichText } from './RichText';                    // 작성물(HTML) 읽
 // 유기체
 export { Modal } from './Modal';
 export { Drawer } from './Drawer';
+// ⚠ **폐기 예정** — `DocModal`의 `children` 모드가 이 부품이 하던 일을 전부 한다.
+//  남길 이유가 없는 게 아니라 **남기면 안 되는** 쪽이다: 이쪽 인쇄 빌트인은 `.erpPaper` 하나를
+//  fixed로 물리 A4에 고정해서 **여러 장짜리 문서가 한 장으로 겹쳐 나간다.** 다음 minor에서 사라진다.
 export { PaperModal } from './PaperModal';
 export { Stepper } from './Stepper';
 export { Transfer } from './Transfer';
@@ -153,13 +156,17 @@ export { MobileBoardWrite } from './MobileBoardWrite';
 //  입력 *원자*는 모바일 전용을 두지 않는다(TextInput·Select…를 그대로 쓴다 — 타이포는 셸 스코프가,
 //  44pt 터치타깃은 mobileshell.css의 --input-height-* 가 처리). 다만 그 원자를 감싸는 *칸*은 갈린다:
 //  데스크탑 FormField(상자)가 아니라 MobileField(밑줄) — 상자를 벗기면 어포던스가 사라지기 때문.
-// 문서 계열 — 서식(엑셀에서 변환한 PaperSpec)을 A4로 그리고 인쇄하고 채운다.
-//  · `PaperDocModal`이 보통의 진입점이다. 문서를 화면에 박아야 하면(전용 인쇄 라우트 등) `PaperDoc`을 쓴다.
+// 문서 계열 — A4 서류를 그리고 인쇄하고 채운다. **껍데기는 `DocModal` 하나다.**
+//  · 내용이 서식(PaperSpec)이면 `spec`+`values`, 손으로 그린 문서면 `children`(각 장 = `<PaperSheet>`).
+//    두 갈래가 **같은 인쇄 경로**를 탄다 — 인쇄는 «무엇으로 그렸나»가 아니라 클래스 계약에 걸려 있다.
+//  · 문서를 화면에 박아야 하면(전용 인쇄 라우트 등) `PaperDoc`·`PaperSheet`를 직접 쓴다.
 //  · 서식 만들기는 `npx erp-paper-import`(bin) — `--template`으로 빈 서식부터 꺼낸다.
 //  ⚠ 아직 못 하는 것: **2단 그룹**(걸침 칸이나 그룹머리가 두 층이면 안쪽이 바깥을 따라가 *틀린 값*이 찍힌다) ·
 //     흐름 셀(한 칸이 쪽을 못 넘는다) · 편집 모드 모바일. 조건부 노출은 반복 배열을 비우는 것으로 된다.
 export { PaperDoc } from './PaperDoc';
-export { PaperDocModal } from './PaperDocModal';
+export { PaperSheet } from './PaperSheet';
+//  `PaperDocModal`은 옛 이름이다 — 한 릴리스 동안 별칭으로 남긴다(소비처가 한 번에 안 갈아도 되게).
+export { DocModal, PaperDocModal, type DocModalProps } from './DocModal';
 export { Timeline } from './Timeline';
 export { Calendar } from './Calendar';
 export { IconButton } from './IconButton';

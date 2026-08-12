@@ -7,10 +7,15 @@
       아니고, 역할 변수를 태우면 옅은 회색 선이 되어 **음영 칸 위에서 통째로 사라진다**(실제로 그랬다).
       종이 밖(그림자·바탕)만 역할 변수를 쓴다. */
 
-.erpPaperDoc { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+/* 장을 쌓는 상자 — 서식 문서(PaperDoc)와 손코딩 문서(DocModal children)가 **같은 것을 쓴다.**
+   ⚠ `width: max-content`가 필요한 이유: 배율이 100%로 굳어서 종이가 데스크보다 넓을 수 있는데,
+      스크롤 상자 안에서 `align-items: center`만 있으면 **왼쪽으로 넘친 부분이 스크롤로 못 간다**(고전 결함).
+      max-content + margin auto면 좁을 땐 가운데, 넓을 땐 정상적으로 스크롤된다. */
+.erpPaperDoc { display: flex; flex-direction: column; align-items: center; gap: 16px; width: max-content; margin-inline: auto; }
 
 .erpPaperSheet {
   position: relative;
+  box-sizing: border-box;   /* PaperSheet가 안쪽 여백(15mm)을 padding으로 갖는다 — 폭이 A4를 넘으면 안 된다 */
   background: var(--bg-primary);
   box-shadow: 0 1px 3px rgba(11, 26, 53, .10), 0 8px 28px rgba(11, 26, 53, .12);
   transform-origin: top center;
@@ -214,7 +219,7 @@
      PaperDoc은 자기 바깥에 뭐가 있는지 모른다(모달은 화면 전체를 소유해서 가능하다).
      그리고 `body *:not(:has(.erpPaperDoc))` 같은 규칙은 셀이 수백 개일 때 :has() 무효화가
      폭발해 화면이 멈춘다 — 실제로 그랬다. 인쇄할 화면의 크롬 정리는 **소비처 몫**이고,
-     문서만 깔끔히 뽑고 싶으면 전용 라우트나 PaperDocModal에 담아 인쇄한다.  */
+     문서만 깔끔히 뽑고 싶으면 전용 라우트나 DocModal에 담아 인쇄한다.  */
   .erpPaperDoc { gap: 0; }
 
   .erpPaperSheet {
@@ -242,7 +247,7 @@
 }
 
 /* ── 모달에서 인쇄 ────────────────────────────────────────────
-   ⚠ **이 블록은 전부 `html.erp-doc-print` 안에 갇혀 있다** — PaperDocModal이 *열려 있는 동안만*
+   ⚠ **이 블록은 전부 `html.erp-doc-print` 안에 갇혀 있다** — DocModal이 *열려 있는 동안만*
       그 클래스를 건다. 스코프 없는 `body * { visibility: hidden }`이 paper.css를 import한
       소비 앱의 **모든 화면**을 인쇄 시 백지로 만든 적이 있다(PaperModal 배포 결함, 커밋 22389c0).
    위 인쇄 블록과 나누는 이유: 저건 «종이를 어떻게 그리나»(문서 전용 라우트에서도 필요하고)이고
@@ -250,8 +255,12 @@
 @media print {
   /* 문서 밖은 **자리까지** 없앤다. `visibility: hidden`으로 감추면 높이가 그대로 남아
      빈 페이지가 뒤에 붙는다 — 2쪽 문서가 4쪽으로 나왔다(실측). 그래서 display로 끊는다.
-     모달은 Portal이라 `body`의 직계 자식이고, 그 형제가 곧 «문서 밖»이다. */
-  html.erp-doc-print body > *:not(.mantine-Modal-root) { display: none !important; }
+
+     ⚠ 겨누는 것은 **우리가 만든 상자**(`.erpDocPortal` — DocModal이 `portalProps`로 이름을 건다)여야 한다.
+        `.mantine-Modal-root`를 겨눴더니 **인쇄가 통째로 백지였다**: Mantine 8은 모달을 body 직계로 안 붙이고
+        `<div data-mantine-shared-portal-node>`(팝오버·툴팁과 공유하는 상자) 안에 넣는다. 그 상자는 저 클래스가
+        없으니 «문서 밖»으로 판정돼 **모달째 사라졌다.** 남의 클래스는 남의 사정으로 바뀐다 — 계약은 우리 것으로 건다. */
+  html.erp-doc-print body > *:not(.erpDocPortal) { display: none !important; }
   html.erp-doc-print .mantine-Modal-overlay { display: none !important; }
   /* 모달 크롬(제목·배율·단추)도 자리째. */
   html.erp-doc-print .erpDocChrome { display: none !important; }

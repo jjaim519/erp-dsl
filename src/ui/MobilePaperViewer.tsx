@@ -1,5 +1,5 @@
 'use client';
-// MobilePaperViewer (유기체) — 폰의 **A4 문서 뷰어**. 데스크탑 `PaperDocModal`·`PaperModal`의 *형제*다.
+// MobilePaperViewer (유기체) — 폰의 **A4 문서 뷰어**. 데스크탑 `DocModal`·`PaperModal`의 *형제*다.
 //  하는 일은 하나다: **인쇄 좌표계로 그려진 문서를 폰에서 훑어보게 한다.** 그리지도, 다시 쓰지도 않는다.
 //
 //  ── 왜 「읽기 뷰」가 없나 (v0.76.0에서 걷어냈다) ──────────────────────────────────
@@ -38,14 +38,14 @@
 //     죽어도 더블탭·표기 버튼이 그대로 받는다(그래서 확대 경로가 핀치에 걸려 있지 않다).
 //
 //  ── 안 만드는 것 ─────────────────────────────────────────────────────────────
-//   · **인쇄 스코프** — 「문서 밖 치우기」는 *화면을 소유한 쪽*만 할 수 있는 일이다. `PaperDocModal`이
+//   · **인쇄 스코프** — 「문서 밖 치우기」는 *화면을 소유한 쪽*만 할 수 있는 일이다. `DocModal`이
 //     그걸 하는 건 Mantine Portal이라 `body`의 직계 자식이고 그 형제가 곧 «문서 밖»이기 때문인데,
 //     이 커버는 Portal이 아니라 앱 트리 안에 있어서 같은 규칙(`body > *:not(...)`)이 **자기를 지운다.**
 //     남는 수법인 `visibility: hidden`은 자리가 남아 빈 페이지를 뒤에 붙이고(paper.css 실측), 스코프를
 //     잃으면 소비 앱 전 화면을 백지로 만든 그 결함(커밋 22389c0)이다. → paper.css의 doctrine 그대로
-//     **인쇄는 소비처 몫**이다(문서 전용 라우트나 데스크탑 `PaperDocModal`). `actions`는 트리거만 나른다.
+//     **인쇄는 소비처 몫**이다(문서 전용 라우트나 데스크탑 `DocModal`). `actions`는 트리거만 나른다.
 //   · 가로 회전 — `.ms`가 100dvh 전제라 셸 전체를 건드린다. 2D 스크롤이 이미 그 자리를 받는다.
-//   · 편집 — 06 §4-1(편집 능력은 읽기보다 좁다). 고치는 건 데스크탑 `PaperDocModal`의 일이다.
+//   · 편집 — 06 §4-1(편집 능력은 읽기보다 좁다). 고치는 건 데스크탑 `DocModal`의 일이다.
 //   · 문서 그리기 — 이 부품은 문서를 **모른다**. 칸도 값도 소비처가 넘긴 children 안에 있다.
 import { useCallback, useEffect, useRef, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react';
 import { PAPER_CANON, type PaperOrientation } from '../schema/paper';

@@ -13,6 +13,7 @@ import {
 } from '../schema/paper';
 import type { FieldSpec } from '../schema/fields';
 import { layoutPaper, paperRead, paperWrite, type OutRow } from './paperLayout';
+import { paperPageRule } from './paperPrint';
 import { TextInput } from './TextInput';
 import { NumberInput } from './NumberInput';
 import { CurrencyInput } from './CurrencyInput';
@@ -129,12 +130,9 @@ export function PaperDoc({
   const isLocked = (cell: PaperCell) =>
     mode === 'edit' && !!cell.field && locked.has(cell.field);
 
-  // 인쇄 @page — 방향별 A4 + margin 0. **margin 0이 브라우저 기본 머리말·꼬리말(URL·날짜·쪽번호)을 없앤다.**
-  //  여백은 종이 안쪽(PAPER_MARGIN)이 이미 갖고 있으므로 페이지 여백은 0이어야 1:1이 된다.
-  //  방향이 닫힌 enum이라 주입 문자열에 임의값이 안 들어간다(PaperModal 선례).
-  const pageRule = `@media print{@page{size:A4 ${spec.orientation};margin:0}`
-    + `.erpPaperSheet{width:${spec.orientation === 'landscape' ? '297mm' : '210mm'} !important;`
-    + `height:${spec.orientation === 'landscape' ? '210mm' : '297mm'} !important}}`;
+  // 인쇄 @page — **문서 두 종류(서식·손코딩)가 한 벌을 쓴다**(paperPrint.ts). 여기서 또 적으면
+  //  손코딩 경로(DocModal children)와 갈리고, 갈리는 순간 한쪽에서 머리말·꼬리말이 되살아난다.
+  const pageRule = paperPageRule(spec.orientation);
 
   return (
     <div className="erpPaperDoc" data-mode={mode}>

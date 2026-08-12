@@ -6,7 +6,7 @@
 //  건수를 바꿔 쪽 나눔·열머리 재출력·묶음 걸침·소계·총계를 눈으로 확인한다.
 //  (dev 도구 — 배포 대상 밖. 샘플 데이터도 여기 산다.)
 import { useMemo, useState } from 'react';
-import { Stack, Group, Title, Text, Button, SegmentedControl, Callout, PaperDoc, PaperDocModal } from '@/ui';
+import { Stack, Group, Title, Text, Button, SegmentedControl, Callout, PaperDoc, DocModal } from '@/ui';
 import { validatePaper, validatePaperCoverage, type PaperSpec } from '@/schema';
 import gabjiJson from '../../../forms/kk-gabji.paper.json';
 import eulJson from '../../../forms/kk-eulnaeyeokseo.paper.json';
@@ -219,7 +219,7 @@ export default function PaperDevPage() {
       />
 
       {/* 소비처 배선 그대로 — 저장은 setState 하나. 여기선 저장된 값을 화면 상태에 반영해 «되돌아오나»를 본다. */}
-      <PaperDocModal
+      <DocModal
         opened={modal !== null}
         onClose={() => setModal(null)}
         title={`${cur.spec.name} — ${modal === 'edit' ? '편집' : '보기'}`}

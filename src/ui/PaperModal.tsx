@@ -1,4 +1,10 @@
 'use client';
+// ⚠⚠ **폐기 예정(v0.85.0) — 새 문서는 `DocModal`의 `children` 모드로 간다. 다음 minor에서 삭제된다.**
+//  이 부품의 인쇄 빌트인은 `.erpPaper` **하나**를 `position: fixed`로 물리 A4에 고정한다. 그래서
+//  여러 장짜리 문서를 넣으면 **N장이 전부 0,0에 겹쳐 한 장으로 나간다** — 소비 앱이 그걸 「한 장에
+//  축소해 넣기」로 우회하다가 «내용이 늘면 글자가 작아지는» 문서가 됐다. 고칠 게 아니라 없앨 결함이다.
+//  `DocModal`은 장마다 `break-after`를 거는 `.erpPaperSheet` 경로를 쓴다(paper.css).
+//
 // PaperModal (유기체) — A4 문서 *뷰어* 모달. 완성된 문서(거래명세서·견적서 등)를 본다(보기 전용, 편집 아님).
 //  · 종이가 자기 윤곽을 가짐(.erpPaper) — 모달이 아니라 *종이*가 A4 한 장.
 //  · CSS aspect-ratio/max-* 안 씀. 뷰포트(95vw×95vh 상한)−크롬을 실측(ResizeObserver)해 A4 박스를 px 계산(fitA4),
