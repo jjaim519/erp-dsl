@@ -1,5 +1,5 @@
 'use client';
-// Register (유기체) — **원장**. 이월 → 부호 있는 증감 → 행마다 누계 → 기말.
+// RegisterWidget (유기체) — **원장**. 이월 → 부호 있는 증감 → 행마다 누계 → 기말.
 //  재무 원장(통장내역·계정별원장)과 재고 수불부는 **같은 골격**이다: 열 이름과 단위만 갈린다
 //  (출금/입금/잔액 ↔ 출고/입고/현재고). 그래서 부품 하나에 `labels`·`unit`만 연다.
 //
@@ -58,7 +58,7 @@ export type RegisterEntry = {
   reconciled?: boolean;
 };
 
-export type RegisterAccount = { label: string; value: string; caption?: string };
+export type RegisterAccount = { label: string; value: string };
 
 /** 증빙(세금계산서·입금증) — **행 하나 = 거래 한 건 = 증빙 한 묶음**.
  *  v1 목업엔 있다가 QuickBooks 열 순서를 따라가며 빠졌었다. 국내 원장에서 증빙은 선택 열이 아니다.
@@ -96,7 +96,7 @@ type Props = {
   onAccountChange?: (v: string) => void;
   period?: string;
   onPeriodChange?: (dir: -1 | 1) => void;
-  /** "○월 ○일까지 대사됨" 뱃지. */
+  /** "○월 ○일까지 대사됨". **푸터의 대사 줄**에 붙는다(헤더 배지 아님 — QuickBooks도 작은 회색 글자다). */
   reconciledThrough?: string;
   /** 주면 ✓ 칸이 눌린다(controlled — 값 갱신은 소비처). */
   onReconcile?: (id: string, next: boolean) => void;
@@ -108,8 +108,12 @@ type Props = {
   actions?: Action[];
 
   // ── C층: 진짜 스위치(위 둘로 못 정하는 것만) ──
-  /** 원장/수불부 열 이름. 기본 = 원장. */
-  labels?: { out?: string; in?: string; balance?: string };
+  /** 원장/수불부 어휘. 기본 = 원장. `account`는 스코프 존의 셀렉트 라벨(수불부면 '창고·품목'). */
+  labels?: { out?: string; in?: string; balance?: string; account?: string };
+  /** 표면(02 elevation 2축). 기본 `raised` = **페이지 위에 뜨는 위젯**.
+   *  모달·서랍처럼 **이미 뜬 표면 안**에 넣을 땐 `flush` — 그림자를 겹치지 않는다
+   *  ("위젯·오버레이만 그림자, 내부 요소는 flush" — 02). */
+  surface?: 'raised' | 'flush';
   /** 수량 단위(장·개). 주면 금액이 아니라 수량으로 그린다(₩ 없음). */
   unit?: string;
   /** 하단 기간 합계줄(출/입 총액). 파생값이라 데이터 유무로 가를 수 없어 스위치. */
@@ -123,12 +127,15 @@ const num = (v: number | string): number | null => {
   return Number.isFinite(n) && String(v) !== '' ? n : null;
 };
 
-export function Register({
+export function RegisterWidget({
   entries, carryOver, closing, accounts, accountValue, onAccountChange,
   period, onPeriodChange, reconciledThrough, onReconcile, onAdd, evidence, actions,
-  labels, unit, periodTotals, emptyState,
+  labels, unit, periodTotals, surface = 'raised', emptyState,
 }: Props) {
-  const L = { out: labels?.out ?? '출금', in: labels?.in ?? '입금', balance: labels?.balance ?? '잔액' };
+  const L = {
+    out: labels?.out ?? '출금', in: labels?.in ?? '입금',
+    balance: labels?.balance ?? '잔액', account: labels?.account ?? '계좌',
+  };
   // 표 *안*에서는 기호·단위를 뗀다 — 매 행에 ₩(또는 '장')가 붙으면 소음이고, 통화·단위는
   //  헤더의 기말잔액과 열 이름이 한 번씩만 말한다(Money 주석의 그 자리).
   const money = (v: number | null | undefined, opts?: { emphasis?: boolean; zeroDash?: boolean }) => (
@@ -174,59 +181,61 @@ export function Register({
   const colCount = 2 + (hasRef ? 1 : 0) + (hasKind ? 1 : 0) + 2 + (hasRecon ? 1 : 0) + (evidence ? 1 : 0) + 1;
   const AmountInput = unit ? NumberInput : CurrencyInput;
 
-  const hasHead = Boolean((accounts && accounts.length > 0) || closing);
-  const head = !hasHead ? null : (
-    <div className="erpRegHead">
-      <div className="erpRegAcct">
-        {accounts && accounts.length > 1 ? (
-          <Select size="sm" options={accounts} value={accountValue ?? accounts[0].value}
-            onChange={(v) => v && onAccountChange?.(v)} />
-        ) : accounts && accounts.length === 1 ? (
-          <Text variant="body-strong">{accounts[0].label}</Text>
-        ) : null}
-        {accounts?.find((a) => a.value === (accountValue ?? accounts[0]?.value))?.caption && (
-          <Text variant="caption" color="secondary">
-            {accounts.find((a) => a.value === (accountValue ?? accounts[0].value))!.caption}
-          </Text>
-        )}
-      </div>
+  // ── 스코프 존 — "무엇을 보고 있는가". Fiori 필터 바 규격: **라벨은 항상 입력칸 위**.
+  //  계좌와 기간은 둘 다 스코프라 나란히 두고, 액션(엑셀·대사)은 아래 툴바 존으로 뺀다
+  //  (Fiori: "표 툴바에 검색·필터를 두지 말 것" — 존이 다르다).
+  const hasScope = Boolean((accounts && accounts.length > 0) || period || closing);
+  const scope = !hasScope ? null : (
+    <div className="erpRegScope">
+      {accounts && accounts.length > 0 && (
+        <div className="erpRegField">
+          <span className="lb">{L.account}</span>
+          {accounts.length > 1
+            ? <Select size="sm" options={accounts} value={accountValue ?? accounts[0].value}
+                onChange={(v) => v && onAccountChange?.(v)} />
+            : <Text variant="body-strong">{accounts[0].label}</Text>}
+        </div>
+      )}
+      {period && (
+        <div className="erpRegField">
+          <span className="lb">기간</span>
+          <PeriodNavigator label={period} onPrev={() => onPeriodChange?.(-1)} onNext={() => onPeriodChange?.(1)} />
+        </div>
+      )}
+      <div className="erpRegSpacer" />
       {closing && (
         <div className="erpRegClose">
           <Text variant="caption" color="secondary">{closing.label ?? (unit ? '현재고' : '기말잔액')}</Text>
           <div className="erpRegCloseVal">
             <Money value={closingValue} unit={unit} symbol={!unit} emphasis />
           </div>
-          {(closing.caption ?? (carryOver ? null : undefined)) && (
-            <Text variant="caption" color="secondary">{closing.caption}</Text>
-          )}
+          {closing.caption && <Text variant="caption" color="secondary">{closing.caption}</Text>}
         </div>
       )}
     </div>
   );
 
-  const strip = (period || reconciledThrough || (actions && actions.length > 0)) ? (
-    <div className="erpRegStrip">
-      {period && <PeriodNavigator label={period} onPrev={() => onPeriodChange?.(-1)} onNext={() => onPeriodChange?.(1)} />}
-      {reconciledThrough && (
-        <span className="erpRegRecMark"><Icon name="check" size="sm" />{reconciledThrough}</span>
-      )}
+  // ── 툴바 존 — Fiori: 좌=건수, 우="표 전체에 영향을 주는 주요 액션". **액션이 없으면 존 자체가 없다.**
+  const toolbar = actions && actions.length > 0 ? (
+    <div className="erpRegBar">
+      <Text variant="caption" color="secondary">{entries.length}건</Text>
       <div className="erpRegSpacer" />
-      {actions?.map((a, i) => renderAction(a, i, 'sm'))}
+      {actions.map((a, i) => renderAction(a, i, 'sm'))}
     </div>
   ) : null;
 
   if (entries.length === 0 && !onAdd && !carryOver)
     return (
-      <div className="erpReg">
-        {head}{strip}
+      <div className={`erpReg is-${surface}`}>
+        {scope}{toolbar}
         <EmptyState icon={emptyState?.icon} title={emptyState?.title ?? '거래 없음'} description={emptyState?.description} />
       </div>
     );
 
   return (
-    <div className="erpReg">
-      {head}
-      {strip}
+    <div className={`erpReg is-${surface}`}>
+      {scope}
+      {toolbar}
       <div className="erpRegScroll">
         <table className="erpRegTable">
           <thead>
@@ -344,11 +353,16 @@ export function Register({
         </table>
       </div>
 
-      {(periodTotals || (hasRecon && unrec.length > 0)) && (
+      {(periodTotals || reconciledThrough || (hasRecon && unrec.length > 0)) && (
         <div className="erpRegFoot">
-          <span>{hasRecon && unrec.length > 0
-            ? <>미대사 {unrec.length}건 · 순액 <Money value={unrec.reduce((s, e) => s + (e.in ?? 0) - (e.out ?? 0), 0)} unit={unit} symbol={!unit} /></>
-            : null}</span>
+          {/* 대사 얘기는 한 곳에서만 한다 — 기준선(reconciledThrough)과 미대사 집계가 같은 줄에 붙는다. */}
+          <span>
+            {reconciledThrough}
+            {reconciledThrough && hasRecon && unrec.length > 0 && ' · '}
+            {hasRecon && unrec.length > 0
+              ? <>미대사 {unrec.length}건 · 순액 <Money value={unrec.reduce((s, e) => s + (e.in ?? 0) - (e.out ?? 0), 0)} unit={unit} symbol={!unit} /></>
+              : null}
+          </span>
           <span>{periodTotals
             ? <>{L.out} <Money value={sumOut} unit={unit} symbol={!unit} /> · {L.in} <Money value={sumIn} unit={unit} symbol={!unit} /></>
             : null}</span>

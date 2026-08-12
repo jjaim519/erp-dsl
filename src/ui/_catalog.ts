@@ -11,7 +11,7 @@
 
 export type Layer =
   | '의미 원자' | '레이아웃 원자' | '배치 프리미티브'
-  | '분자' | '유기체' | '템플릿';
+  | '분자' | '유기체' | '위젯' | '템플릿';
 
 export type PropKind = '스타일' | '콘텐츠' | '기능' | '값';
 
@@ -29,6 +29,7 @@ export type Composition = {
   '배치 프리미티브'?: string[];
   분자?: string[];
   유기체?: string[];
+  위젯?: string[];
   템플릿?: string[];
   공유?: string[];   // _cells / _masks / _fieldStyles 등 격리 구역 공유 모듈
 };
@@ -805,7 +806,7 @@ export const CATALOG: CatalogEntry[] = [
   // ── 회계 골격 3종 — 도메인이 아니라 *회계 구조*를 안다(부호 있는 증감·누계·연령·배분).
   //    노출 규율 공통: A층(데이터·콜백 유무) → B층(배열 길이) → C층(boolean/enum)이고, **기본은 전부 꺼짐**이다.
   //    아무 옵션 없이 렌더한 최소형이 기준선 — 목업은 전부 켠 최대형이라 개발 기준이 아니다.
-  { name: 'Register', layer: '유기체', role: '**원장** — 이월 → 부호 있는 증감 → 행마다 누계 → 기말. 재무 원장(통장내역·계정별원장)과 재고 수불부가 **같은 골격**이라 `labels`·`unit`만 갈린다. 실물 기준(QuickBooks bank register · Dynamics BC Bank Account Ledger Entries 화면 확인): 기말잔액은 표 합계행이 아니라 **헤더 우상단**, 새 줄 입력은 **표 맨 위**(누계가 아래로 흐르니 밑에 있으면 새 줄이 누계의 *끝*처럼 읽힌다), 열 순서는 출금 → 입금 → ✓대사 → 잔액. **DataSheet와 형제인 선: 전기된 기록은 못 고친다**(정정은 반대 전표) — 그래서 행 편집 기제가 통째로 없고, 대신 DataSheet에 없는 세 축(누계·기간경계·대사)이 있다. 누계는 `balance`를 안 주면 **이월 + Σ(입−출)**로 부품이 만든다(그게 존재 이유다).',
+  { name: 'RegisterWidget', layer: '위젯', role: '**원장** — 이월 → 부호 있는 증감 → 행마다 누계 → 기말. 재무 원장(통장내역·계정별원장)과 재고 수불부가 **같은 골격**이라 `labels`·`unit`만 갈린다. 실물 기준(QuickBooks bank register · Dynamics BC Bank Account Ledger Entries 화면 확인): 기말잔액은 표 합계행이 아니라 **헤더 우상단**, 새 줄 입력은 **표 맨 위**(누계가 아래로 흐르니 밑에 있으면 새 줄이 누계의 *끝*처럼 읽힌다), 열 순서는 출금 → 입금 → ✓대사 → 잔액. **DataSheet와 형제인 선: 전기된 기록은 못 고친다**(정정은 반대 전표) — 그래서 행 편집 기제가 통째로 없고, 대신 DataSheet에 없는 세 축(누계·기간경계·대사)이 있다. 누계는 `balance`를 안 주면 **이월 + Σ(입−출)**로 부품이 만든다(그게 존재 이유다).',
     props: [
       { name: 'entries', kind: '기능', values: 'RegisterEntry[] = { id, date, label, sublabel?, ref?, kind?{label,tone}, kindSub?, out?, in?, balance?, reconciled? }. out/in은 **부호 없는 크기** — 방향은 어느 열에 담기느냐가 말한다' },
       { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '입력행=`onAdd` · 이월행=`carryOver` · 기말잔액=`closing`(value 없으면 누계에서 파생. **`accounts`도 `closing`도 없으면 헤더 띠 자체를 안 그린다** — 모달처럼 제목이 따로 있고 이력이 짧은 자리에서는 같은 수가 네 번 나온다: 모달 제목·목록 행·이 헤더·표 마지막 행) · ✓열=entry.reconciled가 한 줄이라도 있으면 · ✓클릭=`onReconcile` · 대사뱃지=`reconciledThrough` · 기간네비=`period`+`onPeriodChange` · 계좌셀렉트=`accounts` 2개 이상(1개면 텍스트) · 두 줄 행=ref/sublabel/kindSub · 구분알약=entry.kind' },
@@ -822,13 +823,13 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action/BadgeColor)', '_money'],
     } },
-  { name: 'OpenItemList', layer: '유기체', role: '**미결 항목 목록**(SAP open item management) — 한 줄 = 아직 안 끝난 돈 한 건: 원금액 / 수납 / 잔액. 매출채권(수금)과 매입채무(지급)가 부호만 반대인 같은 물건이라 `labels`로 갈린다. **AgingReport와 갈리는 선**: 거기는 매트릭스라 회계가 *읽고*, 여기는 평면 목록 + 행동이라 담당자가 *처리한다*(DataTable/DataSheet 선례). **표면을 안 갖는다** — 행을 열면 무엇이 뜨는지는 페이지가 정하고(`onSelect`로 신호만), 한 건의 수납 이력은 `Register`가 **모달(size=full)에서 전체 폭으로** 그린다 — 좁은 Drawer도 2-pane도 안 된다(둘 다 만들어 보고 되돌렸다: 1200px을 5:7로 갈라도 좌측 대상명과 우측 적요가 잘린다). 소비처 화면 진단에서 나온 부품이다: 현장 목록(계약금액/수금액/미수금) → 한 건 열기 → 수납 기록+첨부 구조가 도메인 특수가 아니라 업계 보편이었다.',
+  { name: 'OpenItemListWidget', layer: '위젯', role: '**미결 항목 목록**(SAP open item management) — 한 줄 = 아직 안 끝난 돈 한 건: 원금액 / 수납 / 잔액. 매출채권(수금)과 매입채무(지급)가 부호만 반대인 같은 물건이라 `labels`로 갈린다. **AgingReport와 갈리는 선**: 거기는 매트릭스라 회계가 *읽고*, 여기는 평면 목록 + 행동이라 담당자가 *처리한다*(DataTable/DataSheet 선례). **표면을 안 갖는다** — 행을 열면 무엇이 뜨는지는 페이지가 정하고(`onSelect`로 신호만), 한 건의 수납 이력은 `RegisterWidget`가 **모달(size=full)에서 전체 폭으로** 그린다 — 좁은 Drawer도 2-pane도 안 된다(둘 다 만들어 보고 되돌렸다: 1200px을 5:7로 갈라도 좌측 대상명과 우측 적요가 잘린다). 소비처 화면 진단에서 나온 부품이다: 현장 목록(계약금액/수금액/미수금) → 한 건 열기 → 수납 기록+첨부 구조가 도메인 특수가 아니라 업계 보편이었다.',
     props: [
       { name: 'items', kind: '기능', values: 'OpenItem[] = { id, label, sublabel?, owner?, gross, received, due?, age?{label,tone} }. **잔액은 안 받는다** — 원금액 − 수납을 부품이 뺀다(소비처가 매번 다시 계산하다 목록마다 다른 수가 나오던 자리). 상단 총계도 여기서 나온다' },
       { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '**행 전체 클릭**=`onSelect`(DataTable·ListWidget과 같은 규율) · 선택 표시=`selectedId` · 담당 열=item.owner · 만기·연령 열=item.due/age · 로딩=`status`' },
       { name: '행에 경로는 하나', kind: '값', values: '행 액션 열이 **없다**. 처음엔 chevron·첫 셀 링크·「수금」 버튼을 같이 뒀는데, 첫 셀에 링크를 건 순간 액션 열이 갈 곳을 잃었다(같은 행에서 두 경로가 같은 곳을 가리킨다) — 실제로 `stopPropagation` 해킹도 필요했다. `DataTable`이 이미 주석으로 못박아 둔 규칙이다: "행 클릭 이동(범용). actions 셀과 경쟁 안 하도록 보기 액션은 두지 않음." 행 단위 액션이 꼭 필요한 화면이면 행 클릭을 포기하고 `DataTable`을 쓴다' },
-      { name: '헤더를 안 갖는다', kind: '값', values: '제목·설명·헤더 액션 prop이 **없다** — 그건 `PageHeader`가 소유한 자리이고, 부품이 페이지 헤더를 한 벌 더 들면 같은 자리를 둘이 다툰다. 첫 판에 소비처 화면의 헤더 행(제목·엑셀·총계)을 그대로 옮겼다가 회수했다. **총계는 하단 합계행**(AgingReport tfoot과 같은 규율)' },
-      { name: '상세를 담는 표면', kind: '값', values: '상세는 **`Modal size=\'full\'`(95vw)**. 좁은 Drawer(잔액 열이 화면 밖)와 5:7 2-pane(좌측 대상명·우측 적요 잘림)을 둘 다 만들어 보고 되돌렸고, 별도 페이지도 검토했으나 상세가 표 하나뿐이라 라우트를 파는 값이 안 나온다는 오너 판단으로 모달로 굳혔다. md/lg 폭에서는 7열 원장이 잘리므로 **full 아래로 내리지 말 것**. Register의 잔액 열은 그래도 sticky로 고정했다 — 어떤 폭에서도 결론은 안 사라져야 한다' },
+      { name: '헤더를 안 갖는다', kind: '값', values: '제목·설명·헤더 액션 prop이 **없다** — 그건 `PageHeader`가 소유한 자리이고, 부품이 페이지 헤더를 한 벌 더 들면 같은 자리를 둘이 다툰다. 첫 판에 소비처 화면의 헤더 행(제목·엑셀·총계)을 그대로 옮겼다가 회수했다. **총계는 하단 합계행**(AgingReportWidget tfoot과 같은 규율)' },
+      { name: '상세를 담는 표면', kind: '값', values: '상세는 **`Modal size=\'full\'`(95vw)**. 좁은 Drawer(잔액 열이 화면 밖)와 5:7 2-pane(좌측 대상명·우측 적요 잘림)을 둘 다 만들어 보고 되돌렸고, 별도 페이지도 검토했으나 상세가 표 하나뿐이라 라우트를 파는 값이 안 나온다는 오너 판단으로 모달로 굳혔다. md/lg 폭에서는 7열 원장이 잘리므로 **full 아래로 내리지 말 것**. RegisterWidget의 잔액 열은 그래도 sticky로 고정했다 — 어떤 폭에서도 결론은 안 사라져야 한다' },
       { name: 'labels', kind: '콘텐츠', values: '{ subject?, gross?, received?, balance?, total? } — 기본 대상/계약금액/수납/잔액/총 잔액. 매입채무면 청구액/지급/미지급' },
     ],
     composition: {
@@ -837,7 +838,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action/BadgeColor)', '_money'],
     } },
-  { name: 'AgingReport', layer: '유기체', role: '**채권 연령 매트릭스** — 행=거래처(펼치면 청구건) × 열=연령 버킷 + 합계. 업계 형태 그대로(Odoo Aged Receivable · Xero AR Aging · SAP "AR Aging Grid"): **버킷은 필터가 아니라 열**이다. 한 거래처의 돈이 어느 연령대에 깔려 있는지는 가로로, 어느 연령대가 회사 전체에서 두꺼운지는 세로로 읽는데, 버킷을 상단 필터 밴드로 접으면 그 두 읽기가 모두 사라진다(첫 목업에서 그렇게 만들었다가 되돌렸다). **행동은 안 갖는다** — 회계가 *읽는* 리포트고, 영업이 *처리하는* 수금 큐는 별개 부품(같은 데이터를 두 부품이 다르게 보는 건 정상 — DataTable/DataSheet 선례). 색은 값이 아니라 **구간**에 붙는다(값에 색을 걸면 같은 금액이 열마다 다른 색이 되어 눈이 금액 크기로 읽어 버린다).',
+  { name: 'AgingReportWidget', layer: '위젯', role: '**채권 연령 매트릭스** — 행=거래처(펼치면 청구건) × 열=연령 버킷 + 합계. 업계 형태 그대로(Odoo Aged Receivable · Xero AR Aging · SAP "AR Aging Grid"): **버킷은 필터가 아니라 열**이다. 한 거래처의 돈이 어느 연령대에 깔려 있는지는 가로로, 어느 연령대가 회사 전체에서 두꺼운지는 세로로 읽는데, 버킷을 상단 필터 밴드로 접으면 그 두 읽기가 모두 사라진다(첫 목업에서 그렇게 만들었다가 되돌렸다). **행동은 안 갖는다** — 회계가 *읽는* 리포트고, 영업이 *처리하는* 수금 큐는 별개 부품(같은 데이터를 두 부품이 다르게 보는 건 정상 — DataTable/DataSheet 선례). 색은 값이 아니라 **구간**에 붙는다(값에 색을 걸면 같은 금액이 열마다 다른 색이 되어 눈이 금액 크기로 읽어 버린다).',
     props: [
       { name: 'buckets', kind: '기능', values: 'AgingBucket[] = { key, label, tone? } — **필수 주입**. 30/60/90은 관행이지 표준이 아니다(Xero 90+, Odoo 120+, 국내 여신 규정마다 다름). 구간을 부품이 정하면 그 회사 회계와 숫자가 안 맞는다. tone 생략 시 순서대로 neutral→danger 자동' },
       { name: 'rows', kind: '기능', values: 'AgingRow[] = { id, label, sublabel?, amounts: Record<bucketKey, number>, children? }' },
@@ -852,7 +853,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action)', '_money'],
     } },
-  { name: 'PaymentApply', layer: '유기체', role: '**수납 적용** — 받은 돈 한 건을 미결 청구 여러 건에 배분한다. NetSuite Customer Payment의 뼈대(실화면 확인): tally = To Apply / Applied / **Unapplied**, 본체 = 미결 목록에 적용액을 치는 표, 출처 = Invoices / Credits / Deposits. "한 입금 = 한 청구"라는 가정이면 폼 하나면 되고, 그 가정이 실무에서 깨지는 게 이 부품의 존재 이유다. **불변식은 부품이 계산한다**: 적용 = Σ적용액 + Σ조정 / 미적용 = 수납액 − 적용 / 행 적용액 ≤ 행 잔액(overApply로 열림). tally는 **하단 고정** — NetSuite는 우상단 작은 박스에 두지만 배분은 표를 훑으며 하는 일이라 작업하는 내내 보여야 한다(DecisionPanel 선례). 미적용은 자리가 고정이고 **색만** 바뀐다(0=success / 남음=warning / 초과=danger).',
+  { name: 'PaymentApplyWidget', layer: '위젯', role: '**수납 적용** — 받은 돈 한 건을 미결 청구 여러 건에 배분한다. NetSuite Customer Payment의 뼈대(실화면 확인): tally = To Apply / Applied / **Unapplied**, 본체 = 미결 목록에 적용액을 치는 표, 출처 = Invoices / Credits / Deposits. "한 입금 = 한 청구"라는 가정이면 폼 하나면 되고, 그 가정이 실무에서 깨지는 게 이 부품의 존재 이유다. **불변식은 부품이 계산한다**: 적용 = Σ적용액 + Σ조정 / 미적용 = 수납액 − 적용 / 행 적용액 ≤ 행 잔액(overApply로 열림). tally는 **하단 고정** — NetSuite는 우상단 작은 박스에 두지만 배분은 표를 훑으며 하는 일이라 작업하는 내내 보여야 한다(DecisionPanel 선례). 미적용은 자리가 고정이고 **색만** 바뀐다(0=success / 남음=warning / 초과=danger).',
     props: [
       { name: 'sources', kind: '기능', values: 'ApplySource[] = { key, label, lines: ApplyLine[] }. **하나면 탭을 안 그린다** — 탭 하나짜리 탭바는 크롬만 늘린다. ApplyLine = { id, label, sublabel?, date?, age?{label,tone}, gross, open }' },
       { name: 'amount / applied / onApplyChange', kind: '기능', values: 'controlled — 값의 주인은 소비처. applied = { lineId: 금액 }' },
@@ -869,7 +870,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action/BadgeColor)', '_money'],
     } },
-  { name: 'ListWidget', layer: '유기체', role: '목록을 raised 표면 하나에 담는 위젯 — TanStack Table(헤드리스) 흡수 × 우리 스킨. 툴바(검색·facet 필터)를 표면 *안*에 소유(바닥 blend 0). ListPage 대체. [MVP] 정렬·전역검색·facet 필터·페이징·행선택(상태 내부, controlled 승격 예정). 도메인=columns/data(헌법 1). 정렬(align)=타입 자동 + 닫힌 override.',
+  { name: 'ListWidget', layer: '위젯', role: '목록을 raised 표면 하나에 담는 위젯 — TanStack Table(헤드리스) 흡수 × 우리 스킨. 툴바(검색·facet 필터)를 표면 *안*에 소유(바닥 blend 0). ListPage 대체. [MVP] 정렬·전역검색·facet 필터·페이징·행선택(상태 내부, controlled 승격 예정). 도메인=columns/data(헌법 1). 정렬(align)=타입 자동 + 닫힌 override.',
     props: [
       { name: 'columns', kind: '기능', values: 'ListColumn[] = { key, label, type(셀 16종), align?(좌/우/중 override), sortable?, filter?:facet(데이터서 옵션 자동), grow?, maxWidth?, badgeColors? }' },
       { name: 'data', kind: '기능', values: 'ListRow[] (id 필수)' },
@@ -1715,7 +1716,10 @@ export const CATALOG: CatalogEntry[] = [
 ];
 
 // ── 그래프 헬퍼 (박물관 하이퍼링크·역참조) ──
-export const LAYERS: Layer[] = ['의미 원자', '레이아웃 원자', '배치 프리미티브', '분자', '유기체', '템플릿'];
+// 위젯 = **페이지 본문에 바로 올라갈 수 있는 유일한 층.** raised 표면 + 그림자를 자기가 갖는다(02 elevation 2축).
+//  유기체와 갈리는 선은 조립 복잡도가 아니라 **자리**다 — 유기체는 다른 것 *안에* 들어가고, 위젯은 페이지 *위에* 선다.
+//  (템플릿은 페이지 전체 골격이라 그 위의 층이다.)
+export const LAYERS: Layer[] = ['의미 원자', '레이아웃 원자', '배치 프리미티브', '분자', '유기체', '위젯', '템플릿'];
 export const PART_NAMES = new Set(CATALOG.map((e) => e.name));
 export const findEntry = (name: string): CatalogEntry | undefined => CATALOG.find((e) => e.name === name);
 

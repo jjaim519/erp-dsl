@@ -4,22 +4,21 @@
  *  "90일+ 열"이 붉다. 그래서 톤은 열(th의 띠 + td의 글자색)에 걸고, 값 자체는 색을 안 갖는다.
  *  값에 색을 걸면 같은 금액이 열마다 다른 색이 되어 눈이 금액 크기로 읽어 버린다.
  */
+/* 위젯 = 페이지 위에 뜬 raised 표면(02 elevation 2축). */
 .erpAging {
-  background: var(--surface-default);
-  border: 1px solid var(--border-default);
-  border-radius: var(--mantine-radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--elevation-raised);
+  border-radius: var(--mantine-radius-md);
   overflow: hidden;
 }
 
-.erpAgingHead {
-  display: flex; align-items: flex-end; gap: var(--mantine-spacing-sm);
-  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+/* 툴바 존 — 좌=기준 캡션·건수 / 우=표 전체 액션. */
+.erpAgingBar {
+  display: flex; align-items: center; gap: var(--mantine-spacing-sm);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-lg);
   border-bottom: 1px solid var(--border-default);
 }
-.erpAgingTitle { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .erpAgingSpacer { flex: 1; }
-.erpAgingGrand { text-align: right; white-space: nowrap; margin-left: var(--mantine-spacing-md); }
-.erpAgingGrandVal { font-size: var(--typo-heading-size); line-height: 1.25; }
 
 .erpAgingScroll { overflow-x: auto; }
 .erpAgingTable { border-collapse: separate; border-spacing: 0; width: 100%; table-layout: auto; }

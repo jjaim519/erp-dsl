@@ -4,22 +4,21 @@
  *  Register의 누계 열과 같은 규율(다른 면 + 좌측 경계선 + 굵게)로 세로로 훑히게 한다.
  *  세 열을 같은 무게로 그리면 눈이 어디를 봐야 하는지 못 정한다.
  */
+/* 위젯 = 페이지 위에 뜬 raised 표면(02 elevation 2축). 윤곽이 아니라 톤+그림자로 담는다. */
 .erpOil {
-  background: var(--surface-default);
-  border: 1px solid var(--border-default);
-  border-radius: var(--mantine-radius-sm);
+  background: var(--surface-raised);
+  box-shadow: var(--elevation-raised);
+  border-radius: var(--mantine-radius-md);
   overflow: hidden;
 }
-
-.erpOilHead {
-  display: flex; align-items: flex-end; gap: var(--mantine-spacing-sm);
-  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+/* 툴바 존 — Fiori: 좌=건수 / 우=표 전체 액션. 액션이 없으면 이 존 자체가 안 그려진다. */
+.erpOilBar {
+  display: flex; align-items: center; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-xs) var(--mantine-spacing-lg);
   border-bottom: 1px solid var(--border-default);
 }
-.erpOilTitle { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
 .erpOilSpacer { flex: 1; }
-.erpOilGrand { text-align: right; white-space: nowrap; margin-left: var(--mantine-spacing-md); }
-.erpOilGrandVal { font-size: var(--typo-heading-size); line-height: 1.25; }
 
 .erpOilSkel {
   display: flex; flex-direction: column; gap: var(--mantine-spacing-xs);

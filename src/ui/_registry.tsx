@@ -59,10 +59,10 @@ import { DataSheet, type SheetRow } from './DataSheet';
 import { LineItemList, type LineItem } from './LineItemList';
 import { QueueList, type QueueItem } from './QueueList';
 import { Money } from './Money';
-import { Register, type RegisterEntry } from './Register';
-import { AgingReport, type AgingBucket, type AgingRow } from './AgingReport';
-import { PaymentApply, type ApplyLine } from './PaymentApply';
-import { OpenItemList, type OpenItem } from './OpenItemList';
+import { RegisterWidget, type RegisterEntry } from './RegisterWidget';
+import { AgingReportWidget, type AgingBucket, type AgingRow } from './AgingReportWidget';
+import { PaymentApplyWidget, type ApplyLine } from './PaymentApplyWidget';
+import { OpenItemListWidget, type OpenItem } from './OpenItemListWidget';
 import { DecisionPanel } from './DecisionPanel';
 import { NoteThread, type ThreadNote } from './NoteThread';
 import type { Attachment, AttachmentKind } from './_attachment';
@@ -996,15 +996,15 @@ function RegisterDemo() {
   return (
     <Stack gap="lg">
       {/* 최소형 — 옵션 0개. 날짜·적요·증감·잔액 네 열. 누계는 부품이 이월부터 만든다. */}
-      <Register entries={REG_ENTRIES.map(({ kind, ref, reconciled, ...e }) => e)} carryOver={{ balance: 12_480_000 }} />
+      <RegisterWidget entries={REG_ENTRIES.map(({ kind, ref, reconciled, ...e }) => e)} carryOver={{ balance: 12_480_000 }} />
 
       {/* 최대형 — A층 전부 + 수불부 형제 */}
-      <Register
+      <RegisterWidget
         entries={entries}
         carryOver={{ balance: 12_480_000 }}
         closing={{ caption: '전월이월 ₩12,480,000' }}
         accounts={[
-          { label: '기업은행 1234-56 · 운영', value: 'ibk', caption: '운영계좌' },
+          { label: '기업은행 1234-56 · 운영', value: 'ibk' },
           { label: '국민은행 7788-01', value: 'kb' },
         ]}
         period={`2026년 ${month}월`}
@@ -1028,14 +1028,14 @@ function RegisterDemo() {
         periodTotals
       />
 
-      <Register
+      <RegisterWidget
         entries={STOCK_ENTRIES}
         carryOver={{ balance: 260 }}
         closing={{ caption: '전월이월 260 장' }}
-        accounts={[{ label: '제1창고 · 미송판 18T', value: 'w1', caption: '품목 MP-018 · 단위 장' }]}
+        accounts={[{ label: '제1창고 · 미송판 18T', value: 'w1' }]}
         period="2026년 8월"
         onPeriodChange={() => {}}
-        labels={{ out: '출고', in: '입고', balance: '현재고' }}
+        labels={{ out: '출고', in: '입고', balance: '현재고', account: '창고 · 품목' }}
         unit="장"
       />
     </Stack>
@@ -1062,9 +1062,9 @@ function AgingDemo() {
   return (
     <Stack gap="lg">
       {/* 최소형 — buckets + rows만. 버킷은 필수 주입(30/60/90은 표준이 아니다). */}
-      <AgingReport buckets={AGING_BUCKETS} rows={AGING_ROWS} />
+      <AgingReportWidget buckets={AGING_BUCKETS} rows={AGING_ROWS} />
       {/* 최대형 */}
-      <AgingReport
+      <AgingReportWidget
         buckets={AGING_BUCKETS} rows={AGING_ROWS}
         asOf="2026-08-12" basis="due" showRatio
         expandedIds={open} onExpandChange={setOpen}
@@ -1098,13 +1098,13 @@ function PaymentApplyDemo() {
   return (
     <Stack gap="lg">
       {/* 최소형 — 출처 하나(탭 없음) · 일괄액션 없음 · 자동배분 없음 · 조정 열 없음 · 체크박스 없음 */}
-      <PaymentApply
+      <PaymentApplyWidget
         sources={[{ key: 'inv', label: '청구', lines: PA_LINES }]}
         amount={AMOUNT} applied={applied} onApplyChange={(id, v) => setApplied((p) => ({ ...p, [id]: v }))}
         submit={{ onSubmit: () => {} }}
       />
       {/* 최대형 */}
-      <PaymentApply
+      <PaymentApplyWidget
         sources={[
           { key: 'inv', label: '청구', lines: PA_LINES },
           { key: 'cm', label: '대변메모', lines: [{ id: 'c1', label: 'CM-0033', sublabel: '하자 보수 감액', gross: 1_200_000, open: 1_200_000 }] },
@@ -1129,8 +1129,8 @@ function PaymentApplyDemo() {
 }
 
 
-// OpenItemList — 소비처 "수금" 화면의 구조 그대로: 목록(현장별 계약금액/수금/미수) → 한 건 열기 → 수납 이력·기록.
-//  **부품 둘을 페이지가 잇는다**(OpenItemList → Drawer → Register). 표면은 우리가 안 정한다.
+// OpenItemListWidget — 소비처 "수금" 화면의 구조 그대로: 목록(현장별 계약금액/수금/미수) → 한 건 열기 → 수납 이력·기록.
+//  **부품 둘을 페이지가 잇는다**(OpenItemListWidget → Drawer → RegisterWidget). 표면은 우리가 안 정한다.
 const OIL_ITEMS: OpenItem[] = [
   { id: 'o1', label: '판교 오피스', sublabel: '세림건설 · 계약 2026-04-20', owner: '옥성훈',
     gross: 56_000_000, received: 33_700_000, due: '06-03', age: { label: '70일 경과', tone: 'danger' } },
@@ -1166,15 +1166,17 @@ function OpenItemDemo() {
   return (
     <Stack gap="xl">
       {/* 최소형 — items만. 잔액 열·하단 합계는 부품이 뺀다. 제목·헤더 액션은 PageHeader의 일이라 없다. */}
-      <OpenItemList items={OIL_ITEMS.map(({ owner, due, age, ...i }) => i)} />
+      <OpenItemListWidget items={OIL_ITEMS.map(({ owner, due, age, ...i }) => i)} />
 
       {/* 최대형 — **행 전체가 클릭 대상**(DataTable·ListWidget과 같은 규율). 행 안에 버튼·링크를 두지 않는다. */}
-      <OpenItemList items={OIL_ITEMS} selectedId={sel.id} onSelect={(it) => { setSel(it); setDetail(true); }} />
+      <OpenItemListWidget items={OIL_ITEMS} selectedId={sel.id} onSelect={(it) => { setSel(it); setDetail(true); }}
+        actions={[{ label: '엑셀', onClick: () => {} }]} />
 
       {/* 행을 누르면 뜨는 것 — **모달**(size=full: 95vw. 7열 원장은 md/lg 폭에서 잘린다).
           기말잔액 헤더는 안 준다: 모달 제목·목록 행·표 마지막 행이 이미 같은 수를 말하고 있다. */}
       <Modal opened={detail} onClose={() => setDetail(false)} title={`${sel.label} · 수금 이력`} size="full">
-        <Register
+        <RegisterWidget
+          surface="flush"
           entries={rows}
           carryOver={{ label: '계약금액', balance: sel.gross }}
           labels={{ out: '수납', in: '청구·증액', balance: '미수' }}
@@ -2252,10 +2254,10 @@ export function Demo({ name }: { name: string }) {
         <Group gap="lg"><Money value={0} /><Money value={0} zero="dash" /><Money value={null} /><Money value={1284000} emphasis /></Group>
       </Stack>
     ),
-    Register: <RegisterDemo />,
-    OpenItemList: <OpenItemDemo />,
-    AgingReport: <AgingDemo />,
-    PaymentApply: <PaymentApplyDemo />,
+    RegisterWidget: <RegisterDemo />,
+    OpenItemListWidget: <OpenItemDemo />,
+    AgingReportWidget: <AgingDemo />,
+    PaymentApplyWidget: <PaymentApplyDemo />,
     Editor: <EditorDemo />,
     RichText: <RichTextDemo />,
   };

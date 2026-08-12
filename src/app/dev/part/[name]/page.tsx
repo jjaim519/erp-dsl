@@ -10,7 +10,7 @@ import { MobileStage } from '../../_MobileStage';
 import { Stack, Group, Card, Title, Text, Badge, Divider } from '@/ui';
 import type { BadgeColor } from '@/ui';
 
-const COMP_ORDER: (keyof Composition)[] = ['토큰', '의미 원자', '레이아웃 원자', '배치 프리미티브', '분자', '유기체', '템플릿', '공유'];
+const COMP_ORDER: (keyof Composition)[] = ['토큰', '의미 원자', '레이아웃 원자', '배치 프리미티브', '분자', '유기체', '위젯', '템플릿', '공유'];
 const COMP_TONE: Record<string, BadgeColor> = {
   토큰: 'warning', '의미 원자': 'info', '레이아웃 원자': 'info', '배치 프리미티브': 'success',
   분자: 'danger', 유기체: 'danger', 템플릿: 'danger', 공유: 'neutral',

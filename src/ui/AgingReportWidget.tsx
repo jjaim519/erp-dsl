@@ -1,5 +1,5 @@
 'use client';
-// AgingReport (유기체) — **채권 연령 매트릭스**. 행=거래처(펼치면 청구건) × 열=연령 버킷 + 합계.
+// AgingReportWidget (유기체) — **채권 연령 매트릭스**. 행=거래처(펼치면 청구건) × 열=연령 버킷 + 합계.
 //  업계 형태를 그대로 가져온다(Odoo Aged Receivable · Xero AR Aging · SAP "AR Aging Grid"):
 //  **버킷은 필터가 아니라 열**이다. 한 거래처의 돈이 어느 연령대에 얼마씩 깔려 있는지는
 //  가로로 읽어야 보이고, 어느 연령대가 회사 전체에서 두꺼운지는 세로로 읽어야 보인다.
@@ -16,7 +16,6 @@
 import { HEAD_CELL, type Action, renderAction } from './_cells';
 import { Money } from './Money';
 import { Text } from './Text';
-import { Title } from './Title';
 import { Icon } from './Icon';
 import { EmptyState } from './EmptyState';
 import type { IconName } from './Icon';
@@ -46,10 +45,9 @@ type Props = {
   rows: AgingRow[];
 
   // ── A층: 데이터·콜백 유무 ──
-  title?: string;
   /** 기준일. 있으면 헤더 캡션에 붙는다 — 연령 리포트는 "언제 기준"이 없으면 못 읽는다. */
   asOf?: string;
-  /** 헤더 우측 총액. 없으면 열 합계에서 파생한다. */
+  /** 하단 합계행의 총액. 없으면 열 합계에서 파생한다. */
   total?: number;
   onRowClick?: (row: AgingRow) => void;
   /** 펼침은 controlled — 어느 거래처를 열어 뒀는지는 화면의 상태다. */
@@ -74,8 +72,8 @@ const AUTO_TONE = (i: number, n: number): 'neutral' | 'warning' | 'danger' =>
 const sumRow = (r: AgingRow, buckets: AgingBucket[]) =>
   buckets.reduce((s, b) => s + (r.amounts[b.key] ?? 0), 0);
 
-export function AgingReport({
-  buckets, rows, title = '채권 연령', asOf, total, onRowClick,
+export function AgingReportWidget({
+  buckets, rows, asOf, total, onRowClick,
   expandedIds, onExpandChange, actions, basis = 'due', showRatio, emptyState,
 }: Props) {
   const colTotals = buckets.map((b) => rows.reduce((s, r) => s + (r.amounts[b.key] ?? 0), 0));
@@ -103,12 +101,20 @@ export function AgingReport({
     </td>
   );
 
+  // 툴바 존 — Fiori: 좌=건수·기준 캡션 / 우=표 전체 액션. 제목은 PageHeader의 자리라 여기 없고,
+  //  총액도 여기 없다 — tfoot 합계행이 이미 같은 수를 말한다.
+  const toolbar = (
+    <div className="erpAgingBar">
+      <Text variant="caption" color="secondary">{caption}</Text>
+      <div className="erpAgingSpacer" />
+      {actions?.map((x, i) => renderAction(x, i, 'sm'))}
+    </div>
+  );
+
   if (rows.length === 0)
     return (
       <div className="erpAging">
-        <div className="erpAgingHead">
-          <div><Title variant="subheading">{title}</Title><Text variant="caption" color="secondary">{caption}</Text></div>
-        </div>
+        {toolbar}
         <EmptyState icon={emptyState?.icon} title={emptyState?.title ?? '미수 채권 없음'} description={emptyState?.description} />
       </div>
     );
@@ -139,18 +145,7 @@ export function AgingReport({
 
   return (
     <div className="erpAging">
-      <div className="erpAgingHead">
-        <div className="erpAgingTitle">
-          <Title variant="subheading">{title}</Title>
-          <Text variant="caption" color="secondary">{caption}</Text>
-        </div>
-        <div className="erpAgingSpacer" />
-        {actions?.map((a, i) => renderAction(a, i, 'sm'))}
-        <div className="erpAgingGrand">
-          <Text variant="caption" color="secondary">총 미수</Text>
-          <div className="erpAgingGrandVal"><Money value={grand} emphasis /></div>
-        </div>
-      </div>
+      {toolbar}
 
       <div className="erpAgingScroll">
         <table className="erpAgingTable">

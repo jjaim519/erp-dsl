@@ -1,5 +1,5 @@
 'use client';
-// OpenItemList (유기체) — **미결 항목 목록**(SAP의 open item management). 한 줄 = 아직 안 끝난 돈 한 건:
+// OpenItemListWidget (유기체) — **미결 항목 목록**(SAP의 open item management). 한 줄 = 아직 안 끝난 돈 한 건:
 //  원금액 / 수납 / 잔액. 매출채권(수금)과 매입채무(지급)가 **부호만 반대인 같은 물건**이라 labels로 갈린다.
 //
 // ── AgingReport와 갈리는 선 ───────────────────────────────────────────────────
@@ -7,13 +7,15 @@
 //  담당자가 *처리한다*. 같은 데이터를 두 부품이 다르게 보는 건 정상이다(DataTable/DataSheet 선례).
 //
 // ── 이 부품이 지키는 불변식 ───────────────────────────────────────────────────
-//  **잔액 = 원금액 − 수납.** 소비처가 세 번째 열을 손으로 만들지 않는다. 상단 총계도 여기서 나온다.
+//  **잔액 = 원금액 − 수납.** 소비처가 세 번째 열을 손으로 만들지 않는다. 하단 합계도 여기서 나온다.
 //  (소비처 화면이 이 뺄셈을 매번 다시 하고 있었고, 그래서 목록마다 다른 수가 나왔다.)
 //
-// ── 표면도 헤더도 안 갖는다 ──────────────────────────────────────────────────
-//  행을 열면 무엇이 뜨는지는 **페이지가 정한다**(Calendar 선례). 이 부품은 `onSelect`로 신호만 쏜다.
-//  제목·설명·헤더 액션도 없다 — 그건 `PageHeader`가 이미 소유한 자리이고, 부품이 페이지 헤더를
-//  한 벌 더 들면 같은 자리를 둘이 다툰다. **총계는 하단 합계행**이다(AgingReport tfoot과 같은 규율).
+// ── 위젯이다 ────────────────────────────────────────────────────────────────
+//  페이지 위에 바로 올라가므로 **raised 표면 + 그림자**를 자기가 갖는다(02 elevation 2축).
+//  제목·설명은 여전히 `PageHeader`의 자리다. 하지만 **표 전체를 조작하는 액션은 표 툴바가 갖는다** —
+//  Fiori가 표 툴바를 "표 전체에 영향을 주는 주요 액션"의 자리로 규정하고, 좌측에 건수를 둔다.
+//  (필터·검색은 툴바에 안 온다 — 그건 스코프 존의 일이고 이 부품은 스코프를 안 갖는다.)
+//  **총계는 하단 합계행**이다(AgingReportWidget tfoot과 같은 규율).
 //
 //  ⚠ **목록과 원장을 한 화면에 같이 놓지 말 것.** 좁은 Drawer도, 2-pane도 안 된다 —
 //  1200px을 5:7로 갈라도 좌측은 대상 이름이, 우측은 적요가 잘린다(둘 다 화면에서 확인하고 되돌렸다).
@@ -30,7 +32,7 @@
 // ── 한 건은 한 줄이다 ────────────────────────────────────────────────────────
 //  보조 정보를 둘째 줄로 내리면 행 높이가 들쭉날쭉해지고, 옆 칸의 버튼·글리프가 세로로 안 맞는다
 //  (화면에서 확인했다). 열로 올릴 것은 열로 올리고, 부제는 **같은 줄에** 흐린 글자로 붙인다.
-import { HEAD_CELL, type BadgeColor } from './_cells';
+import { HEAD_CELL, renderAction, type Action, type BadgeColor } from './_cells';
 import { Money } from './Money';
 import { Text } from './Text';
 import { Badge } from './Badge';
@@ -63,6 +65,11 @@ type Props = {
   status?: 'loading' | 'ready';
   skeletonRows?: number;
 
+  // ── B층: 배열 길이 ──
+  /** 표 툴바 우측 — 엑셀·일괄처리 등 **표 전체**에 걸리는 액션. 없으면 툴바 존 자체가 없다.
+   *  행 단위 액션이 아니다(행에 경로는 하나뿐 — 위 주석). */
+  actions?: Action[];
+
   // ── C층: 스위치 ──
   /** 채권/채무 어휘. 기본 = 채권(수금). */
   labels?: { subject?: string; gross?: string; received?: string; balance?: string; total?: string };
@@ -70,8 +77,8 @@ type Props = {
   emptyState?: { icon?: IconName; title: string; description?: string };
 };
 
-export function OpenItemList({
-  items, onSelect, selectedId, status = 'ready', skeletonRows = 4, labels, emptyState,
+export function OpenItemListWidget({
+  items, onSelect, selectedId, status = 'ready', skeletonRows = 4, actions, labels, emptyState,
 }: Props) {
   const L = {
     subject: labels?.subject ?? '대상',
@@ -86,9 +93,18 @@ export function OpenItemList({
   const hasOwner = items.some((it) => it.owner);
   const hasAge = items.some((it) => it.age || it.due);
 
+  const toolbar = actions && actions.length > 0 ? (
+    <div className="erpOilBar">
+      <Text variant="caption" color="secondary">{items.length}건</Text>
+      <div className="erpOilSpacer" />
+      {actions.map((a, i) => renderAction(a, i, 'sm'))}
+    </div>
+  ) : null;
+
   if (status === 'loading')
     return (
       <div className="erpOil">
+        {toolbar}
         <div className="erpOilSkel">
           {Array.from({ length: skeletonRows }, (_, i) => <Skeleton key={i} variant="text" lines={1} />)}
         </div>
@@ -98,12 +114,14 @@ export function OpenItemList({
   if (items.length === 0)
     return (
       <div className="erpOil">
+        {toolbar}
         <EmptyState icon={emptyState?.icon} title={emptyState?.title ?? '미결 건이 없습니다'} description={emptyState?.description} />
       </div>
     );
 
   return (
     <div className="erpOil">
+      {toolbar}
       <div className="erpOilScroll">
         <table className="erpOilTable">
           <thead>
@@ -134,7 +152,7 @@ export function OpenItemList({
                   {hasAge && (
                     <td className="w-age">
                       {it.due}
-                      {it.age && <span className="l2"><Badge color={it.age.tone ?? 'neutral'}>{it.age.label}</Badge></span>}
+                      {it.age && <span className="sub"><Badge color={it.age.tone ?? 'neutral'}>{it.age.label}</Badge></span>}
                     </td>
                   )}
                 </tr>

@@ -1,5 +1,5 @@
 'use client';
-// PaymentApply (유기체) — **수납 적용**. 받은 돈 한 건을 미결 청구 여러 건에 배분한다.
+// PaymentApplyWidget (유기체) — **수납 적용**. 받은 돈 한 건을 미결 청구 여러 건에 배분한다.
 //  NetSuite Customer Payment의 뼈대(실화면 확인): 헤더 tally = To Apply / Applied / **Unapplied**,
 //  본체 = 미결 목록에 `적용액`을 치는 표, 그리고 Invoices / Credits / Deposits 세 출처.
 //  "한 입금 = 한 청구"가 아니라는 게 이 부품의 존재 이유다 — 그 가정이면 그냥 폼 하나면 된다.
@@ -11,6 +11,11 @@
 // ── tally를 하단 바에 둔 이유 ─────────────────────────────────────────────────
 //  NetSuite는 우상단 작은 박스에 둔다. 그대로 안 따랐다 — 배분은 표를 훑으며 하는 일이라
 //  **작업하는 내내 보여야 하는 값**이고, 위에 있으면 스크롤로 표에 가린다. 하단 고정 = DecisionPanel 선례.
+//
+// ── 표면 ─────────────────────────────────────────────────────────────────────
+//  기본은 **위젯(raised)** — 전용 수납 화면이면 페이지 위에 뜬다(NetSuite도 레코드 페이지다).
+//  모달 안에 넣을 땐 `surface="flush"` — 오버레이가 이미 lift를 가져서 그림자를 겹치면
+//  "표면 안의 표면"이 된다(02: 위젯·오버레이만 그림자, 내부 요소는 flush).
 //
 // ── 조정(±) 열: 실물을 의도적으로 안 따른 자리 ────────────────────────────────
 //  NetSuite엔 조기결제 할인 두 열(DISC. AVAIL / DISC. TAKEN)이 있다. 국내 상거래엔 그 관행이 거의 없고
@@ -82,16 +87,19 @@ type Props = {
   /** 행 잔액을 넘겨 적용하도록 허용. */
   overApply?: boolean;
 
+  /** 표면(02 elevation 2축). 기본 `raised` = 페이지 위에 뜨는 위젯.
+   *  모달·서랍처럼 **이미 뜬 표면 안**에 넣을 땐 `flush`(그림자를 겹치지 않는다). */
+  surface?: 'raised' | 'flush';
   /** 하단 확정 버튼. disabled 판단(미적용 block·초과)은 부품이 얹는다. */
   submit: { label?: string; onSubmit: () => void; busy?: boolean };
   onCancel?: () => void;
   emptyState?: { icon?: IconName; title: string; description?: string };
 };
 
-export function PaymentApply({
+export function PaymentApplyWidget({
   sources, activeSource, onSourceChange, amount, applied, onApplyChange,
   header, adjustments, onAdjust, onToggleLine, bulkActions, autoApply,
-  unapplied = 'warn', overApply, submit, onCancel, emptyState,
+  unapplied = 'warn', overApply, surface = 'raised', submit, onCancel, emptyState,
 }: Props) {
   const active = sources.find((s) => s.key === (activeSource ?? sources[0]?.key)) ?? sources[0];
   const showAdjust = Boolean(onAdjust);
@@ -119,7 +127,7 @@ export function PaymentApply({
   const restTone = rest === 0 ? 'is-done' : rest < 0 ? 'is-over' : 'is-rest';
 
   return (
-    <div className="erpPa">
+    <div className={`erpPa is-${surface}`}>
       {header && <div className="erpPaHeader">{header}</div>}
 
       {(sources.length > 1 || autoApply) && (
