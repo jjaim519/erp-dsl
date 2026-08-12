@@ -1024,7 +1024,6 @@ function RegisterDemo() {
           onOpen: (id, items) => window.alert(`증빙 ${items.length}건 — ${items.map((a) => a.name).join(', ')}`),
           onAttach: () => window.alert('첨부 선택기는 소비처가 연다(부품은 파일을 안 든다)'),
         }}
-        actions={[{ label: '엑셀', onClick: () => {} }]}
         periodTotals
       />
 
@@ -1068,7 +1067,6 @@ function AgingDemo() {
         buckets={AGING_BUCKETS} rows={AGING_ROWS}
         asOf="2026-08-12" basis="due" showRatio
         expandedIds={open} onExpandChange={setOpen}
-        actions={[{ label: '엑셀', onClick: () => {} }]}
       />
     </Stack>
   );
@@ -1169,8 +1167,7 @@ function OpenItemDemo() {
       <OpenItemListWidget items={OIL_ITEMS.map(({ owner, due, age, ...i }) => i)} />
 
       {/* 최대형 — **행 전체가 클릭 대상**(DataTable·ListWidget과 같은 규율). 행 안에 버튼·링크를 두지 않는다. */}
-      <OpenItemListWidget items={OIL_ITEMS} selectedId={sel.id} onSelect={(it) => { setSel(it); setDetail(true); }}
-        actions={[{ label: '엑셀', onClick: () => {} }]} />
+      <OpenItemListWidget items={OIL_ITEMS} selectedId={sel.id} onSelect={(it) => { setSel(it); setDetail(true); }} />
 
       {/* 행을 누르면 뜨는 것 — **모달**(size=full: 95vw. 7열 원장은 md/lg 폭에서 잘린다).
           기말잔액 헤더는 안 준다: 모달 제목·목록 행·표 마지막 행이 이미 같은 수를 말하고 있다. */}
