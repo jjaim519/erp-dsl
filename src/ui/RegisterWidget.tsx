@@ -88,6 +88,9 @@ type Props = {
   entries: RegisterEntry[];
 
   // ── A층: 데이터·콜백 유무가 노출을 정한다 ──
+  /** 이월행. 안 주면 **행 자체가 없다**(A층).
+   *  ⚠ 다만 누계의 시작점이기도 하다 — 안 주면 0부터 쌓이므로 잔액 열이 *실제 잔액*이 아니라
+   *  **기간 내 누계**가 된다. 이월 없이 실제 잔액을 그리려면 각 행에 `balance`를 직접 준다. */
   carryOver?: { label?: string; balance: number };
   /** 헤더 우상단 기말잔액. `value` 없으면 마지막 누계에서 파생한다. */
   closing?: { label?: string; value?: number; caption?: string };
@@ -152,7 +155,7 @@ export function RegisterWidget({
   const hasRef = entries.some((e) => e.ref);
   const hasKind = entries.some((e) => e.kind);
 
-  // ── 누계: balance가 없으면 부품이 만든다(이월 + Σ) ──
+  // ── 누계: balance가 없으면 부품이 만든다(이월 + Σ). 이월이 없으면 0부터 = 기간 내 누계. ──
   let running = carryOver?.balance ?? 0;
   const rows = entries.map((e) => {
     running += (e.in ?? 0) - (e.out ?? 0);
