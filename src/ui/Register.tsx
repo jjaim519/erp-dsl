@@ -174,7 +174,8 @@ export function Register({
   const colCount = 2 + (hasRef ? 1 : 0) + (hasKind ? 1 : 0) + 2 + (hasRecon ? 1 : 0) + (evidence ? 1 : 0) + 1;
   const AmountInput = unit ? NumberInput : CurrencyInput;
 
-  const head = (
+  const hasHead = Boolean((accounts && accounts.length > 0) || closing);
+  const head = !hasHead ? null : (
     <div className="erpRegHead">
       <div className="erpRegAcct">
         {accounts && accounts.length > 1 ? (

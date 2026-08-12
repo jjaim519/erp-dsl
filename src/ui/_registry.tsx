@@ -1160,6 +1160,7 @@ const OIL_EVIDENCE: Record<string, Attachment[]> = {
 function OpenItemDemo() {
   const [sel, setSel] = useState<OpenItem>(OIL_ITEMS[0]);
   const [hist, setHist] = useState(OIL_HISTORY);
+  const [detail, setDetail] = useState(false);
   const rows = hist[sel.id] ?? [];
 
   return (
@@ -1167,22 +1168,15 @@ function OpenItemDemo() {
       {/* 최소형 — items만. 잔액 열·하단 합계는 부품이 뺀다. 제목·헤더 액션은 PageHeader의 일이라 없다. */}
       <OpenItemList items={OIL_ITEMS.map(({ owner, due, age, ...i }) => i)} />
 
-      {/* 최대형 — 행은 클릭 대상이 아니다. **첫 셀이 링크**(그 건의 원장으로) · **액션 열은 그 자리 행동**.
-          「수금」이 여는 기록 폼은 아직 미정이라 데모에 안 붙였다(껍데기를 붙이면 그게 설계로 읽힌다). */}
-      <OpenItemList
-        items={OIL_ITEMS}
-        selectedId={sel.id}
-        onSelect={setSel}
-        itemActions={() => [{ label: '수금', variant: 'secondary', onClick: () => {} }]}
-      />
+      {/* 최대형 — **행 전체가 클릭 대상**(DataTable·ListWidget과 같은 규율). 행 안에 버튼·링크를 두지 않는다. */}
+      <OpenItemList items={OIL_ITEMS} selectedId={sel.id} onSelect={(it) => { setSel(it); setDetail(true); }} />
 
-      {/* 그 건의 원장 — **다른 화면**이라 전체 폭을 쓴다(위 목록 옆이 아니다). */}
-      <Stack gap="xs">
-        <Text variant="caption" color="secondary">실제 앱에서는 <b>별도 화면</b>이다(`item.href`를 주면 진짜 링크로 이동). 박물관엔 라우팅이 없어 여기 이어 그린다 — {sel.label}</Text>
+      {/* 행을 누르면 뜨는 것 — **모달**(size=full: 95vw. 7열 원장은 md/lg 폭에서 잘린다).
+          기말잔액 헤더는 안 준다: 모달 제목·목록 행·표 마지막 행이 이미 같은 수를 말하고 있다. */}
+      <Modal opened={detail} onClose={() => setDetail(false)} title={`${sel.label} · 수금 이력`} size="full">
         <Register
           entries={rows}
           carryOver={{ label: '계약금액', balance: sel.gross }}
-          closing={{ label: '미수' }}
           labels={{ out: '수납', in: '청구·증액', balance: '미수' }}
           evidence={{
             of: (e) => OIL_EVIDENCE[e.id],
@@ -1198,7 +1192,7 @@ function OpenItemDemo() {
             },
           }}
         />
-      </Stack>
+      </Modal>
     </Stack>
   );
 }

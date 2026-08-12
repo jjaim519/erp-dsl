@@ -57,18 +57,13 @@
   margin-left: var(--mantine-spacing-xs);
   font-size: var(--typo-caption-size); color: var(--text-secondary);
 }
-/* href 없이 콜백만 있을 때의 링크 — 생김새는 Anchor와 같게. */
-.erpOilLink {
-  border: 0; background: transparent; padding: 0; cursor: pointer;
-  font: inherit; font-size: var(--typo-body-size);
-  color: var(--mantine-color-primary-6); text-decoration: underline;
-}
+/* 행 전체가 클릭 대상 — 안에 링크·버튼·chevron을 두지 않는다(경쟁 경로). */
+.erpOilTable tr.is-clickable { cursor: pointer; }
 
 .erpOil .w-owner { min-width: 76px; }
 .erpOil .w-money { min-width: 112px; }
 .erpOil .w-bal   { min-width: 124px; }
 .erpOil .w-age   { min-width: 104px; }
-.erpOil .w-act   { width: 1px; }
 
 /* 하단 합계 — AgingReport tfoot과 같은 규율(상단 카드 헤더를 안 갖는 대신 여기서 맺는다). */
 .erpOilTable tfoot td {
@@ -90,4 +85,3 @@
 .erpOilTable tr.is-selected:hover > td { background: var(--mantine-color-primary-0); }
 .erpOilTable tbody tr:hover > td { background: var(--bg-secondary); }
 
-.erpOilActs { display: flex; gap: var(--mantine-spacing-xs); justify-content: flex-end; }

@@ -20,20 +20,20 @@
 //  업계가 하는 것도 분할이 아니라 **이동**이다: SAP는 List Report → Object Page, Odoo·Xero는 목록 → 상세 폼.
 //  (Flexible Column Layout은 상세가 *폼*일 때 쓰는 것이지 7열 원장을 담는 자리가 아니다.)
 //
-// ── 행은 클릭 대상이 아니다 ─────────────────────────────────────────────────
-//  **클릭 가능한 행 *안*에 버튼을 넣지 않는다.** 히트 타깃이 겹치고 `stopPropagation` 해킹이 필요해지며
-//  (실제로 그렇게 만들었다가 되돌렸다) 행은 진짜 버튼도 아니라 키보드로 못 잡는다.
-//  표준 표 문법대로 간다: **첫 셀이 링크**(그 건의 원장으로 이동) · **액션은 액션 열**(그 자리에서 하는 짧은 일).
-//  chevron도 없앴다 — 링크가 이미 "여기를 누르면 간다"를 말하는데 글리프를 또 얹으면 신호가 둘이다.
+// ── 행에 경로는 **하나**다 ───────────────────────────────────────────────────
+//  `onSelect`를 주면 **행 전체가 클릭 대상**이다(DataTable·ListWidget과 같은 규율).
+//  행 안에 버튼·링크·chevron을 두지 않는다 — 그건 이미 `DataTable`이 주석으로 못박아 둔 규칙이고
+//  ("actions 셀과 경쟁 안 하도록 보기 액션은 두지 않음") 어겼더니 `stopPropagation` 해킹이 필요했다.
+//  첫 셀에 링크를 걸었더니 그 순간 액션 열이 갈 곳을 잃었다 — 같은 행에서 두 경로가 같은 곳을 가리키니까.
+//  행 단위 액션이 꼭 필요한 화면이면 그건 이 부품이 아니다(행 클릭을 포기하고 `DataTable`을 쓴다).
 //
 // ── 한 건은 한 줄이다 ────────────────────────────────────────────────────────
 //  보조 정보를 둘째 줄로 내리면 행 높이가 들쭉날쭉해지고, 옆 칸의 버튼·글리프가 세로로 안 맞는다
 //  (화면에서 확인했다). 열로 올릴 것은 열로 올리고, 부제는 **같은 줄에** 흐린 글자로 붙인다.
-import { HEAD_CELL, renderAction, type Action, type BadgeColor } from './_cells';
+import { HEAD_CELL, type BadgeColor } from './_cells';
 import { Money } from './Money';
 import { Text } from './Text';
 import { Badge } from './Badge';
-import { Anchor } from './Anchor';
 import { Skeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
 import type { IconName } from './Icon';
@@ -45,8 +45,6 @@ export type OpenItem = {
   label: string;              // 현장·거래처·청구번호 — 무엇을 여기 넣을지는 소비처가 정한다
   /** 같은 줄에 붙는 흐린 보조(거래처·계약일). **둘째 줄로 안 내린다** — 행 높이가 흔들린다. */
   sublabel?: string;
-  /** 있으면 첫 셀이 진짜 링크가 된다(가운데 클릭·새 탭이 산다). 없으면 `onSelect` 버튼. */
-  href?: string;
   owner?: string;             // 담당. 있으면 그 열이 열린다
   gross: number;              // 계약금액·청구액
   received: number;           // 지금까지 받은 것
@@ -58,19 +56,12 @@ type Props = {
   items: OpenItem[];
 
   // ── A층: 데이터·콜백 유무 ──
-  /** 첫 셀 링크의 신호(행 전체가 아니다). 무엇을 띄울지는 페이지가 정한다(표면 비소유).
-   *  `item.href`가 있으면 그쪽이 이긴다. */
+  /** 주면 **행 전체가 클릭 대상**이 된다. 무엇을 띄울지는 페이지가 정한다(표면 비소유). */
   onSelect?: (item: OpenItem) => void;
   /** 2-pane에서 지금 열려 있는 행 표시. */
   selectedId?: string | null;
   status?: 'loading' | 'ready';
   skeletonRows?: number;
-
-  // ── B층: 배열 길이 ──
-  /** 행 액션. 빈 배열이면 그 칸이 비고, 아예 안 주면 열이 없다.
-   *  ⚠ `onSelect`와 **같은 곳으로 가는 버튼을 넣지 말 것** — 한 행에 같은 목적지가 두 경로면 경쟁이다(§11-3).
-   *  행 클릭이 상세를 연다면 여기엔 *다른* 행동만 온다(청구서 발행·보류 등). */
-  itemActions?: (item: OpenItem) => Action[];
 
   // ── C층: 스위치 ──
   /** 채권/채무 어휘. 기본 = 채권(수금). */
@@ -80,8 +71,7 @@ type Props = {
 };
 
 export function OpenItemList({
-  items, onSelect, selectedId, status = 'ready', skeletonRows = 4,
-  itemActions, labels, emptyState,
+  items, onSelect, selectedId, status = 'ready', skeletonRows = 4, labels, emptyState,
 }: Props) {
   const L = {
     subject: labels?.subject ?? '대상',
@@ -124,19 +114,16 @@ export function OpenItemList({
               <th style={HEAD_CELL} className="is-num w-money">{L.received}</th>
               <th style={HEAD_CELL} className="is-num w-bal">{L.balance}</th>
               {hasAge && <th style={HEAD_CELL} className="w-age">만기</th>}
-              {itemActions && <th style={HEAD_CELL} className="w-act" />}
             </tr>
           </thead>
           <tbody>
             {items.map((it) => {
-              const acts = itemActions?.(it) ?? [];
               return (
-                <tr key={it.id} className={selectedId === it.id ? 'is-selected' : undefined}>
+                <tr key={it.id}
+                  className={[onSelect ? 'is-clickable' : '', selectedId === it.id ? 'is-selected' : ''].filter(Boolean).join(' ')}
+                  onClick={onSelect ? () => onSelect(it) : undefined}>
                   <td className="is-grow">
-                    {it.href ? <Anchor href={it.href}>{it.label}</Anchor>
-                      : onSelect ? (
-                        <button type="button" className="erpOilLink" onClick={() => onSelect(it)}>{it.label}</button>
-                      ) : it.label}
+                    {it.label}
                     {it.sublabel && <span className="sub">{it.sublabel}</span>}
                   </td>
                   {hasOwner && <td className="w-owner">{it.owner}</td>}
@@ -148,11 +135,6 @@ export function OpenItemList({
                     <td className="w-age">
                       {it.due}
                       {it.age && <span className="l2"><Badge color={it.age.tone ?? 'neutral'}>{it.age.label}</Badge></span>}
-                    </td>
-                  )}
-                  {itemActions && (
-                    <td className="w-act">
-                      <div className="erpOilActs">{acts.map((a, i) => renderAction(a, i, 'sm'))}</div>
                     </td>
                   )}
                 </tr>
@@ -167,7 +149,6 @@ export function OpenItemList({
               <td className="is-num"><Money value={items.reduce((t, i) => t + i.received, 0)} symbol={false} /></td>
               <td className="is-num erpOilBal"><Money value={grand} symbol={false} /></td>
               {hasAge && <td />}
-              {itemActions && <td />}
             </tr>
           </tfoot>
         </table>
