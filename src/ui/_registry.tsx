@@ -964,13 +964,13 @@ function CalDemo() {
 
 const REG_ENTRIES: RegisterEntry[] = [
   { id: 'r1', date: '08-03', ref: 'TR-0812', kind: { label: '매출', tone: 'success' },
-    label: '키친앤코', sublabel: '성수 현장 2차 중도금 · 외상매출금', in: 8_250_000, reconciled: true },
+    label: '키친앤코', sublabel: '성수 현장 2차 중도금 · 외상매출금', in: 8_250_000, memo: '세금계산서 발행', reconciled: true },
   { id: 'r2', date: '08-05', ref: 'TR-0813', kind: { label: '매입' },
     label: '대성목재', sublabel: '8월 1차 자재 · 원재료', out: 3_180_000, reconciled: true },
   { id: 'r3', date: '08-10', ref: 'TR-0814', kind: { label: '고정비' },
     label: '성수산업개발', sublabel: '공장 임대료 8월분 · 지급임차료', out: 2_400_000, reconciled: true },
   { id: 'r4', date: '08-11', ref: 'TR-0815', kind: { label: '고정비' },
-    label: '급여', sublabel: '7월분 · 급여', out: 18_600_000, reconciled: false },
+    label: '급여', sublabel: '7월분 · 급여', out: 18_600_000, memo: '마이너스 통장', reconciled: false },
   { id: 'r5', date: '08-12', ref: 'TR-0816', kind: { label: '매출', tone: 'success' },
     label: '케이산업', sublabel: '잔금 · 외상매출금', in: 6_930_000, reconciled: false },
 ];
@@ -1013,10 +1013,11 @@ function RegisterDemo() {
         onReconcile={(id, next) => setEntries((p) => p.map((e) => (e.id === id ? { ...e, reconciled: next } : e)))}
         onAdd={{
           kinds: [{ label: '매출', value: 'sale' }, { label: '매입', value: 'buy' }, { label: '고정비', value: 'fixed' }],
+          memoPlaceholder: '비고',
           onSubmit: async (v) => {
             if (!v.label) return { error: '적요를 입력하세요.' };
             setEntries((p) => [...p, { id: `n${p.length}`, date: v.date ?? '08-12', label: v.label,
-              out: v.out ?? undefined, in: v.in ?? undefined, reconciled: false }]);
+              out: v.out ?? undefined, in: v.in ?? undefined, memo: v.memo, reconciled: false }]);
           },
         }}
         evidence={{
@@ -1176,7 +1177,8 @@ function OpenItemDemo() {
           surface="flush"
           entries={rows}
           carryOver={{ label: '계약금액', balance: sel.gross }}
-          labels={{ out: '수납', in: '청구·증액', balance: '미수' }}
+          sides="out"
+          labels={{ out: '수납', balance: '미수' }}
           evidence={{
             of: (e) => OIL_EVIDENCE[e.id],
             onOpen: (id, items) => window.alert(`증빙 ${items.length}건 — ${items.map((a) => a.name).join(', ')}`),

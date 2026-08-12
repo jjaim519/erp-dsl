@@ -203,6 +203,9 @@ export type { SheetColumn, SheetRow, SheetEditKind, SheetCommitResult } from './
 
 // 유기체 공유 타입 (스키마 작성자가 쓰는 어휘)
 export type { CellType, Action, ActionVariant, BadgeColor } from './_cells';
+// 표를 손으로 짜는 소비처(위젯 확장·포크)가 헤더 밴드와 액션 렌더를 다시 쓰지 않도록 공개한다.
+//  값이 아니라 *규율*이다 — 이걸 안 쓰면 헤더 배경·구분선·액션 크기가 화면마다 갈린다.
+export { HEAD_CELL, renderAction, cellAlign, fmtCurrency, fmtNumber } from './_cells';
 
 // App Router 배선 (src/ui 안에서만 @mantine/core를 만질 수 있어 여기서 노출)
 export { Providers } from './Providers';

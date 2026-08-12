@@ -77,10 +77,11 @@
   border-left: 1px solid var(--border-default);
   border-right: 1px solid var(--border-default);
 }
-.erpOilTable tr:hover > td.erpOilBal { background: var(--bg-tertiary); }
+.erpOilTable tr.is-clickable:hover > td.erpOilBal { background: var(--bg-tertiary); }
 
 /* 선택 행 — 지금 다른 화면에서 열려 있는 건. 틴트 한 겹(면만, 좌측 띠 없음). */
 .erpOilTable tr.is-selected > td,
 .erpOilTable tr.is-selected:hover > td { background: var(--mantine-color-primary-0); }
-.erpOilTable tbody tr:hover > td { background: var(--bg-secondary); }
+/* 호버는 **누를 수 있을 때만** — 커서와 배경이 같은 조건을 봐야 한다(전엔 배경만 무조건이었다). */
+.erpOilTable tbody tr.is-clickable:hover > td { background: var(--bg-secondary); }
 

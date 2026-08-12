@@ -18,6 +18,13 @@
 //  입력행=onAdd · 이월행=carryOver · 기말=closing · 증빙열=evidence · ✓열=entry.reconciled · 뱃지=reconciledThrough ·
 //  기간네비=period+onPeriodChange · 계좌셀렉트=accounts 2개 이상 · 전표열=entry.ref · 알약=kind.
 //
+// ── 스코프 존은 위젯이 하나뿐인 페이지에서만 ─────────────────────────────────
+//  `actions`와 **같은 규율, 더 강하게**. 액션은 표 하나를 건드리지만 스코프(계좌·기간)는
+//  페이지 전체의 숫자를 바꾼다 — KPI 카드와 원장이 같은 스코프를 공유하는 화면에서 스코프를
+//  원장 안에 넣었더니 "기준이 아래 표 안에 들어 있는" 화면이 나왔다(kk 통장내역).
+//  위젯이 둘 이상이면 `accounts`·`period`·`closing`을 **주지 않고** 페이지가 그린다
+//  (기말잔액은 KPI 한 칸으로). 안 주면 스코프 존 자체가 없다.
+//
 // ── 한 거래 = 한 줄 ──────────────────────────────────────────────────────────
 //  처음엔 QuickBooks처럼 2단 행(날짜/전표, 적요/계정)으로 그렸다가 걷어냈다. 행 높이가 들쭉날쭉해지면
 //  옆 칸의 알약·글리프·버튼이 세로로 안 맞고, 그걸 맞추려 vertical-align을 손대기 시작하면 끝이 없다.
@@ -36,6 +43,8 @@ import { CurrencyInput } from './CurrencyInput';
 import { NumberInput } from './NumberInput';
 import { PeriodNavigator } from './PeriodNavigator';
 import { EmptyState } from './EmptyState';
+import { Button } from './Button';
+import { Skeleton } from './Skeleton';
 import type { Attachment } from './_attachment';
 import type { IconName } from './Icon';
 import './register.css';
@@ -54,6 +63,9 @@ export type RegisterEntry = {
   in?: number;                                    // 입금/입고
   /** 없으면 부품이 누계를 만든다(이월 + Σ). 주면 그 값을 그린다. */
   balance?: number;
+  /** 자유 텍스트 한 칸. 있으면 **비고 열**이 열린다 — 국내 거래내역서의 기재내용·전표의 비고란.
+   *  `sublabel`(적요 옆 흐린 글자)과 다르다: 저건 적요의 부속이고 이건 독립 열이라 정렬·편집 대상이 된다. */
+  memo?: string;
   /** 이 필드를 **한 줄이라도 가지면** ✓ 열이 열린다. 대사 개념이 없는 원장은 안 주면 된다. */
   reconciled?: boolean;
 };
@@ -72,6 +84,10 @@ export type RegisterEvidence = {
   onAttach?: (entryId: string | null) => void;
   /** 입력행에 지금 붙어 있는 개수 — 값의 주인은 소비처. */
   draftCount?: number;
+  /** 입력행에 **무엇이** 붙었는지(파일명 등). 개수만으로는 고른 걸 확인할 수 없다. */
+  draftLabel?: string;
+  /** 입력행 증빙 무르기. 없으면 ✕가 안 나온다. */
+  onDraftClear?: () => void;
 };
 
 /** 새 줄 입력(표 **맨 위**). QuickBooks가 위에 두는 이유가 화면에서 드러난다 —
@@ -79,9 +95,13 @@ export type RegisterEvidence = {
 export type RegisterAdd = {
   kinds?: { label: string; value: string }[];
   labelPlaceholder?: string;
+  /** 주면 입력행에 **비고 칸**이 열린다(비고 열도 함께). */
+  memoPlaceholder?: string;
   /** 실패하면 { error } — 값은 남고 줄 아래에 오류가 붙는다(DataSheet 커밋 계약과 동형). */
-  onSubmit: (v: { date: string | null; kind: string | null; label: string; out: number | null; in: number | null })
+  onSubmit: (v: { date: string | null; kind: string | null; label: string; out: number | null; in: number | null; memo: string })
     => Promise<{ error?: string } | void>;
+  /** 확정 버튼 라벨(기본 '기록'). **텍스트 버튼이다** — ✓ 아이콘은 "저장"으로 안 읽혔다(kk 실사용자). */
+  submitLabel?: string;
 };
 
 type Props = {
@@ -121,11 +141,18 @@ type Props = {
    *  모달·서랍처럼 **이미 뜬 표면 안**에 넣을 땐 `flush` — 그림자를 겹치지 않는다
    *  ("위젯·오버레이만 그림자, 내부 요소는 flush" — 02). */
   surface?: 'raised' | 'flush';
+  /** 증감 방향. 기본 `both`(출금·입금 두 열).
+   *  수납 원장처럼 **한 방향만 존재하는 장부**는 `out`(감소만)·`in`(증가만) — 죽은 열과
+   *  죽은 푸터 항목(청구·증액 ₩0)이 안 남는다. 푸터 기간합계도 따라간다. */
+  sides?: 'both' | 'out' | 'in';
   /** 수량 단위(장·개). 주면 금액이 아니라 수량으로 그린다(₩ 없음). */
   unit?: string;
   /** 하단 기간 합계줄(출/입 총액). 파생값이라 데이터 유무로 가를 수 없어 스위치. */
   periodTotals?: boolean;
 
+  /** 로딩 — 표만 자리표시로 바뀐다. **스코프 존·툴바는 남는다**(사라지면 "뭘 보고 있었는지"를 놓친다). */
+  status?: 'loading' | 'ready';
+  skeletonRows?: number;
   emptyState?: { icon?: IconName; title: string; description?: string };
 };
 
@@ -137,7 +164,8 @@ const num = (v: number | string): number | null => {
 export function RegisterWidget({
   entries, carryOver, closing, accounts, accountValue, onAccountChange,
   period, onPeriodChange, reconciledThrough, onReconcile, onAdd, evidence, actions,
-  labels, unit, periodTotals, surface = 'raised', emptyState,
+  labels, unit, sides = 'both', periodTotals, surface = 'raised',
+  status = 'ready', skeletonRows = 4, emptyState,
 }: Props) {
   const L = {
     out: labels?.out ?? '출금', in: labels?.in ?? '입금',
@@ -151,9 +179,12 @@ export function RegisterWidget({
   );
 
   // 대사 열은 "한 줄이라도 reconciled를 갖는가"로 열린다 — 토글 prop이 아니다.
+  // ⚠ 열림 조건은 **entries만 보면 안 된다.** 거래 0건인 달에서도 입력행은 그 칸이 필요하다 —
+  //  안 그러면 그 달의 첫 줄을 칠 수가 없다(kk 실화면에서 잡힌 버그).
   const hasRecon = entries.some((e) => e.reconciled !== undefined) || reconciledThrough != null;
   const hasRef = entries.some((e) => e.ref);
-  const hasKind = entries.some((e) => e.kind);
+  const hasKind = entries.some((e) => e.kind) || Boolean(onAdd?.kinds?.length);
+  const hasMemo = entries.some((e) => e.memo != null) || Boolean(onAdd?.memoPlaceholder);
 
   // ── 누계: balance가 없으면 부품이 만든다(이월 + Σ). 이월이 없으면 0부터 = 기간 내 누계. ──
   let running = carryOver?.balance ?? 0;
@@ -172,20 +203,24 @@ export function RegisterWidget({
   const [dLabel, setDLabel] = useState('');
   const [dOut, setDOut] = useState<number | string>('');
   const [dIn, setDIn] = useState<number | string>('');
+  const [dMemo, setDMemo] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const dirty = Boolean(dLabel || dOut !== '' || dIn !== '' || dDate || dKind);
+  const dirty = Boolean(dLabel || dOut !== '' || dIn !== '' || dDate || dKind || dMemo || evidence?.draftCount);
 
+  const reset = () => { setDDate(null); setDKind(null); setDLabel(''); setDOut(''); setDIn(''); setDMemo(''); setErr(null); };
   const submit = async () => {
     if (!onAdd || busy || !dirty) return;
     setBusy(true); setErr(null);
-    const r = await onAdd.onSubmit({ date: dDate, kind: dKind, label: dLabel, out: num(dOut), in: num(dIn) });
+    const r = await onAdd.onSubmit({ date: dDate, kind: dKind, label: dLabel, out: num(dOut), in: num(dIn), memo: dMemo });
     setBusy(false);
     if (r && r.error) { setErr(r.error); return; }
-    setDDate(null); setDKind(null); setDLabel(''); setDOut(''); setDIn('');
+    reset();
   };
 
-  const colCount = 2 + (hasRef ? 1 : 0) + (hasKind ? 1 : 0) + 2 + (hasRecon ? 1 : 0) + (evidence ? 1 : 0) + 1;
+  const sideCount = sides === 'both' ? 2 : 1;
+  const colCount = 2 + (hasRef ? 1 : 0) + (hasKind ? 1 : 0) + sideCount
+    + (hasMemo ? 1 : 0) + (hasRecon ? 1 : 0) + (evidence ? 1 : 0) + 1 + (onAdd ? 1 : 0);
   const AmountInput = unit ? NumberInput : CurrencyInput;
 
   // ── 스코프 존 — "무엇을 보고 있는가". Fiori 필터 바 규격: **라벨은 항상 입력칸 위**.
@@ -231,6 +266,16 @@ export function RegisterWidget({
     </div>
   ) : null;
 
+  if (status === 'loading')
+    return (
+      <div className={`erpReg is-${surface}`}>
+        {scope}{toolbar}
+        <div className="erpRegSkel">
+          {Array.from({ length: skeletonRows }, (_, i) => <Skeleton key={i} variant="text" lines={1} />)}
+        </div>
+      </div>
+    );
+
   if (entries.length === 0 && !onAdd && !carryOver)
     return (
       <div className={`erpReg is-${surface}`}>
@@ -240,7 +285,7 @@ export function RegisterWidget({
     );
 
   return (
-    <div className={`erpReg is-${surface}`}>
+    <div className={`erpReg is-${surface}${onAdd ? ' has-commit' : ''}`}>
       {scope}
       {toolbar}
       <div className="erpRegScroll">
@@ -251,11 +296,13 @@ export function RegisterWidget({
               {hasRef && <th style={HEAD_CELL} className="w-ref">전표</th>}
               {hasKind && <th style={HEAD_CELL} className="w-kind">구분</th>}
               <th style={HEAD_CELL} className="is-grow">적요</th>
-              <th style={HEAD_CELL} className="is-num w-money">{L.out}</th>
-              <th style={HEAD_CELL} className="is-num w-money">{L.in}</th>
+              {sides !== 'in' && <th style={HEAD_CELL} className="is-num w-money">{L.out}</th>}
+              {sides !== 'out' && <th style={HEAD_CELL} className="is-num w-money">{L.in}</th>}
+              {hasMemo && <th style={HEAD_CELL} className="w-memo">비고</th>}
               {evidence && <th style={HEAD_CELL} className="is-mid w-evi">증빙</th>}
               {hasRecon && <th style={HEAD_CELL} className="is-mid w-rec" aria-label="대사">✓</th>}
               <th style={HEAD_CELL} className="is-num w-bal">{L.balance}</th>
+              {onAdd && <th style={HEAD_CELL} className="w-commit" />}
             </tr>
           </thead>
           <tbody>
@@ -273,28 +320,55 @@ export function RegisterWidget({
                     <TextInput size="sm" value={dLabel} onChange={setDLabel}
                       placeholder={onAdd.labelPlaceholder ?? '거래처 · 적요'} onCommit={() => void submit()} />
                   </td>
-                  <td className="is-num">
-                    <AmountInput size="sm" value={dOut} onChange={(v) => setDOut(v as never)} placeholder="0" onCommit={() => void submit()} />
-                  </td>
-                  <td className="is-num">
-                    <AmountInput size="sm" value={dIn} onChange={(v) => setDIn(v as never)} placeholder="0" onCommit={() => void submit()} />
-                  </td>
+                  {sides !== 'in' && (
+                    <td className="is-num">
+                      <AmountInput size="sm" value={dOut} onChange={(v) => setDOut(v as never)} placeholder="0" onCommit={() => void submit()} />
+                    </td>
+                  )}
+                  {sides !== 'out' && (
+                    <td className="is-num">
+                      <AmountInput size="sm" value={dIn} onChange={(v) => setDIn(v as never)} placeholder="0" onCommit={() => void submit()} />
+                    </td>
+                  )}
+                  {hasMemo && (
+                    <td className="w-memo">
+                      <TextInput size="sm" value={dMemo} onChange={setDMemo}
+                        placeholder={onAdd.memoPlaceholder ?? '비고'} onCommit={() => void submit()} />
+                    </td>
+                  )}
                   {evidence && (
                     <td className="is-mid">
+                      {/* 0건은 ＋(붙여라) · 있으면 클립+개수(붙어 있다). 흐리게만 하면 뜻이 안 바뀌고 약해지기만 한다. */}
                       <button type="button" className="erpRegEvi" onClick={() => evidence.onAttach?.(null)}
-                        aria-label="증빙 첨부">
-                        <Icon name="paperclip" size="sm" color="secondary" />
-                        {evidence.draftCount ? evidence.draftCount : ''}
+                        aria-label={evidence.draftCount ? `증빙 ${evidence.draftCount}건` : '증빙 첨부'}
+                        title={evidence.draftLabel}>
+                        {evidence.draftCount
+                          ? <><Icon name="paperclip" size="sm" color="secondary" />{evidence.draftCount}</>
+                          : <Icon name="plus" size="sm" color="secondary" />}
                       </button>
+                      {evidence.draftCount && evidence.onDraftClear ? (
+                        <button type="button" className="erpRegEviX" aria-label="증빙 무르기"
+                          onClick={evidence.onDraftClear}><Icon name="x" size="sm" color="secondary" /></button>
+                      ) : null}
                     </td>
                   )}
                   {hasRecon && <td className="is-mid"><span className="erpRegRecOpen">○</span></td>}
-                  {/* 치는 중에도 **기록 후 잔액**을 보여준다 — 얼마가 남는지 모르고 확정하게 두지 않는다.
-                      계산 칸이라 색은 죽여 둔다(못 고친다는 걸 대비로 말한다). */}
+                  {/* 손타기 전에도 **현재 잔액**을 회색으로 깔아 둔다 — 「자동」은 동작을 말하지 값을 말하지 않는다.
+                      금액을 치는 순간 그 자리에서 줄어들어 "이 칸은 결과다"가 설명 없이 전달된다. */}
                   <td className="is-num erpRegBal is-derived">
-                    {dirty
-                      ? money(closingValue == null ? null : closingValue + (num(dIn) ?? 0) - (num(dOut) ?? 0))
-                      : '자동'}
+                    {money(closingValue == null ? null : closingValue + (num(dIn) ?? 0) - (num(dOut) ?? 0))}
+                  </td>
+                  {/* 확정은 **글자**다. ✓ 아이콘은 "저장"으로 안 읽혔고, 배경을 갈랐더니 액션 없는 줄이
+                      빈 구멍으로 보였다(kk 실사용자 검증). 손타기 전엔 자리만 있고 버튼이 없다. */}
+                  <td className="w-commit">
+                    {dirty && (
+                      <div className="erpRegCommit">
+                        <Button variant="ghost" size="sm" onClick={reset}>취소</Button>
+                        <Button variant="primary" size="sm" loading={busy} onClick={() => void submit()}>
+                          {onAdd.submitLabel ?? '기록'}
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
                 {err && (
@@ -325,19 +399,21 @@ export function RegisterWidget({
                   {e.label}
                   {e.sublabel && <span className="sub">{e.sublabel}</span>}
                 </td>
-                <td className="is-num">{money(e.out ?? 0, { emphasis: true, zeroDash: true })}</td>
-                <td className="is-num is-in">{money(e.in ?? 0, { emphasis: true, zeroDash: true })}</td>
+                {sides !== 'in' && <td className="is-num">{money(e.out ?? 0, { emphasis: true, zeroDash: true })}</td>}
+                {sides !== 'out' && <td className="is-num is-in">{money(e.in ?? 0, { emphasis: true, zeroDash: true })}</td>}
+                {hasMemo && <td className="w-memo">{e.memo}</td>}
                 {evidence && (() => {
                   const items = evidence.of(e) ?? [];
                   const n = items.length;
                   if (n === 0 && !evidence.onAttach) return <td className="is-mid" />;
                   return (
                     <td className="is-mid">
-                      <button type="button"
-                        className={`erpRegEvi${n === 0 ? ' is-quiet' : ''}`}
+                      <button type="button" className="erpRegEvi"
                         aria-label={n > 0 ? `증빙 ${n}건` : '증빙 첨부'}
                         onClick={() => (n > 0 ? evidence.onOpen?.(e.id, items) : evidence.onAttach?.(e.id))}>
-                        <Icon name="paperclip" size="sm" color="secondary" />{n > 0 ? n : ''}
+                        {n > 0
+                          ? <><Icon name="paperclip" size="sm" color="secondary" />{n}</>
+                          : <Icon name="plus" size="sm" color="secondary" />}
                       </button>
                     </td>
                   );
@@ -354,6 +430,7 @@ export function RegisterWidget({
                   </td>
                 )}
                 <td className="is-num erpRegBal">{money(balance)}</td>
+                {onAdd && <td className="w-commit" />}
               </tr>
             ))}
           </tbody>
@@ -370,9 +447,13 @@ export function RegisterWidget({
               ? <>미대사 {unrec.length}건 · 순액 <Money value={unrec.reduce((s, e) => s + (e.in ?? 0) - (e.out ?? 0), 0)} unit={unit} symbol={!unit} /></>
               : null}
           </span>
-          <span>{periodTotals
-            ? <>{L.out} <Money value={sumOut} unit={unit} symbol={!unit} /> · {L.in} <Money value={sumIn} unit={unit} symbol={!unit} /></>
-            : null}</span>
+          <span>{periodTotals ? (
+            <>
+              {sides !== 'in' && <>{L.out} <Money value={sumOut} unit={unit} symbol={!unit} /></>}
+              {sides === 'both' && ' · '}
+              {sides !== 'out' && <>{L.in} <Money value={sumIn} unit={unit} symbol={!unit} /></>}
+            </>
+          ) : null}</span>
         </div>
       )}
     </div>

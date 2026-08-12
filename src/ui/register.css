@@ -3,13 +3,13 @@
  * 이 파일을 지배하는 계약 둘:
  *  ① **잔액 열은 다른 면에 앉는다.** 누계는 입력도 증감도 아닌 *결과*라, 좌측 경계선 + 한 톤 낮은 배경으로
  *     증감 열과 갈라 놓는다. 눈이 그 열만 세로로 훑을 수 있어야 "이월+Σ=기말"이 검산된다.
- *  ② **두 줄 행에서도 숫자는 첫 줄에 정렬된다.** 보조줄(l2)이 있는 칸과 없는 칸이 섞이므로
- *     셀은 vertical-align:top이고, 숫자 셀만 첫 줄 높이에 맞춘다. 안 그러면 금액이 행 가운데로 내려가
- *     날짜·적요와 눈높이가 어긋난다.
+ *  ② **한 거래 = 한 줄, 행 높이 고정.** 그래야 vertical-align:middle이 성립하고 옆 칸의
+ *     알약·글리프·버튼이 세로로 맞는다. 보조는 둘째 줄이 아니라 같은 줄의 흐린 글자다.
  */
 .erpReg {
   --reg-pad: var(--mantine-spacing-sm);   /* 12 */
   --reg-line: 22px;                        /* 첫 줄 높이 — 숫자 셀이 여기에 맞춘다 */
+  --reg-commit-w: 0px;                     /* 확정 열 폭 — 입력행이 있을 때만(아래 has-commit) */
   overflow: hidden;
 }
 /* 위젯 = 페이지 위에 뜬 raised 표면(02 elevation 2축). 윤곽이 아니라 톤+그림자로 담는다. */
@@ -20,6 +20,8 @@
 }
 /* 모달·서랍처럼 **이미 뜬 표면 안**에서는 그림자를 겹치지 않는다("내부 요소는 flush" — 02). */
 .erpReg.is-flush { background: transparent; }
+/* 입력행이 있으면 확정 열이 생긴다. 버튼 두 개(취소·기록)가 안 접히는 폭. */
+.erpReg.has-commit { --reg-commit-w: 124px; }
 
 /* ── 스코프 존 — "무엇을 보고 있는가". Fiori 필터 바 규격: 라벨은 항상 입력칸 **위**. ── */
 .erpRegScope {
@@ -67,7 +69,8 @@
 .erpRegTable td.is-grow { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .erpRegTable td.is-num { text-align: right; }
 .erpRegTable td.is-mid { text-align: center; }
-.erpRegTable tbody tr:hover > td { background: var(--bg-secondary); }
+/* 행 호버 없음 — 이 부품엔 행 클릭 prop이 아예 없다. 안 눌리는 행을 칠하면 "눌릴 것 같다"고
+ *  말해 놓고 아무 일도 안 일어난다(kk 오너가 바로 걸었다). 호버는 *누를 수 있을 때만* 쓴다. */
 
 /* 보조는 **같은 줄에** 흐린 글자로. 위계는 색·크기가 만들지 줄바꿈이 만들지 않는다. */
 .erpRegTable .sub {
@@ -78,23 +81,25 @@
 /* 열 폭 — 임의 px이 아니라 그 열의 *서식*이 정한다(DataSheet w-* 선례). */
 .erpReg .w-date  { min-width: 104px; }
 .erpReg .w-ref   { min-width: 84px; }
-.erpReg .w-kind  { min-width: 88px; }
+/* 읽기 땐 배지·편집 땐 셀렉트라 **셀렉트 기준**이다 — 세 글자(「고정비」)+chevron이 안 들어가 잘렸다. */
+.erpReg .w-kind  { min-width: 112px; }
 .erpReg .w-money { min-width: 116px; }
 .erpReg .w-bal   { min-width: 128px; }
 .erpReg .w-rec   { width: 44px; }
+.erpReg .w-memo  { min-width: 132px; }
+.erpReg .w-commit { width: var(--reg-commit-w); white-space: nowrap; }
 .erpReg .w-evi   { width: 60px; }
 
-/* ① 잔액 열 — 다른 면 + **오른쪽 고정**.
- *  가로 스크롤이 생기면 제일 먼저 잘리는 게 마지막 열인데, 하필 그게 이 부품의 결론이다.
- *  sticky로 붙여 두면 좁은 자리(2-pane 우측)에서도 "이월+Σ=기말"을 계속 검산할 수 있다. */
+/* ① 잔액 열 — 다른 면.
+ *  전엔 sticky right로 붙여 뒀는데, 그건 폐기한 2-pane 실험(좁은 우측 pane)을 위한 것이었다.
+ *  지금 이 위젯은 페이지나 full 모달에서 전체 폭을 쓰고, 열이 늘자(비고·확정) sticky가
+ *  ✓ 열을 덮어 버렸다 — 없어진 문제를 풀던 장치가 새 문제를 만들었으므로 걷어낸다. */
 .erpRegTable td.erpRegBal,
 .erpRegTable th.w-bal {
   background: var(--bg-secondary);
   border-left: 1px solid var(--border-default);
   font-weight: 600;
-  position: sticky; right: 0; z-index: 1;
 }
-.erpRegTable tbody tr:hover > td.erpRegBal { background: var(--bg-tertiary); }
 /* 계산되는 칸은 **죽여서** 못 고친다는 걸 말한다(칠하지 않는다 — 편집 어포던스는 대비로). */
 .erpRegTable td.is-derived { color: var(--text-disabled); font-weight: 400; }
 
@@ -121,10 +126,10 @@
 
 /* 미대사 행 — 배경 한 겹(경고색 아님: 미대사는 오류가 아니라 *아직*이다). */
 .erpRegTable tr.is-unrec > td:not(.erpRegBal) { background: var(--mantine-color-warning-0); }
-.erpRegTable tr.is-unrec:hover > td:not(.erpRegBal) { background: var(--mantine-color-warning-1); }
 
-/* 증빙 — 붙은 게 없으면 **조용하다**(클립만 흐리게). 모든 행에 강한 글리프가 깔리면
- *  "증빙 있음"이 신호이길 그만둔다(Badge 사다리와 같은 규율). */
+/* 증빙 — **0건은 ＋(붙여라) · 있으면 클립+개수(붙어 있다).**
+ *  전엔 0건을 흐린 클립으로 뒀는데, 클립은 「파일이 있다」는 표시지 「붙여라」가 아니라
+ *  흐리게만 하면 뜻이 안 바뀌고 약해지기만 했다(kk 실사용자). 글리프 무게는 그대로 두고 뜻만 가른다. */
 .erpRegEvi {
   display: inline-flex; align-items: center; gap: 3px;
   min-width: 30px; height: 24px; padding: 0 5px; border: 0; cursor: pointer;
@@ -133,8 +138,19 @@
   color: var(--text-secondary);
 }
 .erpRegEvi:hover { background: var(--bg-tertiary); }
-.erpRegEvi.is-quiet { opacity: .35; }
-.erpRegEvi.is-quiet:hover { opacity: 1; }
+.erpRegEviX {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; padding: 0; border: 0; cursor: pointer;
+  background: transparent; border-radius: var(--mantine-radius-xs);
+}
+.erpRegEviX:hover { background: var(--bg-tertiary); }
+/* 확정은 글자다(아이콘 아님). 손타기 전엔 자리만 있고 버튼이 없다 — 빈 구멍을 안 만든다. */
+.erpRegCommit { display: flex; gap: var(--mantine-spacing-xxs); justify-content: flex-end; }
+
+.erpRegSkel {
+  display: flex; flex-direction: column; gap: var(--mantine-spacing-xs);
+  padding: var(--mantine-spacing-md) var(--mantine-spacing-lg);
+}
 
 .erpRegRecOpen { color: var(--border-strong); }
 .erpRegRecBtn {
