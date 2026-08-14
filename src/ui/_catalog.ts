@@ -686,7 +686,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'scale', kind: '스타일', values: 'number (화면 축소 배율. 인쇄는 항상 물리 A4 1:1)' },
       { name: 'mode', kind: '기능', values: "'view'(기본) | 'edit'" },
       { name: 'onChange', kind: '기능', values: '(next) => void (edit 전용 — 바뀐 값 *전체*를 준다)' },
-      { name: 'readonlyFields', kind: '기능', values: "string[] (edit 전용 — 데이터에서 끌어오는 값. **서식이 아니라 소비처가 정한다**. 반복 안은 점 경로 '부속.품목'. 잉크가 죽어 «고칠 수 있는 곳»이 대비로 드러난다)" },
+      { name: 'readonlyFields', kind: '기능', values: "string[] (edit 전용 — 데이터에서 끌어오는 값. **서식이 아니라 소비처가 정한다**. 반복 안은 점 경로 '부속.품목'(전 행) 또는 '부속[14].품목'(원본 배열 그 행만) — 둘은 OR라 «전체 잠그고 이 행만 풀기»는 없다. 잉크가 죽어 «고칠 수 있는 곳»이 대비로 드러난다)" },
     ],
     composition: {
       토큰: ['A4 794×1123 @96dpi(고정 px 좌표계 — 명시예외)', '여백 15mm', '쪽당 행 수 하나가 행 높이·글자 크기를 함께 정한다(42행→10.5pt / 31행→14pt)', '괘선 #000(종이 절대색)', '채우기 = 토큰 3단 또는 엑셀 헥스', '편집 어포던스 = **칸 안에 1px 물려 넣은 진짜 입력**(자기 윤곽을 되찾고 1px 틈이 칸 괘선에서 떼어 놓는다). 칠하기·칸에 링 두르기 둘 다 실패했다 — 전자는 fill 채널 충돌, 후자는 인접 칸이 각자 링을 그려 3중선', '잠근 칸(readonlyFields)은 입력 없이 잉크만 죽임', '@media print: 물리 A4 1:1·장마다 break-after, 편집 표시는 인쇄에 안 나간다'],

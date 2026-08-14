@@ -38,6 +38,10 @@ type Props = {
    * `edit` 전용 — 데이터에서 끌어오는 값(시공팀·시공일…). 보이되 못 고친다.
    * **서식이 아니라 소비처가 정한다** — 어느 값이 어디서 오는지는 소비처만 알기 때문에
    * 스키마(엑셀)에 「출처」를 적게 하지 않았다. 반복 안 필드는 `"부속.개수"`처럼 점 경로로 적는다.
+   *
+   * 반복은 **행 하나만** 잠글 수도 있다 — `"부속[14].품목"`(원본 배열 14번). 둘은 OR라
+   * 「전체 잠금 + 이 행만 풀기」는 없다. 한 배열에 잠긴 행과 열린 행이 섞이면
+   * 소비처는 **전체 잠금을 빼고 잠글 행만** 적는다.
    */
   readonlyFields?: string[];
 };
@@ -95,6 +99,22 @@ export function PaperDoc({
   }, [spec]);
   const locked = useMemo(() => new Set(readonlyFields ?? []), [readonlyFields]);
 
+  // 잠금 판정 — 필드 전체(`부속.품목`)와 **그 행 하나**(`부속[14].품목`)의 OR다. 행 번호는
+  //  원본 배열 순번(`at`)이라 쪽 나눔·묶음과 무관하게 안정적이다.
+  //  ⚠ 부정 표기(전체 잠그고 이 행만 풀기)는 없다 — 목록을 두 번 뒤집어 읽게 된다.
+  //  잘못된 표기(`부속[abc].품목`)·범위 밖 인덱스는 그냥 «안 맞는 문자열»이라 조용히 안 잠긴다.
+  //  던지지 않는 게 맞다: 잠금은 안전장치가 아니라 편의고, 진짜 방어는 서버가 한다.
+  const indexed = (field: string, at: number) => {
+    const dot = field.indexOf('.');
+    return dot < 0 ? undefined : `${field.slice(0, dot)}[${at}]${field.slice(dot)}`;
+  };
+  const lockedAt = (field: string, at?: number) => {
+    if (locked.has(field)) return true;
+    if (at == null) return false;
+    const k = indexed(field, at);
+    return !!k && locked.has(k);
+  };
+
   // 고칠 수 있는 칸 — 데이터 자리이면서 ① 시스템 값(@쪽)이 아니고 ② 소비처가 안 잠갔고
   //  ③ 「필드」 시트가 아는 이름이다. 집계·이어붙이기·고정 글자는 애초에 «값»이 아니라 대상이 아니다.
   //
@@ -105,7 +125,7 @@ export function PaperDoc({
   const editableAt = (cell: PaperCell, at?: number): FieldSpec | undefined => {
     if (mode !== 'edit' || !onChange) return undefined;
     if (!cell.field || cell.field.startsWith('@')) return undefined;
-    if (cell.scope === 'group' || locked.has(cell.field)) return undefined;
+    if (cell.scope === 'group' || lockedAt(cell.field, at)) return undefined;
     if (cell.field.includes('.') && at == null) return undefined;
     return fieldOf.get(cell.field);
   };
@@ -127,8 +147,10 @@ export function PaperDoc({
   // 「보이되 못 고친다」를 **소비처가 잠근 것에만** 표시한다 — 편집 가능함은 쉼 상태를 안 건드리고
   //  대비로 드러내는 게 표 계열의 관습이라(paper.css 주석), 죽일 대상을 정확히 골라야 한다.
   //  고정 글자·라벨은 «잠긴 값»이 아니라 애초에 값이 아니므로 제외한다.
-  const isLocked = (cell: PaperCell) =>
-    mode === 'edit' && !!cell.field && locked.has(cell.field);
+  //  행 하나만 잠근 경우도 여기서 갈린다 — 표시가 판정과 같은 자를 써야 «잠긴 줄»과 «입력칸 줄»이
+  //  한 표 안에서 어긋나지 않는다.
+  const isLocked = (cell: PaperCell, at?: number) =>
+    mode === 'edit' && !!cell.field && lockedAt(cell.field, at);
 
   // 인쇄 @page — **문서 두 종류(서식·손코딩)가 한 벌을 쓴다**(paperPrint.ts). 여기서 또 적으면
   //  손코딩 경로(DocModal children)와 갈리고, 갈리는 순간 한쪽에서 머리말·꼬리말이 되살아난다.
@@ -218,7 +240,7 @@ export function PaperDoc({
                   cell.writing === 'vertical' ? 'wr-vertical' : '',
                   depth ? 'is-indent' : '',
                   field ? 'is-edit' : '',
-                  isLocked(cell) ? 'is-locked' : '',
+                  isLocked(cell, at) ? 'is-locked' : '',
                 ].filter(Boolean).join(' ');
                 return (
                   <div
