@@ -152,6 +152,10 @@ export function PaperDoc({
   const isLocked = (cell: PaperCell, at?: number) =>
     mode === 'edit' && !!cell.field && lockedAt(cell.field, at);
 
+  // 값이 «들어 있나». 빈 글자·없음은 물론 **꺼진 체크도 빈 것으로 본다** — 체크 안 함은
+  //  작성자가 쓴 값이 아니라 쉼 상태다. 반대로 `0`은 쓴 값이다(누가 0을 적었다는 뜻).
+  const hasValue = (v: unknown) => v != null && v !== '' && v !== false;
+
   // 인쇄 @page — **문서 두 종류(서식·손코딩)가 한 벌을 쓴다**(paperPrint.ts). 여기서 또 적으면
   //  손코딩 경로(DocModal children)와 갈리고, 갈리는 순간 한쪽에서 머리말·꼬리말이 되살아난다.
   const pageRule = paperPageRule(spec.orientation);
@@ -162,6 +166,26 @@ export function PaperDoc({
       {pages.map((page, pi) => {
         const { rows, placed } = assemble(page);
         const total = rows.length;
+
+        // ── 쓴 행 — 작성자가 값을 넣은 반복 행. 작성 화면에서 훑는 단위는 «칸»이 아니라 «행»이다
+        //  ("내가 뭘 시켰지?"). 카탈로그처럼 깔린 마흔 줄에서 실제로 쓴 서너 줄이 상자 안 글자
+        //  한 자로만 달라선 행으로 안 읽힌다 — 그 줄의 **잠근 값(품목 이름)을 되살려** 행을 세운다.
+        //
+        //  ⚠ 판정은 **편집 가능한 값만** 센다. 양식이 깐 품목 이름은 모든 행에 있으니 그걸 세면
+        //    전 행이 «쓴 행»이 되어 신호가 0이 된다. 걸침 칸(종류)·집계도 같은 이유로 빠진다
+        //    — editableAt이 이미 셋을 다 걸러 주므로 그 자를 그대로 쓴다.
+        const written = new Set<string>();
+        placed.forEach(({ cell, at }) => {
+          if (at == null || !cell.field || !editableAt(cell, at)) return;
+          if (hasValue(paperRead(values, cell.field, at))) {
+            written.add(`${cell.field.slice(0, cell.field.indexOf('.'))}:${at}`);
+          }
+        });
+        // 행은 배열 이름과 원본 순번으로 잡는다 — 한 장에 반복이 둘이어도 안 섞인다.
+        const isWritten = (cell: PaperCell, at?: number) => {
+          const dot = cell.field?.indexOf('.') ?? -1;
+          return at != null && dot > 0 && written.has(`${cell.field!.slice(0, dot)}:${at}`);
+        };
 
         // ── 선 지도 — 셀이 "그리겠다"고 선언한 변을 격자선 좌표에 등록한다.
         //  값은 굵기(1=얇음, 2=굵음). 같은 선을 양쪽 칸이 서로 다르게 선언하면 **굵은 쪽이 이긴다**
@@ -225,6 +249,7 @@ export function PaperDoc({
                 const cs = cell.cs ?? 1;
                 const rs = cell.rs ?? 1;
                 const field = editableAt(cell, at);
+                const value = field ? paperRead(values, cell.field!, at) : undefined;
                 // 서식이 색을 **직접** 말한 칸(엑셀에서 온 헥스). 토큰이 아니라 종이 절대색이라
                 //  클래스가 아니라 인라인으로 간다 — `fill-#D9D9D9`는 클래스 이름이 될 수 없다.
                 const fillHex = cell.fill?.startsWith('#') ? cell.fill : undefined;
@@ -240,7 +265,9 @@ export function PaperDoc({
                   cell.writing === 'vertical' ? 'wr-vertical' : '',
                   depth ? 'is-indent' : '',
                   field ? 'is-edit' : '',
+                  field && hasValue(value) ? 'is-filled' : '',
                   isLocked(cell, at) ? 'is-locked' : '',
+                  isWritten(cell, at) ? 'is-written' : '',
                 ].filter(Boolean).join(' ');
                 return (
                   <div
@@ -256,7 +283,7 @@ export function PaperDoc({
                     {field ? (
                       <CellInput
                         field={field}
-                        value={paperRead(values, cell.field!, at)}
+                        value={value}
                         onChange={(v) => onChange!(paperWrite(values, cell.field!, at, v))}
                       />
                     ) : cell.image ? (

@@ -38,7 +38,12 @@ const gabjiValues = (n: number) => {
     시공팀: '1팀 (김병준)', 시공일: '2026-08-14',
     발주담당자: '박서연', 출입정보: '지하 2층 하역장',
     연락처: '010-1234-5678', 부속비고: '현장 지참',
-    부속: Array.from({ length: n }, (_, i) => ({ ...평면[i % 평면.length], 개수: ((i % 6) + 1) * 2 })),
+    // 개수를 **세 줄에 한 줄만** 채운다 — kk 갑지가 실제로 그렇다. 양식이 카탈로그처럼 줄을 깔아 두고
+    //  작성자는 그중 몇 줄만 쓴다. 편집 모드에서 «쓴 행»(잉크가 살아난 품목 이름)과 «안 쓴 행»이
+    //  이 데이터라야 갈린다 — 전 줄을 채우면 그 구별이 화면에 안 나온다.
+    부속: Array.from({ length: n }, (_, i) => ({
+      ...평면[i % 평면.length], ...(i % 3 === 0 ? { 개수: ((i % 6) + 1) * 2 } : {}),
+    })),
     시공팀요청: '엘리베이터 사용 09:00~17:00. 자재 반입 전 관리실 확인 요망.',
     케이산업요청: '상부장 수평 재확인 후 실리콘 마감. 폐기물은 당일 반출.',
   };
@@ -125,12 +130,18 @@ const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<str
 // 데이터에서 끌어오는 값 — **소비처가 정한다.** 서식(엑셀)은 «필드가 어디 있나»만 말하고
 //  «어디서 오나»는 그 값을 실제로 쥔 쪽만 안다. 여기서는 회사 정보를 잠가 그 통로를 보인다.
 //  서식마다 이름이 다르므로 셋을 합쳐 둔다 — 갑지는 시공팀·시공일, 산출내역서는 회사 정보가 잠긴다.
-//  뒤 둘은 **행 하나만** 잠근 것 — 같은 표에서 0·1행 품목은 죽은 글자, 나머지 줄은 입력칸이 된다.
-//  (양식이 깐 고정 줄과 직접 쓰는 빈 줄이 한 배열에 섞이는 실제 경우다. 편집 모드에서 눈으로 본다.)
 const READONLY = [
   '발행처명', '발행처사업자번호', '발행처주소', '발행처전화', '시공팀', '시공일',
-  '부속[0].품목', '부속[1].품목',
 ];
+
+// 갑지 부속은 **행 단위로** 잠근다 — kk가 실제로 넘기는 모양이다. 양식이 깐 품목 이름은 잠기고,
+//  마지막 두 줄만 «품목명을 직접 쓰는 빈 줄»로 열어 둔다(스티커 = 합판 이름이라 양식에 못 담는다).
+//  전체 잠금(`부속.품목`)을 쓰면 그 두 줄을 다시 열 방법이 없으므로, 소비처는 **잠글 행만** 적는다.
+//  ⚠ 이 데모가 «전체 잠금 + 인덱스 두 줄»이었을 때는 나머지 줄 품목이 전부 입력칸이라
+//    「쓴 행/안 쓴 행」 구별(is-written)이 화면에 거의 안 나왔다 — 잠근 값이 있어야 살아날 잉크가 있다.
+const readonlyFor = (form: string, n: number) =>
+  form !== 'gabji' ? READONLY
+    : [...READONLY, ...Array.from({ length: Math.max(0, n - 2) }, (_, i) => `부속[${i}].품목`)];
 
 export default function PaperDevPage() {
   const [form, setForm] = useState('gabji');
@@ -220,7 +231,7 @@ export default function PaperDevPage() {
         scale={Number(zoom)}
         mode={mode as 'view' | 'edit'}
         onChange={setEdits}
-        readonlyFields={READONLY}
+        readonlyFields={readonlyFor(form, count)}
       />
 
       {/* 소비처 배선 그대로 — 저장은 setState 하나. 여기선 저장된 값을 화면 상태에 반영해 «되돌아오나»를 본다. */}
@@ -232,7 +243,7 @@ export default function PaperDevPage() {
         values={values}
         mode={modal ?? 'view'}
         onSave={(next) => { setEdits(next); setSaved(next); }}
-        readonlyFields={READONLY}
+        readonlyFields={readonlyFor(form, count)}
       />
       {saved && (
         <div className="dev-noprint">

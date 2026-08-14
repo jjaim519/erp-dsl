@@ -80,7 +80,9 @@ const semantic = {
     field:   { light: neutral[4], dark: neutral[5] },
     // fieldStrong = 고대비 모드에서만 쓰는 입력칸 경계. 3:1을 확실히 넘는 단(라이트 7.60:1).
     //  기본값(field 2.59:1 · 모바일 면 1.09:1)이 의도적 미달이므로, 그 미달분을 받는 자리가 필요하다.
-    //  a11y.css의 prefers-contrast/forced-colors 블록에서만 참조한다.
+    //  a11y.css의 prefers-contrast/forced-colors 블록이 주 사용처다.
+    //  하나 더 — paper.css의 «쓴 칸»(값이 든 입력)이 이 단을 빌려 윤곽을 한 계단 올린다.
+    //  문서 편집 화면엔 입력이 수십 개 서고, 그중 «어디까지 썼나»를 윤곽 세기로 말해야 하기 때문이다.
     fieldStrong: { light: neutral[6], dark: neutral[3] },
   },
   // ── surface (containment 축) — "윤곽 대신 음영·톤으로 구획" (02 elevation 2축) ──

@@ -205,6 +205,25 @@
    보호된 시트의 잠긴 칸·그리드의 읽기 전용 열이 쓰는 그 관습이다.
    ⚠ 고정 글자(라벨·제목)에는 안 건다 — 그건 «잠긴 값»이 아니라 애초에 값이 아니다. */
 .erpPaperDoc[data-mode="edit"] .is-locked { color: var(--text-secondary); }
+
+/* 쓴 행 — 그 줄에 작성자가 값을 하나라도 넣었다. **잠근 값의 잉크가 살아나고 굵어진다.**
+   작성 화면에서 훑는 단위는 칸이 아니라 행이다("내가 뭘 시켰지?"). 부속표처럼 양식이 마흔 줄을
+   깔아 두는 문서에서, 실제로 쓴 서너 줄이 «상자 안 글자 한 자»로만 달라선 행으로 안 읽힌다.
+
+   ⚠ 채우지 않는다 — `fill`은 이 문서에서 이미 뜻을 나른다(라벨 음영·열머리·엑셀 실제 색).
+     쓰는 채널은 잉크(죽은 단 ↔ 기본 단)와 굵기 한 단뿐이고, 굵기는 위 「쓴 칸」과 같은 값이라
+     한 행이 **한 목소리로** 굵어진다(품목 이름과 그 줄의 입력이 따로 놀지 않는다).
+   ⚠ 잠근 값에만 건다 — 그게 그 행의 «자기 글자»다. 값이 없는 칸은 원래대로 둔다.
+   인쇄에선 잉크를 print 블록이 통째로 되살리고 굵기는 애초에 화면에서만 켜므로 이 구별이 같이
+   사라진다 — 맞다. 종이엔 «안 쓴 행»이 없다(빈 칸일 뿐이다). */
+.erpPaperDoc[data-mode="edit"] .is-locked.is-written { color: var(--text-primary); }
+/* 굵기는 **화면에만** 건다. 인쇄에서 되돌리는 방식(font-weight: inherit)은 못 쓴다 —
+   굵기는 상속 속성이라 「되돌리기」가 *서식이 t-body-strong으로 선언한 굵기»까지 같이 지운다.
+   껐다 켜는 게 아니라 애초에 화면에서만 켜는 게 맞다(is-filled의 굵기도 같은 이유로 여기 있다). */
+@media screen {
+  .erpPaperDoc[data-mode="edit"] .is-locked.is-written { font-weight: 600; }
+  .erpPaperDoc[data-mode="edit"] .is-edit.is-filled .mantine-Input-input { font-weight: 600; }
+}
 /* 칸 → 부품 뿌리 → 감싸개 → 입력, 높이를 끝까지 물려준다.
    한 마디라도 auto면 입력이 자기 기본 높이(--input-height-sm)로 돌아가 칸을 삐져나온다. */
 .erpPaperCell.is-edit > *,
@@ -225,6 +244,22 @@
      「표 안의 또 다른 칸」으로 읽혔다 — 컨트롤로 읽히게 하는 신호가 바로 라운드다.
      여기서 문서가 정하는 건 «어디에 얼마만 한 크기로 놓느냐»뿐이고, 생김새는 입력 부품이 갖고 온다. */
 }
+/* 쓴 칸 — 값이 든 입력. **윤곽을 한 단 올리고 글자를 굵힌다**(--border-field 2.59:1 → --border-field-strong 7.60:1).
+   작성 화면에서 「어디까지 썼나」는 값 자체보다 자주 묻는 질문인데, 숫자 한 자는 마흔 줄에서 안 읽힌다.
+
+   ⛔ **반대 방향(빈 칸을 죽이기)은 하지 않는다** — 2026-08-14에 해 보고 되돌렸다.
+     빈 칸의 윤곽을 한 단 내렸더니(--border-default) 빈 칸이 **「입력이 제한된 칸」으로 읽혔다.**
+     이 문서에서 입력의 윤곽이 나르는 뜻은 하나뿐이다 — «채워진 정도»가 아니라 **«여기는 쓸 수 있다»**
+     (위 is-edit 주석). 빈 칸은 *아직 쓸 곳*이라 어포던스가 제일 성해야 한다.
+     기준선(빈 칸)은 그대로 두고 **쓴 쪽만 올리면** 둘 다 산다.
+   ⚠ --border-field-strong은 고대비 모드가 쓰는 그 단이다(theme.ts). 고대비에선 빈 칸도 같은 단으로
+     올라가 이 구별이 윤곽에선 사라지지만, 굵기가 남아 신호는 유지된다.
+   · 굵기 600(이 문서의 «굵게» 한 단 = t-body-strong)은 위 is-written 옆 `@media screen`에 있다 —
+     인쇄에서 되돌릴 수 없는 속성이라 켜는 자리를 화면으로 한정한다. */
+.erpPaperDoc[data-mode="edit"] .is-edit.is-filled .mantine-Input-input {
+  --field-border: var(--border-field-strong);
+}
+
 .erpPaperDoc[data-mode="edit"] .is-edit .mantine-Input-input:focus {
   --field-border: var(--border-focus);
   outline: none;              /* 윤곽이 이미 포커스를 말한다 — 이중 링 방지 */
@@ -241,6 +276,14 @@
     padding: 2px 5px;
   }
   .erpPaperDoc[data-mode="edit"] .is-locked { color: var(--text-primary); }
+  /* 「쓴 칸」의 진한 윤곽도 종이엔 없다 — 거기선 값이 적힌 자리와 빈 자리가 **글자로** 이미 갈린다.
+     ⚠ 윤곽은 `border-color`가 아니라 **역할 변수**로 지운다: 부품이 그 색을 인라인으로 물고 있어
+       (_fieldStyles.ts) CSS의 border-color는 못 이긴다 — 위 줄의 `border-color: transparent`가
+       그동안 안 먹어서 편집 모드 인쇄물엔 입력 윤곽이 그대로 나갔다. 여기서 같이 고친다.
+     ⚠ 선택자는 화면 규칙과 같은 세기로(.is-filled 한 마디를 달고) 적는다 — @media는 특정도를
+       안 올려서 한 마디 짧게 적으면 인쇄에서 화면 규칙에 진다. */
+  .erpPaperDoc[data-mode="edit"] .is-edit.is-filled .mantine-Input-input,
+  .erpPaperDoc[data-mode="edit"] .is-edit .mantine-Input-input { --field-border: transparent; }
 }
 
 /* ── 인쇄 ──────────────────────────────────────────────────────
