@@ -10,6 +10,7 @@ import { Title } from './Title';
 import { Badge } from './Badge';
 import { IconButton } from './IconButton';
 import type { BadgeColor } from './_cells';
+import { WEEKDAYS, startOfWeek } from './_week';
 import dayjs from 'dayjs';
 
 type CalendarEvent = {
@@ -27,16 +28,14 @@ type CalendarProps = {
   onSelectEvent?: (event: CalendarEvent) => void;                    // 배지 직접 클릭(선택)
 };
 
-const WEEKDAYS = ['월', '화', '수', '목', '금', '토', '일']; // 월요일 시작(내부 고정)
 const MAX_BADGES = 3;                                        // 셀당 배지 최대(고정) + "+N"
 
 export function Calendar({ month, onMonthChange, events, onSelectDate, onSelectEvent }: CalendarProps) {
   const monthStart = dayjs(`${month}-01`);
   const today = dayjs();
 
-  // 월요일 시작 그리드의 첫 칸(이전 달 꼬리 포함). day(): 0=일..6=토 → 월요일 기준 오프셋.
-  const offset = (monthStart.day() + 6) % 7;
-  const gridStart = monthStart.subtract(offset, 'day');
+  // 그리드의 첫 칸(이전 달 꼬리 포함) — 주 시작은 _week 하나가 정한다(달력 넷이 같은 값을 봐야 한다).
+  const gridStart = startOfWeek(monthStart);
   const cells = Array.from({ length: 42 }, (_, i) => gridStart.add(i, 'day')); // 7×6 고정
 
   // 날짜별 이벤트 묶음
@@ -77,8 +76,10 @@ export function Calendar({ month, onMonthChange, events, onSelectDate, onSelectE
 
       {/* 월 그리드(7×6) — 격리 구역 raw CSS grid */}
       <div className="erp-cal-grid">
-        {WEEKDAYS.map((w) => (
-          <div className="erp-cal-head" key={w}><Text variant="caption" color="secondary">{w}</Text></div>
+        {WEEKDAYS.map(([w, tone]) => (
+          <div className="erp-cal-head" key={w} data-week-tone={tone}>
+            <Text variant="caption" color="secondary">{w}</Text>
+          </div>
         ))}
         {cells.map((d) => {
           const dateStr = d.format('YYYY-MM-DD');

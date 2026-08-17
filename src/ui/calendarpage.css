@@ -62,15 +62,17 @@
   border-right: var(--border-width) solid var(--border-default); cursor: pointer; overflow: hidden; }
 .cal-tl-dh:hover { background: var(--surface-sunken); }
 .cal-tl-dh small { display: block; font-size: 0.82em; opacity: .75; }
-/* 한국식: 토=파랑·일/공휴일=빨강 (텍스트만, 배경은 평일과 동일) */
-.cal-tl-dh.sat { color: var(--mantine-color-info-7); }
-.cal-tl-dh.sun, .cal-tl-dh.hol { color: var(--mantine-color-danger-6); }
+/* 한국식: 토=파랑·일/공휴일=빨강 (텍스트만, 배경은 평일과 동일).
+   ⚠ 색 값을 여기 적지 않는다 — 달력 넷이 같은 두 색을 써야 해서 --week-sat/--week-sun 하나로 모았다
+     (theme.ts). 전에는 이 파일이 info-7, mobilelist.css가 info-6이라 같은 「토요일」이 이미 갈려 있었다. */
+.cal-tl-dh.sat { color: var(--week-sat); }
+.cal-tl-dh.sun, .cal-tl-dh.hol { color: var(--week-sun); }
 /* 날짜 숫자 = 고정 높이 중앙정렬 박스(원형이 잘리지 않게). today = 채운 원형(흰 글씨) */
 .cal-dnum { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; flex: none; }
 .cal-tl-dh.today .cal-dnum { border-radius: var(--mantine-radius-full); background: var(--mantine-color-primary-6); color: #fff; font-weight: 700; }
 /* 공휴일명 = 일 숫자 옆 인라인(헤더 높이 불변·월뷰 바 안 가림). 빨강 고정(today여도 이름은 빨강) */
 .cal-dh-top { display: flex; align-items: center; justify-content: center; gap: 2px; max-width: 100%; }
-.cal-hol-in { font-size: 0.74em; color: var(--mantine-color-danger-6); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cal-hol-in { font-size: 0.74em; color: var(--week-sun); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .cal-tl-row { border-bottom: var(--border-width) solid var(--border-default); position: relative; z-index: 1; }  /* shade 위 */
 .cal-tl-name { grid-column: 1; position: sticky; left: 0; z-index: 2; background: var(--surface-default);
   border-right: var(--border-width) solid var(--border-strong); display: flex; flex-direction: column;
@@ -94,7 +96,7 @@
 /* ── 월 그리드 (칸 키워 전부) ── */
 .cal-mh { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-mh div { padding: var(--mantine-spacing-xxs) var(--mantine-spacing-xs); font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.cal-mh .sat { color: var(--mantine-color-info-7); } .cal-mh .sun { color: var(--mantine-color-danger-6); }
+.cal-mh .sat { color: var(--week-sat); } .cal-mh .sun { color: var(--week-sun); }
 .cal-wk { position: relative; border-top: var(--border-width) solid var(--border-default); }
 .cal-days { display: grid; grid-template-columns: repeat(7, 1fr); }
 .cal-cell { min-height: 96px; border-right: var(--border-width) solid var(--border-default);
@@ -103,8 +105,8 @@
 .cal-cell:hover { background: var(--surface-sunken); }
 .cal-cell.other { background: var(--surface-sunken); }
 .cal-num { display: inline-flex; align-items: center; justify-content: center; min-width: 1.6em; height: 1.6em; font-size: var(--typo-caption-size); font-weight: 500; color: var(--text-primary); }
-.cal-cell.sat .cal-num { color: var(--mantine-color-info-7); }
-.cal-cell.sun .cal-num, .cal-cell.hol .cal-num { color: var(--mantine-color-danger-6); }
+.cal-cell.sat .cal-num { color: var(--week-sat); }
+.cal-cell.sun .cal-num, .cal-cell.hol .cal-num { color: var(--week-sun); }
 .cal-cell.other .cal-num { opacity: .6; }
 .cal-cell.today .cal-num { border-radius: var(--mantine-radius-full); background: var(--mantine-color-primary-6); color: #fff; }
 /* (월 공휴일도 .cal-hol-in 인라인 재사용 — 별도 규칙 불필요) */

@@ -55,6 +55,9 @@ export type SheetColumn = {
   options?: { label: string; value: string }[];   // select — Select 원자와 같은 입구
   badgeColors?: Record<string, BadgeColor>;       // read:'badge' — DataTableColumn과 같은 이름
   placeholder?: string;
+  /** edit:'date' 표기(dayjs 토큰). 기본 'YYYY-MM-DD'. **표현은 소비처 것이다** — 날짜 입력 넷과 같은 계약.
+   *  값은 안 바뀐다(늘 ISO). placeholder도 이 표기를 그대로 예시로 쓴다. */
+  dateFormat?: string;
   grow?: boolean;                                  // 남는 폭을 먹는 열(보통 하나). 나머지는 서식이 폭을 정한다.
   sortable?: boolean;
 };
@@ -237,8 +240,8 @@ export function DataSheet({
       autoFocus,
       // 날짜 칸은 **빈 채로 두지 않는다.** DatePickerInput은 값이 없으면 아무것도 안 그려서
       //  빈 초안 줄의 일자가 통째로 빈칸이 된다(무엇을 치는 칸인지 알 수 없다).
-      //  서식을 그대로 예시로 쓴다 — 표기 규칙(DATE_FORMAT)과 안내가 한 값에서 나오므로 갈릴 수 없다.
-      placeholder: c.placeholder ?? (c.edit === 'date' ? DATE_FORMAT : undefined),
+      //  서식을 그대로 예시로 쓴다 — 표기와 안내가 한 값에서 나오므로 갈릴 수 없다(열이 표기를 바꾸면 안내도 따라간다).
+      placeholder: c.placeholder ?? (c.edit === 'date' ? (c.dateFormat ?? DATE_FORMAT) : undefined),
     };
     const keys = commitKeyHandler({
       onCommit: () => { const nk = nextKey(id, c.key); if (nk) goTo(id, nk); else void commit(id); },
@@ -256,7 +259,7 @@ export function DataSheet({
         //  그래서 팝업형 칸엔 commit 키를 안 건다(이동은 Tab·Esc가 받는다).
         // ⚠ 빈 값은 반드시 null로 넘긴다. 초안 seed의 ''를 그대로 주면 파싱에 실패해 **"Invalid Date"가 찍힌다**
         //   (?? 는 ''를 통과시킨다 — || 여야 한다). 빈 초안 줄에서 바로 드러났다.
-        return wrap(<MDatePicker {...common} value={(raw as string) || null} onChange={set} valueFormat={DATE_FORMAT}
+        return wrap(<MDatePicker {...common} value={(raw as string) || null} onChange={set} valueFormat={c.dateFormat ?? DATE_FORMAT}
           rightSection={<Icon name="calendar" size="sm" color="secondary" />} />);
       case 'select':
         return wrap(<MSelect {...common} data={c.options ?? []} value={(raw as string) || null} onChange={set}

@@ -257,18 +257,33 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ] },
-  { name: 'DatePicker', layer: '의미 원자', role: "단일 날짜 선택(범위는 분자로). 표시 형식은 **DATE_FORMAT('YYYY-MM-DD') 고정** — "
-      + '표 셀(_cells.fmtDate)과 같은 표기여야 같은 값이 한 화면에서 두 얼굴이 안 된다. valueFormat을 prop으로 열지 않는다. '
-      + '달력 드롭다운 안쪽(월 이름·요일 머리)은 dayjs 로케일이라 부품이 못 고친다 — Providers의 DatesProvider(ko, firstDayOfWeek:1)가 세운다. '
-      + '주 시작이 1(월요일)인 이유: 우리 달력 셋(Calendar·CalendarPage·MobileCalendar)이 전부 월요일 시작으로 못박혀 있다.',
+  { name: 'DatePicker', layer: '의미 원자', role: "단일 날짜 선택(흩어진 여러 날=MultiDatePicker · 연속 구간=DateRangePicker). **표기는 소비처가 정한다**(format) — "
+      + '연도를 보일지·요일을 붙일지는 그 화면을 아는 쪽만 안다(오너 결정 2026-08-17). 기본값은 DATE_FORMAT(\'YYYY-MM-DD\') — 대조하는 값이라 고정폭이 안전한 기본이고, 표 셀(_cells.fmtDate)도 같은 기본을 쓴다. '
+      + '**값은 표기와 무관하게 늘 ISO다**(onChange). 달력 드롭다운 안쪽(월 이름·요일 머리)은 dayjs 로케일이라 부품이 못 고친다 — Providers의 DatesProvider(ko)가 세운다. '
+      + '**주 시작·요일 색·오늘은 _week 하나가 정한다**(WEEK_START=0 일요일 · 토=파랑 · 일/공휴일=빨강 · **오늘=옅은 원**). 강약(채움↔윤곽)이 아니라 **형태**로 선택과 가른다 — Mantine 칸이 라운드 사각이라 오늘에 윤곽을 두르면 «네모가 두 벌»이 되어 선택된 날이 둘로 읽힌다(해 보고 되돌렸다). 달력 셋이 이미 오늘을 원으로 그리며 «겹쳐도 둘 다 읽히게 형태를 다르게»를 규칙으로 두고 있었다. 선택·구간 중엔 안 그린다. 달력이 넷이라(Calendar·CalendarPage·MobileCalendar·이 드롭다운) '
+      + '전에는 넷이 각자 월요일 시작을 박고 있었고 색도 파일마다 갈려 있었다 — 그 상태로 주 시작을 바꾸면 같은 앱에서 달력이 갈린다. prop으로 열지 않는다.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, string | null (ISO)' },
+      { name: 'format', kind: '콘텐츠', values: "dayjs 토큰. 기본 'YYYY-MM-DD'. 예: 'M월 D일'(같은 해 안에서만 쓰는 화면) · 'YY.MM.DD (ddd)'(요일이 필요한 배차·시공). 값은 안 바뀐다 — 표기만" },
+      { name: 'holidays', kind: '기능', values: 'CalendarHoliday[]{date,name} — 그 날을 빨강 표시(막지는 않는다: 공휴일 시공 현장이 있다). 이름은 hover(title). **표는 소비처가 쥔다** — 음력·대체공휴일은 규칙이 아니라 표라서 부품이 물면 해마다 부품을 발행해야 한다. 달력 계열과 같은 타입이라 한 벌을 그대로 넘긴다(변환 0)' },
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ] },
-  { name: 'MultiDatePicker', layer: '의미 원자', role: '여러 개별 날짜(집합 string[]). DatePicker 형제.',
+  { name: 'MultiDatePicker', layer: '의미 원자', role: '여러 개별 날짜(집합 string[]). DatePicker 형제 — 흩어진 날들과 한 구간은 같은 값이 아니라 구간은 DateRangePicker가 받는다.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, string[]' },
+      { name: 'format', kind: '콘텐츠', values: 'DatePicker와 같은 계약' },
+      { name: 'holidays', kind: '기능', values: 'CalendarHoliday[] — DatePicker와 같은 계약' },
+      { name: 'placeholder', kind: '콘텐츠', values: 'string' },
+      { name: 'size', kind: '스타일', values: SIZE2 },
+    ] },
+  { name: 'DateRangePicker', layer: '의미 원자', role: '**한 칸에서 시작~끝을 이어 고른다**(연속 구간 하나 = DateRange{start,end}). DatePicker·MultiDatePicker의 셋째 형제. '
+      + '⚠ DateRangeField(분자)와 **경쟁하지 않고 쓰임으로 갈린다**: 이 원자는 조회·필터(끌어서 집는 게 빠르다), 분자는 폼(시작·끝이 각자 라벨·설명·에러를 갖는 자리 — 한 칸엔 그걸 붙일 데가 없다). '
+      + '값 모양이 같아서(DateRange) 자리를 옮겨도 소비처 데이터는 안 바뀐다. 「시작만 고름」은 유효한 중간 상태이고 끝≥시작 판정은 스키마가 한다.',
+    props: [
+      { name: 'value / onChange', kind: '기능', values: 'controlled, { start, end } (안쪽 Mantine 튜플은 부품이 가린다 — 배열이면 [0]이 시작인지 읽는 사람이 기억해야 한다)' },
+      { name: 'format / separator', kind: '콘텐츠', values: "표기와 **이음말**. 기본 'YYYY-MM-DD'와 '~'. 구간은 특히 소비처 것이다 — 「8/1 ~ 8/31」인지 「2026-08-01 ~ 2026-08-31」인지는 그 화면의 폭과 관습이 정한다" },
+      { name: 'holidays', kind: '기능', values: 'CalendarHoliday[] — DatePicker와 같은 계약' },
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ] },
@@ -433,9 +448,12 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Chip', 'Icon'],
       공유: ['_fieldStyles'],
     } },
-  { name: 'DateRangeField', layer: '분자', role: 'DatePicker 둘 + 가운데 ~. "시작 ≤ 끝"이 묶음.',
+  { name: 'DateRangeField', layer: '분자', role: 'DatePicker 둘 + 가운데 ~. "시작 ≤ 끝"이 묶음. **폼 자리** — 시작·끝이 각자 라벨·설명·에러를 갖는 경우(FormField가 칸마다 붙는다). '
+      + '한 칸에서 끌어 고르는 조회·필터는 DateRangePicker(원자)가 받는다 — 값 모양은 같다(DateRange).',
     props: [
-      { name: 'value / onChange', kind: '기능', values: '{ start, end } controlled' },
+      { name: 'value / onChange', kind: '기능', values: '{ start, end } controlled (DateRangePicker와 같은 모양)' },
+      { name: 'holidays', kind: '기능', values: 'CalendarHoliday[] — 두 칸에 같이 내려간다' },
+      { name: 'format', kind: '콘텐츠', values: '두 칸이 **같은** 표기를 쓴다(한 묶음이라 갈리면 결함)' },
       { name: 'startPlaceholder / endPlaceholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ],
@@ -782,7 +800,7 @@ export const CATALOG: CatalogEntry[] = [
     } },
   { name: 'DataSheet', layer: '유기체', role: '**DataTable의 쓰기 형제** — 도메인 무관 표에 "행 수정 + 새 줄 입력"을 얹는다. DataTable에 editable을 얹지 않고 형제로 낸 것은 큰 유기체에 축을 더 여는 게 옵션 스태킹이기 때문(03 §11-3 · CurrencyInput↔NumberInput과 같은 짜임). **저장된 행은 읽기**고 편집 신호를 상시로 깔지 않는다 — Dynamics BC(「Edit list」로 연다)·Salesforce(연필을 hover에서만)·SAP(edit 모드일 때만 빈 줄)가 그렇게 한다. NetSuite식 상시 인라인은 "어느 칸이 편집되는지 모르겠다"가 대표 불만이고, 화면에서도 모든 행에 신호를 깔면 표가 노트 괘선처럼 읽힌다. **편집 단위는 칸이 아니라 행** — 그래서 탐색은 행 단위, 편집에 들어가야 칸 단위가 되어 APG 그리드 2단 모델(탐색↔편집)이 그대로 맞는다.',
     props: [
-      { name: 'columns', kind: '기능', values: 'SheetColumn[] = { key, label, read?(CellType 16종 — DataTable과 **같은 어휘**), edit?(text·number·currency·date·select), editable?(row)=>boolean, options?, badgeColors?, placeholder?, grow?, sortable? }' },
+      { name: 'columns', kind: '기능', values: 'SheetColumn[] = { key, label, read?(CellType 16종 — DataTable과 **같은 어휘**), edit?(text·number·currency·date·select), editable?(row)=>boolean, options?, badgeColors?, placeholder?, dateFormat?(edit:date 표기 — **표현은 소비처 것**, 기본 \'YYYY-MM-DD\'), grow?, sortable? }' },
       { name: 'read × edit 2축', kind: '값', values: '**표시와 편집은 별개 축이다.** kind 하나로 묶으면 "배지로 보이지만 select로 고친다"(상태 열의 가장 흔한 형태)를 표현할 수 없다. `edit`이 없으면 **파생 칸**(읽기 전용 — Enter 순회에서도 빠지고 상자를 안 그린다). 저장된 줄의 파생값은 소비처가 `rows`에 넣고, **초안 줄의 파생값은 `draft.derive`가 준다** — 둘 다 있어야 같은 열이 줄에 따라 차고 비는 일이 없다' },
       { name: 'editable(row)', kind: '기능', values: '같은 열이라도 **줄마다** 열리고 닫힌다(전기된 줄·계정 성격에 따라). 그래서 boolean이 아니라 (row)=>boolean' },
       { name: 'rows / onCommitRow', kind: '기능', values: 'SheetRow[] (id 필수) / (rowId, values) => Promise<{error?,key?}|void>. **줄 단위 확정.** 거절하면 값을 지키고 그 줄을 연 채 오류를 붙인다(MUI processRowUpdate 거절 계약과 동형). 정규화된 값을 돌려주는 통로는 안 연다 — controlled니까 소비처가 rows를 갱신한다(값의 주인이 둘이 되는 걸 막는다)' },

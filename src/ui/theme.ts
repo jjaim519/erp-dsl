@@ -63,6 +63,22 @@ const semantic = {
     success:   { light: success[6], dark: success[4] },
     disabled:  { light: neutral[4], dark: neutral[6] },
   },
+  // ── 요일 색 (한국 관습) — 토=파랑 · 일/공휴일=빨강. **달력 넷이 이 둘만 본다**(_week.ts).
+  //  전에는 calendarpage.css가 `info-7`, mobilelist.css가 `info-6`을 각자 적어 이미 갈려 있었다.
+  //  일요일은 text.danger와 같은 짜임이지만 역할이 다르다 — 저건 «에러»고 이건 «휴일»이라,
+  //  에러 색을 조정하는 날 휴일이 따라 움직이면 안 된다.
+  week: {
+    sat: { light: info[6],   dark: info[4]   },
+    sun: { light: danger[6], dark: danger[4] },
+    // 오늘의 표식 — **옅은 원**(윤곽 없음). 강약(채움↔윤곽)이 아니라 **형태**로 선택과 가른다:
+    //  Mantine의 날짜 칸은 라운드 «사각»이라, 오늘에 윤곽을 두르면 선택과 같은 네모가 두 벌 생긴다
+    //  (2026-08-17에 그렇게 해 보고 되돌렸다 — 화면에서 곧바로 「선택된 날이 둘」로 읽혔다).
+    //  우리 달력이 이미 그 답을 갖고 있었다: CalendarPage·MobileCalendar가 오늘을 «원»으로 그리고
+    //  «겹쳐도 둘 다 읽히게 형태를 다르게»를 규칙으로 적어 뒀다 — 피커도 같은 자를 쓴다.
+    //  중립 회색은 못 쓴다: Mantine hover가 gray-0 면이라 오늘이 「마우스 올라간 칸」으로 보인다.
+    //  윤곽이 없으니 면이 스스로 보여야 해서 primary 0이 아니라 1이다.
+    today: { light: primary[1], dark: primary[8] },
+  },
   bg: {
     primary:   { light: '#FFFFFF',  dark: neutral[9] }, // 기본 면
     secondary: { light: neutral[0], dark: neutral[8] }, // 표면(카드 등)
@@ -271,6 +287,9 @@ export const cssVariablesResolver: CSSVariablesResolver = () => {
     '--text-danger':    s.text.danger[mode],
     '--text-success':   s.text.success[mode],
     '--text-disabled':  s.text.disabled[mode],
+    '--week-sat':       s.week.sat[mode],
+    '--week-sun':       s.week.sun[mode],
+    '--week-today':     s.week.today[mode],
     '--bg-primary':     s.bg.primary[mode],
     '--bg-secondary':   s.bg.secondary[mode],
     '--bg-tertiary':    s.bg.tertiary[mode],

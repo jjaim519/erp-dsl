@@ -65,7 +65,10 @@ export function renderAction(a: Action, key: number | string, size: 'sm' | 'md' 
   );
 }
 
-// 표기는 DATE_FORMAT 하나를 본다 — 입력칸(DatePicker)과 표 셀이 갈리면 같은 값이 한 화면에서 두 얼굴이 된다.
+// 표기는 DATE_FORMAT — 날짜 입력들의 **기본값과 같은 값**이라 아무도 손대지 않으면 입력칸과 표가 저절로 맞는다.
+//  ⚠ 입력칸 표기는 이제 소비처가 format으로 바꿀 수 있다(오너 결정 2026-08-17). 바꾼 화면에서 표까지
+//    맞출지는 **소비처의 판단**이다 — 패키지는 그 화면을 못 본다. 여기 셀 표기를 여는 건 아직 안 했다
+//    (DataTable 열 스펙에 표기 구멍을 낼지는 별개 결정이라, 필요해지는 자리를 보고 정한다).
 function fmtDate(v: unknown): string {
   if (v == null || v === '') return '';
   const d = dayjs(v as string);

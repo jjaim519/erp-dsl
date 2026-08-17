@@ -35,6 +35,7 @@ export { Select } from './Select';
 export { Combobox } from './Combobox';
 export { DatePicker } from './DatePicker';
 export { MultiDatePicker } from './MultiDatePicker';
+export { DateRangePicker, type DateRange } from './DateRangePicker';
 export { TimePicker } from './TimePicker';
 export { Checkbox } from './Checkbox';
 export { Switch } from './Switch';

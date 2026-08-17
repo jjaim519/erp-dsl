@@ -15,6 +15,12 @@
   border-bottom: 1px solid var(--border-default);
   background: var(--bg-secondary);
 }
+/* 요일 색(토=파랑·일=빨강) — 색 값은 week.css의 두 역할 변수 하나에서 온다(달력 넷 공통).
+   ⚠ 자식 Text의 색을 CSS로 덮지 못한다: Text 원자가 `color: var(--text-secondary)`를 **인라인**으로
+     싣기 때문이다. 그래서 «덮어칠하기»가 아니라 그 인라인이 읽는 **역할 변수를 갈아 끼운다** —
+     paper.css의 --field-border, a11y.css의 고대비 블록이 쓰는 그 통로다. */
+.erp-cal-head[data-week-tone='sat'] { --text-secondary: var(--week-sat); }
+.erp-cal-head[data-week-tone='sun'] { --text-secondary: var(--week-sun); }
 .erp-cal-cell {
   min-height: 96px;
   padding: var(--mantine-spacing-xs);

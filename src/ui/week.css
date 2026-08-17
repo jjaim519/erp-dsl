@@ -1,0 +1,39 @@
+/* 요일 색 — 한국 관습(토=파랑 · 일/공휴일=빨강)을 **날짜 입력 드롭다운**에 세운다.
+   달력 셋(calendarpage.css · mobilelist.css · calendar.css)은 자기 선택자를 쓰지만 색은 이 두 역할
+   변수(--week-sat / --week-sun)를 함께 읽는다 — 전에는 세 파일이 각자 `info-7`·`info-6`·`text-danger`를
+   적어 두고 있었고, 그래서 이미 갈려 있었다(같은 「토요일」이 파일마다 다른 파랑).
+
+   ⚠ **우리 속성만 겨눈다.** 드롭다운의 날짜 칸은 Mantine이 포털에 그리는 남의 상자라
+     `.mantine-Day`를 겨누면 같은 포털을 쓰는 다른 부품까지 물든다(그 사고가 이미 있었다 —
+     인쇄 백지 사건과 같은 뿌리). `_week.weekDayAttrs`가 `data-week-*`를 달고 여기서 그 이름만 고른다.
+     Mantine 자신의 주말 색은 Providers에서 껐다(`weekendDays: []`) — 한 채널에 두 진실을 안 둔다.
+
+   ⚠ 선택된 날은 건드리지 않는다 — 채운 원 위의 흰 글씨를 요일 색으로 되돌리면 대비가 깨진다.
+     다른 달의 날(`data-outside`)도 건드리지 않는다 — 거기선 «흐림»이 먼저 읽혀야 한다. */
+[data-week-tone='sat']:not([data-selected]):not([data-outside]) { color: var(--week-sat); }
+[data-week-tone='sun']:not([data-selected]):not([data-outside]) { color: var(--week-sun); }
+/* 공휴일은 일요일과 같은 빨강이다(관습). 요일 색보다 뒤에 둬서 토요일 공휴일도 빨강이 된다 —
+   현충일이 토요일에 걸리면 그건 «파란 토요일»이 아니라 공휴일이다. */
+[data-week-holiday]:not([data-selected]):not([data-outside]) { color: var(--week-sun); }
+
+/* 오늘 — **옅은 원.** 우리 피커엔 오늘 표시가 아예 없었다(Mantine `highlightToday` 기본 false).
+
+   ⛔ **윤곽(테두리)으로 하지 않는다** — 2026-08-17에 해 보고 되돌렸다.
+     업계 통설은 「오늘=윤곽 / 선택=채움」이고(M3·MUI·Ant·Carbon·Mantine) 그 강약 자체는 맞다.
+     그런데 M3에서 두 상태가 안 헷갈리는 건 **칸이 원**이기 때문이다: 원 윤곽 vs 원 채움.
+     Mantine의 칸은 라운드 **사각**이라 같은 자를 대면 «네모 윤곽 vs 네모 채움»이 되고,
+     화면에선 그냥 **선택된 날이 둘**로 읽힌다(실제로 그렇게 보였다).
+     우리 집 안에 이미 답이 있었다 — CalendarPage·MobileCalendar는 오늘을 «원»으로 그리고
+     «겹쳐도 둘 다 읽히게 **형태를 다르게**»를 규칙으로 적어 뒀다(_catalog). 피커도 그 자를 쓴다:
+     강약이 아니라 **형태**로 가른다(오늘=원 / 선택=라운드 사각).
+
+   ⚠ 채널이 겹치지 않아 공휴일·요일 색과 **같이** 읽힌다 — 저건 글자색, 이건 면이다.
+     오늘이 공휴일인 날(8/17 대체공휴일)에 하나가 다른 하나를 지우지 않는다.
+   ⚠ 선택·구간 중에는 안 그린다: 그 칸은 이미 채움이 말한다.
+     Mantine 자신의 today 규칙도 같은 제외를 쓴다(`:not([data-selected],[data-in-range])`).
+   ⚠ hover(Mantine의 gray-0 면)가 이 면을 덮는다 — 특정도가 그쪽이 높다. 손이 올라간 칸은
+     그 사실이 먼저 읽혀야 하고, 손을 떼면 원이 돌아온다. */
+[data-week-today]:not([data-selected]):not([data-in-range]):not([data-outside]) {
+  background-color: var(--week-today);
+  border-radius: 50%;       /* 칸이 정사각(--day-size)이라 이 한 줄이 원이 된다 */
+}

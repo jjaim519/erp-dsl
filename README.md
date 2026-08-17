@@ -123,7 +123,9 @@ type FieldSpec = {
 - **CurrencyInput** `value: number|string` — 돈 입력(₩ prefix·천단위 콤마·무소수). NumberInput 형제(표시만 통화, 저장·검증은 number)
 - **Select** `options: {label,value}[]` · `value: string`(단일)
 - **Radio** `options` · `value`(단일)
-- **DatePicker** `value`(Date/ISO) · **MultiDatePicker** `value: string[]`(개별 날짜 집합) — 표시 형식은 **`YYYY-MM-DD` 고정**(`DATE_FORMAT` 단일 출처, 표 셀 `type:'date'`와 같은 표기). **prop으로 안 연다** — 소비처마다 갈리면 같은 값이 화면마다 다르게 읽힌다. 달력 안쪽 한글·월요일 시작은 `Providers`의 `DatesProvider`가 세운다
+- **DatePicker** `value`(Date/ISO) · **MultiDatePicker** `value: string[]`(개별 날짜 집합) · **DateRangePicker** `value: {start,end}`(한 칸에서 끌어 고르는 연속 구간) — **표기는 소비처가 정한다**(`format`) — 연도를 보일지·요일을 붙일지·구간을 어떻게 이을지는 그 화면을 아는 쪽만 안다. 기본값은 `'YYYY-MM-DD'`(`DATE_FORMAT`)이고 그건 «우리가 고른 표기»가 아니라 안전한 기본이다(대조하는 값이라 고정폭). **값은 표기와 무관하게 늘 ISO**로 나간다. 달력 안쪽 한글은 `Providers`의 `DatesProvider`가 세운다
+  · **주 시작·요일 색은 `_week` 하나가 정한다** — 일요일 시작, 토=파랑·일=빨강. 달력이 넷이라(Calendar·CalendarPage·MobileCalendar·날짜 입력 드롭다운) 값이 흩어지면 「8월 3주」가 부품마다 다른 주를 가리킨다. prop으로 안 연다
+  · **공휴일은 `holidays={CalendarHoliday[]}` 주입** — 음력·대체공휴일은 규칙이 아니라 *표*라서 부품이 물면 해마다 부품을 발행해야 한다. **표는 소비처가 쥔다.** 달력 계열과 같은 타입이라 한 벌을 그대로 넘긴다. 표시만 하고 고르는 걸 막지는 않는다(공휴일에 시공하는 현장이 있다)
 - **Checkbox** / **Switch** `checked`/`onChange` · 인라인 `label`은 유지
 - **Combobox** `options` `value`(단일) `clearable?` — 검색되는 Select(대용량 옵션 타이핑 필터)
 - **TimePicker** `value: "HH:MM"` — 시각 입력(날짜는 DatePicker)
@@ -142,7 +144,7 @@ type FieldSpec = {
 ### 분자 (27) — 원자를 결합·일부 상태 고정
 > 모바일 전용 분자 10종은 아래 「모바일 계열」에 따로 있다(시각 체계가 정반대라 섞어 쓰지 않는다).
 - **FormField** — 입력 컨트롤을 children으로 받아 `label`·`withAsterisk`·`error`(메시지+빨간 테두리)를 두름. **모든 입력칸은 이걸로 감싼다.**
-- **MultiSelect** `options` `value: string[]` · **DateRangeField** `value: {start,end}`
+- **MultiSelect** `options` `value: string[]` · **DateRangeField** `value: {start,end}` `format?` — DatePicker 둘(표기는 두 칸이 같다). **폼 자리**(시작·끝이 각자 라벨·에러를 갖는 경우). 조회·필터는 원자 `DateRangePicker`가 받는다 — 값 모양은 같다
 - **InputGroup** `leftAddon`/`rightAddon: string|<Icon>` · **FileUploader** `value: FileItem[]`
 - **Pagination** `total` `value` `onChange` · **Callout** `tone: info|warning|danger|neutral` `title?` (비휘발 인라인 안내)
 - **StatusRow** `label` `status:{label,tone}` `actions` · **SummaryCard** `label` `count?` `amount?` `tone?` (KPI 타일)

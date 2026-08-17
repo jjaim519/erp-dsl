@@ -21,6 +21,7 @@ import { Group } from './Group';
 import { Text } from './Text';
 import { Icon, type IconName } from './Icon';
 import { packLanes } from './_calendarLanes';   // 레인 패킹은 MobileCalendar와 공유(단일 출처)
+import { WEEKDAYS, WEEK_ANCHOR, startOfWeek, type CalendarHoliday } from './_week';
 import './calendarpage.css';
 
 export type CalendarColorRole = 'primary' | 'neutral' | 'success' | 'warning' | 'danger' | 'info';
@@ -31,7 +32,8 @@ export type CalendarEvent = {
   label: string;
   attrs?: Record<string, string>;  // 임의 차원 — 부품은 의미를 모른다
 };
-export type CalendarHoliday = { date: string; name: string };  // 로케일 데이터(주입) — 부품은 달력을 모른다
+// 로케일 데이터(주입) — 부품은 달력을 모른다. 정의는 _week로 옮겼다(날짜 입력도 같은 한 벌을 받는다).
+export type { CalendarHoliday };
 // 태그(기간 표식) — 이벤트와 별개. display: 'background'(색+윤곽, 환경) | 'banner'(상단 라벨 바, 종일 이벤트식).
 export type CalendarAnnotation = {
   id: string;
@@ -70,8 +72,9 @@ type Props = {
 
 type Range = 'week' | 'biweek' | 'month';
 const NAME_COL = 150;
-const monStart = (d: dayjs.Dayjs) => d.subtract((d.day() + 6) % 7, 'day');
-const weekOfMonth = (mon: dayjs.Dayjs) => { const th = mon.add(3, 'day'); return { m: th.month() + 1, w: Math.floor((th.date() - 1) / 7) + 1 }; };
+// 주 시작·요일 이름은 _week 하나가 정한다 — 달력 넷이 같은 값을 봐야 「8월 3주」가 한 주를 가리킨다.
+//  주차는 ISO 관습대로 «그 주의 목요일이 속한 달»로 판정하고, 목요일의 주 내 위치도 주 시작에서 도출된다.
+const weekOfMonth = (ws: dayjs.Dayjs) => { const th = ws.add(WEEK_ANCHOR, 'day'); return { m: th.month() + 1, w: Math.floor((th.date() - 1) / 7) + 1 }; };
 const cvar = (role: CalendarColorRole, s: number) => `var(--mantine-color-${role}-${s})`;
 // 태그 배경 = 반투명 틴트(토큰 색 + 투명도만, color-mix — 헌법 8 유지). 빗금 아님.
 const tint = (role: CalendarColorRole) => `color-mix(in srgb, ${cvar(role, 6)} 14%, transparent)`;
@@ -181,7 +184,7 @@ export function CalendarPage({ title, description, events, encoding, annotations
   // ── 타임라인 ──
   function timeline() {
     const days = range === 'biweek' ? 14 : 7;
-    const winStart = monStart(anchor); const winEnd = winStart.add(days - 1, 'day');
+    const winStart = startOfWeek(anchor); const winEnd = winStart.add(days - 1, 'day');
     const cols = `repeat(${days}, minmax(0, 1fr))`; const colTpl = `${NAME_COL}px ${cols}`;
     const known = rowAxis === encoding.anchor.attr ? encoding.anchor.values
       : rowAxis === encoding.status?.attr ? encoding.status.values
@@ -254,13 +257,12 @@ export function CalendarPage({ title, description, events, encoding, annotations
 
   // ── 월 그리드 ──
   function month() {
-    const mStart = anchor.startOf('month'); const gridStart = monStart(mStart);
-    const weeks = monStart(mStart.endOf('month')).diff(gridStart, 'week') + 1;  // 그 달이 걸치는 주만(5~6) — 다음달 전용 주 X
-    const weekdays = [['월'], ['화'], ['수'], ['목'], ['금'], ['토', 'sat'], ['일', 'sun']] as [string, string?][];
+    const mStart = anchor.startOf('month'); const gridStart = startOfWeek(mStart);
+    const weeks = startOfWeek(mStart.endOf('month')).diff(gridStart, 'week') + 1;  // 그 달이 걸치는 주만(5~6) — 다음달 전용 주 X
     const onMove = (e: React.MouseEvent) => { const el = (e.target as HTMLElement).closest('[data-tip]') as HTMLElement | null; setTip(el?.dataset.tip ? { t: el.dataset.tip, x: e.clientX, y: e.clientY } : null); };
     return (
       <div onMouseMove={onMove} onMouseLeave={() => setTip(null)}>
-        <div className="cal-mh">{weekdays.map(([w, c]) => <div key={w} className={c}>{w}</div>)}</div>
+        <div className="cal-mh">{WEEKDAYS.map(([w, c]) => <div key={w} className={c}>{w}</div>)}</div>
         {Array.from({ length: weeks }, (_, w) => {
           const ws = gridStart.add(w * 7, 'day'); const we = ws.add(6, 'day');
           const segs = visible.filter((e) => !(evEnd(e).isBefore(ws, 'day') || evStart(e).isAfter(we, 'day')))
@@ -311,11 +313,11 @@ export function CalendarPage({ title, description, events, encoding, annotations
   const step = (dir: number) => setAnchor(range === 'month' ? anchor.add(dir, 'month') : anchor.add(dir * (range === 'biweek' ? 14 : 7), 'day'));
   let onToday: boolean; let todayDir: 'left' | 'right' | null = null;
   if (range === 'month') { onToday = anchor.isSame(today, 'month'); if (!onToday) todayDir = today.isBefore(anchor, 'month') ? 'left' : 'right'; }
-  else { const s = monStart(anchor); const e = s.add((range === 'biweek' ? 14 : 7) - 1, 'day'); onToday = !today.isBefore(s, 'day') && !today.isAfter(e, 'day'); if (!onToday) todayDir = today.isBefore(s, 'day') ? 'left' : 'right'; }
+  else { const s = startOfWeek(anchor); const e = s.add((range === 'biweek' ? 14 : 7) - 1, 'day'); onToday = !today.isBefore(s, 'day') && !today.isAfter(e, 'day'); if (!onToday) todayDir = today.isBefore(s, 'day') ? 'left' : 'right'; }
 
   const rangeLabel = (() => {
     if (range === 'month') return anchor.format('YYYY년 M월');
-    const s = monStart(anchor); const days = range === 'biweek' ? 14 : 7; const e = s.add(days - 1, 'day');
+    const s = startOfWeek(anchor); const days = range === 'biweek' ? 14 : 7; const e = s.add(days - 1, 'day');
     const dateRange = `${s.format('M/D')}–${e.format('M/D')}`;
     if (range === 'week') { const { m, w } = weekOfMonth(s); return `${m}월 ${w}주차 (${dateRange})`; }
     const w1 = weekOfMonth(s); const w2 = weekOfMonth(s.add(7, 'day'));

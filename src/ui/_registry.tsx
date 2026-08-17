@@ -37,6 +37,7 @@ import { Textarea } from './Textarea';
 import { Select } from './Select';
 import { DatePicker } from './DatePicker';
 import { MultiDatePicker } from './MultiDatePicker';
+import { DateRangePicker } from './DateRangePicker';
 import { Checkbox } from './Checkbox';
 import { Switch } from './Switch';
 import { Radio } from './Radio';
@@ -1224,6 +1225,8 @@ export function Demo({ name }: { name: string }) {
   const [ff, setFf] = useState('');
   const [multi, setMulti] = useState<string[]>(['plywood']);
   const [range, setRange] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
+  // 구간 하나(원자) — 위 range와 값 모양이 같아 자리만 다르다(조회·필터 / 폼).
+  const [rangeOne, setRangeOne] = useState<{ start: string | null; end: string | null }>({ start: null, end: null });
   const [grp, setGrp] = useState('');
   const [queueSel, setQueueSel] = useState('q1');
   const [branchSel, setBranchSel] = useState('b');
@@ -1411,8 +1414,9 @@ export function Demo({ name }: { name: string }) {
     NumberStepper: <NumberStepper value={qty} onChange={setQty} max={99} />,
     Textarea: <Textarea value={area} onChange={setArea} placeholder="메모" autosize />,
     Select: <Select options={opts} value={sel} onChange={setSel} placeholder="자재 선택" />,
-    DatePicker: <DatePicker value={date} onChange={setDate} placeholder="날짜" />,
-    MultiDatePicker: <MultiDatePicker value={mdate} onChange={setMdate} placeholder="여러 날짜" />,
+    DatePicker: <DatePicker value={date} onChange={setDate} placeholder="날짜" holidays={CAL_HOLIDAYS} />,
+    MultiDatePicker: <MultiDatePicker value={mdate} onChange={setMdate} placeholder="여러 날짜" holidays={CAL_HOLIDAYS} />,
+    DateRangePicker: <DateRangePicker value={rangeOne} onChange={setRangeOne} placeholder="기간(시작~끝)" holidays={CAL_HOLIDAYS} />,
     Checkbox: <Checkbox label="동의합니다" checked={chk} onChange={setChk} />,
     Switch: <Switch label="알림 받기" checked={sw} onChange={setSw} />,
     Radio: <Radio options={opts} value={rad} onChange={setRad} />,
@@ -1425,7 +1429,7 @@ export function Demo({ name }: { name: string }) {
     Grid: <Grid columns={3} gap="xs"><Grid.Col span={1}><Box>1</Box></Grid.Col><Grid.Col span={2}><Box>span 2</Box></Grid.Col></Grid>,
     FormField: <FormField label="이메일" withAsterisk error={ff && !ff.includes('@') ? '형식이 올바르지 않습니다' : undefined}><TextInput value={ff} onChange={setFf} placeholder="user@kk.co.kr" /></FormField>,
     MultiSelect: <MultiSelect options={opts} value={multi} onChange={setMulti} placeholder="자재(복수)" />,
-    DateRangeField: <DateRangeField value={range} onChange={setRange} startPlaceholder="시작" endPlaceholder="끝" />,
+    DateRangeField: <DateRangeField value={range} onChange={setRange} startPlaceholder="시작" endPlaceholder="끝" holidays={CAL_HOLIDAYS} />,
     InputGroup: <InputGroup rightAddon="원"><NumberInput value={grp} onChange={(v) => setGrp(String(v))} placeholder="금액" /></InputGroup>,
     FileUploader: <FileUploader value={files} onChange={setFiles} multiple accept=".pdf,.xlsx,image/*" maxSize={5 * 1024 * 1024} />,
     Pagination: <Pagination total={10} value={page} onChange={setPage} />,

@@ -336,8 +336,9 @@ button.mst-item:active { background: var(--bg-secondary); }
 .mcal-week { flex: none; display: grid; grid-template-columns: repeat(7, 1fr);
   padding: var(--mantine-spacing-xs) 2px var(--mantine-spacing-xs); }
 .mcal-wd { text-align: center; font-size: var(--typo-caption-size); color: var(--text-secondary); }
-.mcal-wd[data-weekend='sat'] { color: var(--mantine-color-info-6); }
-.mcal-wd[data-weekend='sun'] { color: var(--text-danger); }
+/* 색 값은 --week-sat/--week-sun 하나에서 온다(theme.ts) — 데스크탑 달력과 같은 두 색이어야 한다. */
+.mcal-wd[data-weekend='sat'] { color: var(--week-sat); }
+.mcal-wd[data-weekend='sun'] { color: var(--week-sun); }
 
 /* 주들이 사는 곳 — fill이면 남은 높이를 여기서 나눈다. 극단적으로 바쁜 달만 스크롤(정상적으론 안 생김). */
 .mcal-body { display: flex; flex-direction: column; }
@@ -357,7 +358,13 @@ button.mst-item:active { background: var(--bg-secondary); }
   color: var(--text-primary); -webkit-tap-highlight-color: transparent;
 }
 .mcal-cell[data-outside] { color: var(--text-disabled); }
-.mcal-cell[data-holiday] .mcal-num { color: var(--text-danger); }
+/* 요일 색 — 데스크탑 월 그리드가 날짜 숫자에 거는 것과 같은 규칙(같은 데이터, 같은 얼굴).
+   공휴일 규칙을 뒤에 둬서 «토요일 공휴일»은 파랑이 아니라 빨강이 된다. */
+.mcal-cell[data-weekend='sat'] .mcal-num { color: var(--week-sat); }
+.mcal-cell[data-weekend='sun'] .mcal-num { color: var(--week-sun); }
+.mcal-cell[data-holiday] .mcal-num { color: var(--week-sun); }
+/* 다른 달·선택된 날은 요일 색보다 자기 상태가 먼저 읽혀야 한다(흐림 / 채운 원). */
+.mcal-cell[data-outside] .mcal-num { color: var(--text-disabled); }
 /* 날짜는 크게 — 갇힌 달력에서 caption(13)이라 안 읽혔다. body(17) 대역. */
 .mcal-num {
   display: inline-flex; align-items: center; justify-content: center;

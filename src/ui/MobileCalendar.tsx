@@ -24,6 +24,7 @@ import dayjs from 'dayjs';
 import { Chip } from './Chip';
 import { packLanes } from './_calendarLanes';
 import type { CalendarEvent, CalendarAnnotation, CalendarEncoding, CalendarHoliday } from './CalendarPage';
+import { WEEKDAYS, startOfWeek, weekTone } from './_week';
 import './mobilelist.css';
 
 type Props = {
@@ -41,7 +42,6 @@ type Props = {
   maxLanes?: number;                      // 한 주에 쌓을 최대 레인(기본 6). 넘치면 그 칸에 +N
 };
 
-const WEEK: [string, string?][] = [['월'], ['화'], ['수'], ['목'], ['금'], ['토', 'sat'], ['일', 'sun']];
 const cvar = (role: string, s: number) => `var(--mantine-color-${role}-${s})`;
 // 바 표면 — 데스크탑 CalendarPage와 같은 레시피(두 화면 공통 표현).
 //  좌측 강조선을 두지 않는다: 분류는 이미 톤 배경이 말하고 있어 같은 정보를 두 번 말하는 것이고,
@@ -94,9 +94,9 @@ export function MobileCalendar({
 
   const visAnnos = annotations.filter((an) => !hidden.has('t:' + an.id));
 
-  const monStart = (d: dayjs.Dayjs) => d.subtract((d.day() + 6) % 7, 'day');
-  const gridStart = monStart(base.startOf('month'));
-  const weekCount = monStart(base.endOf('month')).diff(gridStart, 'week') + 1;
+  // 주 시작은 _week 하나가 정한다 — 데스크탑 달력과 다른 주에서 시작하면 같은 데이터가 두 얼굴이 된다.
+  const gridStart = startOfWeek(base.startOf('month'));
+  const weekCount = startOfWeek(base.endOf('month')).diff(gridStart, 'week') + 1;
 
   // 주별 레이아웃을 먼저 계산한다 — 행 높이가 그 주의 레인 수에 달려 있어서(동적 분배).
   const rows = Array.from({ length: weekCount }, (_, w) => {
@@ -155,7 +155,7 @@ export function MobileCalendar({
       </div>
 
       <div className="mcal-week">
-        {WEEK.map(([w, c]) => <span key={w} className="mcal-wd" data-weekend={c}>{w}</span>)}
+        {WEEKDAYS.map(([w, c]) => <span key={w} className="mcal-wd" data-weekend={c}>{w}</span>)}
       </div>
 
       <div className="mcal-body">
@@ -175,6 +175,7 @@ export function MobileCalendar({
                     className="mcal-cell"
                     style={{ background: bg ? cvar(bg.tone, 0) : undefined }}
                     data-outside={d.month() !== base.month() || undefined}
+                    data-weekend={weekTone(d.day())}
                     data-selected={iso === selected || undefined}
                     data-today={d.isSame(today, 'day') || undefined}
                     data-holiday={hol ? '' : undefined}
