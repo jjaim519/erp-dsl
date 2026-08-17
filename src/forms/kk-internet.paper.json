@@ -1,0 +1,412 @@
+{
+  "id": "kk-internet",
+  "name": "인터넷 구매내역서",
+  "columns": 24,
+  "orientation": "portrait",
+  "fields": [
+    {
+      "name": "발주처",
+      "label": "발주처",
+      "type": "text"
+    },
+    {
+      "name": "배송요청일",
+      "label": "배송요청일",
+      "type": "date"
+    },
+    {
+      "name": "발주담당자",
+      "label": "발주담당자",
+      "type": "text"
+    },
+    {
+      "name": "발주일",
+      "label": "발주일",
+      "type": "date"
+    },
+    {
+      "name": "현장주소",
+      "label": "현장주소",
+      "type": "text"
+    }
+  ],
+  "arrays": [
+    {
+      "name": "인터넷발주",
+      "label": "인터넷발주",
+      "of": [
+        {
+          "name": "구매처",
+          "label": "구매처",
+          "type": "text"
+        },
+        {
+          "name": "품목",
+          "label": "품목",
+          "type": "text"
+        },
+        {
+          "name": "개수",
+          "label": "개수",
+          "type": "number"
+        },
+        {
+          "name": "금액",
+          "label": "금액",
+          "type": "currency"
+        },
+        {
+          "name": "비고",
+          "label": "비고",
+          "type": "textarea"
+        }
+      ]
+    }
+  ],
+  "images": [
+    "발행처로고"
+  ],
+  "cells": [
+    {
+      "r": 0,
+      "c": 0,
+      "rs": 2,
+      "cs": 5,
+      "image": "발행처로고",
+      "align": "center",
+      "typo": "caption",
+      "ink": "secondary"
+    },
+    {
+      "r": 0,
+      "c": 5,
+      "rs": 2,
+      "cs": 14,
+      "text": "인터넷 구매내역서",
+      "align": "center",
+      "typo": "display"
+    },
+    {
+      "r": 2,
+      "c": 0,
+      "cs": 24,
+      "text": "현장 정보",
+      "typo": "body-strong"
+    },
+    {
+      "r": 3,
+      "c": 0,
+      "cs": 4,
+      "text": "현장주소",
+      "border": [
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "t",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 3,
+      "c": 4,
+      "cs": 20,
+      "field": "현장주소",
+      "border": [
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t",
+        "r"
+      ]
+    },
+    {
+      "r": 4,
+      "c": 0,
+      "cs": 4,
+      "text": "구매일",
+      "border": [
+        "t",
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 4,
+      "c": 4,
+      "cs": 20,
+      "field": "발주일",
+      "format": "date",
+      "border": [
+        "t",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "r"
+      ]
+    },
+    {
+      "r": 5,
+      "c": 0,
+      "cs": 4,
+      "text": "구매자",
+      "border": [
+        "t",
+        "r"
+      ],
+      "borderStrong": [
+        "b",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 5,
+      "c": 4,
+      "cs": 20,
+      "field": "발주담당자",
+      "border": [
+        "t",
+        "l"
+      ],
+      "borderStrong": [
+        "r",
+        "b"
+      ]
+    },
+    {
+      "r": 7,
+      "c": 0,
+      "cs": 24,
+      "text": "구매내역",
+      "typo": "body-strong"
+    },
+    {
+      "r": 8,
+      "c": 0,
+      "cs": 3,
+      "text": "구매처",
+      "border": [
+        "r",
+        "b"
+      ],
+      "borderStrong": [
+        "t",
+        "l"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 8,
+      "c": 3,
+      "cs": 8,
+      "text": "품목",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 8,
+      "c": 11,
+      "cs": 2,
+      "text": "개수",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 8,
+      "c": 13,
+      "cs": 3,
+      "text": "금액",
+      "border": [
+        "r",
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 8,
+      "c": 16,
+      "cs": 8,
+      "text": "비고",
+      "border": [
+        "b",
+        "l"
+      ],
+      "borderStrong": [
+        "t",
+        "r"
+      ],
+      "align": "center",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 9,
+      "c": 0,
+      "cs": 3,
+      "field": "인터넷발주.구매처",
+      "scope": "group",
+      "border": [
+        "t",
+        "r"
+      ],
+      "borderStrong": [
+        "b",
+        "l"
+      ],
+      "fill": "#D9D9D9"
+    },
+    {
+      "r": 9,
+      "c": 3,
+      "cs": 8,
+      "field": "인터넷발주.품목",
+      "border": [
+        "t",
+        "r",
+        "l"
+      ],
+      "borderStrong": [
+        "b"
+      ]
+    },
+    {
+      "r": 9,
+      "c": 11,
+      "cs": 2,
+      "field": "인터넷발주.개수",
+      "format": "number",
+      "border": [
+        "t",
+        "r",
+        "l"
+      ],
+      "borderStrong": [
+        "b"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 9,
+      "c": 13,
+      "cs": 3,
+      "field": "인터넷발주.금액",
+      "format": "currency",
+      "border": [
+        "t",
+        "r",
+        "l"
+      ],
+      "borderStrong": [
+        "b"
+      ],
+      "align": "end"
+    },
+    {
+      "r": 9,
+      "c": 16,
+      "cs": 8,
+      "field": "인터넷발주.비고",
+      "border": [
+        "t",
+        "l"
+      ],
+      "borderStrong": [
+        "r",
+        "b"
+      ]
+    },
+    {
+      "r": 10,
+      "c": 0,
+      "rs": 2,
+      "cs": 13,
+      "text": "소계",
+      "border": [
+        "r"
+      ],
+      "borderStrong": [
+        "t",
+        "b",
+        "l"
+      ],
+      "align": "end",
+      "fill": "#BFBFBF"
+    },
+    {
+      "r": 10,
+      "c": 13,
+      "rs": 2,
+      "cs": 11,
+      "agg": {
+        "fn": "sum",
+        "of": "인터넷발주.금액"
+      },
+      "format": "currency",
+      "border": [
+        "l"
+      ],
+      "borderStrong": [
+        "t",
+        "r",
+        "b"
+      ],
+      "typo": "body-strong",
+      "fill": "#BFBFBF"
+    }
+  ],
+  "bands": [
+    {
+      "kind": "columnHeader",
+      "r1": 8,
+      "r2": 8
+    },
+    {
+      "kind": "repeat",
+      "r1": 9,
+      "r2": 9,
+      "source": "인터넷발주"
+    },
+    {
+      "kind": "summary",
+      "r1": 10,
+      "r2": 11
+    },
+    {
+      "kind": "pageFooter",
+      "r1": 41,
+      "r2": 41
+    }
+  ]
+}

@@ -12,11 +12,13 @@ import gabjiJson from '../../../forms/kk-gabji.paper.json';
 import eulJson from '../../../forms/kk-eulnaeyeokseo.paper.json';
 import gabNaeJson from '../../../forms/kk-gabnaeyeokseo.paper.json';
 import sayongJson from '../../../forms/kk-sayongnaeyeokseo.paper.json';
+import internetJson from '../../../forms/kk-internet.paper.json';
 
 const gabji = gabjiJson as PaperSpec;
 const eul = eulJson as PaperSpec;
 const gabNae = gabNaeJson as PaperSpec;
 const sayong = sayongJson as PaperSpec;
+const internet = internetJson as PaperSpec;
 
 // ── 샘플 값 ────────────────────────────────────────────────────
 // 갑지 — 부속을 **묶음이 지어지게** 만든다(종류가 연달아 같은 줄끼리 걸침 칸 하나로 합쳐진다).
@@ -120,11 +122,33 @@ const sayongValues = (n: number) => {
   };
 };
 
+// 인터넷 구매내역서 — 부속을 «파는 곳»으로 묶는다(경첩·레일이 아니라 쿠팡·리안컴퍼니).
+//  같은 반복이라도 **묶는 축이 도메인마다 다르다**는 걸 이 서식이 보인다 — 갑지는 부속 종류로,
+//  이건 구매처로 묶고, 표 구조는 똑같다. 금액은 엔진이 더한다({{합계:인터넷발주.금액}}).
+const 구매처목록 = [
+  { 구매처: '쿠팡', 품목: ['경첩 15T 댐퍼', '3단 언더레일 450', '전선캡 화이트'] },
+  { 구매처: '리안컴퍼니', 품목: ['알루미늄 바 320', '매립 손잡이'] },
+  { 구매처: '네이버 스마트스토어', 품목: ['가스쇼바 8키로', '선반 다보'] },
+];
+const internetValues = (n: number) => {
+  const 평면 = 구매처목록.flatMap((g) => g.품목.map((품목) => ({ 구매처: g.구매처, 품목 })));
+  return {
+    발행처로고: DEMO_LOGO,
+    현장주소: '서울 강남구 테헤란로 123 4층',
+    발주일: '2026-08-17', 발주담당자: '옥성훈',
+    인터넷발주: Array.from({ length: n }, (_, i) => {
+      const 개수 = ((i % 5) + 1) * 2;
+      return { ...평면[i % 평면.length], 개수, 금액: 개수 * ((i % 4) + 2) * 1_500, 비고: i % 3 === 1 ? '당일 배송' : '' };
+    }),
+  };
+};
+
 const FORMS: Record<string, { spec: PaperSpec; values: (n: number) => Record<string, unknown>; note: string }> = {
   gabji: { spec: gabji, values: gabjiValues, note: 'public/kk-gabji.xlsx  ·  부속이 반복 + 종류 걸침' },
   gabNae: { spec: gabNae, values: gabNaeValues, note: 'public/kk-gabnaeyeokseo.xlsx  ·  묶음 걸침 + 표의 합을 엔진이 더함' },
   eul: { spec: eul, values: treeValues, note: 'public/kk-eulnaeyeokseo.xlsx  ·  줄마다 깊이가 다른 트리 + 깊이 1 소계' },
   sayong: { spec: sayong, values: sayongValues, note: 'public/kk-sayongnaeyeokseo.xlsx  ·  ⚠ 하단 「묶음별 합계」 미완' },
+  internet: { spec: internet, values: internetValues, note: 'public/kk-internet.xlsx  ·  구매처로 묶고 금액을 엔진이 더함' },
 };
 
 // 데이터에서 끌어오는 값 — **소비처가 정한다.** 서식(엑셀)은 «필드가 어디 있나»만 말하고
@@ -190,6 +214,7 @@ export default function PaperDevPage() {
                 { label: '갑내역서', value: 'gabNae' },
                 { label: '을내역서', value: 'eul' },
                 { label: '사용내역서', value: 'sayong' },
+                { label: '인터넷', value: 'internet' },
               ]}
             />
             <SegmentedControl
