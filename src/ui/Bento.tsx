@@ -17,9 +17,32 @@ import type { ReactNode } from 'react';
 type Columns = 2 | 3 | 4 | 6 | 12;
 type Gap = 'sm' | 'md' | 'lg';
 type GridProps = { columns?: Columns; gap?: Gap; fill?: boolean; children: ReactNode };
-type TileProps = { colSpan?: number; rowSpan?: 1 | 2 | 3; children: ReactNode };
 
-const ROW_UNIT = 140; // 흐름 모드 셀 한 칸 높이(px, 잠정 — 화면 검증 후 조정). 고정이라 내용으로 늘지 않는다.
+// colSpan은 **12의 약수가 아니어도 된다.** 그 제한은 `Grid`(균등 분할) 규칙을 여기에 잘못 옮긴 것이었다 —
+//  Bento는 명시 좌표 모델이라 «똑같이 나누기»가 아니고, 8이 12를 안 나눠도 `8+4`로 완결된다.
+//  그리고 8+4(본문+사이드 레일)·9+3(목록+필터)은 업무 화면에서 제일 흔한 쌍인데 약수 집합엔 없었다.
+//  **닫힘은 격자가 아니라 «위젯이 선언하는 footprint 부분집합»에서 일어난다**(05 §2-1 `WidgetDef.footprints`).
+//  즉 «어떤 폭이 존재하나」는 격자가 아니라 위젯이 정한다 — 여기 1~12는 그 선언이 놓일 좌표계일 뿐이다.
+//  (Grafana도 같은 짜임이다: 격자는 w 1~24를 다 열고, 무엇을 쓸지는 패널이 정한다.)
+type Span = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+type TileProps = { colSpan?: Span; rowSpan?: 1 | 2 | 3; children: ReactNode };
+
+// 흐름 모드 셀 한 칸 높이. **정의: 가장 작은 «자기완결 위젯»의 자연 높이를 8px 스냅한 값.**
+//  (그래서 1×1이 «위젯 하나»라는 뜻을 갖는다 — Grafana식 30px 눈금과 갈리는 지점이다.)
+//
+//  **실측(2026-08-20, `/dev/grid` 실험대 · 12열 span3):**
+//    SummaryCard 124px → 128 · SummaryCard(금액 없음) 99 → 104 · **Stat 139 → 144**
+//  1×1은 이 중 «가장 큰 최소 위젯»을 담아야 하므로 **144**다. 140은 Stat과 1px 차이라 여유가 없었다.
+//
+//  ⚠ **px가 아니라 rem이다.** 폰트 스케일(루트 전역 줌)에서 위젯 내용은 rem이라 커지는데 칸이 px면
+//    안 따라와서 **잘린다** — 「아주크게」(125%)에서 Stat이 173px이 되어 140px 칸을 33px 넘겼고,
+//    Tile이 overflow:hidden이라 델타 칩이 잘려 나갔다(헤드리스 캡처로 확인). 9rem이면 144→180으로
+//    같은 비율로 따라온다. `fontscale.css`가 "고정 높이 밴드는 텍스트보다 충분히 커 안 잘린다"고
+//    적어 둔 가정의 첫 반례다.
+//
+//  실험대가 후보를 갈아 끼울 수 있게 **CSS 변수로 한 겹 뺀다** — 공개 prop은 안 연다(헌법 5).
+//  소비처엔 이 변수가 존재하지 않는 것과 같다.
+const ROW_UNIT = '9rem';   // 144px @ 루트 16
 
 function Bento({ columns = 12, gap = 'lg', fill = false, children }: GridProps) {
   return (
@@ -28,7 +51,7 @@ function Bento({ columns = 12, gap = 'lg', fill = false, children }: GridProps) 
       gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
       ...(fill
         ? { gridAutoRows: 'minmax(0, 1fr)', height: '100%', minHeight: 0 }  // 작업면 — 행이 잔여고 등분
-        : { gridAutoRows: `${ROW_UNIT}px` }),                               // 흐름 — 상수 셀
+        : { gridAutoRows: `var(--bento-row, ${ROW_UNIT})` }),             // 흐름 — 상수 셀
       gap: `var(--mantine-spacing-${gap})`,
     }}>
       {children}

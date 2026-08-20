@@ -8,7 +8,7 @@
 //  · 검색어 입력 시 부품명으로 필터 + 매칭 그룹 자동 펼침. 단일 출처(_catalog·INPUT_ATOMS)에서 파생 → 드리프트 0.
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { CATALOG, LAYERS, INPUT_ATOMS } from '@/ui/_catalog';
 import { MOBILE_DEMOS, MOBILE_SCREENS } from '@/ui/_mobileDemos';
 import { Tree, TextInput, SegmentedControl, type TreeNodeData } from '@/ui';
@@ -108,7 +108,14 @@ export default function DevLayout({ children }: { children: ReactNode }) {
   const q = query.trim().toLowerCase();
 
   // 폰트 스케일(접근성) 검증 토글 — :root에 data-font-scale를 깔아 전역 줌(소비 앱은 <html>에 1회 설정).
+  //  `?fs=large|xlarge`도 받는다 — 토글은 사람 손이 있어야 눌리는데, 스케일 검증은 캡처로 대조해야 하는
+  //  일이라(06 §4-3 ②가 폰트 캡 대신 「검증 절차로 닫는다」고 못박은 그 절차) 클릭 없이도 걸려야 한다.
+  //  캔버스들이 이미 같은 수법을 쓴다(`/shell/part/…?fs=`).
   const [fscale, setFscale] = useState('default');
+  useEffect(() => {
+    const fs = new URLSearchParams(window.location.search).get('fs');
+    if (fs === 'large' || fs === 'xlarge') { setFscale(fs); document.documentElement.dataset.fontScale = fs; }
+  }, []);
   const setScale = (v: string) => {
     setFscale(v);
     if (v === 'default') delete document.documentElement.dataset.fontScale;
