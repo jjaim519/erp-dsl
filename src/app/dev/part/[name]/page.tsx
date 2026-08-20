@@ -1,13 +1,19 @@
 'use client';
-// 부품 상세(전시) — 라이브 예시 + 닫힌 props + 구성요소(하이퍼링크) + 쓰인 곳(역참조).
-// [전시 ↔ 편집] 중 편집은 확장 예정(슬롯만). 데이터는 _catalog, 라이브는 _registry.
+// 부품 상세 — **3띠**: ① 헤더(정체) ② 무대(보는 곳) ③ 계약(읽는 곳).
+//
+//  띠를 셋으로 둔 이유(원래 넷이었다): 「매트릭스」를 별도 띠로 두려 했으나, 매트릭스가 필요로 하는
+//  크롬(모드 병치·폭·탐침)이 무대의 것과 **하나도 안 다르다.** 별도 띠면 같은 컨트롤이 두 벌 서고
+//  둘이 어긋나는 순간 어느 쪽 화면을 보고 있는지 알 수 없게 된다. 매트릭스는 «다른 띠»가 아니라
+//  **무대의 다른 보기**다 — 그래서 무대 안 세그먼트로 들어갔다.
+//
+//  데이터는 `_catalog`(선언) · 라이브는 `_registry`(데모) / `_matrix`(축의 곱) · 무대는 iframe 캔버스.
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { findEntry, usedBy, basePart, PART_NAMES, type Composition } from '@/ui/_catalog';
-import { Demo } from '@/ui/_dev';
 import { MOBILE_DEMOS } from '@/ui/_mobileDemos';
 import { MobileStage } from '../../_MobileStage';
-import { Stack, Group, Card, Title, Text, Badge, Divider } from '@/ui';
+import { Stage } from '../../_Stage';
+import { Stack, Group, Title, Text, Badge, Divider } from '@/ui';
 import type { BadgeColor } from '@/ui';
 
 const COMP_ORDER: (keyof Composition)[] = ['토큰', '의미 원자', '레이아웃 원자', '배치 프리미티브', '분자', '유기체', '위젯', '템플릿', '공유'];
@@ -40,19 +46,17 @@ export default function PartDetail() {
         <Text variant="body" color="secondary">{entry.role}</Text>
       </Stack>
 
-      {/* 라이브 예시 — 모바일은 페이지 안에 그대로 못 넣는다(뷰포트·문서 잠금·셸 스코프).
-          캔버스(/shell/m/part/[name])를 폰 프레임 iframe으로 임베드한다. _MobileStage 헤더 주석 참조. */}
-      <Card variant="outlined" padding="lg">
-        <Stack gap="sm">
-          <Group gap="xs" align="center">
-            <Text variant="caption" color="secondary">라이브 예시</Text>
-            {mobileDemo?.note && <Text variant="caption" color="secondary">— {mobileDemo.note}</Text>}
-          </Group>
-          {mobileDemo
-            ? <MobileStage name={entry.name} />
-            : <Card variant="flat" padding="md"><Demo name={entry.name} /></Card>}
-        </Stack>
-      </Card>
+      {/* ② 무대 — 데스크탑·모바일 **둘 다 iframe 캔버스**다(자체 뷰포트·문서 잠금 격리).
+          모바일은 폰 프레임 안(`/shell/m/part/…`), 데스크탑은 폭 토글이 곧 뷰포트(`/shell/part/…`).
+          카드로 감싸지 않는다 — 캔버스가 자기 윤곽을 갖고 있어 두 겹이 되고,
+          무엇보다 카드 면이 «부품이 가진 면»과 섞여 raised 판정을 흐린다(0단계에서 재려던 바로 그 신호다). */}
+      <Stack gap="sm">
+        <Group gap="xs" align="center">
+          <Text variant="caption" color="secondary">무대</Text>
+          {mobileDemo?.note && <Text variant="caption" color="secondary">— {mobileDemo.note}</Text>}
+        </Group>
+        {mobileDemo ? <MobileStage name={entry.name} /> : <Stage name={entry.name} />}
+      </Stack>
 
       <Group gap="lg" align="start" wrap>
         {/* 닫힌 props */}
