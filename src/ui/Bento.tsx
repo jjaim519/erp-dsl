@@ -59,9 +59,26 @@ function Bento({ columns = 12, gap = 'lg', fill = false, children }: GridProps) 
   );
 }
 
-// Tile은 footprint를 고정한다(overflow:hidden) — 내용이 넘치면 위젯이 내부에서 스크롤/요약.
+// Tile은 footprint를 고정한다 — 내용이 넘치면 위젯이 내부에서 스크롤/요약(05 §2-2).
+//
+//  ⚠ **`overflow: hidden`이 위젯의 그림자를 코너에만 남기고 있었다.** 위젯은 squircle이라
+//    코너 노치가 «사각형 안쪽 · 도형 바깥»인데, 그림자는 그 노치에 칠해진다. hidden은 **사각형 기준**으로
+//    자르므로 사각형 밖 그림자는 지워지고 **노치 안 그림자만 살아남아** 네 모서리에 직선 경계의 회색
+//    패치가 생긴다 — 화면에서 「카드 뒤에 직사각형만큼 잘린 자체 배경이 있다」로 읽혔다(오너 관찰).
+//    실측: 클립 있으면 타일 경계에서 페이지색 → 그림자로 **계단 점프**(#f1f2f4 → #eff0f2), 없으면 연속.
+//
+//  → `clip` + `overflow-clip-margin`으로 바꾼다. 안전망(내용이 칸을 못 넘음)은 그대로 두고 **그림자만
+//    통과**시킨다. 여백값은 `--elevation-raised`의 최대 도달(6+20=26px)을 덮는 2rem이고, 옆 타일과의
+//    간격(gap lg=24)이 그 자리를 이미 비워 둔다. 위젯이 **raised로 떠 보여야 한다**는 게 05 §2-2의
+//    계약이라, 그림자를 자르는 클립은 계약과 정면으로 부딪힌다.
 function Tile({ colSpan = 1, rowSpan = 1, children }: TileProps) {
-  return <div style={{ gridColumn: `span ${colSpan}`, gridRow: `span ${rowSpan}`, minWidth: 0, minHeight: 0, overflow: 'hidden' }}>{children}</div>;
+  return (
+    <div style={{
+      gridColumn: `span ${colSpan}`, gridRow: `span ${rowSpan}`,
+      minWidth: 0, minHeight: 0,
+      overflow: 'clip', overflowClipMargin: '2rem',
+    }}>{children}</div>
+  );
 }
 
 Bento.Tile = Tile;
