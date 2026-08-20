@@ -36,11 +36,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 //  ⚠ 이 미리보기 박스는 raw div라 `squircle.css` 화이트리스트 밖이다 — 곡률을 직접 걸어줘야
 //    실물과 같아진다. 그리고 `corner-shape`는 React가 아는 style 속성이 아니라 인라인 객체로
 //    넣으면 조용히 떨어지므로, 클래스로 낸다.
+//  ⚠ **`full`은 곡률을 안 받는다.** superellipse는 «원/알약의 둥근 곡선까지» 각지게 만들어서
+//    알약이 둥근 사각이 된다 — 그래서 `squircle.css`가 blacklist가 아니라 **whitelist**다
+//    (Button·Paper·Input·Modal·Popover·SegmentedControl만 켜고, Chip·Avatar·Switch·Radio는 자동 제외).
+//    이 프리뷰가 처음에 full에도 곡률을 걸어 그 실패를 그대로 재현했다 — 아래 마지막 칸이 그 증거다.
 const RADIUS_BANDS = [
-  { key: 'xs', label: '작은 내부 요소', note: '스와치·마커·툴바 항목 (16~30px)', h: 24 },
-  { key: 'sm', label: '컨트롤', note: 'Button·TextInput·Select (28~44px) · defaultRadius', h: 32 },
-  { key: 'md', label: '면', note: 'Card·Modal·Popover·Drawer', h: 72 },
-  { key: 'full', label: '알약·원', note: 'Chip·Avatar·Switch', h: 32 },
+  { key: 'xs', label: '작은 내부 요소', note: '스와치·마커·툴바 항목 (16~30px)', h: 24, curved: true },
+  { key: 'sm', label: '컨트롤', note: 'Button·TextInput·Select (28~44px) · defaultRadius', h: 32, curved: true },
+  { key: 'md', label: '면', note: 'Card·Modal·Popover·Drawer', h: 72, curved: true },
+  { key: 'full', label: '알약·원', note: 'Chip·Avatar·Switch — 곡률 제외(whitelist 밖)', h: 32, curved: false },
 ] as const;
 
 export function DevTokenPreview() {
@@ -139,8 +143,12 @@ export function DevTokenPreview() {
 
       <Section title="radius — 단 이름이 곧 크기 대역이다">
         <Stack gap="sm">
-          <style>{RADIUS_BANDS.map((b) =>
-            `.rb-${b.key}{border-radius:${theme.radius[b.key]};corner-shape:var(--corner-shape)}`).join('')}</style>
+          <style>{[
+            ...RADIUS_BANDS.map((b) =>
+              `.rb-${b.key}{border-radius:${theme.radius[b.key]};corner-shape:${b.curved ? 'var(--corner-shape)' : 'round'}}`),
+            //  반증 칸 — full에 곡률을 걸면 알약이 둥근 사각이 된다(whitelist가 존재하는 이유).
+            `.rb-full-bad{border-radius:${theme.radius.full};corner-shape:var(--corner-shape)}`,
+          ].join('')}</style>
           <Group gap="xl" align="flex-end">
             {RADIUS_BANDS.map((b) => (
               <Stack key={b.key} gap="xxs" align="center" style={{ width: 128 }}>
@@ -149,11 +157,18 @@ export function DevTokenPreview() {
                 <Text size="xs" c="dimmed" ta="center">{b.label}</Text>
               </Stack>
             ))}
+            {/* 반증 — 알약에 곡률을 걸면 이렇게 된다. 「왜 whitelist인가」의 증거로 남긴다. */}
+            <Stack gap="xxs" align="center" style={{ width: 128 }}>
+              <Box className="rb-full-bad" style={{ background: 'var(--mantine-color-danger-5)', width: 112, height: 32 }} />
+              <Text size="xs" fw={700}>full + 곡률</Text>
+              <Text size="xs" c="dimmed" ta="center">✗ 알약이 둥근 사각이 된다</Text>
+            </Stack>
           </Group>
           <UiText variant="caption" color="secondary">
             곡률은 <b>corner-shape: {String(theme.other.cornerShape)}</b> — 애플 quintic(수학 k5).
             CSS의 <code>superellipse(s)</code>에서 s는 수학 지수가 아니라 <b>k = 2<sup>s</sup></b>다(s1=원호 · s2=표준 스쿼클 · s2.32=애플).
             Chromium만 그린다 — Safari·FF는 평범한 둥근 모서리로 graceful fallback.
+            <b> 곡률은 박스에만 켠다</b>(squircle.css whitelist) — 원·알약에 걸면 마지막 칸처럼 각져서 Chip·Avatar·Switch·Radio는 제외된다.
           </UiText>
           <UiText variant="caption" color="secondary">
             {RADIUS_BANDS.map((b) => `${b.key}=${b.note}`).join('  ·  ')}
