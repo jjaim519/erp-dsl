@@ -44,7 +44,7 @@ const RADIUS_BANDS = [
   { key: 'xs', label: '작은 내부 요소', note: '스와치·마커·툴바 항목 (16~30px)', h: 24, curved: true },
   { key: 'sm', label: '컨트롤', note: 'Button·TextInput·Select (28~44px) · defaultRadius', h: 32, curved: true },
   { key: 'md', label: '면', note: 'Card·Modal·Popover·Drawer', h: 72, curved: true },
-  { key: 'full', label: '알약·원', note: 'Chip·Avatar·Switch — 곡률 제외(whitelist 밖)', h: 32, curved: false },
+  { key: 'full', label: '알약 (직사각일 때)', note: 'Chip·Avatar·Switch — 곡률 제외(whitelist 밖)', h: 32, curved: false },
 ] as const;
 
 export function DevTokenPreview() {
@@ -157,6 +157,14 @@ export function DevTokenPreview() {
                 <Text size="xs" c="dimmed" ta="center">{b.label}</Text>
               </Stack>
             ))}
+            {/* `full`은 **원이 아니라 «반경 = 높이/2»**다 — 박스가 정사각일 때만 그 결과가 원이 된다.
+                라벨에 「알약·원」이라 써 놓고 직사각 하나만 그리면 Avatar(56×56 원)와 안 맞아 보인다.
+                실제로 그 질문이 나왔다(2026-08-20) → 같은 토큰의 두 결과를 나란히 그린다. */}
+            <Stack gap="xxs" align="center" style={{ width: 128 }}>
+              <Box className="rb-full" style={{ background: 'var(--mantine-color-primary-6)', width: 44, height: 44 }} />
+              <Text size="xs" fw={700}>full · 정사각</Text>
+              <Text size="xs" c="dimmed" ta="center">= 원 (Avatar)</Text>
+            </Stack>
             {/* 반증 — 알약에 곡률을 걸면 이렇게 된다. 「왜 whitelist인가」의 증거로 남긴다. */}
             <Stack gap="xxs" align="center" style={{ width: 128 }}>
               <Box className="rb-full-bad" style={{ background: 'var(--mantine-color-danger-5)', width: 112, height: 32 }} />
