@@ -6,12 +6,16 @@
 //  · **Bento의 본질 = 높이는 내용이 못 정한다.** 높이의 주인은 상수(흐름) 또는 뷰포트(작업면)이며, 위젯은 자기
 //    본성에 맞는 닫힌 n×n footprint를 colSpan·rowSpan으로 *선택*한다. 그 선택만이 가변이고, 내용 증감·펼침/접힘은
 //    격자를 1px도 못 움직인다(jitter 0).
-//  · 2기하 체제(2026-07-27 확정): ① 흐름(기본) — 페이지가 세로 스크롤, 셀 높이 = ROW_UNIT 상수.
-//    ② 작업면(fill) — 페이지 스크롤 0, 격자가 부모 잔여고(100%)를 받아 행을 minmax(0,1fr) 등분. 고정 px는
-//    "화면 꽉 맞음"을 두 화면 크기에서 동시 만족 못 하므로, 템플릿이 갖던 viewport-fit 기하를 이 모드가 승계한다.
-//    fill의 높이 공급은 바깥 배관(페이지 flex) 몫 — 부모가 auto면 내용 높이로 자연 강등된다.
-//  · 내용이 footprint를 넘치면 위젯이 *내부에서* 처리(스크롤/요약) — Tile은 overflow:hidden으로 셀을 고정한다.
-//  · [백로그] 흐름 모드 rowSpan 4~6 확장·ROW_UNIT 실측·모바일 reflow. raw CSS grid는 Calendar 7열과 동류의 명시 예외.
+//  · 2기하 체제(2026-07-27 확정 · 2026-08-20 실측 정정):
+//    ① 흐름(기본) — 페이지가 **세로 스크롤**, 행 무제한, 셀 높이 = ROW_UNIT 상수.
+//    ② 작업면(fill) — 페이지 스크롤 0, 격자가 부모 잔여고(100%)를 받아 행을 등분하되 **ROW_UNIT이 하한**.
+//    fill의 높이 공급은 바깥 배관(AppShell → Page flex) 몫 — 부모가 auto면 내용 높이로 자연 강등된다.
+//    ※ 「무스크롤 12×3」은 iOS 홈 화면의 직역이었는데, **iOS의 무스크롤은 세로 스크롤을 «페이지 넘김»으로
+//      바꾼 것**이라 전제가 달랐다. 업무 화면엔 그 탈출구가 없고 조사한 넷이 전부 스크롤한다
+//      (Grafana·SAP Fiori OVP·MS Viva·Azure). 대신 「높이는 내용이 못 정한다」는 유지된다.
+//  · 내용이 footprint를 넘치면 위젯이 *내부에서* 처리(스크롤/요약) — Tile은 `clip`으로 셀을 고정하되
+//    `overflow-clip-margin`으로 **그림자는 통과시킨다**(아래 Tile 주석 — 코너 패치 사고).
+//  · [백로그] 흐름 모드 rowSpan 4~6 확장·모바일 reflow. raw CSS grid는 Calendar 7열과 동류의 명시 예외.
 import type { ReactNode } from 'react';
 
 type Columns = 2 | 3 | 4 | 6 | 12;
@@ -50,7 +54,12 @@ function Bento({ columns = 12, gap = 'lg', fill = false, children }: GridProps) 
       display: 'grid',
       gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`,
       ...(fill
-        ? { gridAutoRows: 'minmax(0, 1fr)', height: '100%', minHeight: 0 }  // 작업면 — 행이 잔여고 등분
+        //  작업면 — 행이 잔여고를 등분하되 **ROW_UNIT이 하한**이다.
+        //  `minmax(0,1fr)`이던 동안 하한이 없어서, 뷰포트가 짧으면 칸이 ROW_UNIT 아래로 줄고
+        //  위젯이 잘렸다(흐름 모드에서 ROW_UNIT을 px로 뒀을 때와 **같은 종류의 결함**).
+        //  「스크롤 0」은 *지향*이지 «어떤 대가를 치르더라도»가 아니다 — 하한 아래에선
+        //  잘리는 대신 넘쳐서 **예측 가능하게** 무너진다(AppShell 하한 768의 가로 스크롤과 같은 규율).
+        ? { gridAutoRows: `minmax(var(--bento-row, ${ROW_UNIT}), 1fr)`, height: '100%', minHeight: 0 }
         : { gridAutoRows: `var(--bento-row, ${ROW_UNIT})` }),             // 흐름 — 상수 셀
       gap: `var(--mantine-spacing-${gap})`,
     }}>

@@ -163,9 +163,12 @@ export default function BentoLab() {
       <Stack gap="sm">
         <Text variant="body-strong">④ 작업면(fill) — 스크롤 0, 행이 잔여고를 등분</Text>
         <Text variant="caption" color="secondary">
-          2-pane 저작 화면처럼 <b>스크롤이 있으면 안 되는</b> 자리. 부모가 높이를 줘야 성립한다(여기선 520px).
+          2-pane 저작 화면처럼 <b>스크롤이 있으면 안 되는</b> 자리. <b>높이는 부모가 준다</b> —
+          실전에선 AppShell → Page 배관이 흘려주는 <b>뷰포트 잔여고</b>이고, 여기선 그걸 흉내내려고
+          <code> calc(100dvh − 12rem)</code>을 쓴다(옛 520px 고정은 실제보다 절반쯤 짧아 오해를 줬다).
+          행에는 <b>ROW_UNIT 하한</b>이 걸려 있어, 잔여고가 모자라면 칸이 줄어 잘리는 대신 넘쳐서 무너진다.
         </Text>
-        <div style={{ height: 520 }}>
+        <div style={{ height: 'calc(100dvh - 12rem)', minHeight: 360 }}>
           <Bento columns={12} gap="lg" fill>
             <Bento.Tile colSpan={4} rowSpan={2}><Slab label="4×2 — 좌 구조" /></Bento.Tile>
             <Bento.Tile colSpan={8}><Slab label="8×1 — 우 상단" /></Bento.Tile>
