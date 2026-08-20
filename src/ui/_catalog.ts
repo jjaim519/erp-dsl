@@ -119,10 +119,12 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: 'ReactNode' },
       { name: 'htmlFor', kind: '기능', values: 'string (짝 연결)' },
     ] },
-  { name: 'Anchor', layer: '의미 원자', role: '이동 의미 고유(Button으로 대체 불가).',
+  { name: 'Anchor', layer: '의미 원자', role: '**«글 안에 박힌 이동».** 자리가 하나뿐인 게 정체다 — 메뉴는 AppShell.onNavigate · 행은 DataTable.onRowClick · 경로는 Breadcrumb · 계층은 Tree가 맡고, 남는 건 안내문·본문 «안»의 링크다. Button이 못 메우는 이유 셋: 문장 흐름을 깬다 · **우클릭 새 탭·주소 복사가 안 된다** · 스크린리더가 「버튼」으로 읽는다(「저기로 간다」와 다른 약속). ⚠ v0.94.0 이전엔 `href`뿐이라 **SPA에서 못 썼다**(전체 문서 재로드) — 실사용이 부품 안 한 자리(_cells의 link 셀)와 dev 도구뿐이었던 이유다. `onNavigate`가 좌클릭만 가로채고 태그는 `<a href>`로 남아 새 탭·복사·낭독이 다 산다. 보조키·가운데 클릭은 안 가로챈다.',
     props: [
       { name: 'href', kind: '콘텐츠', values: 'string' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode' },
+      { name: 'onNavigate', kind: '기능', values: '(href) => void — 좌클릭만 가로채 소비처 라우터로(SPA)' },
+      { name: 'external', kind: '스타일', values: 'boolean — target=_blank + rel + 표식(↗)이 함께' },
     ] },
   { name: 'Icon', layer: '의미 원자', role: 'SVG 아이콘(85종). baseline 광학보정 내장.',
     props: [

@@ -88,7 +88,7 @@ export function Stage({ name }: { name: string }) {
           options={WIDTHS.map((x) => ({ label: x.label, value: x.value }))} />
         <SegmentedControl size="sm" value={probe} onChange={setProbe}
           options={[{ label: '탐침', value: 'on' }, { label: '끔', value: 'off' }]} />
-        <Anchor href={src('light')}>캔버스만 열기 ↗</Anchor>
+        <Anchor href={src('light')} external>캔버스만 열기</Anchor>
         <button type="button" onClick={() => setNonce((n) => n + 1)}
           style={{
             font: 'inherit', fontSize: 13, padding: '4px 10px', cursor: 'pointer',

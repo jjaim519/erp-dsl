@@ -1428,10 +1428,11 @@ export function Demo({ name }: { name: string }) {
         </Text>
         <Group gap="lg" align="center">
           <Anchor href="/dev/part/Badge">단독 링크</Anchor>
-          <Anchor href="/dev/tokens">토큰 화면으로</Anchor>
+          <Anchor href="https://developer.mozilla.org/docs/Web/HTML/Element/a" external>외부 문서</Anchor>
         </Group>
         <Text variant="caption" color="secondary">
-          캔버스가 iframe이라 누르면 이 판 안에서 이동합니다 — 「상태 초기화」로 되돌립니다.
+          외부 링크는 표식(↗)·새 탭·rel이 <b>함께</b> 붙는다 — 라벨에 손으로 적지 않는다.
+          SPA 이동은 <code>onNavigate</code>가 <b>좌클릭만</b> 가로챈다(⌘/Ctrl+클릭은 새 탭 그대로).
         </Text>
       </Stack>
     ),

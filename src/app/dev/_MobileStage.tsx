@@ -35,7 +35,7 @@ export function MobileStage({ name }: { name: string }) {
       <Group gap="sm" align="center" wrap>
         <SegmentedControl size="sm" value={dev} onChange={setDev}
           options={DEVICES.map((x) => ({ label: x.label, value: x.value }))} />
-        <Anchor href={src}>캔버스만 열기 ↗</Anchor>
+        <Anchor href={src} external>캔버스만 열기</Anchor>
         <button type="button"
           onClick={() => { if (frameRef.current) frameRef.current.src = src; }}
           style={{
