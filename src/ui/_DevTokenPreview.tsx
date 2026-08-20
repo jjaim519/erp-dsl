@@ -40,41 +40,75 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 //     원호 k2 = s1 / 표준 스쿼클(=`squircle` 키워드) k4 = s2 / **애플 quintic k5 = s2.32**.
 //     (애플 실형상은 연속곡률 스플라인이라 순수 초타원이 아니고, n=5가 가장 가까운 단순 초타원이다.)
 //   · Chromium만 그린다(Safari·FF는 평범한 둥근 모서리로 graceful fallback) — 크롬에서 볼 것.
-const RADII = [4, 8, 12, 16, 24];
-const CURVES = [
-  { label: '원호  round (k2)', shape: 'round' },
-  { label: '스쿼클 superellipse(2) — 현재 (k4)', shape: 'superellipse(2)' },
-  { label: '애플  superellipse(2.32) (k5)', shape: 'superellipse(2.32)' },
-  { label: '더 각짐 superellipse(3) (k8)', shape: 'superellipse(3)' },
+const RADII = [4, 6, 8, 10, 12, 16, 20, 24];
+//  실제 박스 높이로 본다. **v1 실험대는 전부 40px이었고 그게 함정이었다** — r24를 라벨해 놓고
+//  브라우저는 20으로 클램프해 «알약»을 그렸다(세로 두 모서리 합 48 > 높이 40). 라벨이 거짓말을 했다.
+//  반경은 크기의 함수라 크기를 안 보이면 판정이 안 선다.
+const BOXES = [
+  { label: '스와치·마커 16', h: 16 },
+  { label: '툴바 항목 30', h: 30 },
+  { label: 'Button xs 28', h: 28 },
+  { label: 'Button sm 32', h: 32 },
+  { label: 'Button md 40', h: 40 },
+  { label: '카드 120', h: 120 },
 ];
+const CURVE = 'superellipse(2.32)';   // 애플 quintic(k5)에 가장 가까운 단순 초타원 — 실험대 기본값
 
 function CornerLab() {
   return (
-    <Section title="곡률 × 반경 실험대 (스쿼클이 어디서부터 보이나)">
-      <Stack gap="md">
-        <Group gap="xl" style={{ paddingLeft: 232 }}>
-          {RADII.map((r) => <Text key={r} size="xs" c="dimmed" style={{ width: 72 }}>r {r}</Text>)}
-        </Group>
-        {/* `corner-shape`는 React가 아는 style 속성이 아니라 인라인 객체로 넣으면 조용히 떨어진다.
-            클래스로 내면 브라우저가 그냥 파싱한다(미지원 브라우저는 이 선언만 무시 — fallback 그대로). */}
-        <style>{CURVES.flatMap((c, ci) =>
-          RADII.map((r) => `.cl-${ci}-${r}{border-radius:${r}px;corner-shape:${c.shape}}`),
-        ).join('')}</style>
-        {CURVES.map((c, ci) => (
-          <Group key={c.shape} gap="xl" align="center">
-            <Text size="xs" c="dimmed" style={{ width: 216 }}>{c.label}</Text>
-            {RADII.map((r) => (
-              <Box key={r} className={`cl-${ci}-${r}`}
-                style={{ background: 'var(--mantine-color-primary-6)', width: 72, height: 40 }} />
+    <Stack gap="xl">
+      <Section title="곡률 — 원호 ↔ 스쿼클 ↔ 애플 (같은 반경 16에서)">
+        <Stack gap="sm">
+          {/* `corner-shape`는 React가 아는 style 속성이 아니라 인라인 객체로 넣으면 조용히 떨어진다.
+              클래스로 내면 브라우저가 그냥 파싱한다(미지원 브라우저는 이 선언만 무시 — fallback 유지). */}
+          <style>{[
+            ...[['round', 'round'], ['sq', 'superellipse(2)'], ['ap', 'superellipse(2.32)'], ['sq3', 'superellipse(3)']]
+              .map(([k, v]) => `.cv-${k}{border-radius:16px;corner-shape:${v}}`),
+            ...RADII.flatMap((r) => BOXES.map((b) =>
+              `.cl-${r}-${b.h}{border-radius:${r}px;corner-shape:${CURVE}}`)),
+          ].join('')}</style>
+          <Group gap="xl" align="center">
+            {[['원호 round (k2)', 'round'], ['스쿼클 se(2) — 현재 (k4)', 'sq'], ['애플 se(2.32) (k5)', 'ap'], ['se(3) (k8)', 'sq3']].map(([label, k]) => (
+              <Stack key={k} gap="xxs" align="center">
+                <Box className={`cv-${k}`} style={{ background: 'var(--mantine-color-primary-6)', width: 96, height: 96 }} />
+                <Text size="xs" c="dimmed">{label}</Text>
+              </Stack>
             ))}
           </Group>
-        ))}
-        <UiText variant="caption" color="secondary">
-          40px 높이 = 버튼 md와 같은 박스. 지금 버튼은 <b>r 8 · superellipse(2)</b> 칸이고, 원호 칸과 1.5px 차이라 구분이 안 된다.
-          곡률이 읽히기 시작하는 건 <b>r 12</b>부터다(2.3px).
-        </UiText>
-      </Stack>
-    </Section>
+          <UiText variant="caption" color="secondary">
+            96px 박스 · 반경 16 고정. 곡률만 갈린다. (원호와 스쿼클의 차이는 <b>0.189 × r</b> — r16이면 3px,
+            <b> r8이면 1.5px</b>이라 지금 버튼에선 안 보였다.)
+          </UiText>
+        </Stack>
+      </Section>
+
+      <Section title="반경 × 실제 박스 높이 (알약이 되는 지점을 본다)">
+        <Stack gap="sm">
+          <Group gap="lg" style={{ paddingLeft: 132 }}>
+            {RADII.map((r) => <Text key={r} size="xs" c="dimmed" style={{ width: 72 }}>r {r}</Text>)}
+          </Group>
+          {BOXES.map((b) => (
+            <Group key={b.h} gap="lg" align="center">
+              <Text size="xs" c="dimmed" style={{ width: 116 }}>{b.label}</Text>
+              {RADII.map((r) => {
+                const pill = r >= b.h / 2;   // 세로 두 모서리 합이 높이를 넘으면 브라우저가 클램프 → 알약
+                return (
+                  <Stack key={r} gap={2} align="center" style={{ width: 72 }}>
+                    <Box className={`cl-${r}-${b.h}`}
+                      style={{ background: pill ? 'var(--mantine-color-danger-4)' : 'var(--mantine-color-primary-6)', width: 72, height: b.h }} />
+                    {pill && <Text size="xs" c="dimmed">알약</Text>}
+                  </Stack>
+                );
+              })}
+            </Group>
+          ))}
+          <UiText variant="caption" color="secondary">
+            곡률은 <b>{CURVE}</b>(애플) 고정. 붉은 칸 = <b>r ≥ 높이/2</b>라 브라우저가 클램프해 알약이 된 것 —
+            라벨한 반경이 실제로 안 걸린 칸이다. <b>알약은 Chip의 어휘</b>라 버튼이 그리 가면 두 부품이 형태로 안 갈린다.
+          </UiText>
+        </Stack>
+      </Section>
+    </Stack>
   );
 }
 
