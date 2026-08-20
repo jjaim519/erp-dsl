@@ -11,12 +11,12 @@ const DEVICES: Record<string, { label: string; w: number; h: number }> = {
   max: { label: 'iPhone 14 Pro Max', w: 430, h: 932 },
 };
 
-// 띄울 화면 — 모바일 어휘로 짠 것 vs *데스크탑 템플릿을 그대로 넣은 반례*.
-//  후자는 권장 사용법이 아니라 진단용이다: MobileShell을 왜 분리했는지(폭만 좁혀선 성립 안 함)를
-//  화면으로 확인하고, 거기서 드러나는 불일치를 모바일 page 어휘의 요구사항으로 수집한다.
+// 띄울 화면 — 모바일 어휘로 짠 것 하나.
+//  ※ 「기존 ListPage 투입(반례)」는 걷어냈다(v0.94.0). 「데스크탑 템플릿은 폭만 좁혀선 성립하지
+//    않는다」는 결론이 이미 06에 확정돼 있어 반례를 상시 전시할 이유가 없다 — 결론이 선 뒤의
+//    반례는 «증명»이 아니라 «옛 시도의 잔해»고, 박물관에 두면 그것도 어휘처럼 읽힌다.
 const SCREENS: Record<string, { label: string; src: string }> = {
   native: { label: '모바일 어휘', src: '/shell/m' },
-  legacy: { label: '기존 ListPage 투입(반례)', src: '/shell/m/legacy' },
 };
 
 export default function MobileShellPreview() {

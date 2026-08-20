@@ -39,48 +39,63 @@ const partNodes = (entries: typeof CATALOG, scope: string): TreeNodeData[] =>
     return [{ id: `__layer:${scope}:${layer}`, label: `${layer} (${inLayer.length})`, children: partLeaves(inLayer) }];
   });
 
+// ── 최상위 세 서랍 ────────────────────────────────────────────────────────────────
+//  전에는 「기초 / 데스크탑 / 모바일 / 데모」였는데, **분류축이 없어서 «부품이 아닌 것»이 전부
+//  「데모」로 밀려나 있었다** — 실험대(Bento)·조립 증명(저작)·수직 슬라이스(고객)·변환 도구(엑셀)·
+//  편집기 PoC가 한 서랍에 뭉쳐 성격이 안 읽혔다. 동시에 트리에 **아예 없는 라우트가 다섯**이었다.
+//
+//  박물관에 있는 것은 실제로 세 종류뿐이다:
+//   · **어휘** — 부품과 값 그 자체.        판별: 카탈로그에 있나 / 토큰인가
+//   · **증명** — 어휘로 진짜 화면이 서는가.  판별: 조립 «결과»를 보여주나
+//   · **도구** — 값을 정하거나 무언가 만드는 자리. 판별: 내가 조작해서 답을 얻나
+//
+//  ※ 모바일 «화면»은 조립된 결과라 어휘가 아니라 **증명**이다(부품은 모바일 어휘 사다리에 남는다).
+//    모바일 계열이 형제 층이라는 규율과 안 부딪힌다 — 사다리는 그대로 나란히 있고, 화면만 갈렸다.
 const NODES: TreeNodeData[] = [
-  { id: '__basics', label: '기초', children: [
+  { id: '__vocab', label: '어휘', children: [
     { id: '/dev/tokens', label: '토큰' },
-    { id: '/shell', label: '셸' },
-    { id: '/dev/preview', label: '반응형 프리뷰' },
+    { id: '__parts', label: `데스크탑 (${DESKTOP.length})`, children: partNodes(DESKTOP, 'd') },
+    // 모바일은 데스크탑의 축소판이 아니라 *형제 층*이라 같은 깊이에 나란히 둔다.
+    { id: '__mobile', label: `모바일 (${MOBILE.length})`, children: partNodes(MOBILE, 'm') },
   ] },
-  { id: '__parts', label: `데스크탑 (${DESKTOP.length})`, children: partNodes(DESKTOP, 'd') },
-  // 모바일은 데스크탑의 축소판이 아니라 *형제 층*이라 같은 깊이에 나란히 둔다(사다리를 한 칸 더 파지 않는다).
-  { id: '__mobile', label: `모바일 (${MOBILE.length})`, children: [
-    // 화면 — 부품 사다리와 나란히. 4탭 셸 데모를 통과하지 않고 *그 화면으로 바로* 간다.
-    //  (부품 하나만 보려면 아래 계층 그룹에서 고르고, 조립된 화면을 보려면 여기서 고른다.)
-    { id: '__mscreens', label: `화면 (${MOBILE_SCREENS.length + 1})`, children: [
-      { id: '/shell/mobile', label: '4탭 셸 데모 (통합)' },
-      ...MOBILE_SCREENS.map((k) => ({
-        id: `/shell/m/part/${k}`,
-        label: MOBILE_DEMOS[k].label ?? k,
-      })),
+
+  { id: '__proof', label: '증명', children: [
+    { id: '__shells', label: '셸', children: [
+      { id: '/shell', label: '데스크탑 셸' },
+      { id: '/shell/mobile', label: '모바일 셸 (4탭)' },
     ] },
-    ...partNodes(MOBILE, 'm'),
+    // 조립된 모바일 화면 — 4탭 셸을 통과하지 않고 *그 화면으로 바로* 간다.
+    { id: '__mscreens', label: `모바일 화면 (${MOBILE_SCREENS.length})`, children:
+      MOBILE_SCREENS.map((k) => ({ id: `/shell/m/part/${k}`, label: MOBILE_DEMOS[k].label ?? k })) },
+    { id: '__pages', label: '페이지', children: [
+      { id: '/customers', label: '고객 관리 (스키마 구동)' },
+      { id: '/dev/authoring', label: '구성 모델 저작' },
+    ] },
+    { id: '/dev/preview', label: '반응형 2티어' },
   ] },
-  { id: '__demos', label: '데모', children: [
-    { id: '/dev/grid', label: '위젯 그리드 시범' },
-    { id: '/dev/authoring', label: '구성 모델 저작(조립 증명)' },
-    { id: '/customers', label: '고객 관리' },
-    { id: '/dev/import', label: '초기 등록 (엑셀)' },
-    { id: '/playground', label: 'SummaryCard 편집기' },
+
+  { id: '__tools', label: '도구', children: [
+    { id: '/dev/grid', label: 'Bento 실험대' },
+    { id: '/dev/paper', label: '문서 렌더러 검증' },
+    { id: '/dev/import', label: '엑셀 가져오기' },
+    { id: '/playground', label: '부품 편집기 PoC' },
   ] },
 ];
 
-// 부품명이 속한 [대분류, 그룹] id (현재 위치 자동 펼침용).
+// 부품명이 속한 [최상위, 대분류, 그룹] id (현재 위치 자동 펼침용).
+//  «어휘» 서랍이 한 칸 더 생겼으므로 그것도 함께 펼쳐야 잎이 보인다.
 function groupIdsOfPart(name: string): string[] {
   const entry = CATALOG.find((e) => e.name === name);
   if (!entry) return [];
   const scope = isMobile(name) ? 'm' : 'd';
   const root = isMobile(name) ? '__mobile' : '__parts';
-  if (entry.layer === '의미 원자') return [root, `__bucket:${scope}:${INPUT_ATOMS.has(name) ? 'input' : 'display'}`];
-  return [root, `__layer:${scope}:${entry.layer}`];
+  if (entry.layer === '의미 원자') return ['__vocab', root, `__bucket:${scope}:${INPUT_ATOMS.has(name) ? 'input' : 'display'}`];
+  return ['__vocab', root, `__layer:${scope}:${entry.layer}`];
 }
 function initialExpanded(path: string): string[] {
   const m = path.match(/^\/dev\/part\/(.+)$/);
   const found = m ? groupIdsOfPart(m[1]) : [];
-  return found.length ? found : ['__parts'];   // 부품 화면이 아니면 데스크탑만 펼침(모바일은 접힌 채 시작)
+  return found.length ? found : ['__vocab', '__parts'];   // 부품 화면이 아니면 어휘·데스크탑만 펼침
 }
 
 // 검색 필터 — 잎(부품)을 label로 매칭, 매칭 자식이 있는 폴더만 유지.

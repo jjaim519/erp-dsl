@@ -3,7 +3,7 @@
 //  · /dev/part/[name] 이 이 주소를 iframe으로 임베드한다. iframe이라야 자체 뷰포트가 되고,
 //    MobileShell의 문서 잠금(html.erp-mobile-lock)이 박물관 페이지를 죽이지 않는다.
 //  · /shell 아래 두는 이유: /dev 에는 박물관 레이아웃(좌측 트리)이 걸려 있어 캔버스가 될 수 없다.
-//    /shell/* 은 레이아웃이 없어 루트 레이아웃만 탄다 — /shell/m·/shell/m/legacy 와 같은 자리.
+//    /shell/* 은 레이아웃이 없어 루트 레이아웃만 탄다 — /shell/m·/shell/part 와 같은 자리.
 //  · 실물은 _mobileDemos 한 곳에서 온다(4탭 데모와 같은 fixture를 본다 — 두 벌이 안 생긴다).
 //  · dev 전용(배포 제외).
 import { useEffect } from 'react';
