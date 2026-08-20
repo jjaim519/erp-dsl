@@ -28,6 +28,56 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+// ── 곡률 실험대 ────────────────────────────────────────────────────────────────
+//  왜 여기가 필요한가: 「스쿼클을 도입했다」는 결정이 화면에서 실현이 안 되고 있었다.
+//  값(`superellipse(2)`)도 셀렉터(`mantine-Button-root`)도 정상인데 **반경이 작아서** 안 보인다 —
+//  원호(k=2)와 스쿼클(k=4)이 45°에서 벌어지는 거리가 `0.189 × r`이라, r=8이면 1.5px이다.
+//  즉 화면에서 제일 많이 보이는 물건(버튼·입력칸, radius sm=8)에 곡률이 사실상 없었다.
+//
+//  두 축의 곱이라 말로는 못 고른다 → 나란히 깔고 눈으로 고른다.
+//   · 가로 = 반경 후보(4·8·12·16·24)  · 세로 = 곡률 후보
+//   · `superellipse(s)`의 s는 **수학 지수가 아니다** — 수학 k = 2^s다.
+//     원호 k2 = s1 / 표준 스쿼클(=`squircle` 키워드) k4 = s2 / **애플 quintic k5 = s2.32**.
+//     (애플 실형상은 연속곡률 스플라인이라 순수 초타원이 아니고, n=5가 가장 가까운 단순 초타원이다.)
+//   · Chromium만 그린다(Safari·FF는 평범한 둥근 모서리로 graceful fallback) — 크롬에서 볼 것.
+const RADII = [4, 8, 12, 16, 24];
+const CURVES = [
+  { label: '원호  round (k2)', shape: 'round' },
+  { label: '스쿼클 superellipse(2) — 현재 (k4)', shape: 'superellipse(2)' },
+  { label: '애플  superellipse(2.32) (k5)', shape: 'superellipse(2.32)' },
+  { label: '더 각짐 superellipse(3) (k8)', shape: 'superellipse(3)' },
+];
+
+function CornerLab() {
+  return (
+    <Section title="곡률 × 반경 실험대 (스쿼클이 어디서부터 보이나)">
+      <Stack gap="md">
+        <Group gap="xl" style={{ paddingLeft: 232 }}>
+          {RADII.map((r) => <Text key={r} size="xs" c="dimmed" style={{ width: 72 }}>r {r}</Text>)}
+        </Group>
+        {/* `corner-shape`는 React가 아는 style 속성이 아니라 인라인 객체로 넣으면 조용히 떨어진다.
+            클래스로 내면 브라우저가 그냥 파싱한다(미지원 브라우저는 이 선언만 무시 — fallback 그대로). */}
+        <style>{CURVES.flatMap((c, ci) =>
+          RADII.map((r) => `.cl-${ci}-${r}{border-radius:${r}px;corner-shape:${c.shape}}`),
+        ).join('')}</style>
+        {CURVES.map((c, ci) => (
+          <Group key={c.shape} gap="xl" align="center">
+            <Text size="xs" c="dimmed" style={{ width: 216 }}>{c.label}</Text>
+            {RADII.map((r) => (
+              <Box key={r} className={`cl-${ci}-${r}`}
+                style={{ background: 'var(--mantine-color-primary-6)', width: 72, height: 40 }} />
+            ))}
+          </Group>
+        ))}
+        <UiText variant="caption" color="secondary">
+          40px 높이 = 버튼 md와 같은 박스. 지금 버튼은 <b>r 8 · superellipse(2)</b> 칸이고, 원호 칸과 1.5px 차이라 구분이 안 된다.
+          곡률이 읽히기 시작하는 건 <b>r 12</b>부터다(2.3px).
+        </UiText>
+      </Stack>
+    </Section>
+  );
+}
+
 export function DevTokenPreview() {
   const theme = useMantineTheme();
   return (
@@ -122,6 +172,7 @@ export function DevTokenPreview() {
         </Stack>
       </Section>
 
+      {/* 곡률 실험대는 아래 CornerLab — radius 스케일 자체를 정하는 자리라 이 절과 짝이다. */}
       <Section title="radius · 그림자">
         <Group gap="lg">
           {(['sm', 'md', 'full'] as const).map((r) => (
@@ -133,16 +184,20 @@ export function DevTokenPreview() {
         </Group>
       </Section>
 
-      <Section title="Button 원자 (variant 4 × size 2 + 상태)">
+      <CornerLab />
+
+      <Section title="Button 원자 (variant 5 × 밀도 3 + 상태)">
         <Group gap="md">
-          <Button variant="primary">Primary</Button>
-          <Button variant="secondary">Secondary</Button>
-          <Button variant="danger">Danger</Button>
-          <Button variant="ghost">Ghost</Button>
+          <Button variant="primary">저장</Button>
+          <Button variant="secondary">취소</Button>
+          <Button variant="danger">삭제</Button>
+          <Button variant="ghost">더보기</Button>
+          <Button variant="accent">글쓰기</Button>
         </Group>
         <Group gap="md">
-          <Button size="sm">sm</Button>
-          <Button size="md">md</Button>
+          <Button size="xs">28</Button>
+          <Button size="sm">32</Button>
+          <Button size="md">40</Button>
           <Button loading>loading</Button>
           <Button disabled>disabled</Button>
         </Group>
