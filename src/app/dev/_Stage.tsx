@@ -20,6 +20,11 @@ import { useEffect, useRef, useState } from 'react';
 import { Group, SegmentedControl, Anchor, Text } from '@/ui';
 import { hasMatrix } from './_matrix';
 
+// 자기 높이를 «뷰포트»에서 가져오는 부품 — 캔버스가 자기 높이를 못 말하므로(순환) 무대가 준다.
+//  AppShell 하나뿐이다(MobileShell 계열은 폰 캔버스가 따로 받는다). 목록이 셋을 넘으면 부품 쪽에
+//  선언을 두는 게 맞지만, 지금은 여기 한 줄이 제일 싸다.
+const FULL_HEIGHT = new Set(['AppShell']);
+
 const WIDTHS = [
   { value: 'min', label: '768', px: 768 },      // AppShell 하한 — 그 아래는 가로 스크롤로 무너지는 게 계약
   { value: 'base', label: '1120', px: 1120 },   // 기본 — page-max 1200 안쪽
@@ -62,7 +67,9 @@ export function Stage({ name }: { name: string }) {
 
   const panes: Pane[] = mode === 'both' ? ['light', 'dark'] : [mode as Pane];
   const w = WIDTHS.find((x) => x.value === width)!;
-  const height = Math.max(240, heights[name] ?? 0);
+  //  높이는 캔버스가 보고한 «내용 높이» 그대로다. 바닥값(옛 240)은 링크 하나짜리 원자를
+  //   빈 판에 띄우던 원인이라 걷었다 — 첫 보고 전 한 프레임만 96으로 버틴다.
+  const height = FULL_HEIGHT.has(name) ? 720 : (heights[name] ?? 96);
 
   const src = (scheme: Pane) =>
     `/shell/part/${encodeURIComponent(name)}?scheme=${scheme}&fs=${fs}&view=${view}&probe=${probe === 'on' ? 1 : 0}`;

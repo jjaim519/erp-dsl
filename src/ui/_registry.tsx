@@ -1416,7 +1416,25 @@ export function Demo({ name }: { name: string }) {
     Text: <Stack gap="xxs"><Text variant="body">본문(body)</Text><Text variant="body-strong">강조(body-strong)</Text><Text variant="caption" color="secondary">보조(caption)</Text></Stack>,
     Title: <Stack gap="xxs"><Title variant="display">Display</Title><Title variant="heading">Heading</Title><Title variant="subheading">Subheading</Title></Stack>,
     Label: <Label htmlFor="x">담당자 이름</Label>,
-    Anchor: <Anchor href="#">상세 페이지로 이동</Anchor>,
+    //  Anchor의 정체는 «이동»이라, 링크 하나를 덩그러니 놓으면 아무것도 안 보인다.
+    //   ① 제일 흔한 자리가 «문장 안»이고 ② href가 살아 있어야 이동인지 확인이 되며
+    //   ③ 밑줄·색이 본문과 어떻게 갈리는지는 본문 옆에 놔야 읽힌다.
+    //   (옛 데모는 `href="#"` 링크 한 줄이라 눌러도 아무 일이 없었다 — 오너 관찰.)
+    Anchor: (
+      <Stack gap="sm">
+        <Text variant="body">
+          문장 안에서: 자세한 규격은 <Anchor href="/dev/part/Button">Button 상세</Anchor>를 보세요.
+          이동이 아닌 행동은 <Text variant="body-strong">버튼</Text>이 맡습니다.
+        </Text>
+        <Group gap="lg" align="center">
+          <Anchor href="/dev/part/Badge">단독 링크</Anchor>
+          <Anchor href="/dev/tokens">토큰 화면으로</Anchor>
+        </Group>
+        <Text variant="caption" color="secondary">
+          캔버스가 iframe이라 누르면 이 판 안에서 이동합니다 — 「상태 초기화」로 되돌립니다.
+        </Text>
+      </Stack>
+    ),
     Icon: <Group gap="sm"><Icon name="check-circle" /><Icon name="bell" color="danger" /><Icon name="settings" size="lg" /></Group>,
     Avatar: <Group gap="xs"><Avatar>김</Avatar><Avatar size="sm">병</Avatar><Avatar size="lg">준</Avatar></Group>,
     Image: <Image src={IMG_SRC} alt="예시" size="sm" />,

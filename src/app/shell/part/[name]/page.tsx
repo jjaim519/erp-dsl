@@ -63,8 +63,13 @@ export default function PartCanvas() {
 
   const pad = q.get('pad') === '0' ? 0 : 24;
 
+  //  ⚠ **`minHeight: 100vh`를 안 쓴다.** 쓰면 높이가 순환한다 — 캔버스가 부모가 준 높이를 100vh로
+  //   읽고 그걸 그대로 «내 높이»라 보고하니, 무대가 정한 값이 영원히 유지된다. 그래서 링크 하나짜리
+  //   원자가 240px 빈 판에 떠 있었다(오너 관찰: 「anchor가 뭔지도 안 보인다」).
+  //   높이는 **내용이 정하고** 무대는 그걸 받아 쓴다. 뷰포트 높이를 스스로 쓰는 부품(AppShell)만
+  //   무대 쪽에서 고정 높이를 준다(`_Stage`의 FULL_HEIGHT).
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-tertiary)', padding: pad }}>
+    <div style={{ background: 'var(--bg-tertiary)', padding: pad }}>
       {q.get('view') === 'matrix' ? <DemoMatrix name={name} /> : <Demo name={name} />}
       {q.get('probe') !== '0' && <Probe />}
     </div>
