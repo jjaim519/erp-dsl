@@ -1158,6 +1158,20 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Grid', 'Stack'],
       공유: ['_cells(셀 type enum)'],
     } },
+  { name: 'PageShell', layer: '유기체', role: 'AppShell 아래 **모든 화면의 골격** — 폭(1200 캡·중앙) · 세로 리듬 · 헤더 자리 · **세로 배관**(작업면이 뷰포트 잔여고를 받는 통로) · 본문 격자를 한 부품이 소유한다. 본문을 `tiles` 배열로 받아 **「page 위엔 widget만」을 구조로 강제**한다 — children으론 못 막는다(ReactElement<TileProps>도, 원소 종류를 지정한 형태도 둘 다 통과한다: JSX 표현식이 ReactElement<any,any>라서다. 헌법 6 「타입은 지도, 래퍼와 린트가 그물」의 사례). content가 ReactNode인 건 구멍이 아니라 Modal children과 동형(방식 A) — 규칙이 겨누는 건 «본문의 구조»지 타일 속 내용물이 아니다. **탈출구(Free 슬롯)는 안 만든다** — 열면 모두가 그리로 가고 규칙이 문서로 돌아간다. 격자로 표현이 안 되면 위젯을 잘못 나눈 신호로 읽는다(03 §11-3). Page는 폐기하지 않고 «전환 통로»로 남는다.',
+    props: [
+      { name: 'title', kind: '콘텐츠', values: 'string (PageHeader 위임)' },
+      { name: 'meta', kind: '콘텐츠', values: 'HeaderMeta[] — 배지·아이콘·정보텍스트' },
+      { name: 'actions', kind: '기능', values: 'Action[] (우측)' },
+      { name: 'controls', kind: '콘텐츠', values: 'ReactNode — 컨트롤 스트립(격자 밖, 높이=내용)' },
+      { name: 'tiles', kind: '값', values: '{ id?, colSpan?: 1..12, rowSpan?: 1|2|3, content }[]' },
+      { name: 'columns / gap / fill', kind: '스타일', values: 'Bento로 위임 — 12열 기본 · lg · 작업면' },
+    ],
+    composition: {
+      토큰: ['--page-max', '--page-chrome', 'spacing.lg'],
+      '배치 프리미티브': ['Bento', 'Bento.Tile'],
+      유기체: ['PageHeader'],
+    } },
   { name: 'AppShell', layer: '유기체', role: '페이지 전체 골격 — **2티어**(데스크탑 260 풀 넷바 / 태블릿 72 아이콘 레일). 상단바 없음, 유틸리티(알림·프로필)는 넷바 하단. **모바일은 범위 밖**(MobileShell이 받는다) — 하한 APPSHELL_MIN_WIDTH(768) 아래는 가로 스크롤로 예측 가능하게 무너진다.',
     props: [
       { name: 'logo / onLogoClick', kind: '콘텐츠', values: 'ReactNode, () => void (데스크탑 넷바 최상단. 태블릿 레일엔 로고 없음 — 72px엔 정사각 마크만 들어가 부실)' },

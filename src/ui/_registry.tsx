@@ -91,6 +91,7 @@ import { RichText } from './RichText';
 import { SectionHeader } from './SectionHeader';
 import { Breadcrumb } from './Breadcrumb';
 import { Bento } from './Bento';
+import { PageShell } from './PageShell';
 import { Accordion } from './Accordion';
 import { Drawer } from './Drawer';
 import { PaperModal } from './PaperModal';
@@ -2265,6 +2266,38 @@ export function Demo({ name }: { name: string }) {
     BoardList: <BoardListDemo />,
     BoardView: <BoardViewDemo />,
     BoardWrite: <BoardWriteDemo />,
+    PageShell: (
+      <PageShell
+        title="발주 관리"
+        meta={[{ kind: 'badge', label: '이번 달', tone: 'info' }]}
+        actions={[{ label: '신규 발주', variant: 'primary', icon: 'plus', onClick: () => {} }]}
+        tiles={[
+          { id: 's1', colSpan: 3, content: <SummaryCard label="승인 대기" icon="clock" tone="warning" count={12} amount={3400000} /> },
+          { id: 's2', colSpan: 3, content: <SummaryCard label="확정" icon="check-circle" tone="success" count={48} amount={18200000} /> },
+          { id: 's3', colSpan: 3, content: <SummaryCard label="반려" icon="x-circle" tone="danger" count={3} /> },
+          { id: 's4', colSpan: 3, content: <Stat label="발주액" value={fmtCurrency(12840000)} trend="up" delta="전월 +8.2%" icon="chart-bar" /> },
+          { id: 'l1', colSpan: 8, rowSpan: 2, content: (
+            <Card variant="elevated" padding="none" fill>
+              <div style={{ height: '100%', overflowY: 'auto' }}>
+                <DataTable
+                  columns={[
+                    { key: 'no', label: '발주번호', type: 'text' },
+                    { key: 'vendor', label: '거래처', type: 'text' },
+                    { key: 'amount', label: '금액', type: 'currency' },
+                  ]}
+                  rows={[
+                    { id: '1', no: 'PO-2026-0612', vendor: '㈜대한철물', amount: 1200000 },
+                    { id: '2', no: 'PO-2026-0613', vendor: '세양하드웨어', amount: 880000 },
+                  ]}
+                  status="ready" />
+              </div>
+            </Card>
+          ) },
+          { id: 'r1', colSpan: 4, content: <SummaryCard label="미수금" icon="wallet" tone="warning" count={7} amount={4300000} /> },
+          { id: 'r2', colSpan: 4, content: <Stat label="평균 리드타임" value="6.2일" icon="clock" /> },
+        ]}
+      />
+    ),
     Money: (
       <Stack gap="xs">
         <Group gap="lg"><Money value={1284000} /><Money value={1284000} symbol={false} /><Money value={412} unit="장" /></Group>

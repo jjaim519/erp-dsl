@@ -261,8 +261,15 @@ export function AppShell({
         </>
       </M.Navbar>
 
-      {/* 문서 스크롤(데스크탑·태블릿 공통). */}
-      <M.Main className="erp-appshell-main" style={{ background: 'var(--bg-tertiary)', minHeight: '100vh' }}>
+      {/* 문서 스크롤(데스크탑·태블릿 공통).
+          `--page-chrome` = 셸이 세로로 먹는 여백(= AppShell padding "lg" × 2). **PageShell의 작업면 모드가
+          `100dvh`에서 이 값을 빼서 잔여고를 잡는다** — 셸만이 이 수치를 알기 때문에 셸이 선언한다.
+          Main이 flex 컨테이너가 아니라 문서 스크롤이라(스티키·스크롤 복원·인쇄 CSS가 그 전제 위에 있다)
+          `flex:1`로는 못 흘리고, 변수 한 개로 잇는다. */}
+      <M.Main className="erp-appshell-main" style={{
+        background: 'var(--bg-tertiary)', minHeight: '100vh',
+        ['--page-chrome' as string]: 'calc(var(--mantine-spacing-lg) * 2)',
+      }}>
         {children}
       </M.Main>
 

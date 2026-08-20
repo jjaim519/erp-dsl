@@ -45,7 +45,11 @@ export { Radio } from './Radio';
 export { Card } from './Card';
 export { Divider } from './Divider';
 export { Container } from './Container';
-export { Page } from './Page';   // 페이지 폭 규율(1200 캡+중앙) — AppShell 아래 모든 화면 공통 래퍼
+// ⚠ **새 화면은 `PageShell`을 쓴다.** `Page`는 폭만 잡는 옛 통로로, 아직 안 옮긴 화면의 «전환 통로»다.
+export { Page } from './Page';   // 페이지 폭 규율(1200 캡+중앙)
+// PageShell = AppShell 아래 모든 화면의 골격 — 폭·세로 리듬·헤더 자리·**세로 배관**·본문 격자를 소유.
+//  본문을 `tiles` 배열로 받아 「page 위엔 widget만」을 **구조로** 강제한다(children으론 못 막는다 — 파일 헤더).
+export { PageShell, type PageTile } from './PageShell';
 
 // 배치 프리미티브
 export { Stack } from './Stack';

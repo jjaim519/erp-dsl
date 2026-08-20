@@ -18,8 +18,10 @@
 //  · [백로그] 흐름 모드 rowSpan 4~6 확장·모바일 reflow. raw CSS grid는 Calendar 7열과 동류의 명시 예외.
 import type { ReactNode } from 'react';
 
-type Columns = 2 | 3 | 4 | 6 | 12;
-type Gap = 'sm' | 'md' | 'lg';
+export type BentoColumns = 2 | 3 | 4 | 6 | 12;
+export type BentoGap = 'sm' | 'md' | 'lg';
+type Columns = BentoColumns;
+type Gap = BentoGap;
 type GridProps = { columns?: Columns; gap?: Gap; fill?: boolean; children: ReactNode };
 
 // colSpan은 **12의 약수가 아니어도 된다.** 그 제한은 `Grid`(균등 분할) 규칙을 여기에 잘못 옮긴 것이었다 —
@@ -28,7 +30,9 @@ type GridProps = { columns?: Columns; gap?: Gap; fill?: boolean; children: React
 //  **닫힘은 격자가 아니라 «위젯이 선언하는 footprint 부분집합»에서 일어난다**(05 §2-1 `WidgetDef.footprints`).
 //  즉 «어떤 폭이 존재하나」는 격자가 아니라 위젯이 정한다 — 여기 1~12는 그 선언이 놓일 좌표계일 뿐이다.
 //  (Grafana도 같은 짜임이다: 격자는 w 1~24를 다 열고, 무엇을 쓸지는 패널이 정한다.)
-type Span = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+export type BentoSpan = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12;
+type Span = BentoSpan;
+export type BentoRowSpan = 1 | 2 | 3;
 type TileProps = { colSpan?: Span; rowSpan?: 1 | 2 | 3; children: ReactNode };
 
 // 흐름 모드 셀 한 칸 높이. **정의: 가장 작은 «자기완결 위젯»의 자연 높이를 8px 스냅한 값.**
