@@ -202,12 +202,16 @@ const motion = {
 } as const;
 const easingStandard = 'ease';
 
-// 모서리 곡률(애플식 squircle). corner-shape: superellipse(2)=squircle.
-// radius 스케일(sm/md/full)·값은 안 건드리고, 그 위에 *연속 곡률*만 얹는 단일 토큰.
+// 모서리 곡률(애플식). radius 스케일 위에 *연속 곡률*만 얹는 단일 토큰.
 // border·box-shadow·outline·overflow가 이 모양을 네이티브로 따라간다(충돌 없음).
 // 미지원 브라우저(Safari/Firefox)는 무시 → 평범한 둥근 모서리로 graceful fallback.
-// 값은 화면 검증에서 조정(더 부드럽게=superellipse(1.8) 등). 컴포넌트엔 prop으로 안 연다(헌법 5).
-const cornerShape = 'superellipse(2)';
+// 컴포넌트엔 prop으로 안 연다(헌법 5).
+//
+// ⚠ **CSS의 `superellipse(s)`에서 s는 수학 지수가 아니다 — 수학 k = 2^s다.**
+//    s1 = k2 = 원호 / s2 = k4 = 표준 스쿼클(`squircle` 키워드의 정체) / **s2.32 = k5 = 애플 quintic**.
+//    애플 아이콘은 quintic이라 표준 스쿼클보다 한 단 더 각지다. 실형상은 연속곡률 스플라인이지
+//    순수 초타원이 아니고, n=5가 «가장 가까운 단순 초타원»이다 — 초타원으로 갈 수 있는 최선이 여기다.
+const cornerShape = 'superellipse(2.32)';
 
 // 페이지 콘텐츠 폭 천장 — AppShell 아래 "모든" 화면의 유일한 폭 캡(중앙정렬은 Page 원자가 소유).
 // 1200 = 앱/정보형 정석 대역(Mesh 1200 · Tailwind max-w-7xl 1280 · Bootstrap xxl 1320 의 하단) +
@@ -238,9 +242,30 @@ export const theme = createTheme({
     xs: '0.75rem', sm: '0.875rem', md: '1rem', lg: '1.25rem', xl: '1.75rem',
   },
 
-  // xs(4px): sm을 4→8로 키운 squircle bump이 "작은 내부 요소(메뉴항목·컬럼항목·스테퍼 버튼 등)"가
-  // 쓸 ~4px 토큰을 고아로 만들어, 그 자리에 px 하드코딩 drift가 생겼었다. xs를 도로 열어 그 자리를 토큰으로 메운다.
-  radius: { xs: '4px', sm: '8px', md: '16px', full: '9999px' }, // md 키움(squircle 곡률이 보이려면 큰 반경 필요 — 8px는 안 드러남)
+  // ── radius = «크기 대역»의 함수다(상수가 아니다) ────────────────────────────────
+  //  단 이름이 곧 대역이고, 실제 소비처가 이미 그렇게 갈려 있다:
+  //    xs = 작은 내부 요소(16~30px — 색 스와치·마커·툴바 항목·캘린더 바, CSS 34곳)
+  //    sm = 컨트롤(28~44px — Button·TextInput·Select·Textarea)          ← defaultRadius
+  //    md = 면(Card·Modal·Popover·Drawer·DocModal)
+  //    full = 알약·원(Chip·Avatar·Switch)
+  //
+  //  값을 올린 이유(v2): **곡률이 안 보이고 있었다.** 원호와 스쿼클이 45°에서 벌어지는 거리는
+  //  `0.189 × r`이라 r8이면 1.5px다 — 화면에서 제일 많이 보이는 물건(버튼·입력칸)에 스쿼클이
+  //  사실상 실현된 적이 없었다. 곡률이 읽히기 시작하는 건 r12부터(2.3px).
+  //
+  //  **왜 한 값으로 통일하지 않나 — 취향이 아니라 기하다.** `r ≥ 높이/2`면 브라우저가 클램프해
+  //  알약이 된다. 우리 박스는 16px~600px으로 40배 차이 나므로 한 값이 전 대역을 못 덮는다:
+  //  r16을 통일하면 16px 스와치·28px 버튼·32px 버튼이 전부 알약이 된다.
+  //  **컨트롤 대역의 상한을 묶는 건 Button xs(28)** — 임계가 14라 12가 실질 최대다.
+  //  애플도 통일 안 한다(아이콘 반경 = 폭의 22.37%, 즉 비례).
+  //
+  //  ※ **px를 유지한다**(rem 아님). radius는 *공간*이 아니라 *형태* 속성이라, 폰트 스케일을 태우면
+  //    사용자가 확대할수록 카드가 점점 둥글어져 «가독성»이 아니라 «정체성»이 바뀐다.
+  //  ※ 알약을 버튼에서 피하는 근거는 **형태 관습이 아니다** — M3는 오히려 버튼이 알약이고 칩이
+  //    각졌다(M2에선 반대였다). 우리 근거는 둘: ① 우리 `Chip`이 full을 점유했고 둘이 같은 화면에
+  //    공존한다(SearchToolbar·MobileChoice) ② 조사한 **업무용** 시스템이 전부 각진 쪽이다
+  //    (Carbon 0 · Fluent 4 · Primer 6 · Ant 6 · shadcn 6). 알약 버튼은 모바일·소비자 문법이다.
+  radius: { xs: '6px', sm: '12px', md: '20px', full: '9999px' },
   defaultRadius: 'sm',
 
   // 그림자: none은 "안 줌"이라 키 없음. sm(카드)·md(모달)만.
