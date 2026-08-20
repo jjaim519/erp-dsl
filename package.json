@@ -40,7 +40,8 @@
     "pdfjs:assets": "node scripts/copy-pdfjs-assets.mjs",
     "predev": "node scripts/copy-pdfjs-assets.mjs",
     "prebuild": "node scripts/copy-pdfjs-assets.mjs",
-    "check:drift": "node scripts/check-catalog-drift.mjs"
+    "check:drift": "node scripts/check-catalog-drift.mjs",
+    "check:layer": "node scripts/check-layer-drift.mjs"
   },
   "peerDependencies": {
     "@mantine/core": "^8.3.18",
