@@ -53,10 +53,17 @@ export default function PartCanvas() {
       { type: 'erp-stage-height', name, h: document.documentElement.scrollHeight },
       window.location.origin,
     );
+    //  ⚠ ResizeObserver만으론 **열리는 것**을 못 잡는다. 드롭다운·팝오버·달력은 Mantine이
+    //   body의 공유 포털 노드에 꽂으므로 documentElement의 박스 크기가 안 변하고, 변하는 건
+    //   `scrollHeight`뿐이다. 그래서 **삽입도 관찰**한다 — 안 그러면 열자마자 잘린다
+    //   (오너 관찰: 「파레트를 줄여놓으면 클릭했을 때 인터랙션을 볼 수가 없다」).
     const ro = new ResizeObserver(send);
     ro.observe(document.documentElement);
+    ro.observe(document.body);
+    const mo = new MutationObserver(send);
+    mo.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
     send();
-    return () => ro.disconnect();
+    return () => { ro.disconnect(); mo.disconnect(); };
   }, [name]);
 
   if (!q) return null;   // 쿼리를 읽기 전엔 안 그린다(모드가 한 프레임 깜빡이는 걸 막는다)

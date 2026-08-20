@@ -11,6 +11,7 @@
 //            768은 AppShell 하한(`APPSHELL_MIN_WIDTH`)이라 그 아래는 안 연다 — 무너지는 게 정상인 자리다.
 //   ④ 탐침   측정 HUD on/off.
 //   ⑤ 바탕   흰 면(기본) ↔ 페이지 바닥. 부품 대부분은 카드 안(흰 면)에 살고, 위젯만 바닥 위에 뜬다.
+//   ⑥ 높이   자동(내용) ↔ 480 ↔ 720. 고정 배치로 뜨는 것(모달·시트)만 손으로 키운다.
 //
 //  폰트 스케일은 **좌측 트리의 토글이 주인**이다. iframe은 별도 문서라 부모의 `:root`가 상속되지 않으므로
 //  여기서 관찰해 `?fs=`로 실어 보낸다(`_MobileStage`가 쓰던 수법 그대로 — 두 무대가 같은 자를 쓴다).
@@ -22,9 +23,18 @@ import { Group, SegmentedControl, Anchor, Text } from '@/ui';
 import { hasMatrix } from './_matrix';
 
 // 자기 높이를 «뷰포트»에서 가져오는 부품 — 캔버스가 자기 높이를 못 말하므로(순환) 무대가 준다.
-//  AppShell 하나뿐이다(MobileShell 계열은 폰 캔버스가 따로 받는다). 목록이 셋을 넘으면 부품 쪽에
-//  선언을 두는 게 맞지만, 지금은 여기 한 줄이 제일 싸다.
 const FULL_HEIGHT = new Set(['AppShell']);
+
+//  높이 — 기본은 «자동»(내용이 정한다. 작은 원자가 빈 판에 뜨지 않게).
+//   열리는 것(드롭다운·팝오버·달력)은 캔버스가 삽입을 관찰해 **자동으로 따라 커진다.**
+//   고정 배치로 뜨는 것(모달·드로어·시트)은 `scrollHeight`를 안 늘려서 자동이 못 잡는다 —
+//   그때만 손으로 키운다. 부품 목록을 또 두는 대신 토글 하나로 여는 이유: 목록은 언젠가 틀리고,
+//   무대를 조작하는 건 사람이다.
+const HEIGHTS = [
+  { value: 'auto', label: '자동' },
+  { value: '480', label: '480' },
+  { value: '720', label: '720' },
+];
 
 const WIDTHS = [
   { value: 'min', label: '768', px: 768 },      // AppShell 하한 — 그 아래는 가로 스크롤로 무너지는 게 계약
@@ -40,6 +50,7 @@ export function Stage({ name }: { name: string }) {
   const [width, setWidth] = useState('base');
   const [probe, setProbe] = useState('on');
   const [bg, setBg] = useState('surface');   // 기본 = 흰 면(부품 대부분이 사는 자리)
+  const [hMode, setHMode] = useState('auto');
   const [heights, setHeights] = useState<Record<string, number>>({});
   const [nonce, setNonce] = useState(0);   // 「상태 초기화」 — 데모 내부 상태를 버리고 새로 마운트
 
@@ -71,7 +82,9 @@ export function Stage({ name }: { name: string }) {
   const w = WIDTHS.find((x) => x.value === width)!;
   //  높이는 캔버스가 보고한 «내용 높이» 그대로다. 바닥값(옛 240)은 링크 하나짜리 원자를
   //   빈 판에 띄우던 원인이라 걷었다 — 첫 보고 전 한 프레임만 96으로 버틴다.
-  const height = FULL_HEIGHT.has(name) ? 720 : (heights[name] ?? 96);
+  const height = hMode !== 'auto' ? Number(hMode)
+    : FULL_HEIGHT.has(name) ? 720
+    : (heights[name] ?? 96);
 
   const src = (scheme: Pane) =>
     `/shell/part/${encodeURIComponent(name)}?scheme=${scheme}&fs=${fs}&view=${view}`
@@ -89,6 +102,7 @@ export function Stage({ name }: { name: string }) {
           options={[{ label: '라이트', value: 'light' }, { label: '다크', value: 'dark' }, { label: '병치', value: 'both' }]} />
         <SegmentedControl size="sm" value={width} onChange={setWidth}
           options={WIDTHS.map((x) => ({ label: x.label, value: x.value }))} />
+        <SegmentedControl size="sm" value={hMode} onChange={setHMode} options={HEIGHTS} />
         <SegmentedControl size="sm" value={bg} onChange={setBg}
           options={[{ label: '흰 면', value: 'surface' }, { label: '바닥', value: 'floor' }]} />
         <SegmentedControl size="sm" value={probe} onChange={setProbe}
