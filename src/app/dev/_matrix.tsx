@@ -46,7 +46,7 @@ function Row({ children }: { children: ReactNode }) {
 
 // ── Button ──────────────────────────────────────────────────────────────────────
 const BTN_VARIANTS = ['primary', 'secondary', 'danger', 'ghost', 'accent'] as const;
-const BTN_SIZES = ['sm', 'md'] as const;
+const BTN_SIZES = ['xs', 'sm', 'md'] as const;
 
 function FocusRow() {
   //  focus는 «신뢰 상태»가 아니라 프로그램으로 만들 수 있다 — 그래서 여기만 강제한다.

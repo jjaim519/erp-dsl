@@ -14,7 +14,31 @@ import type { ReactNode } from 'react';
 // ─────────────────────────────────────────────────────────────
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost' | 'accent';
-type ButtonSize = 'sm' | 'md';
+type ButtonSize = 'xs' | 'sm' | 'md';
+
+// ── 밀도 3단 — 값을 Mantine에서 «뺏어와» 우리가 고정한다 ────────────────────────────
+//
+//  전에는 `size`를 Mantine에 그대로 넘겼다. 그래서 우리가 고른 적 없는 값이 화면에 서 있었고
+//  (sm 36 / md 42 · 좌우 18 / 22), 무엇보다 **글자 크기가 size와 함께 커졌다** — md 버튼이 16px이라
+//  본문(body 14)보다 큰 글자를 달고 있었다. 업무 화면에서 버튼 글자가 본문보다 크면 랜딩 CTA 신호가 켜진다.
+//  Carbon은 다섯 사이즈 전부 14px을 쓰고 예외가 마케팅용(large expressive) 하나뿐이다.
+//  → **크기는 높이·패딩으로만 말한다. 글자는 본문과 같은 14px에 고정.**
+//
+//  이건 새 결정이 아니라 복귀다 — 「01 크기 = 밀도」가 *"size는 안쪽 여백을 정하고 높이는 그 결과로
+//  도출된다"*고 못박아 뒀는데, size를 그대로 넘기던 동안 그게 «높이·패딩·글자 3축 묶음»이 되어 있었다.
+//
+//  단은 셋이다. 둘이던 시절엔 «표 행 안에 들어갈 버튼»이 없어 sm(36)을 억지로 쓰거나 손으로 그렸다.
+//  업계 수렴대역도 조밀 24~28 · 기본 32~36 · 큰 것 40 셋이다(Ant 24/32/40 · Primer 28/32/40 ·
+//  Fluent 24/32/40 · shadcn 32/36/40 · Carbon 32/40/48).
+//
+//  ⚠ **값은 rem이다.** 폰트 스케일(루트 font-size 전역 줌)이 고정 px을 못 태운다 — CountBadge가
+//    같은 이유로 rem화됐다. 좌우 여백은 아예 간격 토큰이라 스케일·재정의가 공짜로 따라온다.
+//  ※ 높이는 8px 스냅(28만 4px) — 이 레포의 셸 치수 습관과 같은 자.
+const SIZE: Record<ButtonSize, { height: string; paddingX: string }> = {
+  xs: { height: '1.75rem', paddingX: 'var(--mantine-spacing-xs)' },  // 28 — 표 행 안·조밀 툴바·칩 옆
+  sm: { height: '2rem',    paddingX: 'var(--mantine-spacing-sm)' },  // 32 — 기본 대역
+  md: { height: '2.5rem',  paddingX: 'var(--mantine-spacing-md)' },  // 40 — 폼 커밋·모달 푸터
+};
 
 type ButtonProps = {
   variant?: ButtonVariant;
@@ -96,6 +120,17 @@ export function ButtonBase({
       color={policy.color}
       variant={policy.mantineVariant}
       size={size}
+      /* 밀도 3축을 우리 값으로 덮는다. `styles`가 아니라 `vars`인 이유: Mantine이 size에서 계산한
+         CSS 변수를 «치환»하는 자리가 여기라, styles로 같은 변수를 또 적으면 어느 쪽이 이길지가
+         선언 순서에 달린다(서드파티 내부 순서에 정렬을 맡기지 않는다 — 01 따름정리). */
+      vars={() => ({
+        root: {
+          '--button-height': SIZE[size].height,
+          '--button-padding-x': SIZE[size].paddingX,
+          // 글자는 size와 무관하게 본문과 같은 단(14px). 크기는 높이·패딩이 말한다.
+          '--button-fz': 'var(--mantine-font-size-sm)',
+        },
+      })}
       radius="sm"        // radius는 정책으로 고정. 바깥에서 못 바꾼다.
       aria-label={ariaLabel}
       leftSection={leftIcon}

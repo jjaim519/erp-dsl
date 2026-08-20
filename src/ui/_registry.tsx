@@ -1331,7 +1331,24 @@ export function Demo({ name }: { name: string }) {
   });
 
   const D: Record<string, ReactNode> = {
-    Button: <Group gap="xs" wrap><Button variant="primary">저장</Button><Button variant="secondary">취소</Button><Button variant="danger">삭제</Button><Button variant="ghost">더보기</Button></Group>,
+    Button: (
+      <Stack gap="sm">
+        {/* variant — 색·강조의 축. accent는 «물러났지만 이 화면의 주 진입»(글쓰기·더보기·초기화). */}
+        <Group gap="xs" align="center" wrap>
+          <Text variant="caption" color="secondary">variant</Text>
+          <Button variant="primary">저장</Button><Button variant="secondary">취소</Button>
+          <Button variant="danger">삭제</Button><Button variant="ghost">더보기</Button>
+          <Button variant="accent">글쓰기</Button>
+        </Group>
+        {/* 밀도 — 높이·좌우여백만 갈린다. **글자는 셋 다 14px**(크기를 글자로 말하지 않는다). */}
+        <Group gap="xs" align="center" wrap>
+          <Text variant="caption" color="secondary">size</Text>
+          <Button variant="secondary" size="xs">28</Button>
+          <Button variant="secondary" size="sm">32</Button>
+          <Button variant="secondary" size="md">40</Button>
+        </Group>
+      </Stack>
+    ),
     Badge: (
       <Stack gap="sm">
         {/* weak(기본) — 평상시. 톤만 얹는다. */}

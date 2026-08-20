@@ -46,6 +46,8 @@ export type CatalogEntry = {
 const ROLE_TEXT = "'primary' | 'secondary' | 'danger'";
 const BADGE = "'neutral' | 'success' | 'warning' | 'danger' | 'info'";
 const SIZE2 = "'sm' | 'md'";
+// 밀도 3단 — 컨트롤의 「안쪽 여백 단계」(01 크기=밀도). 높이는 그 결과로 도출된다.
+const DENSITY = "'xs' | 'sm' | 'md'";
 const SIZE3 = "'sm' | 'md' | 'lg'";
 
 // 의미 원자의 하위 분류(뷰 그룹핑 단일 출처) — 입력군 vs 표시·행동. 새 입력 원자는 여기 한 곳에 등록.
@@ -56,10 +58,10 @@ export const INPUT_ATOMS: ReadonlySet<string> = new Set([
 
 export const CATALOG: CatalogEntry[] = [
   // ── 의미 원자 — 표시·행동 ─────────────────────────────────────────────
-  { name: 'Button', layer: '의미 원자', role: '클릭 행동의 기본 단위. variant가 색·강조를 닫는다.',
+  { name: 'Button', layer: '의미 원자', role: '클릭 행동의 기본 단위. variant가 색·강조를 닫고, size는 «밀도»만 정한다 — 높이·좌우여백은 갈리고 **글자는 전 사이즈 14px 고정**(크기를 글자로 말하면 버튼이 본문보다 커진다).',
     props: [
-      { name: 'variant', kind: '스타일', values: "'primary' | 'secondary' | 'danger' | 'ghost'" },
-      { name: 'size', kind: '스타일', values: SIZE2 },
+      { name: 'variant', kind: '스타일', values: "'primary' | 'secondary' | 'danger' | 'ghost' | 'accent'" },
+      { name: 'size', kind: '스타일', values: DENSITY + '  (28 / 32 / 40 — 표 행 안 · 기본 · 폼 커밋)' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (텍스트/아이콘)' },
       { name: 'leftIcon / rightIcon', kind: '콘텐츠', values: 'ReactNode(아이콘)' },
       { name: 'loading / disabled / fullWidth', kind: '스타일', values: 'boolean' },
@@ -506,8 +508,8 @@ export const CATALOG: CatalogEntry[] = [
     props: [
       { name: 'icon', kind: '콘텐츠', values: 'IconName' },
       { name: 'label', kind: '콘텐츠', values: 'string (aria-label 필수)' },
-      { name: 'variant', kind: '스타일', values: "'primary' | 'secondary' | 'danger' | 'ghost'" },
-      { name: 'size', kind: '스타일', values: SIZE2 },
+      { name: 'variant', kind: '스타일', values: "'primary' | 'secondary' | 'danger' | 'ghost' | 'accent'" },
+      { name: 'size', kind: '스타일', values: DENSITY },
     ],
     composition: {
       토큰: ['variant→색 역할(primary/danger/secondary)', 'radius sm', '정사각'],

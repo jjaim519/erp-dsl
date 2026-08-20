@@ -12,7 +12,7 @@ type Props = {
   icon: IconName;
   label: string;            // aria-label(필수)
   variant?: Variant;
-  size?: 'sm' | 'md';
+  size?: 'xs' | 'sm' | 'md';   // Button 밀도 3단 그대로 — 표 행 안 액션이 xs의 자리다
   disabled?: boolean;
   // Button 원자가 이미 갖고 있는데 분자가 안 흘려보내던 둘. 새 축이 아니라 *누락된 통로*다.
   //  · type='submit' — 아이콘 전용 제출 버튼(NoteThread 컴포저). 폼 소유 부품이 Enter 제출을 form으로
@@ -39,7 +39,9 @@ export function IconButton({ icon, label, variant = 'ghost', size = 'md', disabl
   return (
     <ButtonBase variant={m.btn} size={size} iconOnly ariaLabel={label} disabled={disabled}
       loading={loading} type={type} onClick={onClick}>
-      <Icon name={icon} size={size} color={m.iconColor} />
+      {/* 아이콘 단은 버튼 밀도와 «같은 이름»이 아니다 — 밀도 3단(28/32/40)에 아이콘 단은 둘뿐이라,
+          조밀 두 단(xs·sm)이 아이콘 sm을 공유한다. 28 버튼에 md 아이콘을 넣으면 글리프가 칸을 꽉 채운다. */}
+      <Icon name={icon} size={size === 'md' ? 'md' : 'sm'} color={m.iconColor} />
     </ButtonBase>
   );
 }
