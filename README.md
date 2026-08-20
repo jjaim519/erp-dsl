@@ -48,7 +48,7 @@
 ```
 간격(gap·padding)   : xxs xs sm md lg xl xxl        (4px 베이스, 임의 px 금지)
 radius              : sm md full
-밀도(size)          : xs sm md                       (컨트롤만; 높이는 결과로 도출 — 버튼 28/32/40)
+밀도(size)          : xs sm md                       (컨트롤만; 높이는 결과로 도출 — 버튼 28/32/40, 좌우여백 12/16/24)
                      글자 크기는 밀도와 무관하게 본문 단(14px) 고정
 콘텐츠 폭(maxWidth) : narrow default wide
 

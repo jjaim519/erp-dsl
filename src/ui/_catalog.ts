@@ -61,7 +61,7 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'Button', layer: '의미 원자', role: '클릭 행동의 기본 단위. variant가 색·강조를 닫고, size는 «밀도»만 정한다 — 높이·좌우여백은 갈리고 **글자는 전 사이즈 14px 고정**(크기를 글자로 말하면 버튼이 본문보다 커진다).',
     props: [
       { name: 'variant', kind: '스타일', values: "'primary' | 'secondary' | 'danger' | 'ghost' | 'accent'" },
-      { name: 'size', kind: '스타일', values: DENSITY + '  (28 / 32 / 40 — 표 행 안 · 기본 · 폼 커밋)' },
+      { name: 'size', kind: '스타일', values: DENSITY + '  (높이 28 / 32 / 40 · 좌우여백 12 / 16 / 24 — 표 행 안 · 기본 · 폼 커밋)' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (텍스트/아이콘)' },
       { name: 'leftIcon / rightIcon', kind: '콘텐츠', values: 'ReactNode(아이콘)' },
       { name: 'loading / disabled / fullWidth', kind: '스타일', values: 'boolean' },

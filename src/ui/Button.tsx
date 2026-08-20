@@ -31,13 +31,22 @@ type ButtonSize = 'xs' | 'sm' | 'md';
 //  업계 수렴대역도 조밀 24~28 · 기본 32~36 · 큰 것 40 셋이다(Ant 24/32/40 · Primer 28/32/40 ·
 //  Fluent 24/32/40 · shadcn 32/36/40 · Carbon 32/40/48).
 //
+//  **좌우 여백은 세로 여백의 ~2배**(업계 경험칙). 이 비를 안 지키면 버튼이 정사각이 된다 —
+//  그리고 **한글에서 그게 먼저 터진다**: "저장"은 14px에서 약 28px인데 "Save"는 32, "Cancel"은 44라,
+//  Latin 라벨을 전제로 잡힌 여백이 CJK에선 글자보다 여백이 작아지는 구간으로 들어간다.
+//  (알려진 현상이고 업계 대응은 둘 — Material의 min-width 64dp, 또는 여백 자체를 키우기.
+//   CJK엔 후자가 맞다: 번역으로 라벨이 길어지면 min-width는 쉽게 무의미해진다.)
+//  ⚠ 초판(v1)은 여기서 틀렸다 — 여백을 xs/sm/md(8/12/16)로 잡아 비가 1.1~1.3이 됐고 화면에서
+//    곧바로 「정사각」으로 읽혔다. 글자를 16→14로 줄이면 **세로 여백이 늘어나므로 가로도 같이
+//    늘려야 한다.** 반대로 줄인 것이 원인이었다.
+//
 //  ⚠ **값은 rem이다.** 폰트 스케일(루트 font-size 전역 줌)이 고정 px을 못 태운다 — CountBadge가
 //    같은 이유로 rem화됐다. 좌우 여백은 아예 간격 토큰이라 스케일·재정의가 공짜로 따라온다.
 //  ※ 높이는 8px 스냅(28만 4px) — 이 레포의 셸 치수 습관과 같은 자.
 const SIZE: Record<ButtonSize, { height: string; paddingX: string }> = {
-  xs: { height: '1.75rem', paddingX: 'var(--mantine-spacing-xs)' },  // 28 — 표 행 안·조밀 툴바·칩 옆
-  sm: { height: '2rem',    paddingX: 'var(--mantine-spacing-sm)' },  // 32 — 기본 대역
-  md: { height: '2.5rem',  paddingX: 'var(--mantine-spacing-md)' },  // 40 — 폼 커밋·모달 푸터
+  xs: { height: '1.75rem', paddingX: 'var(--mantine-spacing-sm)' },  // 28 · 좌우 12 (세로 7 → 1.7배)
+  sm: { height: '2rem',    paddingX: 'var(--mantine-spacing-md)' },  // 32 · 좌우 16 (세로 9 → 1.8배)
+  md: { height: '2.5rem',  paddingX: 'var(--mantine-spacing-lg)' },  // 40 · 좌우 24 (세로 13 → 1.9배)
 };
 
 type ButtonProps = {
