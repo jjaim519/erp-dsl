@@ -67,7 +67,7 @@ function ButtonMatrix() {
   return (
     <Stack gap="xl">
       {BTN_SIZES.map((size) => (
-        <Block key={size} title={`size = ${size}`} note="가로 = 상태(prop) · 세로 = variant">
+        <Block key={size} title={`size = ${size}`} note="가로 상태 · 세로 variant">
           <Stack gap="sm">
             {BTN_VARIANTS.map((variant) => (
               <Row key={variant}>
@@ -82,13 +82,13 @@ function ButtonMatrix() {
         </Block>
       ))}
 
-      <Block title="포커스" note="focus는 프로그램으로 만들 수 있는 유일한 상태 — 왼쪽에 자동으로 걸어 둔다">
+      <Block title="포커스" note="왼쪽에 자동으로 걸어 둔다">
         <FocusRow />
       </Block>
 
       {/* 극단 콘텐츠 — 「일부러 틀린 걸 넣어서 막히는지 본다」(02 §9-1)의 콘텐츠판.
           한글 2음절은 라틴 4자(Save)와 폭이 달라서, 영어 라벨로는 안 보이는 결함이 여기서만 보인다. */}
-      <Block title="극단 콘텐츠" note="라벨 길이가 기하를 어떻게 흔드나 — 한글 2음절 / 7음절 / 장문 / 전폭">
+      <Block title="극단 콘텐츠" note="한글 2음절 · 7음절 · 장문 · 전폭">
         <Stack gap="sm">
           <Row>
             <Cell label="2음절"><Button variant="primary">저장</Button></Cell>

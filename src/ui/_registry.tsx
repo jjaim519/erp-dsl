@@ -1423,17 +1423,12 @@ export function Demo({ name }: { name: string }) {
     Anchor: (
       <Stack gap="sm">
         <Text variant="body">
-          문장 안에서: 자세한 규격은 <Anchor href="/dev/part/Button">Button 상세</Anchor>를 보세요.
-          이동이 아닌 행동은 <Text variant="body-strong">버튼</Text>이 맡습니다.
+          자세한 규격은 <Anchor href="/dev/part/Button">Button 상세</Anchor>를 보세요.
         </Text>
         <Group gap="lg" align="center">
           <Anchor href="/dev/part/Badge">단독 링크</Anchor>
           <Anchor href="https://developer.mozilla.org/docs/Web/HTML/Element/a" external>외부 문서</Anchor>
         </Group>
-        <Text variant="caption" color="secondary">
-          외부 링크는 표식(↗)·새 탭·rel이 <b>함께</b> 붙는다 — 라벨에 손으로 적지 않는다.
-          SPA 이동은 <code>onNavigate</code>가 <b>좌클릭만</b> 가로챈다(⌘/Ctrl+클릭은 새 탭 그대로).
-        </Text>
       </Stack>
     ),
     Icon: <Group gap="sm"><Icon name="check-circle" /><Icon name="bell" color="danger" /><Icon name="settings" size="lg" /></Group>,

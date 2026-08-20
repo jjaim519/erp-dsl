@@ -89,17 +89,12 @@ export default function BentoLab() {
     <Stack gap="xl">
       <Stack gap="xxs">
         <Title variant="display">Bento 실험대</Title>
-        <Text variant="body" color="secondary">
-          ROW_UNIT 실측 · 흐름↔작업면 · colSpan 쌍(8+4 · 9+3). 격자는 12열 고정, 간격 lg(24).
-        </Text>
+        <Text variant="body" color="secondary">12열 · 간격 lg(24)</Text>
       </Stack>
 
       {/* ① 실측 — 높이를 안 고정한 격자라 위젯이 «자기 높이»를 말한다 */}
       <Stack gap="sm">
         <Text variant="body-strong">① ROW_UNIT 실측 — 가장 작은 자기완결 위젯의 자연 높이</Text>
-        <Text variant="caption" color="secondary">
-          높이를 안 준 칸에 실제 위젯을 넣고 잰다. 이 값의 8px 스냅이 ROW_UNIT 후보다 — 고르는 게 아니라 재는 것.
-        </Text>
         <div style={{ display: 'grid', gridTemplateColumns: `repeat(${COLS}, minmax(0,1fr))`, gap: GAP }}>
           <Measure label="SummaryCard" span={3}>
             <SummaryCard label="승인 대기" icon="clock" tone="warning" count={12} amount={3400000} />
@@ -123,10 +118,6 @@ export default function BentoLab() {
           <SegmentedControl size="sm" value={row} onChange={setRow}
             options={ROW_CANDIDATES} />
         </Group>
-        <Text variant="caption" color="secondary">
-          업무 화면은 스크롤한다(Grafana·Fiori OVP·Viva 전부). 단 <b>높이는 내용이 못 정한다</b>는 유지 —
-          스크롤은 「칸이 몇 줄이냐」의 문제지 「칸이 늘어나느냐」의 문제가 아니다.
-        </Text>
         {/* ROW_UNIT은 공개 prop이 아니라 내부 CSS 변수다 — 실험대만 이렇게 갈아 끼운다. */}
         <div style={{ ['--bento-row' as string]: row }}>
           <Bento columns={12} gap="lg">
@@ -142,10 +133,6 @@ export default function BentoLab() {
       {/* ③ colSpan 쌍 — 12의 약수가 아닌 것들이 실제로 쓸 만한가 */}
       <Stack gap="sm">
         <Text variant="body-strong">③ colSpan 쌍 — 8+4 · 9+3은 약수가 아니지만 완결된다</Text>
-        <Text variant="caption" color="secondary">
-          지금 문서(05 §1-3)는 w를 12의 약수 5종으로 닫아 뒀는데, 그러면 <b>본문+사이드 레일(8+4)</b>과
-          <b> 목록+필터(9+3)</b>가 표현이 안 된다. 격자는 좌표계만 주고, 무엇을 쓸지는 위젯이 선언한다.
-        </Text>
         <Bento columns={12} gap="lg">
           <Bento.Tile colSpan={8} rowSpan={2}>{TABLE}</Bento.Tile>
           <Bento.Tile colSpan={4}><SummaryCard label="미수금" icon="wallet" tone="warning" count={7} amount={4300000} /></Bento.Tile>
@@ -162,12 +149,6 @@ export default function BentoLab() {
       {/* ④ 작업면 — 스크롤 0. iOS 「한 화면」의 우리식 대응물 */}
       <Stack gap="sm">
         <Text variant="body-strong">④ 작업면(fill) — 스크롤 0, 행이 잔여고를 등분</Text>
-        <Text variant="caption" color="secondary">
-          2-pane 저작 화면처럼 <b>스크롤이 있으면 안 되는</b> 자리. <b>높이는 부모가 준다</b> —
-          실전에선 AppShell → Page 배관이 흘려주는 <b>뷰포트 잔여고</b>이고, 여기선 그걸 흉내내려고
-          <code> calc(100dvh − 12rem)</code>을 쓴다(옛 520px 고정은 실제보다 절반쯤 짧아 오해를 줬다).
-          행에는 <b>ROW_UNIT 하한</b>이 걸려 있어, 잔여고가 모자라면 칸이 줄어 잘리는 대신 넘쳐서 무너진다.
-        </Text>
         <div style={{ height: 'calc(100dvh - 12rem)', minHeight: 360 }}>
           <Bento columns={12} gap="lg" fill>
             <Bento.Tile colSpan={4} rowSpan={2}><Slab label="4×2 — 좌 구조" /></Bento.Tile>

@@ -37,7 +37,20 @@ for (const m of read('_catalog.ts').matchAll(/\{\s*name:\s*'([^']+)'\s*,\s*layer
 const demos = new Set();
 for (const m of read('_mobileDemos.tsx').matchAll(/^\s{2}([A-Za-z][\w]*):\s*\{\s*render:/gm)) demos.add(m[1]);
 
-const problems = [];
+// ── role 게이트 — 「부품명 아래 한 줄」 계약을 기계가 지킨다 ────────────────────
+//  role은 박물관에서 **평문으로** 그려진다(`<Text>{entry.role}</Text>`). 그래서
+//   · 길면 부품명 아래에 문단이 깔리고(설명이 부품을 덮는다)
+//   · 마크다운은 `**`가 글자 그대로 찍힌다.
+//  근거는 소스 파일 헤더 주석이 받는다 — 실제로 role>150자였던 50개 전부 헤더에 같은 글이 있었다.
+const ROLE_MAX = 80;
+const roleProblems = [];
+for (const m of read('_catalog.ts').matchAll(/\{\s*name:\s*'([^']+)'\s*,\s*layer:\s*'[^']+'\s*,\s*role:\s*'((?:[^'\\]|\\.)*)'/g)) {
+  const [, name, role] = m;
+  if (role.length > ROLE_MAX) roleProblems.push(`role이 ${role.length}자 (상한 ${ROLE_MAX}) — ${name}: 근거는 소스 헤더 주석으로`);
+  if (/\*\*|«|»|`/.test(role)) roleProblems.push(`role에 마크다운·기호 — ${name}: 평문으로 렌더된다`);
+}
+
+const problems = [...roleProblems];
 
 // 1. 카탈로그가 없는 부품을 가리킨다
 for (const name of catalog) {

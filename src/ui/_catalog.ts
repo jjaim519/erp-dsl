@@ -37,7 +37,12 @@ export type Composition = {
 export type CatalogEntry = {
   name: string;
   layer: Layer;
-  role: string;            // 한 줄 역할
+  //  **화면에 그대로 찍히는 한 줄.** 「어떻게 보이나 + 무슨 일을 하나」만 적는다.
+  //  근거·선례·반례·백로그는 **소스 파일 헤더 주석**에 — 여기 적으면 부품명 아래에 문단이 깔린다.
+  //  (2026-08-20: 144개 합계가 24,428자였다. 50개는 role>150자였고 그 50개 전부 소스 헤더에
+  //   같은 근거가 있었다 = 순수 중복. 4,164자로 줄였다. 마크다운도 안 쓴다 — 평문으로 렌더돼
+  //   `**`가 글자로 찍힌다.)
+  role: string;            // ≤80자 · 마크다운 금지 (check:drift가 막는다)
   props: PropSpec[];
   composition?: Composition; // 분자 이상만
 };
@@ -58,7 +63,7 @@ export const INPUT_ATOMS: ReadonlySet<string> = new Set([
 
 export const CATALOG: CatalogEntry[] = [
   // ── 의미 원자 — 표시·행동 ─────────────────────────────────────────────
-  { name: 'Button', layer: '의미 원자', role: '클릭 행동의 기본 단위. variant가 색·강조를 닫고, size는 «밀도»만 정한다 — 높이·좌우여백은 갈리고 **글자는 전 사이즈 14px 고정**(크기를 글자로 말하면 버튼이 본문보다 커진다).',
+  { name: 'Button', layer: '의미 원자', role: '클릭 행동의 기본 단위. variant가 색·강조를 닫고, size는 밀도만 정한다.',
     props: [
       { name: 'variant', kind: '스타일', values: "'primary' | 'secondary' | 'danger' | 'ghost' | 'accent'" },
       { name: 'size', kind: '스타일', values: DENSITY + '  (높이 28 / 32 / 40 · 좌우여백 12 / 16 / 24 — 표 행 안 · 기본 · 폼 커밋)' },
@@ -68,13 +73,13 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'type', kind: '기능', values: "'button' | 'submit'" },
       { name: 'onClick', kind: '기능', values: '() => void' },
     ] },
-  { name: 'Badge', layer: '의미 원자', role: '표시 전용 상태 알약(행동 없음). 상태 사다리의 **3단**(면 있음) — *드물게* 나타나는 것에만. 모든 행에 배지가 달리면 배지가 신호이길 그만둔다. 1·2단(면 없음)은 StatusLabel.',
+  { name: 'Badge', layer: '의미 원자', role: '표시 전용 상태 알약(행동 없음). 상태 사다리의 3단(면 있음).',
     props: [
       { name: 'color', kind: '스타일', values: BADGE + ' (primary 제외)' },
       { name: 'strength', kind: '스타일', values: "'weak'(기본, 톤만) | 'fill'(반전 — \"여기 좀 봐\": 필독·공지). 알약끼리도 위계가 있어야 한다. 이 축이 없어서 게시판이 board.css에 솔리드 클래스 3개를 따로 팠었다(v0.72.0 회수)" },
       { name: 'children', kind: '콘텐츠', values: 'string' },
     ] },
-  { name: 'StatusLabel', layer: '의미 원자', role: '**면 없는** 상태 표기 — 사다리 1단(텍스트+색) · 2단(심볼+텍스트). icon 유무가 단을 가른다. Badge와 안 합친 이유: 면이 없으면 알약이 아니고, 무엇보다 **줄 높이를 안 밀어** 문장·표 셀·헤더 어디에나 섞인다(Badge는 padding이 있어 행간이 튄다). iOS엔 상태 알약 컴포넌트가 아예 없고 SwiftUI Label(심볼+텍스트)+시맨틱 색이 이 자리를 맡는다.',
+  { name: 'StatusLabel', layer: '의미 원자', role: '면 없는 상태 표기.',
     props: [
       { name: 'tone', kind: '스타일', values: BADGE + " (기본 neutral). 색 통로는 weak Badge의 글자색과 동일(-light-color) — 1·2·3단이 같은 색 계열로 묶여야 사다리를 오르내려도 같은 상태로 읽힌다" },
       { name: 'icon', kind: '콘텐츠', values: 'IconName (선택). 주면 2단. **종류가 다섯을 넘거나 색만으로 못 가를 땐 필수** — 색만으로 뜻을 나르면 WCAG 1.4.1 위반. 그룹웨어 기본값은 2단' },
@@ -84,7 +89,7 @@ export const CATALOG: CatalogEntry[] = [
       토큰: ['상태색 -light-color(모드별 자동)', 'text-secondary(neutral)', 'gap xxs', 'typo-body-strong-weight', 'font-size: inherit — 크기를 스스로 안 정하고 놓인 자리를 따른다(자리마다 size prop을 받는 것보다 축이 하나 적다)'],
       '의미 원자': ['Icon(색 미지정 → currentColor로 글자와 한 색. SF Symbols hierarchical과 같은 수법)'],
     } },
-  { name: 'CountBadge', layer: '의미 원자', role: '알림 카운트(미처리 건수) — 카톡식 빨강 N 동그라미. 솔리드 채움(행동요구 환기). Badge(상태·반투명)와 별개 역할.',
+  { name: 'CountBadge', layer: '의미 원자', role: '알림 카운트(미처리 건수).',
     props: [
       { name: 'count', kind: '값', values: 'number (0 이하면 안 보임)' },
       { name: 'tone', kind: '스타일', values: "'danger'(기본=행동요구) | 'neutral'(정보 카운트)" },
@@ -119,7 +124,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: 'ReactNode' },
       { name: 'htmlFor', kind: '기능', values: 'string (짝 연결)' },
     ] },
-  { name: 'Anchor', layer: '의미 원자', role: '**«글 안에 박힌 이동».** 자리가 하나뿐인 게 정체다 — 메뉴는 AppShell.onNavigate · 행은 DataTable.onRowClick · 경로는 Breadcrumb · 계층은 Tree가 맡고, 남는 건 안내문·본문 «안»의 링크다. Button이 못 메우는 이유 셋: 문장 흐름을 깬다 · **우클릭 새 탭·주소 복사가 안 된다** · 스크린리더가 「버튼」으로 읽는다(「저기로 간다」와 다른 약속). ⚠ v0.94.0 이전엔 `href`뿐이라 **SPA에서 못 썼다**(전체 문서 재로드) — 실사용이 부품 안 한 자리(_cells의 link 셀)와 dev 도구뿐이었던 이유다. `onNavigate`가 좌클릭만 가로채고 태그는 `<a href>`로 남아 새 탭·복사·낭독이 다 산다. 보조키·가운데 클릭은 안 가로챈다.',
+  { name: 'Anchor', layer: '의미 원자', role: '색·밑줄 링크. 글 안에서 다른 곳으로 이동한다.',
     props: [
       { name: 'href', kind: '콘텐츠', values: 'string' },
       { name: 'children', kind: '콘텐츠', values: 'ReactNode' },
@@ -138,7 +143,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: 'string (이니셜)' },
       { name: 'size', kind: '스타일', values: SIZE3 },
     ] },
-  { name: 'Image', layer: '의미 원자', role: '콘텐츠 이미지 고정 종횡비 박스(명시 예외=고정치수).',
+  { name: 'Image', layer: '의미 원자', role: '콘텐츠 이미지의 고정 종횡비 박스.',
     props: [
       { name: 'src / alt', kind: '콘텐츠', values: 'string (alt 필수)' },
       { name: 'fallbackSrc', kind: '콘텐츠', values: 'string' },
@@ -229,14 +234,14 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'size', kind: '스타일', values: SIZE2 },
       { name: 'disabled', kind: '스타일', values: 'boolean' },
     ] },
-  { name: 'CurrencyInput', layer: '의미 원자', role: '돈 입력 전용(₩ prefix + 천단위 콤마, 무소수). NumberInput의 형제 — 옵션 대신 named 부품. 값은 순수 number(표시만 ₩·콤마, 다운스트림은 fmtCurrency).',
+  { name: 'CurrencyInput', layer: '의미 원자', role: '돈 입력 전용(₩ prefix + 천단위 콤마, 무소수). NumberInput의 형제.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, number | string' },
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
       { name: 'disabled', kind: '스타일', values: 'boolean' },
     ] },
-  { name: 'Money', layer: '의미 원자', role: '금액·수량의 **표시** 규율 한 곳(입력은 CurrencyInput). 포맷 함수는 있었지만 *표기 규율*이 없어 자릿수 정렬·음수·0 표기를 호출처가 각자 정하고 있었고, 실제로 `paperLayout.ts`가 `fmtCurrency` 복사본을 들고 있었다(순수 모듈 `_money`로 합침 — JSX 파일인 `_cells`를 인쇄 엔진이 못 당겨 써서 생긴 복사였다). **정렬은 안 갖는다** — "currency·number는 right"는 `_cells.cellAlign`이 이미 단일 출처로 갖고 있어, Money가 스스로 오른쪽에 붙으면 규율이 두 곳이 된다. 담는 칸이 정렬하고 Money는 글자(자릿수 폭·부호·기호)만 책임진다.',
+  { name: 'Money', layer: '의미 원자', role: '금액·수량을 표시하는 글자 규율. 입력은 CurrencyInput.',
     props: [
       { name: 'value', kind: '값', values: 'number | null | undefined (null·NaN은 항상 — · 0 표기와 별개 축)' },
       { name: 'symbol', kind: '스타일', values: 'boolean (기본 true = fmtCurrency와 같은 얼굴). 표에서 매 행에 ₩가 붙으면 소음이라 그때 끈다' },
@@ -246,7 +251,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'emphasis', kind: '스타일', values: 'boolean (합계·잔액처럼 그 줄의 주인공인 숫자)' },
       { name: 'tone', kind: '스타일', values: "'auto'(기본 — 음수를 danger 색) | 'plain'(부호만으로 읽는 장표)" },
     ] },
-  { name: 'Textarea', layer: '의미 원자', role: '여러 줄 입력. variant가 "이 칸이 무엇인가"를 가른다 — field(폼의 한 칸·높이는 내용이 정함) / canvas(*글을 쓰는 면*: 비어 있어도 여러 줄로 시작). canvas가 따로 있는 이유는 M3가 텍스트 영역을 텍스트 필드와 다른 물건으로 규정하며 "큰 초기 크기가 긴 응답이 가능·권장됨을 알린다"고 못박기 때문 — 한 줄로 시작하는 본문칸은 제목칸과 구분되지 않는다.',
+  { name: 'Textarea', layer: '의미 원자', role: '여러 줄 입력. variant가 "이 칸이 무엇인가"를 가른다.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, string' },
       { name: 'variant', kind: '스타일', values: "'field'(기본) | 'canvas'(본문·메모 — 6줄에서 시작해 성장). 줄 수는 부품이 정한다(minRows/maxRows 미노출)" },
@@ -273,7 +278,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ] },
-  { name: 'MultiDatePicker', layer: '의미 원자', role: '여러 개별 날짜(집합 string[]). DatePicker 형제 — 흩어진 날들과 한 구간은 같은 값이 아니라 구간은 DateRangePicker가 받는다.',
+  { name: 'MultiDatePicker', layer: '의미 원자', role: '여러 개별 날짜(집합 string[]). DatePicker 형제.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, string[]' },
       { name: 'format', kind: '콘텐츠', values: 'DatePicker와 같은 계약' },
@@ -281,7 +286,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'placeholder', kind: '콘텐츠', values: 'string' },
       { name: 'size', kind: '스타일', values: SIZE2 },
     ] },
-  { name: 'DateRangePicker', layer: '의미 원자', role: '**한 칸에서 시작~끝을 이어 고른다**(연속 구간 하나 = DateRange{start,end}). DatePicker·MultiDatePicker의 셋째 형제. '
+  { name: 'DateRangePicker', layer: '의미 원자', role: '한 칸에서 시작~끝을 이어 고르는 날짜 입력.'
       + '⚠ DateRangeField(분자)와 **경쟁하지 않고 쓰임으로 갈린다**: 이 원자는 조회·필터(끌어서 집는 게 빠르다), 분자는 폼(시작·끝이 각자 라벨·설명·에러를 갖는 자리 — 한 칸엔 그걸 붙일 데가 없다). '
       + '값 모양이 같아서(DateRange) 자리를 옮겨도 소비처 데이터는 안 바뀐다. 「시작만 고름」은 유효한 중간 상태이고 끝≥시작 판정은 스키마가 한다.',
     props: [
@@ -320,7 +325,7 @@ export const CATALOG: CatalogEntry[] = [
     ] },
   { name: 'Divider', layer: '레이아웃 원자', role: '구분선(보더 토큰 1px).',
     props: [{ name: 'orientation', kind: '스타일', values: "'horizontal' | 'vertical'" }] },
-  { name: 'Page', layer: '레이아웃 원자', role: 'AppShell 아래 "모든" 화면의 공통 폭 규율 — var(--page-max)=1200 캡 + 중앙정렬. 폭에 관여하는 유일한 페이지-층 소유자(Container는 위젯·폼 내부의 좁은 읽기 컬럼으로 강등). 가로 거터는 AppShell.Main이, 세로 리듬은 각 페이지 Stack이 소유(단일 책임). 페이지별 폭 오버라이드 없음 — 1200을 넘겨야 하는 콘텐츠는 페이지 폭을 깨지 말고 그 위젯 안에서 가로 스크롤.',
+  { name: 'Page', layer: '레이아웃 원자', role: 'AppShell 아래 "모든" 화면의 공통 폭 규율.',
     props: [
       { name: 'children', kind: '콘텐츠', values: 'ReactNode (폭 prop 없음 — 캡은 토큰 하나)' },
     ] },
@@ -351,7 +356,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'equalRows', kind: '스타일', values: 'boolean (행 높이 균등)' },
       { name: 'Grid.Col span', kind: '값', values: '1~12' },
     ] },
-  { name: 'Bento', layer: '배치 프리미티브', role: '페이지 본문 격자 — 위젯이 정수 칸 점유(iOS 홈/Bento). 높이는 내용이 못 정한다(jitter 0): 흐름(기본)=ROW_UNIT 상수 셀·페이지 스크롤 / 작업면(fill)=페이지 스크롤 0, 행이 부모 잔여고를 minmax(0,1fr) 등분 — 템플릿이 갖던 viewport-fit 기하의 승계 통로.',
+  { name: 'Bento', layer: '배치 프리미티브', role: '페이지 본문 격자.',
     props: [
       { name: 'columns', kind: '값', values: '2 | 3 | 4 | 6 | 12 (닫힌 열 수)' },
       { name: 'gap', kind: '값', values: "'sm' | 'md' | 'lg'" },
@@ -408,7 +413,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Button', 'Icon', 'Popover'],
       유기체: ['Tree'],
     } },
-  { name: 'Cascader', layer: '분자', role: '계층 경로를 순차로 선택 — 한 칸(레벨) 고르면 다음 칸이 옆에 등장(페이지에 N박스, 공간 여유용). 리프 선택 시 "A › B › C [변경]"으로 압축. 드롭다운 박스는 MillerColumns와 같은 컬럼-아이템 레이아웃(Select 아님). 한 트리거+다단은 MillerColumns(형제).',
+  { name: 'Cascader', layer: '분자', role: '계층 경로를 순차로 선택.',
     props: [
       { name: 'options', kind: '기능', values: '{ value, label, children }[]' },
       { name: 'value / onChange', kind: '기능', values: 'controlled, value[] (경로)' },
@@ -419,7 +424,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Group'],
       공유: ['controls.css(트리거·컬럼 박스)'],
     } },
-  { name: 'MillerColumns', layer: '분자', role: '계층 경로를 한 컨트롤로 선택 — 트리거 1개 → 팝오버 다단 컬럼(좌→우, 부모 클릭=다음 컬럼; Finder·Ant Cascader 패턴). 좁은 화면(≤600px)은 단일 컬럼 드릴인 폴백. 리프=경로 확정(트리거에 A › B › C). Cascader(순차 인라인)의 형제 — 같은 박스 비주얼, 페이지 발자국은 트리거 1개. 대용량 검색은 Combobox 위임.',
+  { name: 'MillerColumns', layer: '분자', role: '계층 경로를 한 컨트롤로 선택.',
     props: [
       { name: 'options', kind: '기능', values: '{ value, label, children }[]' },
       { name: 'value / onChange', kind: '기능', values: 'controlled, value[] (경로)' },
@@ -452,7 +457,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Chip', 'Icon'],
       공유: ['_fieldStyles'],
     } },
-  { name: 'DateRangeField', layer: '분자', role: 'DatePicker 둘 + 가운데 ~. "시작 ≤ 끝"이 묶음. **폼 자리** — 시작·끝이 각자 라벨·설명·에러를 갖는 경우(FormField가 칸마다 붙는다). '
+  { name: 'DateRangeField', layer: '분자', role: 'DatePicker 둘 + 가운데 ~. "시작 ≤ 끝"이 묶음.'
       + '한 칸에서 끌어 고르는 조회·필터는 DateRangePicker(원자)가 받는다 — 값 모양은 같다(DateRange).',
     props: [
       { name: 'value / onChange', kind: '기능', values: '{ start, end } controlled (DateRangePicker와 같은 모양)' },
@@ -476,7 +481,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Text', 'Icon(어드온)'],
       '배치 프리미티브': ['Group'],
     } },
-  { name: 'NumberStepper', layer: '분자', role: '수량 − [n] + 스테퍼. NumberInput을 "증감 노출 + 타이핑"으로 고정한 형제(이름 Stepper는 다단계-진행 유기체가 선점 → NumberStepper). min/max는 검증(스키마)이 아니라 증감 버튼의 동작 경계(UI). 가운데 타이핑 가능(B2B 큰 수량).',
+  { name: 'NumberStepper', layer: '분자', role: '− [n] + 형태의 수량 입력. 증감 버튼과 타이핑을 함께.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'controlled, number' },
       { name: 'min / max / step', kind: '기능', values: '증감 경계·단위 (기본 min 0, step 1)' },
@@ -582,7 +587,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Stack'],
       공유: ['_cells(Action)'],
     } },
-  { name: 'ObjectCard', layer: '분자', role: '계층 안 오브젝트 한 칸의 닫힌 표현 — 평면 자루 대신 *역할 슬롯*(무엇을 어디에 매핑할지 강제). 단일 사진 카드(밀도 비교는 Explorer 목록이 맡음). 높이는 그리드 셀이 분배(타일).',
+  { name: 'ObjectCard', layer: '분자', role: '계층 안 오브젝트 한 칸의 닫힌 표현.',
     props: [
       { name: 'title', kind: '콘텐츠', values: 'string (필수 — 이름)' },
       { name: 'subtitle', kind: '콘텐츠', values: 'string (선택 — 식별자/코드)' },
@@ -682,7 +687,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Group (헤더 직접 조립)'],
       공유: ['_cells(renderAction)'],
     } },
-  { name: 'PaperModal', layer: '유기체', role: '⚠ **폐기 예정 — 새 문서는 `DocModal`의 `children` 모드로 간다(다음 minor에서 삭제).** 남기면 안 되는 쪽이다: 이 인쇄 빌트인은 `.erpPaper` 하나를 fixed로 물리 A4에 고정해서 **여러 장짜리 문서가 한 장으로 겹쳐 나간다** — 소비 앱이 그걸 「한 장에 축소」로 우회하다가 «내용이 늘면 글자가 작아지는» 문서가 됐다. // A4 문서 *뷰어* 모달(보기 전용 — 거래명세서·견적서). 종이가 자기 윤곽을 가짐(모달 아님). 실측(ResizeObserver)→fitA4로 A4 박스 px 계산→표준 A4 캔버스(794×1123 @96dpi)를 transform:scale. aspect-ratio·max-* 안 씀. **모달 폭은 가로(landscape) A4 기준 고정**(세로 문서여도 넓은 박스) — 한 모달에서 헤더 뷰토글(자세히/전체)로 두 뷰: ① 자세히(기본·좌)=폭 채워 확대·세로 스크롤(글자 읽기용) / ② 전체(우)=높이 맞춤 통째·무스크롤(세로 문서는 좌우 데스크). 토글은 내부 상태(공개 prop 아님). 내용=소비처 FieldGrid 장표(CANON 좌표계). 인쇄 빌트인(@media print: 종이만 남기고 화면 맞춤 scale·모달 변형 무효화 → 물리 A4 1:1·1장·머리말꼬리말 제거, FieldGrid 디바이더 크리스프; orientation별 @page size 주입) — 인쇄 *트리거*(버튼)만 actions로 소비처 배선. Modal의 뷰어 형제(공유 Modal 불변).',
+  { name: 'PaperModal', layer: '유기체', role: '⚠ 폐기 예정 — DocModal의 children 모드가 대신한다.',
     props: [
       { name: 'opened / onClose', kind: '기능', values: 'boolean, () => void' },
       { name: 'title', kind: '콘텐츠', values: 'string' },
@@ -697,7 +702,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Group (헤더 직접 조립)'],
       공유: ['_cells(renderAction)'],
     } },
-  { name: 'PaperDoc', layer: '유기체', role: '서식(PaperSpec) + 값 → A4 **여러 장**. 도메인 0줄. 배치(쪽 나눔·반복 펼침·집계·묶음 걸침)는 순수 엔진(paperLayout)이 하고 여기는 그리기만 한다. 24열 격자는 *정렬 골격*이고 **선은 셀의 속성**이다 — 선 소유권(각 칸이 자기 위·왼쪽만 그린다)으로 맞닿은 자리가 2px 되는 걸 막는다. 괘선은 종이 절대색(검정) — 역할 변수를 태우면 음영 칸 위에서 선이 사라진다. `mode: edit`이면 데이터 자리가 입력이 되되 **문서 기하는 그대로**(칸이 곧 입력의 크기, 입력은 자기 크롬을 벗는다). 서식은 `npx erp-paper-import`로 xlsx에서 만든다. **줄마다 깊이가 다른 표**(내역서)는 트리 배열 + `indent`로 담는다(아래 두 항목). ⚠ 2단 그룹 미해결(걸침·그룹머리가 두 층이면 안쪽이 바깥을 따라가 *틀린 값*이 찍힌다) · 흐름 셀 없음.',
+  { name: 'PaperDoc', layer: '유기체', role: '서식(PaperSpec)에 값을 먹여 A4 여러 장을 그린다.',
     props: [
       { name: 'spec', kind: '기능', values: 'PaperSpec (엑셀에서 변환한 서식)' },
       { name: '트리 배열(깊이)', kind: '값', values: '**줄마다 깊이가 다른 표**(내역서·BOM — 「주방 › 상부장 › 옵션1」). 축은 둘이다: 배열이 깊이 열을 가지면(`PaperArray.level` — 엑셀 「필드」 시트에서 종류를 «깊이»로) 그 배열은 트리가 되고, 칸에 `indent`를 주면(`{{들여:품목.품명}}`) 그 줄의 깊이만큼 **글자가** 밀린다. 격자는 안 움직인다 — 칸을 옮기면 열이 어긋나 테두리가 계단이 되고 병합 폭이 깊이마다 달라져 표가 목록으로 읽힌다. 그래서 보통 **품명 칸 하나에만** 붙인다(수량·단가는 제 열에 서야 세로로 읽힌다). 한 계단은 `--paper-indent`(**한 행 = 24px**)로 **부품이 정한다** — 0.5행(12px)으로 시작했다가 화면에서 «레벨 구분이 어렵다»가 나와 올렸다(본문 14px보다 좁은 계단은 계단으로 안 읽힌다). 계단 수의 기준선은 **실제로 그려지는 줄 중 가장 얕은 깊이**다 — 구획 제목이 깊이 1을 가져가면 깊이 2가 기준선이 되어 표가 통째로 밀려 들어가지 않는다 — px를 열면 같은 회사 문서 둘이 다른 계단을 갖는다. 중첩(children)이 아니라 평탄 배열 + 깊이 열인 이유: 엑셀이 이미 그 모양이고(왼쪽 칸에 레벨), `buildHierarchyFromRows` 선례가 같고, 쪽 나눔이 평평한 흐름 위에서 돌기 때문' },
@@ -714,7 +719,7 @@ export const CATALOG: CatalogEntry[] = [
       토큰: ['A4 794×1123 @96dpi(고정 px 좌표계 — 명시예외)', '여백 15mm', '쪽당 행 수 하나가 행 높이·글자 크기를 함께 정한다(42행→10.5pt / 31행→14pt)', '괘선 #000(종이 절대색)', '채우기 = 토큰 3단 또는 엑셀 헥스', '편집 어포던스 = **칸 안에 1px 물려 넣은 진짜 입력**(자기 윤곽을 되찾고 1px 틈이 칸 괘선에서 떼어 놓는다). 칠하기·칸에 링 두르기 둘 다 실패했다 — 전자는 fill 채널 충돌, 후자는 인접 칸이 각자 링을 그려 3중선', '잠근 칸(readonlyFields)은 입력 없이 잉크만 죽임', '「어디까지 썼나」는 **쓴 쪽을 올려** 말한다 — 값이 든 입력은 윤곽 한 단 위(--border-field-strong)+굵기 600, 그 행의 잠근 값(품목 이름)도 잉크가 살아나며 같이 굵어진다. 빈 칸은 손대지 않는다(윤곽을 내렸더니 「입력 제한된 칸」으로 읽혔다 — 여기서 윤곽은 «여기는 쓸 수 있다» 하나만 말한다)', '@media print: 물리 A4 1:1·장마다 break-after, 편집 표시는 인쇄에 안 나간다'],
       '의미 원자': ['TextInput', 'NumberInput', 'CurrencyInput', 'Textarea', 'Select', 'DatePicker', 'Checkbox (edit 모드 — 종류는 「필드」 시트가 정한다)'],
     } },
-  { name: 'DocModal', layer: '유기체', role: '회사 서류의 **껍데기 하나** — 보고·인쇄하고·채운다(옛 이름 `DocModal`, 별칭 한 릴리스). **내용은 두 갈래, 인쇄는 한 갈래다**: 서식이면 `spec`+`values`, 손으로 그린 문서면 `children`(각 장 = `<PaperSheet>`). 그 둘을 합칠 수 있는 근거 — 인쇄 경로는 «무엇으로 그렸나»가 아니라 **클래스 계약**(`.erpPaperSheet` + break-after)에 걸려 있다. 갈라 뒀더니 소비 앱에 껍데기가 4종이 생겼고 문서마다 인쇄 결과가 달랐다(계약서는 여러 장이 한 장으로 겹쳐 나가 「한 장에 축소」로 우회 중이었다). 껍데기가 소유: 인쇄·크롬·쪽 나눔·`@page`. 내용물이 소유: 칸을 어떻게 그리나. 인쇄 규칙은 반드시 `html.erp-doc-print` 안에 갇혀 있다(스코프 없는 `body * {visibility:hidden}`이 소비 앱 전 화면을 백지로 만든 적이 있다). 보기/편집은 한 부품(mode) — 문서 기하가 같기 때문. **편집 초안은 모달이 쥔다**: 소비처는 onSave 하나만 배선하고, 저장 안 한 채 닫으려 하면 푸터가 확인으로 바뀐다(모달 위에 모달을 쌓지 않는다).',
+  { name: 'DocModal', layer: '유기체', role: '회사 서류의 껍데기 하나.',
     props: [
       { name: 'opened / onClose', kind: '기능', values: 'boolean, () => void' },
       { name: 'title', kind: '콘텐츠', values: 'string' },
@@ -735,7 +740,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Group (헤더·푸터 직접 조립)'],
       공유: ['PaperDoc', 'PaperSheet', 'paperPrint(@page 한 벌)'],
     } },
-  { name: 'PaperFlow', layer: '레이아웃 원자', role: '**길이가 데이터로 정해지는 서류**(계약서 — 약관 N개 / 정산 명세서 — 품목 N행). `PaperSheet`의 형제다: 시트는 «장을 소비처가 나눈다»가 전제라(높이 고정) 넘치면 흐르는 게 아니라 **잘린다**. 여기서는 폭·여백만 잡고 **높이를 내용에 맡긴다** — 쪽 나눔은 브라우저가 한다. ⚠ **여백이 이 부품의 전부다**(실측 3종): 흐르는 요소에 `padding`을 주면 여백이 «흐름 전체»의 위아래에만 걸려 **2쪽부터 글이 종이 가장자리에 붙는다**(위 0px). `@page{margin}`으로 주면 쪽마다 걸리지만 그 자리가 곧 브라우저 머리말·꼬리말 자리라 URL·날짜·쪽번호가 찍힌다(가구 발주서가 모달을 떠난 이유). **쪽마다 반복되는 것은 표의 머리·꼬리 그룹뿐**이라, 내용을 표 한 칸에 담고 빈 `thead`/`tfoot`으로 자리를 예약한다(실측: 1쪽 57 · 2쪽 57 · 3쪽 58px, 머리말 없음). 좌우는 표 바깥 `padding`이 맡는다(가로는 쪽이 바뀌어도 같은 상자다). 표가 한 겹 들어가지만 **보이는 계약은 `<PaperFlow>` 하나**다.',
+  { name: 'PaperFlow', layer: '레이아웃 원자', role: '길이가 데이터로 정해지는 서류(계약서.',
     props: [
       { name: 'orientation', kind: '기능', values: "'portrait' | 'landscape' — 문맥(DocModal)이 정한 방향을 덮어쓴다. 모달 밖에서 쓸 때만 적는다" },
       { name: 'margin', kind: '스타일', values: "number | string (기본 15mm=PAPER_MARGIN). 수는 인쇄 좌표계 px, 문자열은 CSS 길이('10mm'). 화면 px과 인쇄 mm이 같은 자다(캔버스가 96dpi라 210mm=794px)" },
@@ -745,7 +750,7 @@ export const CATALOG: CatalogEntry[] = [
     composition: {
       토큰: ['A4 폭(세로 794px = 210mm)·높이 없음', '여백 15mm 기본', 'min-height = 한 장(화면에서만 — 인쇄에선 푼다, 빈 장이 붙는다)', '인쇄 관습 빌트인: 표 행·이미지 안 쪼갬 · 표 머리행 쪽마다 반복 · 제목 뒤 안 끊음 · orphans/widows 2 · print-color-adjust exact'],
     } },
-  { name: 'PaperSheet', layer: '레이아웃 원자', role: '**종이 한 장.** 손으로 그린 문서를 `DocModal`에 넣을 때 각 장을 이걸로 감싼다 — 그 한 줄이 다장 인쇄 계약의 전부다(`.erpPaperSheet` + break-after). 부품으로 내보내는 이유: 클래스 문자열을 소비처가 베끼면 **그 이름이 사실상 공개 API가 되어 우리가 못 바꾼다.** 시트가 소유하는 것 = 폭·높이(A4 캔버스)·안쪽 여백 15mm·바탕·그림자·쪽 나눔. 소비처가 소유하는 것 = 그 안을 어떻게 그리나. 이 경계가 PaperDoc이 그리는 장과 **정확히 같아서** 두 종류의 문서가 같은 인쇄 경로를 탄다. 방향은 보통 DocModal이 문맥으로 흘려준다(장마다 다시 적게 하지 않는다 — 한 문서 안에서 방향이 갈리면 @page 하나로 못 찍는다).',
+  { name: 'PaperSheet', layer: '레이아웃 원자', role: '종이 한 장. 손으로 그린 문서를 DocModal에 넣을 때 각 장을 이걸로 감싼다.',
     props: [
       { name: 'orientation', kind: '기능', values: "'portrait' | 'landscape' — 문맥(DocModal)이 정한 방향을 덮어쓴다. **모달 밖**(문서 전용 라우트)에서 쓸 때만 적는다" },
       { name: 'margin', kind: '스타일', values: "number | string (기본 15mm=PAPER_MARGIN — 서식 문서의 격자 여백과 한 수). ⚠ 문을 연 이유: **여백이 서식의 일부인 문서가 있다** — 자기 여백(10mm)에 맞춰 열 폭을 짜고 «내용 폭 190mm»를 재서 스스로 쪽을 나누는 문서에 15mm를 먹이면 표가 틀어지고 그 계측까지 어긋난다. `0`이면 시트는 테두리만 준다" },
@@ -774,7 +779,7 @@ export const CATALOG: CatalogEntry[] = [
       '레이아웃 원자': ['Card'],
       '배치 프리미티브': ['Grid', 'Group', 'Stack'],
     } },
-  { name: 'ToastHost', layer: '유기체', role: '토스트 호스트(위치·지속·스택 단일 관리). notify.*가 이리로 띄움. 앱 셸에 1회 배치.',
+  { name: 'ToastHost', layer: '유기체', role: '토스트 호스트(위치·지속·스택 단일 관리). notify.가 이리로 띄움. 앱 셸에 1회 배치.',
     props: [],
     composition: { 공유: ['notify(트리거)'] } },
   { name: 'DataTable', layer: '유기체', role: '도메인 무관 표. columns(표현 enum) + rows. controlled 정렬/페이징.',
@@ -802,7 +807,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(셀 type enum)'],
     } },
-  { name: 'DataSheet', layer: '유기체', role: '**DataTable의 쓰기 형제** — 도메인 무관 표에 "행 수정 + 새 줄 입력"을 얹는다. DataTable에 editable을 얹지 않고 형제로 낸 것은 큰 유기체에 축을 더 여는 게 옵션 스태킹이기 때문(03 §11-3 · CurrencyInput↔NumberInput과 같은 짜임). **저장된 행은 읽기**고 편집 신호를 상시로 깔지 않는다 — Dynamics BC(「Edit list」로 연다)·Salesforce(연필을 hover에서만)·SAP(edit 모드일 때만 빈 줄)가 그렇게 한다. NetSuite식 상시 인라인은 "어느 칸이 편집되는지 모르겠다"가 대표 불만이고, 화면에서도 모든 행에 신호를 깔면 표가 노트 괘선처럼 읽힌다. **편집 단위는 칸이 아니라 행** — 그래서 탐색은 행 단위, 편집에 들어가야 칸 단위가 되어 APG 그리드 2단 모델(탐색↔편집)이 그대로 맞는다.',
+  { name: 'DataSheet', layer: '유기체', role: 'DataTable의 쓰기 형제.',
     props: [
       { name: 'columns', kind: '기능', values: 'SheetColumn[] = { key, label, read?(CellType 16종 — DataTable과 **같은 어휘**), edit?(text·number·currency·date·select), editable?(row)=>boolean, options?, badgeColors?, placeholder?, dateFormat?(edit:date 표기 — **표현은 소비처 것**, 기본 \'YYYY-MM-DD\'), grow?, sortable? }' },
       { name: 'read × edit 2축', kind: '값', values: '**표시와 편집은 별개 축이다.** kind 하나로 묶으면 "배지로 보이지만 select로 고친다"(상태 열의 가장 흔한 형태)를 표현할 수 없다. `edit`이 없으면 **파생 칸**(읽기 전용 — Enter 순회에서도 빠지고 상자를 안 그린다). 저장된 줄의 파생값은 소비처가 `rows`에 넣고, **초안 줄의 파생값은 `draft.derive`가 준다** — 둘 다 있어야 같은 열이 줄에 따라 차고 비는 일이 없다' },
@@ -828,7 +833,7 @@ export const CATALOG: CatalogEntry[] = [
   // ── 회계 골격 3종 — 도메인이 아니라 *회계 구조*를 안다(부호 있는 증감·누계·연령·배분).
   //    노출 규율 공통: A층(데이터·콜백 유무) → B층(배열 길이) → C층(boolean/enum)이고, **기본은 전부 꺼짐**이다.
   //    아무 옵션 없이 렌더한 최소형이 기준선 — 목업은 전부 켠 최대형이라 개발 기준이 아니다.
-  { name: 'RegisterWidget', layer: '위젯', role: '**원장** — 이월 → 부호 있는 증감 → 행마다 누계 → 기말. 재무 원장(통장내역·계정별원장)과 재고 수불부가 **같은 골격**이라 `labels`·`unit`만 갈린다. 실물 기준(QuickBooks bank register · Dynamics BC Bank Account Ledger Entries 화면 확인): 기말잔액은 표 합계행이 아니라 **헤더 우상단**, 새 줄 입력은 **표 맨 위**(누계가 아래로 흐르니 밑에 있으면 새 줄이 누계의 *끝*처럼 읽힌다), 열 순서는 출금 → 입금 → ✓대사 → 잔액. **DataSheet와 형제인 선: 전기된 기록은 못 고친다**(정정은 반대 전표) — 그래서 행 편집 기제가 통째로 없고, 대신 DataSheet에 없는 세 축(누계·기간경계·대사)이 있다. 누계는 `balance`를 안 주면 **이월 + Σ(입−출)**로 부품이 만든다(그게 존재 이유다).',
+  { name: 'RegisterWidget', layer: '위젯', role: '원장 표 — 이월·부호 있는 증감·행별 누계·기말잔액.',
     props: [
       { name: 'entries', kind: '기능', values: 'RegisterEntry[] = { id, date, label, sublabel?, ref?, kind?{label,tone}, kindSub?, out?, in?, balance?, reconciled? }. out/in은 **부호 없는 크기** — 방향은 어느 열에 담기느냐가 말한다' },
       { name: '스코프 존은 위젯이 하나뿐인 페이지에서만', kind: '값', values: '`actions`와 **같은 규율, 더 강하게**. 액션은 표 하나를 건드리지만 스코프(계좌·기간)는 페이지 전체의 숫자를 바꾼다 — KPI 카드와 원장이 같은 스코프를 공유하는 화면에서 스코프를 원장 안에 넣었더니 "기준이 아래 표 안에 들어 있는" 화면이 나왔다(kk 통장내역, 오너 표현 "배치가 괴상하다"). 위젯이 둘 이상이면 `accounts`·`period`·`closing`을 **안 주고** 페이지가 그린다(기말잔액은 KPI 한 칸으로). 새 prop이 필요 없다 — A층이 이미 그 일을 한다' },
@@ -850,7 +855,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action/BadgeColor)', '_money'],
     } },
-  { name: 'OpenItemListWidget', layer: '위젯', role: '**미결 항목 목록**(SAP open item management) — 한 줄 = 아직 안 끝난 돈 한 건: 원금액 / 수납 / 잔액. 매출채권(수금)과 매입채무(지급)가 부호만 반대인 같은 물건이라 `labels`로 갈린다. **AgingReport와 갈리는 선**: 거기는 매트릭스라 회계가 *읽고*, 여기는 평면 목록 + 행동이라 담당자가 *처리한다*(DataTable/DataSheet 선례). **표면을 안 갖는다** — 행을 열면 무엇이 뜨는지는 페이지가 정하고(`onSelect`로 신호만), 한 건의 수납 이력은 `RegisterWidget`가 **모달(size=full)에서 전체 폭으로** 그린다 — 좁은 Drawer도 2-pane도 안 된다(둘 다 만들어 보고 되돌렸다: 1200px을 5:7로 갈라도 좌측 대상명과 우측 적요가 잘린다). 소비처 화면 진단에서 나온 부품이다: 현장 목록(계약금액/수금액/미수금) → 한 건 열기 → 수납 기록+첨부 구조가 도메인 특수가 아니라 업계 보편이었다.',
+  { name: 'OpenItemListWidget', layer: '위젯', role: '미결 항목 목록(SAP open item management).',
     props: [
       { name: 'items', kind: '기능', values: 'OpenItem[] = { id, label, sublabel?, owner?, gross, received, due?, age?{label,tone} }. **잔액은 안 받는다** — 원금액 − 수납을 부품이 뺀다(소비처가 매번 다시 계산하다 목록마다 다른 수가 나오던 자리). 상단 총계도 여기서 나온다' },
       { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '**행 전체 클릭**=`onSelect`(DataTable·ListWidget과 같은 규율) · 선택 표시=`selectedId` · 담당 열=item.owner · 만기·연령 열=item.due/age · 로딩=`status`' },
@@ -865,7 +870,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action/BadgeColor)', '_money'],
     } },
-  { name: 'AgingReportWidget', layer: '위젯', role: '**채권 연령 매트릭스** — 행=거래처(펼치면 청구건) × 열=연령 버킷 + 합계. 업계 형태 그대로(Odoo Aged Receivable · Xero AR Aging · SAP "AR Aging Grid"): **버킷은 필터가 아니라 열**이다. 한 거래처의 돈이 어느 연령대에 깔려 있는지는 가로로, 어느 연령대가 회사 전체에서 두꺼운지는 세로로 읽는데, 버킷을 상단 필터 밴드로 접으면 그 두 읽기가 모두 사라진다(첫 목업에서 그렇게 만들었다가 되돌렸다). **행동은 안 갖는다** — 회계가 *읽는* 리포트고, 영업이 *처리하는* 수금 큐는 별개 부품(같은 데이터를 두 부품이 다르게 보는 건 정상 — DataTable/DataSheet 선례). 색은 값이 아니라 **구간**에 붙는다(값에 색을 걸면 같은 금액이 열마다 다른 색이 되어 눈이 금액 크기로 읽어 버린다).',
+  { name: 'AgingReportWidget', layer: '위젯', role: '채권 연령 매트릭스.',
     props: [
       { name: 'buckets', kind: '기능', values: 'AgingBucket[] = { key, label, tone? } — **필수 주입**. 30/60/90은 관행이지 표준이 아니다(Xero 90+, Odoo 120+, 국내 여신 규정마다 다름). 구간을 부품이 정하면 그 회사 회계와 숫자가 안 맞는다. tone 생략 시 순서대로 neutral→danger 자동' },
       { name: 'rows', kind: '기능', values: 'AgingRow[] = { id, label, sublabel?, amounts: Record<bucketKey, number>, children? }' },
@@ -880,7 +885,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action)', '_money'],
     } },
-  { name: 'PaymentApplyWidget', layer: '위젯', role: '**수납 적용** — 받은 돈 한 건을 미결 청구 여러 건에 배분한다. NetSuite Customer Payment의 뼈대(실화면 확인): tally = To Apply / Applied / **Unapplied**, 본체 = 미결 목록에 적용액을 치는 표, 출처 = Invoices / Credits / Deposits. "한 입금 = 한 청구"라는 가정이면 폼 하나면 되고, 그 가정이 실무에서 깨지는 게 이 부품의 존재 이유다. **불변식은 부품이 계산한다**: 적용 = Σ적용액 + Σ조정 / 미적용 = 수납액 − 적용 / 행 적용액 ≤ 행 잔액(overApply로 열림). tally는 **하단 고정** — NetSuite는 우상단 작은 박스에 두지만 배분은 표를 훑으며 하는 일이라 작업하는 내내 보여야 한다(DecisionPanel 선례). 미적용은 자리가 고정이고 **색만** 바뀐다(0=success / 남음=warning / 초과=danger).',
+  { name: 'PaymentApplyWidget', layer: '위젯', role: '받은 돈 한 건을 미결 청구 여러 건에 배분하는 표.',
     props: [
       { name: 'sources', kind: '기능', values: 'ApplySource[] = { key, label, lines: ApplyLine[] }. **하나면 탭을 안 그린다** — 탭 하나짜리 탭바는 크롬만 늘린다. ApplyLine = { id, label, sublabel?, date?, age?{label,tone}, gross, open }' },
       { name: 'amount / applied / onApplyChange', kind: '기능', values: 'controlled — 값의 주인은 소비처. applied = { lineId: 금액 }' },
@@ -897,7 +902,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(HEAD_CELL/renderAction/Action/BadgeColor)', '_money'],
     } },
-  { name: 'ListWidget', layer: '위젯', role: '목록을 raised 표면 하나에 담는 위젯 — TanStack Table(헤드리스) 흡수 × 우리 스킨. 툴바(검색·facet 필터)를 표면 *안*에 소유(바닥 blend 0). ListPage 대체. [MVP] 정렬·전역검색·facet 필터·페이징·행선택(상태 내부, controlled 승격 예정). 도메인=columns/data(헌법 1). 정렬(align)=타입 자동 + 닫힌 override.',
+  { name: 'ListWidget', layer: '위젯', role: '목록을 raised 표면 하나에 담는 위젯.',
     props: [
       { name: 'columns', kind: '기능', values: 'ListColumn[] = { key, label, type(셀 16종), align?(좌/우/중 override), sortable?, filter?:facet(데이터서 옵션 자동), grow?, maxWidth?, badgeColors? }' },
       { name: 'data', kind: '기능', values: 'ListRow[] (id 필수)' },
@@ -915,7 +920,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(renderCell 셀 16종·renderAction·fmt)', '@tanstack/react-table(엔진 격리 — 헌법 7, TipTap 동형)'],
     } },
-  { name: 'NotificationPanel', layer: '유기체', role: '알림 벨 Popover(content) 슬롯에 꽂히는 알림 패널 위젯(시안 A). 3층: 헤더(제목·미읽음 카운트·모두읽음) / 본문 목록(높이 예약·내부 스크롤·시간 그룹) / 푸터(모든 알림 보기 — onViewAll 있을 때만). 도메인 무지(헌법 1): tone·title·icon·actor·time 문자열만, 날짜 로직 없음(그룹은 소비처 라벨). 축 예약: 헤더 높이·읽음점 컬럼 고정 → 읽음 전환 reflow 0. 전체 알림 페이지 목적지는 소비처 소유(설정 화면과 동형).',
+  { name: 'NotificationPanel', layer: '유기체', role: '알림 벨에 꽂히는 3층 패널 — 헤더·목록·푸터.',
     props: [
       { name: 'items', kind: '기능', values: 'NotifItem[] = { id, tone(info/success/warning/danger), title, time(문자열), icon?, actor?, group?(시간 그룹 라벨), read?, onClick? }' },
       { name: 'onMarkAllRead', kind: '기능', values: '() => void — 있으면 "모두 읽음"(미읽음 0이면 비활성)' },
@@ -928,7 +933,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['AppShell notifControl Popover(width lg=360·position top/right/bottom) — 표면·폭 소유'],
     } },
-  { name: 'Repeater', layer: '유기체', role: '저작 툴킷 척추 — 가변 레코드 목록(추가/삭제/펼침) 크롬만 소유. 각 레코드 필드(renderItem)·접이 헤더(renderHeader)는 raw 슬롯(소비처가 원자로 조립, 상위필드 접근 자유 → door_spec 교차바인딩 성립). 도메인 무지(헌법 1): 레코드를 더하고 지우고 접을 뿐. dimensions·options·values·categories 등 모든 가변 컬렉션 저작 + 중첩(Repeater 안 Repeater). onReorder 예약(현 소비처 dnd 없음).',
+  { name: 'Repeater', layer: '유기체', role: '저작 툴킷 척추.',
     props: [
       { name: 'items / renderItem / renderHeader?', kind: '기능', values: 'T[] / (item,i)=>본문 / (item,i)=>접이 헤더(주면 collapsible)' },
       { name: 'onAdd / onRemove / onReorder?', kind: '기능', values: '() / (index) / (from,to) 예약' },
@@ -943,7 +948,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['renderItem/renderHeader = raw 슬롯(Modal children 동형) — 도메인 escape'],
     } },
-  { name: 'InheritedValueField', layer: '유기체', role: '참조(SSOT)+상속+override+배율을 한 부품에 봉인 — effective = (override>0 ? override : ref.price) × ratio 를 부품이 계산·표시. 값마다 손조립 시 상속/override 누락으로 금액이 조용히 틀리는 것(소비처 v1 금액버그 재발점)을 원천봉쇄. 유효값은 저작자 피드백용 — 실제 가격 파이프라인(BOM)은 소비처 소유(§6). 도메인 무지: 참조에서 상속하거나 직접 입력한 수 × 배율, format로 표기만 주입.',
+  { name: 'InheritedValueField', layer: '유기체', role: '참조(SSOT)+상속+override+배율을 한 부품에 봉인.',
     props: [
       { name: 'refOptions', kind: '기능', values: 'RefOption[] = { id, label, price, unit?, group? } — SSOT 아이템(도메인 주입)' },
       { name: 'refId / onRefChange', kind: '기능', values: 'string|null / (id)=>void' },
@@ -968,7 +973,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon'],
       공유: ['경량 렉서(내장 — 풀 파서 아님, 검증용)'],
     } },
-  { name: 'KeyValueField', layer: '유기체', role: '닫힌 키(소비처 주입) → 타입 값 맵 편집 — dim_adjustments {width_mm:+30, height_mm:-12} 류. 각 키 1회(행 선택지는 현재 키+미사용 키로 좁힘, 다 쓰면 추가 비활성). number=부호(±) 허용 델타(기본)·currency=원화. 도메인 무지(헌법 1): 키가 무슨 축인지 모름 — 정해진 키집합에 수치 붙일 뿐(키는 품목 dimensions 동적 주입). 축 예약.',
+  { name: 'KeyValueField', layer: '유기체', role: '닫힌 키(소비처 주입) → 타입 값 맵 편집.',
     props: [
       { name: 'keys', kind: '기능', values: 'KVKey[] = { key, label? } — 닫힌 키집합(도메인 주입)' },
       { name: 'value / onChange', kind: '기능', values: 'Record<string,number> / (map)=>void' },
@@ -980,7 +985,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Select', 'NumberInput', 'CurrencyInput', 'Button', 'Icon'],
       분자: ['IconButton'],
     } },
-  { name: 'AssignPicker', layer: '유기체', role: '옵션세트(템플릿) kind별 배정 상호작용 봉인 — 트리거→kind 필터 리스트(itemCount 배지·빈 템플릿 비활성)→선택→재적용 경고 Modal→onAssign(서버 머지, 소비처). 조립(Popover+Modal+Button)이지만 명시 안 잡으면 통째로 새는 흐름이라 부품화. 도메인 무지(헌법 1): kind는 불투명 태그(동등 비교만) · 배정 실행은 소비처 소유.',
+  { name: 'AssignPicker', layer: '유기체', role: '옵션세트(템플릿) kind별 배정 상호작용 봉인.',
     props: [
       { name: 'templates', kind: '기능', values: 'AssignTemplate[] = { id, label, kind, itemCount } — itemCount 0=비활성' },
       { name: 'kind', kind: '기능', values: 'string — 이 kind와 같은 템플릿만(같은 kind 옵션에만 배정, §5-4)' },
@@ -994,7 +999,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['Callout'],
       유기체: ['Modal'],
     } },
-  { name: 'OptionSetEditor', layer: '유기체', role: '옵션 정의 저작 위젯 v2.1 — 2-pane 동형 골격(좌=구조 트리, 우=작업면. OptionSetComposer와 공유 규격 — optionset-shared 내부 모듈이 강제). 트리: 1층=옵션(리딩 글리프=유형 형태 아이콘, Forms 문법), 2층=묶음(무글리프+들여쓰기+1px 중성 가이드). 루트 추가=하단 아웃라인·자식 추가=부모 행 hover ＋(표 아래 ＋묶음 병존). 스코프: 옵션=전체 표 / 묶음 클릭=그 묶음 값만(경로 헤더·빈 행 추가는 묶음 안으로). 헤더=[이름]…[유형][필수]|[편집/미리보기](height 56 고정). 표=FieldGrid식 hairline·행 36px·Tab=열·Enter=같은 열 아랫 행·고스트 실체화·붙여넣기 분리·native 드래그(값·묶음 블록·입력칸)·hidden 봉인·강조=캐럿+밑변 1px. 유형 5형 자연어+아이콘 전환 무손실(choices/fields/texts 공존). 미리보기=단일 옵션 경량 내장(조립 프리뷰는 Composer=Picker 몫). 고급 배선 없음(fx·adjust·unit 계약 보존만). usage=삭제 확인에서만. 도메인 무지(헌법 1)·금액 계산 0(§6).',
+  { name: 'OptionSetEditor', layer: '유기체', role: '옵션 정의 저작 위젯 v2.1.',
     props: [
       { name: 'groups / onChange', kind: '기능', values: 'OptionGroup[] (controlled) / (groups)=>void — 모든 쓰기는 이 하나(부품은 저장을 모른다)' },
       { name: 'usage?', kind: '기능', values: 'Record<groupId, string[]> — 옵션별 사용처 라벨(소비처가 부착 데이터에서 계산). 완전 삭제 확인에 나열' },
@@ -1009,7 +1014,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['Repeater', 'InheritedValueField', 'ExpressionField', 'KeyValueField'],
       공유: ['optionset(공유 타입)'],
     } },
-  { name: 'OptionSetComposer', layer: '유기체', role: '구성 위젯(부착 상위 면) — OptionSetEditor와 동형 2-pane(좌=구성 트리 저작, 우=부착·순서+Picker 내장 조립 미리보기). 모델(업계 검증 — Square 동형): 옵션 정의=라이브러리 참조, 부착·순서=노드의 속성. 정의 수정 불가 — 행 클릭/편집↗=onEditOption(소비처 라우팅, 편집기 중복 내장 금지). 트리: kind branch(쉐브론·묶기 전용·클릭=펼침)/leaf(▪마크·부착 단위·루트 직결 가능), 깊이 무제한, 타이포 균일(종류=글리프·깊이=들여쓰기). 저작: 루트=하단 아웃라인 2버튼, 자식=branch hover ＋(기본 leaf)·⋯(둘 다), 이름=⋯ 인라인, ⠿=형제 순서(reparent 백로그), 삭제=확인(하위·부착 수 고지). 부착 행=[⠿][유형 아이콘][이름][필수][공용 N], 팝오버=라이브러리 목록(부착됨·공용 표시)+새 옵션 만들기(onCreateOption 위임). 미리보기=Picker configure 통째 내장(소계=미리보기 한정 표시 산술 — 저장 경로 없음, §6 예외 명시). 노드 종류 문구=labels prop(기본 그룹/대상 — 도메인 무지).',
+  { name: 'OptionSetComposer', layer: '유기체', role: '구성 위젯(부착 상위 면).',
     props: [
       { name: 'nodes / onNodesChange', kind: '기능', values: 'OptionNode[] (controlled) — 트리·부착·순서 전부 이 데이터' },
       { name: 'library', kind: '기능', values: 'OptionGroup[] — 옵션 정의 전체(읽기 전용 — 부착 후보·렌더 소스)' },
@@ -1017,7 +1022,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'selectedId? / onSelect?', kind: '기능', values: 'controlled 선택(leaf) — 미지정 시 내부 상태' },
       { name: 'labels? / title? / readOnly?', kind: '콘텐츠', values: "{ branch?, leaf? }(기본 '그룹'/'대상') / 좌측 pane 제목(기본 '구성') / 저작 잠금" },
     ] },
-  { name: 'OptionSetPicker', layer: '유기체', role: '저작 면이 정의한 OptionSet을 읽어 *고르는* 선택 면 위젯 — OptionSetEditor의 짝. **행 규율(실검토 확정)**: 상태는 기하를 못 바꾼다 — 수량 슬롯 상시 예약(빈 행 hover "담기" 알약→같은 자리 스테퍼 morph), 행 소계 없음(품목 소계=풋터), 수량 행 숫자=단가(무부호), 택 델타만 "+ ₩"·포함 사양은 \'포함\', 담긴 행 틴트 없음(✓마크+weight). **표현 어휘 = 본문 기하(자동+override)**: single→cards(≤6 — 제목+델타, 선택=링 색 승격만)/grid(≤10)/list(초과)/chips/segmented/select · multi→grid(≤10)/list(초과)/chips/cards · quantity→stepper/grid · number→input(범위 넓음 — blur 스냅)/stepper. **값묶음은 기하와 직교한 레이어**(F′ 2026-07-30): 기본=구획 블록(밴드+그 묶음의 기하 반복 — 카드·2열도 지원, 전 후보 한 화면=횡단 비교 보존) · 값>10=필터 칩(밴드 없음, 활성 칩이 말한다 — 무묶음 값 있으면 \'전체\' 칩) · 정렬 책임은 부품(bundleBlocks 계약: 첫 등장 순서 유지·묶음 안 순서 유지·무묶음은 밴드 없는 선두 블록) · segmented·select는 단일 컨트롤이라 묶음 표현 불가 · \'filtered\'·\'collect\' override는 기하가 아니라 칩 레이어 강제 별칭. **2열 규칙**: 3개 이상=반폭 2열(거터+hairline)·2개 이하=반열 한 열(밴드는 열 사이가 아니라 블록 사이 — 옛 밴드×2열 상호배타 폐기). **접힘**: defaultCollapsed 기본 \'sequential\'(첫 그룹만 — 신규 작성)·재편집은 \'satisfied\'·"다음" 진행 접힘·선택은 접힘 유발 안 함·collapseOnPick opt-in·openGroups controlled. **시점 보정**: 펼침·다음=최하단 맞춤(패널 내부·하이라이트 없음)/잠금 담기·ref=상단 점프. 풋터 소계=대형 타이포, 미충족 경고=잠금 담기 탭 시 플로팅(2.6s·기하 불변). 그룹 헤더 고정은 *열린 그룹만*(접힘 헤더는 흐를 본문이 없고 자기 요약줄을 잠식)·스크롤 컨테이너에 padding-top 금지(크롬 sticky는 content box 기준 — 고정 헤더 위 틈)·필수=별표·그룹1+섹션無=헤더 생략. 검색: 소비처 제어, 미충족 필수는 못 지움. 금액 계산 0(§6).',
+  { name: 'OptionSetPicker', layer: '유기체', role: '저작 면이 정의한 OptionSet을 읽어 고르는 선택 면 위젯.',
     props: [
       { name: 'mode', kind: '기능', values: "'idle'(placeholder) | 'pick'(title·items·onPick·secondary?·emptyState?) | 'configure'(아래 전부)" },
       { name: 'groups / selection', kind: '기능', values: 'OptionGroup[] / OptionSelection { picked, qty, nums, pickedMany? } (controlled)' },
@@ -1038,7 +1043,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['optionset(공유 타입)', '_cells(fmtCurrency)'],
     } },
-  { name: 'CompositionOutline', layer: '유기체', role: '2-pane 작성 면의 우측 "작성물 카드 스택" — 카드는 라인이 있거나 작성 중(active)인 섹션만(빈 섹션 상시 노출 폐기 — 실화면 반전). 추가 진입점은 상단 단일 버튼 + **계층 메뉴**(부품 소유 Popover): items 있는 섹션은 하위까지 드릴(뒤로 포함)→onAddToSection(sectionId, itemId), 없는 섹션은 (sectionId)만 — 좌측 pick 모드 없이 곧장 구성/담기 면 진입. 조작면 — 라인 클릭=좌측 재진입, active=은은한 채움 한 겹+"편집 중" 라벨(카드 링 안에 링 중첩 금지·카운트 뱃지 없음). **라인 해부: [×수량?][라벨][금액] + 보조 요약(있을 때만 — 자리 채움 문구 금지)**. 담기형 섹션 가이드: 품목 낱개 나열 대신 하부장 동형 라인 *하나*(보조=고른 품목 나열, 금액=전체 소계 — 소비처가 집계해 주입). 선 최소화, 섹션 라벨=캡션 오버라인(라인이 주인공). 합계 하단 고정, value는 포맷된 문자열(§6-1). footer=완전 위임. 카드 flex:none.',
+  { name: 'CompositionOutline', layer: '유기체', role: '2-pane 작성 면의 우측 "작성물 카드 스택".',
     props: [
       { name: 'sections', kind: '기능', values: 'CompositionSection[] = { id, label, badge?, items?, lines, active? } — 전체가 메뉴 후보, 카드는 라인 보유·active만. addLabel?은 지원 중단(무시)' },
       { name: 'sections[].items?', kind: '기능', values: '{ id, label, sublabel? }[] — 추가 메뉴 하위 드릴 목록(구성형 섹션)' },
@@ -1054,7 +1059,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['optionset(공유 타입)', '_cells(fmtCurrency)'],
     } },
-  { name: 'LineItemList', layer: '유기체', role: '편집 가능한 라인아이템 목록 — DataTable(읽기 전용)에 없는 "수량 편집+소계+삭제+합계". 도메인 무지(items 주입). 그룹(하위분류) 헤더로 묶고 하단에 수량-중심 합계(가격 옵션).',
+  { name: 'LineItemList', layer: '유기체', role: '편집 가능한 라인아이템 목록.',
     props: [
       { name: 'items', kind: '기능', values: 'LineItem[] = { id, label, sublabel?, group?, unitAmount?, quantity, min?, max? }' },
       { name: 'onQuantityChange / onRemove', kind: '기능', values: '(id, qty) / (id) — onRemove 있으면 ✕ 노출' },
@@ -1071,7 +1076,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_cells(fmtCurrency/fmtNumber)'],
     } },
-  { name: 'QueueList', layer: '유기체', role: '평평한 목록 + *선택 상태* — 2-pane 좌측(큐)의 표준 골격. ListWidget(표·선택 표현 없음)·StatusRow(골격 고정)·MobileListRow(모바일·chevron)가 못 메우던 빈칸. 행 = [mark 고정폭 46][제목(+흐린 꼬리)][우측 메타 다중][상태 배지]. **선택 표현은 prop으로 못 바꾼다** — 모양 변화(각진 전체폭 → 안쪽 라운드 pill) + 굵기 변화라 색이 아닌 이중 단서(WCAG 1.4.1). 옅은 틴트는 흰 배경 대비 1.1:1로 1.4.11 미달이라 폐기. 구분선 인셋·`·` 구분자·행 최소높이(44 HIG)·스켈레톤 기하는 부품 소유. 도메인 무지(헌법 1): mark/meta는 raw 노드가 아니라 닫힌 무게·톤 어휘.',
+  { name: 'QueueList', layer: '유기체', role: '평평한 목록 + 선택 상태.',
     props: [
       { name: 'items', kind: '기능', values: 'QueueItem[] = { id, mark?{label, weight: quiet|outline|solid}, title, titleMuted?, meta?[{text, tone: default|strong|warning|danger, icon?}], badge?{label,color}, disabled? }' },
       { name: 'selectedId / onSelect', kind: '기능', values: 'controlled 선택' },
@@ -1087,7 +1092,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['queuelist.css(행 기하·인셋 자동계산 — 격리 raw)', 'radio 모드 행=<label>+네이티브 input(화살표 이동·"N 중 M 선택됨" 낭독)'],
     } },
-  { name: 'DecisionPanel', layer: '유기체', role: '"한 건을 다음 단계로 넘긴다" 화면의 우측 패널 — **하단 고정 액션 바를 소유**한다. Card+Stack 조립이면 바 위치를 소비처가 갖게 되는데, 탭이 셋이어도 주 CTA 자리가 같아야 그 정체성이 성립하므로 자리를 부품이 갖는다(SAP Fiori: 워크플로 액션은 푸터 / Workday Canvas: 액션이 바뀌어도 바 위치 유지). 오른쪽 정렬 — 4열 격자로 만들면 보조가 하나뿐인 탭에서 두 버튼이 양 끝으로 벌어져 한 쌍으로 안 읽힌다. **잠금 CTA**: disabled 속성을 안 쓴다(포커스를 못 받아 사유가 도달 안 함) — 눌리되 안 넘어가고 사유를 안내 자리에 danger로(자리 상시 예약이라 기하 불변).',
+  { name: 'DecisionPanel', layer: '유기체', role: '"한 건을 다음 단계로 넘긴다" 화면의 우측 패널.',
     props: [
       { name: 'title / subtitle', kind: '콘텐츠', values: 'string (머리 구획)' },
       { name: 'sections', kind: '콘텐츠', values: 'DecisionSection[] = { key, label?(대문자 캡션 — 없으면 라벨 줄 미조립), labelExtra?(ReactNode), children(raw 슬롯 — Modal children 동형) }' },
@@ -1100,7 +1105,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Title', 'Text', 'Icon', 'Button'],
       공유: ['_cells(renderAction·Action)', 'decisionpanel.css(sticky 바 — 격리 raw)'],
     } },
-  { name: 'NoteThread', layer: '분자', role: '데스크탑에서 *쓰기 가능한* 누적 메모 — MobileComment+MobileComposer의 데스크탑 짝. Timeline(읽기 전용·컴포저 없음)·BoardView 댓글(게시글에 갇힘)이 못 메우던 자리. Enter 제출은 부품이 form을 소유해 푼다(TextInput에 onKeyDown을 여는 대신 — 임의 키 핸들러는 닫힌 경계의 구멍). 빈 상태 문구 없음(입력칸이 이미 "여기 쓰면 된다"를 말한다). 자기 표면 없음 — 남의 섹션 안에 들어가는 물건이라 면을 가지면 카드 안 카드가 된다. **첨부**: 이 부품이 이미 쓰기 스레드라 새 부품을 세우지 않고 확장했다(FileUploader는 자기 세로 목록을 소유해 컴포저 한 줄에 못 들어가고, AttachmentViewer는 여는 일만 알고 붙이는 일을 모른다). 타입은 _attachment의 Attachment 한 벌을 그대로 쓰고, **업로드도 뷰어도 소비처의 일**이다. renderAttachment 같은 자유 슬롯·layer prop은 안 연다(첨부 모양이 화면마다 갈라지고, 모바일은 MobileComment/MobileComposer가 받는다).',
+  { name: 'NoteThread', layer: '분자', role: '데스크탑에서 쓰기 가능한 누적 메모.',
     props: [
       { name: 'notes', kind: '기능', values: 'ThreadNote[] = { id, body, author, time(상대시각 문자열 — 포맷은 소비처), canEdit?(서버 판정), attachments?: Attachment[] }' },
       { name: 'draft / onDraftChange / onSubmit', kind: '기능', values: 'controlled 컴포저. 본문이 비어도 대기 첨부가 있으면 제출된다(코멘트 없는 첨부가 흔하다)' },
@@ -1118,7 +1123,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton(클립·전송·항목 액션)'],
       공유: ['notethread.css', '_attachment(Attachment)', '_fileAccept(accept·maxSize 판정)'],
     } },
-  { name: 'ListDetail', layer: '배치 프리미티브', role: '평면 목록 + 프리뷰 2-pane. 계층은 HierarchyExplorer, 정보+폼은 DetailPage가 있고 **평면 목록 + 상세**만 빈칸이었다. 계약이 {list, detail, collapsed}뿐이라 도메인 골격(템플릿)이 아니라 배치 — 그래서 템플릿 층 동결 방침과 안 부딪힌다. Grid로 대체 안 되는 이유는 폭 비율이 아니라 **상세의 sticky**(소비처가 표현할 방법이 없다). 좁아져도 2열 유지(폰은 소비처가 애초에 안 렌더 — AppShell 하한과 같은 규율).',
+  { name: 'ListDetail', layer: '배치 프리미티브', role: '평면 목록 + 우측 프리뷰의 2-pane 배치.',
     props: [
       { name: 'list / detail', kind: '콘텐츠', values: 'ReactNode ×2 (보통 QueueList / DecisionPanel)' },
       { name: 'collapsed', kind: '값', values: 'boolean — 목록 0건이면 상세를 접고 1열(고를 게 없는데 "고르세요"를 안 띄운다)' },
@@ -1160,7 +1165,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Grid', 'Stack'],
       공유: ['_cells(셀 type enum)'],
     } },
-  { name: 'PageShell', layer: '유기체', role: 'AppShell 아래 **모든 화면의 골격** — 폭(1200 캡·중앙) · 세로 리듬 · 헤더 자리 · **세로 배관**(작업면이 뷰포트 잔여고를 받는 통로) · 본문 격자를 한 부품이 소유한다. 본문을 `tiles` 배열로 받아 **「page 위엔 widget만」을 구조로 강제**한다 — children으론 못 막는다(ReactElement<TileProps>도, 원소 종류를 지정한 형태도 둘 다 통과한다: JSX 표현식이 ReactElement<any,any>라서다. 헌법 6 「타입은 지도, 래퍼와 린트가 그물」의 사례). content가 ReactNode인 건 구멍이 아니라 Modal children과 동형(방식 A) — 규칙이 겨누는 건 «본문의 구조»지 타일 속 내용물이 아니다. **탈출구(Free 슬롯)는 안 만든다** — 열면 모두가 그리로 가고 규칙이 문서로 돌아간다. 격자로 표현이 안 되면 위젯을 잘못 나눈 신호로 읽는다(03 §11-3). Page는 폐기하지 않고 «전환 통로»로 남는다.',
+  { name: 'PageShell', layer: '유기체', role: 'AppShell 아래 모든 화면의 골격.',
     props: [
       { name: 'title', kind: '콘텐츠', values: 'string (PageHeader 위임)' },
       { name: 'meta', kind: '콘텐츠', values: 'HeaderMeta[] — 배지·아이콘·정보텍스트' },
@@ -1174,7 +1179,7 @@ export const CATALOG: CatalogEntry[] = [
       '배치 프리미티브': ['Bento', 'Bento.Tile'],
       유기체: ['PageHeader'],
     } },
-  { name: 'AppShell', layer: '유기체', role: '페이지 전체 골격 — **2티어**(데스크탑 260 풀 넷바 / 태블릿 72 아이콘 레일). 상단바 없음, 유틸리티(알림·프로필)는 넷바 하단. **모바일은 범위 밖**(MobileShell이 받는다) — 하한 APPSHELL_MIN_WIDTH(768) 아래는 가로 스크롤로 예측 가능하게 무너진다.',
+  { name: 'AppShell', layer: '유기체', role: '페이지 전체 골격.',
     props: [
       { name: 'logo / onLogoClick', kind: '콘텐츠', values: 'ReactNode, () => void (데스크탑 넷바 최상단. 태블릿 레일엔 로고 없음 — 72px엔 정사각 마크만 들어가 부실)' },
       { name: 'menuItems / activePath / onNavigate', kind: '기능', values: '{ label, icon, path, group, count?: number }[] (count=미처리 건수 → CountBadge, 두 티어 모두에서 보임)' },
@@ -1189,7 +1194,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton', 'Menu'],
       공유: ['_cells(Action)'],
     } },
-  { name: 'MobileShell', layer: '유기체', role: '모바일 셸 — AppShell의 *형제*(축소판 아님). 면·그림자를 안 쓰고 배경 + 가로 헤어라인으로만 나누는 네이티브 리스트 체계. **상단은 헤더 행 하나**(고정·항상): 화면 제목이 여기 산다(v0.74.0 — MobileTop 폐기, iOS식 큰 제목 접힘은 blur/material 전제라 기각). CTA는 헤더가 아니라 하단 고정.',
+  { name: 'MobileShell', layer: '유기체', role: '폰 화면 골격 — 면 대신 헤어라인으로 나눈다.',
     props: [
       { name: 'header', kind: '콘텐츠', values: 'MobileHeaderContent(선택) = { title?, onBack?, backLabel?, actions? } — **행에 무엇을 놓을지만 정한다. 행의 유무는 정하지 않는다**: 생략해도 행은 남는다(고정 52px 밴드). 비는 게 정상인 화면이 있다' },
       { name: 'header.title', kind: '콘텐츠', values: "string(고정 제목) | MobileHeaderValue = { value, onPrev, onNext, prevLabel?, nextLabel? }(‹ › 로 바뀌는 **값 제목** — 달력의 'YYYY년 M월'처럼 보고 있는 범위가 곧 이름인 경우). 스테퍼는 제목에 붙는다(액션 존이 아니다 — 화면의 액션이 아니라 제목을 바꾸는 컨트롤이다). h2로 렌더(제목 탐색 보존)" },
@@ -1205,7 +1210,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['_cells(Action)'],
     } },
-  { name: 'MobileSection', layer: '분자', role: '모바일 화면의 내용 묶음 — 제목(선택) + 자유 슬롯. 묶음을 *카드*가 아니라 **여백 또는 경계선**이 만든다(면·그림자 미사용). M3가 implicit containment(여백)와 explicit containment(선)를 다른 수단으로 규정하고 "full-width divider는 아껴 쓰라"고 하므로, 무엇으로 나눌지를 축(separator)으로 연다. 행 밀도도 여기서 정한다 — 한 목록에서 행 높이가 갈리면 사고이기 때문(06 §1-8).',
+  { name: 'MobileSection', layer: '분자', role: '모바일 화면의 내용 묶음.',
     props: [
       { name: 'title / action', kind: '콘텐츠', values: '섹션 제목(TDS ListHeader 자리) + 우측 보조(‘전체보기’ 등). 텍스트 CTA 자리가 아니다 — CTA는 셸 하단 고정' },
       { name: 'headingLevel', kind: '스타일', values: "2 | 3(기본) — 제목의 heading 단계. 생김새는 캡션 그대로이고 시맨틱만 얻는다(스크린리더 제목 탐색)" },
@@ -1215,7 +1220,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: 'ReactNode — raw 슬롯(Modal children 동형). 텍스트·아이콘·배지 뭘 넣든 소비처가 조립' },
     ],
     composition: { 토큰: ['--border-default(헤어라인)', '--row-pad-y(밀도 통로)', '--row-divider-inset(들여쓴 행 선)', 'caption 타이포', 'spacing'], 공유: ['mobilelist.css — 모바일 목록 계열 공유'] } },
-  { name: 'MobileField', layer: '분자', role: '모바일 폼의 한 칸 — [작은 라벨] / [값 슬롯] / [에러]. **칸 자신은 아무 경계도 그리지 않는다**: 경계는 값 슬롯에 든 *입력 원자*가 자기 **면(fill)** 으로 말하고 그 면은 셸 스코프가 깐다. 부착 지점이 칸이 아니라 원자인 이유는 이 칸에 원자 아닌 것도 들어오기 때문이다(칩 줄·펼침 트리거) — 밑줄은 칸 단위로 성립하지만 면·윤곽은 원자 단위로만 성립한다(06 §3-2). 라벨은 **위**에 둔다: Baymard가 모바일 inline 라벨을 금하고(좁은 폭에서 입력칸이 쪼그라들고 오류가 는다) 상단 라벨이 완료 시간을 최대 50% 줄인다는 아이트래킹(Wroblewski)이 근거. 포커스는 원자가 윤곽 2px로 말한다(WCAG 2.4.13 (b)).',
+  { name: 'MobileField', layer: '분자', role: '모바일 폼의 한 칸.',
     props: [
       { name: 'label', kind: '콘텐츠', values: 'string' },
       { name: 'required', kind: '스타일', values: 'boolean (별표 *표시*만 — 필수 검증은 스키마)' },
@@ -1223,14 +1228,14 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: '입력 원자 또는 값 슬롯' },
     ],
     composition: { 토큰: ['--border-default/--border-focus/--text-danger(밑줄)', '--typo-caption(라벨)', '--input-height-md(값 높이)'], 공유: ['mobilelist.css'] } },
-  { name: 'MobileChoice', layer: '분자', role: '닫힌 선택지에서 하나 고르기 — 가로 스크롤 **칩 줄**. 폰에서 Select는 탭해서 열고 고르는 두 동작이고 그 사이 오버레이가 화면을 덮는다: 선택지가 손에 꼽을 만큼이면 전부 보여주고 한 번에 고르는 게 빠르고 *뭘 고를 수 있는지*가 화면에 남는다. 신호 분리도 목적이다 — 꺽쇠(⌄)를 *펼침*에만 남겨, 오버레이로 열리는 것과 제자리에서 펼쳐지는 것이 같은 글리프를 쓰지 않게 한다. 선택지가 6~7개를 넘으면 줄이 길어져 뒤가 숨으므로 그땐 Select가 맞다. 게시판 목록의 말머리 필터와 같은 부품(필터냐 폼 값이냐는 데이터의 차이지 컨트롤의 차이가 아니다).',
+  { name: 'MobileChoice', layer: '분자', role: '닫힌 선택지에서 하나 고르기.',
     props: [
       { name: 'options', kind: '기능', values: '{ label, value }[]' },
       { name: 'value / onChange', kind: '기능', values: 'controlled, string (단일 선택)' },
       { name: 'ariaLabel', kind: '콘텐츠', values: 'string (radiogroup 이름)' },
     ],
     composition: { '의미 원자': ['Chip(legend)'], 공유: ['mobilelist.css(.mchoice — 가로 스크롤·줄바꿈 금지)'] } },
-  { name: 'MobileListRow', layer: '분자', role: '모바일 목록의 행 — 누르면 *다른 화면으로 이동*하는 탐색형. 구분은 하단 헤어라인 하나뿐.',
+  { name: 'MobileListRow', layer: '분자', role: '모바일 목록의 행.',
     props: [
       { name: 'title / meta', kind: '콘텐츠', values: '제목 + 아래 줄 보조 정보(작성자·날짜 — 포맷은 소비처)' },
       { name: 'leading / badges / trailing', kind: '콘텐츠', values: 'ReactNode 슬롯 — 좌측(아바타·아이콘) / 제목 위 배지 줄 / 우측 값. 어떤 배지를 쓸지는 도메인이라 소비처가 정한다' },
@@ -1243,7 +1248,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon'],
       공유: ['mobilelist.css — 마지막 행 선 제거는 MobileSection이 소유'],
     } },
-  { name: 'MobileStatRow', layer: '분자', role: '모바일 KPI 행 — 지표 2~4개 균등 분할 + 항목 사이 세로 헤어라인. 데스크탑 Stat·SummaryCard는 카드 면 위 물건이라 모바일 체계에 못 쓴다.',
+  { name: 'MobileStatRow', layer: '분자', role: '모바일 KPI 행.',
     props: [
       { name: 'items', kind: '기능', values: 'MobileStatItem[] = { label, value(포맷된 문자열 — 숫자 포맷은 소비처), sub?(델타·보조), tone?(sub 색), onClick?(그 칸만 눌림 — 보통 걸러진 목록으로) }' },
     ],
@@ -1251,7 +1256,7 @@ export const CATALOG: CatalogEntry[] = [
       토큰: ['--border-default(세로 구분선)', 'subheading 크기 + display 굵기(값)', '상태 4역할(sub tone)'],
       공유: ['mobilelist.css — 모바일 목록 계열 공유'],
     } },
-  { name: 'MobileDisclosure', layer: '분자', role: '그 자리에서 펼쳐지는 행 — MobileListRow(다른 화면으로 이동)의 짝. 이동=chevron-right / 펼침=chevron-down(회전)으로 어포던스가 방향으로 갈린다.',
+  { name: 'MobileDisclosure', layer: '분자', role: '그 자리에서 펼쳐지는 행.',
     props: [
       { name: 'title / meta', kind: '콘텐츠', values: '제목 + 접힌 상태에서도 보이는 우측 요약(금액·건수)' },
       { name: 'sub', kind: '콘텐츠', values: "string(선택) — 제목 **옆** 보조. 한 줄 안의 타이포 위계다. title을 ReactNode로 열지 않은 이유: raw 슬롯이면 한 줄의 규격이 소비처마다 갈린다(06 §3-1 — 축이 추가될 때만 연다). 요구는 '위계 두 단'이고 축 하나로 닫힌다. **짧아야 한다** — meta처럼 flex:none이라 길면 제목을 밀어낸다" },
@@ -1259,7 +1264,7 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'children', kind: '콘텐츠', values: 'ReactNode raw 슬롯' },
     ],
     composition: { 토큰: ['--border-default', 'min-height 44px'], '의미 원자': ['Icon'], 공유: ['mobilelist.css'] } },
-  { name: 'MobilePhotoPicker', layer: '분자', role: '모바일 사진 첨부/삭제 — 정사각 썸네일 격자 + 추가 타일 + 각 썸네일 ✕. 데스크탑 FileUploader(드롭존)는 폰에 드래그가 없어 못 쓴다.',
+  { name: 'MobilePhotoPicker', layer: '분자', role: '모바일 사진 첨부/삭제.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'FileItem[](FileUploader와 같은 타입 — 상태·진행률 어휘 공유). 새로 고른 건 부품이 url에 objectURL을 채우고 회수까지 책임진다. 실제 업로드는 소비처(pending의 file → FormData)' },
       { name: 'max / disabled', kind: '스타일', values: 'number(넘으면 추가 타일이 사라짐) / boolean' },
@@ -1269,7 +1274,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon', 'Text'],
       공유: ['FileItem(FileUploader)', 'mobilelist.css'],
     } },
-  { name: 'MobileCalendar', layer: '분자', role: '모바일 월 달력 — **스팬 바**로 기간을 읽는다(점 아님). 여러 날 일정은 하나의 연속 알약이라 "언제부터 언제까지"·겹침·연속이 보인다(iOS 18이 월 뷰를 Compact/**Stacked**/Details로 재편하며 iOS 17의 점 표기를 교체 — 취한 건 Stacked). 바는 pointer-events 없음: 폰에서 7px 바는 터치 표적이 못 되므로 일정 선택은 아젠다 목록이 받는다. 달력만 그린다.',
+  { name: 'MobileCalendar', layer: '분자', role: '모바일 월 달력.',
     props: [
       { name: 'month', kind: '기능', values: "'YYYY-MM' controlled — 상태 주인은 소비처. **onMonthChange는 없다**: 월 제목·이동이 셸 헤더의 값 제목(MobileShell.header.title)으로 올라갔다(v0.74.0). 부품은 받은 달을 그릴 뿐이다" },
       { name: 'selected / onSelect', kind: '기능', values: "'YYYY-MM-DD'" },
@@ -1281,7 +1286,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['**_calendarLanes.packLanes — CalendarPage와 한 벌**(복제하면 적층 순서가 갈려 같은 데이터가 두 화면에서 다르게 쌓인다)', 'CalendarPage 타입', 'raw 7열 CSS grid(우리 Grid는 12의 약수만 — 명시 예외)', 'dayjs'],
     } },
-  { name: 'MobileBoardList', layer: '유기체', role: '사내 게시판 목록의 모바일 화면 — 데스크탑 BoardList의 짝. **`BoardPost` 타입을 공유**한다(소비처가 한 벌로 두 화면을 그린다, MobileCalendar 선례). 데스크탑의 열(분류·필독·NEW·안읽음·첨부/댓글·작성자·날짜·조회)을 폰의 3층 [배지 줄 / 제목 / 보조 줄]로 접는다 — 잃는 정보 없이 배치만 세로로 눕는다. 표 헤더 없음(폰 폭에 6열은 안 들어가고 열 제목은 행이 이미 말한다) · 번호 페이징 대신 더보기(폰에서 번호는 표적이 작고 스크롤 맥락을 끊는다) · 분류는 SegmentedControl이 아니라 가로 스크롤 필터 칩(5개 넘으면 세그먼트는 글자가 뭉개진다). 공지=배지가 아니라 *별도 구획*(배지만으로는 "고정"이 안 읽힌다). 글쓰기 CTA는 셸 소유.',
+  { name: 'MobileBoardList', layer: '유기체', role: '사내 게시판 목록의 모바일 화면.',
     props: [
       { name: 'posts', kind: '기능', values: 'BoardPost[] (데스크탑과 같은 타입)' },
       { name: 'categories / category / onCategoryChange', kind: '기능', values: '말머리 필터 칩(안 주면 미조립)' },
@@ -1298,7 +1303,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['BoardPost(BoardList)', 'Badge strength(공지=info/fill · 필독=danger/fill · NEW=danger/weak — 데스크탑 BoardList와 같은 호출. v0.72.0 전엔 board.css 전용 클래스 3개였다)', 'mobileboard.css', '_useDelayedFlag(로딩 표시 지연)'],
     } },
-  { name: 'MobileBoardView', layer: '유기체', role: '게시판 글 보기의 모바일 화면 — 데스크탑 BoardView의 짝. 업무 기능을 전부 갖는다(필독 읽음확인 배너+진행률+CTA · 첨부 · 이전/다음글 · 조회수 · 작성자 신원 · 댓글 차단). 글 카드가 없다(면·그림자 대신 섹션 헤어라인). **댓글 작성란이 이 부품 안에 없다** — 폰은 입력이 하단 고정이라 셸 `bottom`의 MobileComposer가 받고, 답글은 *위치*가 아니라 **대상 태깅**으로 말한다(`onReply(id)`). 데스크탑은 반대로 중첩 인라인 폼 — 같은 행위, 다른 매체. 상단 액션(수정·삭제)도 셸 몫.',
+  { name: 'MobileBoardView', layer: '유기체', role: '게시판 글 보기의 모바일 화면.',
     props: [
       { name: 'category / notice / mustRead / title / author / date / views', kind: '콘텐츠', values: '글 신원(작성자는 {name,dept?,role?})' },
       { name: 'content', kind: '콘텐츠', values: 'ReactNode (본문 슬롯 — 보통 RichText)' },
@@ -1313,7 +1318,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['MobileSection', 'MobileListRow', 'MobileFileRow', 'MobileComment'],
       공유: ['BoardAttachment·BoardComment(BoardView)', 'Badge strength(공지=info/fill · 필독=danger/fill)', 'mobileboard.css'],
     } },
-  { name: 'MobileBoardWrite', layer: '유기체', role: '게시판 작성/수정의 모바일 화면 — 데스크탑 BoardWrite의 짝. 작성 기능을 전부 갖는다(분류·제목·수신자 조직도·본문·첨부(문서 포함)·게시옵션 3종·임시저장). **수신자 포섭·배타 규칙은 `_audience` 공유 모듈**(복제하면 같은 조직도가 두 화면에서 다르게 담긴다 — _calendarLanes와 같은 이유). 본문은 Editor가 아니라 Textarea(폰에서 리치 툴바는 화면을 먹고 손도 안 닿는다) · 첨부는 드롭존이 아니라 파일 선택 버튼+행(폰엔 드래그가 없다) · 조직도는 새 화면이 아니라 그 자리에서 펼침(화면을 쌓으면 쓰던 글의 맥락이 끊긴다). 등록·취소·**임시저장 전부 셸 소유** — 임시저장은 등록과 같은 위계가 아니라 안전망이라, 업계 권고대로 자동 저장 + 이탈 확인 + *눈에 안 띄는* 상단 보조 액션 자리로 간다(폼 끝에 두면 정작 나가려는 순간 화면 밖이다).',
+  { name: 'MobileBoardWrite', layer: '유기체', role: '게시판 작성/수정의 모바일 화면.',
     props: [
       { name: 'categories / category / onCategoryChange', kind: '기능', values: '분류 Select' },
       { name: 'postTitle / onPostTitleChange · body / onBodyChange / bodyPlaceholder', kind: '기능', values: 'controlled' },
@@ -1327,14 +1332,14 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['FormField', 'IconButton', 'MobileSection', 'MobileListRow'],
       공유: ['_audience(포섭 규칙 — 데스크탑 BoardWrite와 한 벌)', 'FileItem(FileUploader)', 'mobileboard.css'],
     } },
-  { name: 'MobileComment', layer: '분자', role: '댓글 한 줄 — 1단 답글(parentId)까지 들여쓰기. 데스크탑 BoardView와 같은 BoardComment 타입을 쓴다(소비처가 한 벌을 두 화면에).',
+  { name: 'MobileComment', layer: '분자', role: '댓글 한 줄. 1단 답글까지 들여쓴다.',
     props: [
       { name: 'comment', kind: '기능', values: 'BoardComment = { id, author, date, body, isAuthor?, parentId? } — 부모 링크는 parentId(배열 순서에 기대지 않음)' },
       { name: 'authorLabel', kind: '콘텐츠', values: "글쓴이 표시 문구(기본 '작성자') — 부품이 호칭을 지어내지 않는다" },
       { name: 'onReply', kind: '기능', values: '(id) => void — 있으면 답글 버튼. 답글엔 안 붙는다(1단 스레드). *작성은 여기 없다* — 폰은 입력이 하단 고정이라 MobileComposer가 받는다(데스크탑 BoardView의 중첩 인라인 폼과 갈리는 지점)' },
     ],
     composition: { 토큰: ['--border-default', 'primary-0(작성자 태그)', 'bg-secondary(답글 배경)'], '의미 원자': ['Avatar', 'Icon'], 공유: ['BoardComment(BoardView)', 'mobilelist.css'] } },
-  { name: 'MobileComposer', layer: '분자', role: '화면 하단 고정 입력 바 — 셸 bottom 슬롯에 꽂는다. 폰에서 긴 스크롤 끝의 입력창은 손이 안 닿아 하단에 붙는다.',
+  { name: 'MobileComposer', layer: '분자', role: '화면 하단 고정 입력 바.',
     props: [
       { name: 'value / onChange / onSubmit', kind: '기능', values: 'controlled — 값의 주인은 소비처' },
       { name: 'replyTo', kind: '콘텐츠', values: '{ label, onCancel } — 있으면 입력 위 대상 칩. 폰은 입력이 하단 고정이라 "위치"로 대상을 말할 수 없어 태깅이 정답(데스크탑은 중첩 폼으로 위치가 말한다 — 같은 행위, 다른 매체)' },
@@ -1345,7 +1350,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['격리 raw textarea(자동 높이·무테 — 필드 규격과 다른 물건. Tree 인라인편집 선례)', 'mobilelist.css'],
     } },
-  { name: 'AttachmentViewer', layer: '유기체', role: '데스크탑 첨부 뷰어 — dimmed backdrop 위 모달. 모바일 짝과 _attachment 계약 한 벌을 공유한다(layer prop을 두지 않는다: 소비처는 자기가 어느 셸인지 안다).',
+  { name: 'AttachmentViewer', layer: '유기체', role: '데스크탑 첨부 뷰어.',
     props: [
       { name: 'opened / onClose', kind: '기능', values: 'controlled' },
       { name: 'items / index / onIndexChange', kind: '기능', values: 'Attachment[] + controlled 인덱스. 목록 화면과 상태를 공유해야 하므로 부품이 안 든다' },
@@ -1359,7 +1364,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['Menu'],
       공유: ['_attachment(계약)', '_attachmentStage(내용 렌더)', '_pdfEngine(엔진 격리)', 'attachment.css'],
     } },
-  { name: 'MobilePaperViewer', layer: '유기체', role: '폰의 **A4 문서 뷰어** — 데스크탑 DocModal·PaperModal의 *형제*(축소판 아님). 하는 일은 하나다: **인쇄 좌표계로 그려진 문서를 폰에서 훑어보게 한다.** 그리지도 다시 쓰지도 않는다. ⚠ v0.75의 「읽기 뷰」(장표를 라벨-값으로 투영)는 **v0.77.0에서 걷어냈다** — 문서 체계가 PaperSpec으로 옮겨오면서 근거가 사라졌기 때문이다: `PaperCell`은 좌표와 text/field/border만 갖고 라벨-값 짝은 "왼쪽 칸이 라벨"이라는 **시각적 인접성 추론**으로만 성립한다(= 되살리면 Adobe Liquid Mode와 같은 처지가 된다). 실제로 소비처는 그걸 피하려고 폰 전용 2열 격자를 손으로 합성해 넘겼고, 그래서 **「원본」 탭이 원본이 아니었다.** 투영을 안 하면 구조가 필요 없으므로 **계약은 `children`으로 돌아왔다**(PaperModal과 한 벌) — `<PaperDoc spec values />`도, 소비처가 이미 가진 A4 문서도 그대로 들어온다(폰용으로 문서를 다시 짜는 일이 없어진다 — 그게 두 화면을 갈리게 하던 원인이다). 확대: **폰에서는 폭이 늘 구속조건**이라 폭맞춤이 곧 「한 장 전체」다(세로 A4 한 장 556px < 무대 659~739px) → 열자마자 폭맞춤이고, **더블탭으로 폭맞춤 ↔ 100%**(탭 지점 앵커), 핀치는 그 사이를 연속으로 지난다. 핀치는 multipoint라 **WCAG 2.5.1(Level A)** 이 단일 포인터 대안을 요구하므로 **하단 확대율 표기 자체가 버튼**이다(맞춤 → 100% → 200% 순환). WCAG **1.4.10 Reflow**가 2차원 배치 콘텐츠(데이터 표를 명시적 예로 든다)를 예외로 두는 그 자리이고, 예외는 본체에만 걸리므로 크롬은 전부 rem 토큰이다. 팬은 브라우저 기본 스크롤이고 핀치만 직접 잡는다(touch-action: pan-x pan-y). 배율이 연속인 것은 헌법 5와 안 부딪힌다 — 그 규율은 API 표면이고 `zoom` prop을 안 연다. 전체 화면 커버(모달 아님) — 크롬 규범은 MobileAttachmentViewer와 한 벌. **인쇄 스코프는 없다**: 「문서 밖 치우기」는 화면을 소유한 쪽만 할 수 있는 일이라(DocModal은 Portal이라 가능하지만 이 커버는 앱 트리 안이라 같은 규칙이 자기를 지운다) 인쇄는 소비처 몫이다(paper.css doctrine).',
+  { name: 'MobilePaperViewer', layer: '유기체', role: '폰의 A4 문서 뷰어.',
     props: [
       { name: 'opened / onClose', kind: '기능', values: 'controlled. 닫으면 배율이 초기화된다 — 다음 문서에 앞 배율이 남으면 "왜 확대돼 있지"가 된다' },
       { name: 'title', kind: '콘텐츠', values: '문서 이름 — 헤더 행(셸 헤더와 같은 기하·h2)' },
@@ -1372,7 +1377,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Text', 'Icon', 'IconButton'],
       공유: ['schema/paper(PAPER_CANON — 데스크탑과 같은 좌표계)', '_cells(renderAction)', 'MobileShell(MobileHeaderActions)', 'mobilepaper.css'],
     } },
-  { name: 'MobileAttachmentViewer', layer: '유기체', role: '폰 첨부 뷰어 — **불투명 전체 화면 커버**(모달 아님). counter 필수 · 크롬 auto-hide 없음 · rotate 없음 · 탈출구 2개(X + Esc) · 제스처 미사용(가로 페이징/세로 닫기 동시 개방은 NN/g 경고).',
+  { name: 'MobileAttachmentViewer', layer: '유기체', role: '폰 첨부 뷰어 — 불투명 전체 화면 커버.',
     props: [
       { name: '(AttachmentViewer와 동일)', kind: '기능', values: '_attachment의 AttachmentViewerContract 한 벌. 추가로 onShare를 그린다(데스크탑엔 OS 공유 관습이 없다)' },
     ],
@@ -1382,7 +1387,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['Menu'],
       공유: ['_attachment', '_attachmentStage', '_pdfEngine', 'attachment.css'],
     } },
-  { name: 'MobileSegment', layer: '분자', role: '화면 *안*의 뷰 전환(결재함 5탭 등). 칩 줄=값 선택/필터라면 이건 뷰 전환 — 항상 하나가 켜져 있고 고르면 목록이 다른 것으로 바뀐다. 하단 탭바와 신호가 겹치지 않게 텍스트+밑줄(탭바는 아이콘+틴트 알약).',
+  { name: 'MobileSegment', layer: '분자', role: '화면 안의 뷰 전환(결재함 5탭 등). 칩 줄=값 선택/필터라면 이건 뷰 전환.',
     props: [
       { name: 'items', kind: '콘텐츠', values: "{ value, label, count?, countTone?: 'danger'|'neutral', showZero? }[] — 데스크탑 TabBar가 받는 두 축을 여기도 연다(계약 비대칭 해소). **countTone 기본은 neutral**(TabBar는 danger): 하단 탭바(primary)는 '가서 처리해라'고 화면 안 세그먼트(secondary)는 '지금 보는 갈래'라 건수가 정보성이다 — 06 §3-5. 행동요구인 갈래만 소비처가 danger로 올린다. showZero는 단계별 큐(대기 0 / 처리 12)용 — 안 열면 소비처가 라벨에 숫자를 박아 우회한다" },
       { name: 'value / onChange', kind: '기능', values: 'controlled. 켜짐은 반드시 하나' },
@@ -1393,7 +1398,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['CountBadge'],
       공유: ['mobilelist.css'],
     } },
-  { name: 'MobileBottomSheet', layer: '유기체', role: '폰에서 화면을 안 떠나고 짧은 일을 끝내는 표면. **생성·편집·피커에만**(06 §2-2) — 액션 목록 시트는 안 만든다(액션 목록은 Menu다, 06 §5). Drawer(position=bottom)를 안 쓴 이유: 그 부품은 heading·닫기 X·우측 정렬 푸터라 폰에서 셋 다 틀리다. 다만 포털·포커스 트랩·Escape·배경 잠금은 Mantine이 옳게 하므로 그건 재사용한다.',
+  { name: 'MobileBottomSheet', layer: '유기체', role: '폰에서 화면을 안 떠나고 짧은 일을 끝내는 표면. 생성·편집·피커에만(06 §2-2).',
     props: [
       { name: 'opened / onClose', kind: '기능', values: 'controlled — 상태는 소비처가 쥔다(Modal·Drawer와 같은 계약)' },
       { name: 'title', kind: '콘텐츠', values: 'string(선택). 없으면 제목 줄 자체를 안 그린다(피커처럼 제목이 군더더기인 경우)' },
@@ -1406,7 +1411,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon'],
       공유: ['mobilesheet.css', 'visualViewport 키보드 회피 — position:fixed는 *레이아웃* 뷰포트 기준이라 키보드가 떠도 안 밀린다(iOS). innerHeight − vv.height − vv.offsetTop 만큼 띄운다', '_cells(renderAction)'],
     } },
-  { name: 'MobileConfirm', layer: '유기체', role: '"정말 할까요?" 한 번 묻는 표면 — `window.confirm` 대체(브라우저 크롬이 앱 표면 밖으로 튀고 문구·라벨·톤을 하나도 못 정한다). **시트가 아니라 가운데**인 이유: 확인은 값을 만들지도 고르지도 않는다. iOS도 둘을 가른다("경고는 가운데, 액션 시트는 아래"). 가운데는 뒤 화면과의 연결을 끊어 흐름을 멈추는데, 확인이 원하는 게 그 멈춤이다.',
+  { name: 'MobileConfirm', layer: '유기체', role: '"정말 할까요?" 한 번 묻는 표면.',
     props: [
       { name: 'opened / onConfirm / onCancel', kind: '기능', values: '선언형 — `await confirm()` 같은 명령형 표면을 새로 만들지 않는다(그건 부품이 아니라 장치이고 포커스 복귀·중첩·언마운트를 새로 떠안는다)' },
       { name: 'title / message', kind: '콘텐츠', values: '질문 + 왜 그런지 한 줄. 제목이 이미 질문이면 message는 군더더기라 생략' },
@@ -1418,7 +1423,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Button'],
       공유: ['mobilesheet.css', '배경 탭으로 안 닫는다 — 스쳐서 닫히면 "아니오"와 구분이 안 된다. X도 안 둔다(취소가 이미 그 경로)'],
     } },
-  { name: 'MobileFilterBar', layer: '유기체', role: '**축이 둘 이상인** 필터 — 축마다 버튼 하나, 값 고르기는 시트. `MobileList.filters`(칩 줄)와의 경계는 **축의 개수**다(kk r2 합의): 하나면 칩 줄(드롭다운은 한 번 더 눌러야 한다), 둘 이상이면 이 부품(칩을 깔면 줄이 축 수만큼 늘어난다). 칩 줄을 이 부품이 안 내는 이유도 같다 — 조사가 수렴으로 본 칩은 *보여주는* 칩이고 여기 요구는 *고르는* 컨트롤이다.',
+  { name: 'MobileFilterBar', layer: '유기체', role: '축이 둘 이상인 필터.',
     props: [
       { name: 'axes', kind: '콘텐츠', values: '{ id, label, rows, action?: Action }[] — **축의 성격을 모른다**(rows가 전부 말한다, 헌법 1). `prefix`를 안 받는다: 부품에 문자열 접두사를 시키면 키 공간이 둘(원본/접두사)이 되어 hiddenKeys에 어느 쪽을 넣는지 흐려진다 → `row.key`가 바 전체에서 유일하다는 규칙 하나로 닫는다' },
       { name: 'rows[].marker', kind: '콘텐츠', values: "swatch(CalendarColorRole — **달력과 같은 인코딩 어휘**여야 '이 색으로 그려진다'가 거짓말이 아니다. 자유 hex는 열린 스칼라라 헌법 5 위반) | initial(색으로 못 가르는 값) | emphasis(실선/파선)" },
@@ -1432,7 +1437,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['MobileBottomSheet(값 고르기 = 피커, 06 §2-2)'],
       공유: ['mobilefilter.css', 'CalendarColorRole(CalendarPage)', '_cells(Action)'],
     } },
-  { name: 'MobileRecordList', layer: '유기체', role: '**표와 같은 데이터**를 폰에서 행으로. kk 요청은 표용 `cells`와 카드용 필드를 따로 받는 형태였는데, 그러면 매핑을 두 번 쓰고 둘이 어긋나는 사고(강조가 카드에만 걸리는 류)가 계약 차원에서 반복된다. 그래서 `DataTableColumn.listSlot` 하나만 붙이고 columns·rows를 그대로 받는다 — **한 벌에서 두 표현이 파생돼 어긋날 수가 없다**(06 §3-4 · Polaris `s-table`).',
+  { name: 'MobileRecordList', layer: '유기체', role: '표와 같은 데이터를 폰에서 행으로 그린다.',
     props: [
       { name: 'columns / rows', kind: '기능', values: 'DataTableColumn[] · DataTableRow[] — 표와 **같은 배열**을 본다. listSlot이 카드 표현을 파생시킨다. **kicker는 사다리 3단 자리**(드물게 뜨는 것 — 지연·필독)이고, 값이 *모든 행에* 있는 축(공정·담당)은 `inline`이나 섹션으로 내린다(06 §3-6 — 배지밭이 되면 배지가 신호이길 그만둔다). 표현은 열의 `type`이 정한다(여기서 배지를 강제하면 표와 목록이 다른 말을 한다)' },
       { name: 'idKey', kind: '값', values: 'string(선택) — 행 식별자 열. 없으면 인덱스라 재정렬 시 React 키가 흔들린다' },
@@ -1444,7 +1449,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['MobileListRow'],
       공유: ['DataTable(DataTableColumn.listSlot · DataTableRow)', '_cells(renderCell — 금액·날짜 포맷이 표와 목록에서 갈리면 "같은 데이터"라는 전제가 깨진다)'],
     } },
-  { name: 'MobilePullToRefresh', layer: '분자', role: '목록 최상단에서 아래로 당겨 새로고침. **제스처는 가속기이지 유일 경로가 아니다**(06 §1-4) — 다른 경로(상단 액션·버튼)를 두는 건 화면 책임이고, 없으면 당기는 법을 모르는 사용자에게 새로고침이 존재하지 않는 기능이 된다.',
+  { name: 'MobilePullToRefresh', layer: '분자', role: '목록 최상단에서 아래로 당겨 새로고침. 제스처는 가속기이지 유일 경로가 아니다(06 §1-4).',
     props: [
       { name: 'onRefresh', kind: '기능', values: '() => void | Promise<void> — Promise면 끝날 때까지 인디케이터를 임계 위치에 붙잡아 둔다(손 떼자마자 접히면 "눌렸나?"가 된다)' },
       { name: 'refreshing', kind: '기능', values: 'boolean(선택) — 재조회 상태를 소비처가 아는 경우' },
@@ -1455,7 +1460,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Spinner', 'Icon'],
       공유: ['mobilesheet.css', '**window가 아니라 가장 가까운 스크롤 조상**에 건다 — MobileShell은 문서를 잠그고(.erp-mobile-lock) .ms-body만 스크롤하므로 window.scrollTop은 항상 0이라 "최상단"이 늘 참이 된다', 'touchmove만 passive:false(preventDefault용) · 나머지는 passive:true · preventDefault는 **최상단+아래로**일 때만(아니면 평소 스크롤이 막힌다)'],
     } },
-  { name: 'MobileList', layer: '유기체', role: '모바일 목록 화면의 **껍데기** — 필터·검색·로딩/빈 상태·계층·더보기를 한 계약으로 묶는다. 전에는 이 계약이 MobileBoardList 안에만 있어 v0.68.0 로딩 규율이 게시판 화면에서만 지켜졌다(다른 화면은 useState+EmptyState+Button으로 매번 다시 조립). MobileBoardList가 이 위에 얹힌다.',
+  { name: 'MobileList', layer: '유기체', role: '모바일 목록 화면의 껍데기.',
     props: [
       { name: 'items / getKey / renderRow', kind: '기능', values: '**정렬된 상태로** 받는다 — 부품은 순서를 만들지 않는다(정렬 규칙은 화면마다 다르고 그건 데이터의 일이다, 헌법 1). 부품이 "우선순위·마감" 같은 걸 알기 시작하면 도메인 무지가 깨진다' },
       { name: 'sections / groupBy', kind: '기능', values: '계층은 **축**이다(평면 / 섹션 / 섹션+그룹). 별도 부품으로 안 가른다 — 가르면 status·필터·더보기 계약이 두 벌이 되고 그게 이 부품이 해결한 문제의 재현이다. 섹션은 0건이어도 헤더가 남는다(구조가 안 흔들리게)' },
@@ -1472,7 +1477,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['EmptyState'],
       공유: ['_useDelayedFlag(표시 지연)', 'fmtNumber(_cells)', 'mobilelist.css', 'data-section 훅 — 소비처가 특정 구획만 칠할 수 있게(raw 슬롯 대신 닫힌 키 하나)'],
     } },
-  { name: 'MobileStepTrail', layer: '분자', role: '단계의 진행 — 전자결재 *결재선*이 첫 소비처지만 부품은 결재를 모른다. MobileListRow로 대신할 수 없다(그 행은 "누르면 다른 화면으로"인데 결재선은 읽는 것이고, 무엇보다 순서·현재 위치를 말해야 한다). Timeline과도 다르다 — Timeline은 *일어난 일*의 기록이고 여기는 **아직 안 일어난 단계까지** 그린다(plan·halt). 데스크탑 결재란 격자의 모바일 짝(06 §5 "격자는 폰에서 트레일로").',
+  { name: 'MobileStepTrail', layer: '분자', role: '단계의 진행 — 지나온·현재·아직 안 온 단계를 세로로.',
     props: [
       { name: 'steps', kind: '기능', values: "TrailStep[] = { id, role, name, meta?, state, stateLabel?, comment? }. state는 'done'|'current'|'plan'|'reject'|'halt' 닫힌 열거. 역할명·상태 문구는 도메인이라 소비처가 준다" },
       { name: 'defaultOpen', kind: '스타일', values: '기본 false=**접힘**. 단계가 5~6개면 펼친 채로 화면을 다 먹는다' },
@@ -1484,7 +1489,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon', 'Text'],
       공유: ['mobilelist.css'],
     } },
-  { name: 'MobileDecisionBar', layer: '분자', role: '결재·승인 화면의 하단 결정 바(MobileShell.bottom에 꽂는다). MobileComposer의 형제 — 그건 입력, 이건 결정. 문서 길이와 무관하게 같은 자리에 있는 것이 값(위치 불변성).',
+  { name: 'MobileDecisionBar', layer: '분자', role: '결재·승인 화면의 하단 결정 바(MobileShell.bottom에 꽂는다). MobileComposer의 형제.',
     props: [
       { name: 'primary', kind: '기능', values: 'Action — 커밋(승인·제출). **강조 1개가 여기서 소진된다**(타입에 둘째 강조 자리가 없다)' },
       { name: 'secondary', kind: '기능', values: 'Action — 대안(반려·보류). 강조 아님' },
@@ -1497,7 +1502,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['Menu'],
       공유: ['Action(_cells)', 'mobilelist.css'],
     } },
-  { name: 'MobileFileRow', layer: '분자', role: '첨부 파일 한 줄(읽기) — 아이콘·이름·크기·내려받기. MobileListRow(누르면 다른 화면)와 행동이 달라 별개 부품(§11-3).',
+  { name: 'MobileFileRow', layer: '분자', role: '첨부 파일 한 줄(읽기).',
     props: [
       { name: 'name / size', kind: '콘텐츠', values: '파일명 + 크기 문자열(바이트 포맷은 소비처 — 로케일/도메인)' },
       { name: 'onOpen', kind: '기능', values: '있으면 행 본체가 *뷰어를 연다*(주 행위). 내려받기는 우측 버튼으로 갈라진다 — 한 표적이 두 행위를 하면 손가락이 어느 쪽인지 모른다' },
@@ -1611,7 +1616,7 @@ export const CATALOG: CatalogEntry[] = [
       템플릿: ['FormSection'],
       공유: ['_cells'],
     } },
-  { name: 'HierarchyExplorer', layer: '템플릿', role: '계층 기반 마스터-디테일(좌 디렉토리 트리 / 우: 하위 분류 + 직속 제품 공존). Unity·Figma·VSCode 멘탈모델. 페이지 템플릿(PageHeader 내장).',
+  { name: 'HierarchyExplorer', layer: '템플릿', role: '좌 계층 트리 / 우 그 노드의 내용. 마스터-디테일.',
     props: [
       { name: 'title / description / status / actions', kind: '콘텐츠', values: 'PageHeader(고정) — title 필수' },
       { name: 'nodes / selectedId / expandedIds', kind: '기능', values: '트리(controlled)' },
@@ -1629,7 +1634,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['Menu', 'IconButton', 'ObjectCard', 'SectionHeader', 'Breadcrumb'],
       유기체: ['Tree', 'DataTable', 'EmptyState', 'PageHeader'],
     } },
-  { name: 'HierarchyCollector', layer: '템플릿', role: 'HierarchyExplorer의 짝 — 계층 카탈로그에서 수량과 함께 골라 담는 "작성 면"(HE=관리/이건 수집). 상단 카탈로그 책갈피 + 영속 경로 네비 + 좌 브라우즈 목록 + 우 sunken-well 카트. 도메인 0줄(헌법 1).',
+  { name: 'HierarchyCollector', layer: '템플릿', role: 'HierarchyExplorer의 짝.',
     props: [
       { name: 'title / description / actions', kind: '콘텐츠', values: 'PageHeader(고정) / 풋터 바 액션(Action[])' },
       { name: 'catalogs', kind: '기능', values: 'CollectorCatalog[] = { id, label, tree: CollectorNode[] } — 책갈피(1개면 숨김)+분류 트리(cascader)' },
@@ -1647,7 +1652,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['LineItemList(카트)', 'PageHeader'],
       공유: ['_cells(fmtCurrency/renderAction)'],
     } },
-  { name: 'LedgerPage', layer: '템플릿', role: '돈 지표 페이지 골격(① 기간 · ② KPI 밴드 · ③ 분해표 · ④ Drawer 드릴). 정산·매출·매입 등 기간 스코프 금액 화면. 도메인 0줄, 스키마 주입. ListPage·DetailPage 형제.',
+  { name: 'LedgerPage', layer: '템플릿', role: '기간·KPI·분해표·드릴 4단의 돈 지표 페이지 골격.',
     props: [
       { name: 'title / description / status / actions', kind: '콘텐츠', values: 'PageHeader(고정)' },
       { name: 'period', kind: '기능', values: '{ label, onPrev, onNext, disabledPrev?, disabledNext? } (PeriodNavigator 중앙 스트립)' },
@@ -1663,7 +1668,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['PeriodNavigator', 'Stat', 'SummaryCard', 'TotalRow'],
       유기체: ['PageHeader', 'DataTable', 'Drawer'],
     } },
-  { name: 'CalendarPage', layer: '템플릿', role: '자원×시간 스케줄 골격 — 리소스 타임라인(행=기준축, 1·2주)/월 그리드. 데이터(attrs)·표현(encoding) 분리, 도메인 0줄. 날짜/이벤트 클릭→Drawer.',
+  { name: 'CalendarPage', layer: '템플릿', role: '자원×시간 스케줄 골격.',
     props: [
       { name: 'events', kind: '기능', values: 'CalendarEvent[] = { id, start, end?, label, attrs(임의 차원) }' },
       { name: 'encoding', kind: '기능', values: 'anchor(색+아이콘) · status(채움/점선) · **mark**(바 안 표식·행축 — 부품은 이게 사람인지 시공 종류인지 모른다. glyph·색·축 이름을 소비처가 준다) · rowAxes' },
@@ -1681,7 +1686,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       유기체: ['PageHeader', 'Drawer', 'EmptyState'],
     } },
-  { name: 'BoardList', layer: '템플릿', role: '사내 게시판 목록 골격 — 밀도형 행(스캔 우선) + 상단 고정 공지 밴드(무테 tonal) + 필독/안읽음 강조. 작성자=실명+부서. 분류(말머리)는 데이터(노출은 소비처). 도메인 0줄.',
+  { name: 'BoardList', layer: '템플릿', role: '사내 게시판 목록 골격.',
     props: [
       { name: 'posts', kind: '기능', values: 'BoardPost[] = { id, category?, title, author{name,dept?}, date, views?, comments?, attachments?, unread?, isNew?, pinned?, mustRead? }' },
       { name: 'categories / category / onCategoryChange', kind: '기능', values: '{value,label}[] 분류 탭(controlled) — 안 주면 탭 없음(소비처가 노출 결정). "전체"는 소비처가 포함' },
@@ -1699,7 +1704,7 @@ export const CATALOG: CatalogEntry[] = [
       유기체: ['PageHeader', 'EmptyState'],
       공유: ['_cells(fmtNumber)'],
     } },
-  { name: 'BoardView', layer: '템플릿', role: '사내 게시판 글 보기 골격 — 발행물형 읽기 + 필독 읽음확인(읽은 N/총원) · 첨부 · 이전/다음글 · 가벼운 댓글(1단 답글). 본문=도메인 슬롯. 도메인 0줄.',
+  { name: 'BoardView', layer: '템플릿', role: '사내 게시판 글 보기 골격.',
     props: [
       { name: 'title / category / notice / mustRead', kind: '콘텐츠', values: '제목 + 말머리 + 공지/필독 배지' },
       { name: 'author / date / views', kind: '콘텐츠', values: '{ name, dept?, role? } 실명+부서 · 작성일시 · 조회' },
@@ -1719,7 +1724,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['IconButton'],
       공유: ['_cells(renderAction·fmtNumber)'],
     } },
-  { name: 'BoardWrite', layer: '템플릿', role: '사내 게시판 글 작성/수정 골격 — 분류·제목·수신자(칩+조직도 드릴)·본문·첨부·게시옵션. 본문 v1=Textarea(리치 에디터는 흡수 백로그). 도메인 0줄.',
+  { name: 'BoardWrite', layer: '템플릿', role: '사내 게시판 글 작성/수정 골격.',
     props: [
       { name: 'categories / category / onCategoryChange', kind: '기능', values: '{value,label}[] 분류(말머리) Select' },
       { name: 'postTitle / body / bodyFeatures', kind: '기능', values: '제목 TextInput · 본문 Editor(리치, HTML) · 본문 기능 세트(닫힘, 소비처 선택)' },
@@ -1735,7 +1740,7 @@ export const CATALOG: CatalogEntry[] = [
       분자: ['FormField', 'FileUploader', 'Editor'],
       유기체: ['PageHeader'],
     } },
-  { name: 'Editor', layer: '분자', role: '리치 텍스트 작성기 — TipTap(헤드리스 엔진) 흡수, 툴바·서식은 우리 토큰(무테). features 닫힌 세트로 소비처가 기능 선택. 출력 HTML.',
+  { name: 'Editor', layer: '분자', role: '리치 텍스트 작성기.',
     props: [
       { name: 'value / onChange', kind: '기능', values: 'HTML 문자열(controlled)' },
       { name: 'features', kind: '값', values: "('bold'|'italic'|'heading'|'bulletList'|'orderedList'|'quote'|'link'|'image'|'table'|'divider')[] — 노출 툴바(기본 전체). 새 기능=큐레이션" },
@@ -1746,7 +1751,7 @@ export const CATALOG: CatalogEntry[] = [
       '의미 원자': ['Icon'],
       공유: ['editor.css(프로즈·툴바 토큰 스킨)'],
     } },
-  { name: 'RichText', layer: '분자', role: '저장된 리치 텍스트(HTML) 읽기 뷰어 — Editor의 짝(같은 TipTap 스키마). ProseMirror 스키마 새니타이즈. BoardView 본문 등.',
+  { name: 'RichText', layer: '분자', role: '저장된 리치 텍스트(HTML) 읽기 뷰어.',
     props: [
       { name: 'html', kind: '콘텐츠', values: 'HTML 문자열(읽기 전용 렌더)' },
     ],

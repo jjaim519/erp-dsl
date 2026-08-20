@@ -53,7 +53,7 @@ export function DevTokenPreview() {
     <Stack gap="xl" p="xl" style={{ background: 'var(--bg-tertiary)', minHeight: '100vh' }}>
       <Title order={1} style={{ color: 'var(--text-primary)' }}>ERP DSL — 0단계 토큰 프리뷰</Title>
       <Text style={{ color: 'var(--text-secondary)' }}>
-        아래 값은 전부 화면 검증에서 조정할 잠정값입니다. 구조·관계만 확정.
+        값은 잠정 · 구조만 확정
       </Text>
 
       <Section title="색 사다리 (10칸 · index 6 = 메인)">
@@ -172,14 +172,9 @@ export function DevTokenPreview() {
               <Text size="xs" c="dimmed" ta="center">✗ 알약이 둥근 사각이 된다</Text>
             </Stack>
           </Group>
+          {/* 화면엔 값만. 근거(k=2^s · whitelist인 이유 · fallback)는 theme.ts와 이 파일 헤더에 있다. */}
           <UiText variant="caption" color="secondary">
-            곡률은 <b>corner-shape: {String(theme.other.cornerShape)}</b> — 애플 quintic(수학 k5).
-            CSS의 <code>superellipse(s)</code>에서 s는 수학 지수가 아니라 <b>k = 2<sup>s</sup></b>다(s1=원호 · s2=표준 스쿼클 · s2.32=애플).
-            Chromium만 그린다 — Safari·FF는 평범한 둥근 모서리로 graceful fallback.
-            <b> 곡률은 박스에만 켠다</b>(squircle.css whitelist) — 원·알약에 걸면 마지막 칸처럼 각져서 Chip·Avatar·Switch·Radio는 제외된다.
-          </UiText>
-          <UiText variant="caption" color="secondary">
-            {RADIUS_BANDS.map((b) => `${b.key}=${b.note}`).join('  ·  ')}
+            corner-shape: {String(theme.other.cornerShape)} · Chromium만
           </UiText>
         </Stack>
       </Section>

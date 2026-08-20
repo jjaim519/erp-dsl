@@ -17,7 +17,7 @@
 //  · 쿼리(부모가 넘긴다 — **별도 문서라 부모의 `:root`가 상속되지 않는다**):
 //      ?scheme=dark   색 모드          ?fs=large|xlarge  폰트 스케일(접근성 검증)
 //      ?view=matrix   둘째 보기        ?probe=0          측정 탐침 끄기
-//      ?pad=0         여백 0(셸·페이지급 부품)
+//      ?pad=0         여백 0(셸·페이지급 부품)     ?bg=floor      바탕을 페이지 바닥으로
 //
 //  dev 전용(배포 제외).
 import { useEffect, useState } from 'react';
@@ -62,6 +62,10 @@ export default function PartCanvas() {
   if (!q) return null;   // 쿼리를 읽기 전엔 안 그린다(모드가 한 프레임 깜빡이는 걸 막는다)
 
   const pad = q.get('pad') === '0' ? 0 : 24;
+  //  **바탕은 기본이 «흰 면»이다.** 부품 대부분(원자·분자)은 실화면에서 카드 안, 즉 흰 면 위에 산다.
+  //   캔버스를 페이지 바닥(회색)으로 두면 실제로 놓일 자리와 괴리가 커서 판정이 틀린다.
+  //   반대로 «떠 있는» 부품(위젯)은 바닥 위에 놓여야 raised가 읽히므로 `?bg=floor`로 연다.
+  const bg = q.get('bg') === 'floor' ? 'var(--bg-tertiary)' : 'var(--bg-primary)';
 
   //  ⚠ **`minHeight: 100vh`를 안 쓴다.** 쓰면 높이가 순환한다 — 캔버스가 부모가 준 높이를 100vh로
   //   읽고 그걸 그대로 «내 높이»라 보고하니, 무대가 정한 값이 영원히 유지된다. 그래서 링크 하나짜리
@@ -69,7 +73,7 @@ export default function PartCanvas() {
   //   높이는 **내용이 정하고** 무대는 그걸 받아 쓴다. 뷰포트 높이를 스스로 쓰는 부품(AppShell)만
   //   무대 쪽에서 고정 높이를 준다(`_Stage`의 FULL_HEIGHT).
   return (
-    <div style={{ background: 'var(--bg-tertiary)', padding: pad }}>
+    <div style={{ background: bg, padding: pad }}>
       {q.get('view') === 'matrix' ? <DemoMatrix name={name} /> : <Demo name={name} />}
       {q.get('probe') !== '0' && <Probe />}
     </div>

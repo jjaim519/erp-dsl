@@ -10,6 +10,7 @@
 //   ③ 폭     iframe 폭 = **진짜 뷰포트**라 브라우저를 안 줄여도 `@container` 강등이 걸린다.
 //            768은 AppShell 하한(`APPSHELL_MIN_WIDTH`)이라 그 아래는 안 연다 — 무너지는 게 정상인 자리다.
 //   ④ 탐침   측정 HUD on/off.
+//   ⑤ 바탕   흰 면(기본) ↔ 페이지 바닥. 부품 대부분은 카드 안(흰 면)에 살고, 위젯만 바닥 위에 뜬다.
 //
 //  폰트 스케일은 **좌측 트리의 토글이 주인**이다. iframe은 별도 문서라 부모의 `:root`가 상속되지 않으므로
 //  여기서 관찰해 `?fs=`로 실어 보낸다(`_MobileStage`가 쓰던 수법 그대로 — 두 무대가 같은 자를 쓴다).
@@ -38,6 +39,7 @@ export function Stage({ name }: { name: string }) {
   const [mode, setMode] = useState('light');
   const [width, setWidth] = useState('base');
   const [probe, setProbe] = useState('on');
+  const [bg, setBg] = useState('surface');   // 기본 = 흰 면(부품 대부분이 사는 자리)
   const [heights, setHeights] = useState<Record<string, number>>({});
   const [nonce, setNonce] = useState(0);   // 「상태 초기화」 — 데모 내부 상태를 버리고 새로 마운트
 
@@ -72,7 +74,8 @@ export function Stage({ name }: { name: string }) {
   const height = FULL_HEIGHT.has(name) ? 720 : (heights[name] ?? 96);
 
   const src = (scheme: Pane) =>
-    `/shell/part/${encodeURIComponent(name)}?scheme=${scheme}&fs=${fs}&view=${view}&probe=${probe === 'on' ? 1 : 0}`;
+    `/shell/part/${encodeURIComponent(name)}?scheme=${scheme}&fs=${fs}&view=${view}`
+    + `&probe=${probe === 'on' ? 1 : 0}${bg === 'floor' ? '&bg=floor' : ''}`;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -86,6 +89,8 @@ export function Stage({ name }: { name: string }) {
           options={[{ label: '라이트', value: 'light' }, { label: '다크', value: 'dark' }, { label: '병치', value: 'both' }]} />
         <SegmentedControl size="sm" value={width} onChange={setWidth}
           options={WIDTHS.map((x) => ({ label: x.label, value: x.value }))} />
+        <SegmentedControl size="sm" value={bg} onChange={setBg}
+          options={[{ label: '흰 면', value: 'surface' }, { label: '바닥', value: 'floor' }]} />
         <SegmentedControl size="sm" value={probe} onChange={setProbe}
           options={[{ label: '탐침', value: 'on' }, { label: '끔', value: 'off' }]} />
         <Anchor href={src('light')} external>캔버스만 열기</Anchor>
@@ -125,10 +130,9 @@ export function Stage({ name }: { name: string }) {
         ))}
       </div>
 
-      <Text variant="caption" color="secondary">
-        iframe(자체 뷰포트)에 <code>/shell/part/{name}</code> 을 띄운다 — 폭 토글이 진짜 뷰포트라 브라우저를 안 줄여도 된다.
-        <b> 탐침</b>은 마우스가 지난 요소의 실측치를 우하단에 띄우고(<b>Option+클릭</b>=고정), 마우스가 나가도 마지막 값을 남긴다 — 그대로 캡처하면 된다.
-      </Text>
+      {/* 화면 문구는 «조작법»만 남긴다. 왜 iframe인지·폭 토글이 왜 진짜 뷰포트인지는 이 파일 헤더에 있다 —
+          도구 설명을 상시 노출하면 그것도 어휘처럼 읽히고, 정작 봐야 할 부품에서 눈을 뺏는다. */}
+      <Text variant="caption" color="secondary">탐침: 마우스가 지난 요소를 잰다 · Option+클릭 = 고정</Text>
     </div>
   );
 }
