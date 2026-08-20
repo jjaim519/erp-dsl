@@ -211,7 +211,8 @@ export function DocModal(props: DocModalProps) {
       centered
       closeOnClickOutside={closeOnOverlayClick && !dirty}
       radius="md"
-      shadow="md"
+      /* 그림자는 elevation 2축의 overlay — Mantine shadows.md와 값이 겹쳐 카드와 구분이 안 됐다(02 §2축) */
+      styles={{ content: { boxShadow: 'var(--elevation-overlay)' } }}
       withCloseButton={false}
       padding={0}
       /* ⚠ **인쇄가 백지로 나가던 자리다.** Mantine 8은 포털을 body에 직접 안 붙인다 —

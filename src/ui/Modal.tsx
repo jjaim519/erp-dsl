@@ -47,7 +47,8 @@ export function Modal({
       centered
       closeOnClickOutside={closeOnOverlayClick}
       radius="md"
-      shadow="md"
+      /* 그림자는 elevation 2축의 overlay — Mantine shadows.md와 값이 겹쳐 카드와 구분이 안 됐다(02 §2축) */
+      styles={{ content: { boxShadow: 'var(--elevation-overlay)' } }}
       withCloseButton={false}  /* 기본 헤더 끔 — 우리가 직접 조립 */
       padding={0}              /* 본문 패딩 끔 — 패딩 주인을 우리 3영역으로 이관 */
     >

@@ -52,7 +52,8 @@ export function Popover({
       middlewares={middlewares}
       width={mWidth}
       withArrow
-      shadow="md"
+      /* 그림자는 elevation 2축의 overlay — Mantine shadows.md와 값이 겹쳐 카드와 구분이 안 됐다(02 §2축) */
+      styles={{ dropdown: { boxShadow: 'var(--elevation-overlay)' } }}
       radius="md"
       withinPortal
     >
