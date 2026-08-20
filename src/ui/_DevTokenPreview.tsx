@@ -28,89 +28,20 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// ── 곡률 실험대 ────────────────────────────────────────────────────────────────
-//  왜 여기가 필요한가: 「스쿼클을 도입했다」는 결정이 화면에서 실현이 안 되고 있었다.
-//  값(`superellipse(2)`)도 셀렉터(`mantine-Button-root`)도 정상인데 **반경이 작아서** 안 보인다 —
-//  원호(k=2)와 스쿼클(k=4)이 45°에서 벌어지는 거리가 `0.189 × r`이라, r=8이면 1.5px이다.
-//  즉 화면에서 제일 많이 보이는 물건(버튼·입력칸, radius sm=8)에 곡률이 사실상 없었다.
+// ── 모서리(반경 × 곡률) ────────────────────────────────────────────────────────
+//  실험대는 걷었다 — 값이 정해졌으니 이 절은 «후보 대조»가 아니라 «채택된 것의 전시»다.
+//  결정 근거는 theme.ts의 radius 주석에 있다(요지: 반경은 크기 대역의 함수고, r ≥ 높이/2면
+//  브라우저가 클램프해 알약이 되므로 한 값이 16~600px 전 대역을 못 덮는다).
 //
-//  두 축의 곱이라 말로는 못 고른다 → 나란히 깔고 눈으로 고른다.
-//   · 가로 = 반경 후보(4·8·12·16·24)  · 세로 = 곡률 후보
-//   · `superellipse(s)`의 s는 **수학 지수가 아니다** — 수학 k = 2^s다.
-//     원호 k2 = s1 / 표준 스쿼클(=`squircle` 키워드) k4 = s2 / **애플 quintic k5 = s2.32**.
-//     (애플 실형상은 연속곡률 스플라인이라 순수 초타원이 아니고, n=5가 가장 가까운 단순 초타원이다.)
-//   · Chromium만 그린다(Safari·FF는 평범한 둥근 모서리로 graceful fallback) — 크롬에서 볼 것.
-const RADII = [4, 6, 8, 10, 12, 16, 20, 24];
-//  실제 박스 높이로 본다. **v1 실험대는 전부 40px이었고 그게 함정이었다** — r24를 라벨해 놓고
-//  브라우저는 20으로 클램프해 «알약»을 그렸다(세로 두 모서리 합 48 > 높이 40). 라벨이 거짓말을 했다.
-//  반경은 크기의 함수라 크기를 안 보이면 판정이 안 선다.
-const BOXES = [
-  { label: '스와치·마커 16', h: 16 },
-  { label: '툴바 항목 30', h: 30 },
-  { label: 'Button xs 28', h: 28 },
-  { label: 'Button sm 32', h: 32 },
-  { label: 'Button md 40', h: 40 },
-  { label: '카드 120', h: 120 },
-];
-const CURVE = 'superellipse(2.32)';   // 애플 quintic(k5)에 가장 가까운 단순 초타원 — 실험대 기본값
-
-function CornerLab() {
-  return (
-    <Stack gap="xl">
-      <Section title="곡률 — 원호 ↔ 스쿼클 ↔ 애플 (같은 반경 16에서)">
-        <Stack gap="sm">
-          {/* `corner-shape`는 React가 아는 style 속성이 아니라 인라인 객체로 넣으면 조용히 떨어진다.
-              클래스로 내면 브라우저가 그냥 파싱한다(미지원 브라우저는 이 선언만 무시 — fallback 유지). */}
-          <style>{[
-            ...[['round', 'round'], ['sq', 'superellipse(2)'], ['ap', 'superellipse(2.32)'], ['sq3', 'superellipse(3)']]
-              .map(([k, v]) => `.cv-${k}{border-radius:16px;corner-shape:${v}}`),
-            ...RADII.flatMap((r) => BOXES.map((b) =>
-              `.cl-${r}-${b.h}{border-radius:${r}px;corner-shape:${CURVE}}`)),
-          ].join('')}</style>
-          <Group gap="xl" align="center">
-            {[['원호 round (k2)', 'round'], ['스쿼클 se(2) — 현재 (k4)', 'sq'], ['애플 se(2.32) (k5)', 'ap'], ['se(3) (k8)', 'sq3']].map(([label, k]) => (
-              <Stack key={k} gap="xxs" align="center">
-                <Box className={`cv-${k}`} style={{ background: 'var(--mantine-color-primary-6)', width: 96, height: 96 }} />
-                <Text size="xs" c="dimmed">{label}</Text>
-              </Stack>
-            ))}
-          </Group>
-          <UiText variant="caption" color="secondary">
-            96px 박스 · 반경 16 고정. 곡률만 갈린다. (원호와 스쿼클의 차이는 <b>0.189 × r</b> — r16이면 3px,
-            <b> r8이면 1.5px</b>이라 지금 버튼에선 안 보였다.)
-          </UiText>
-        </Stack>
-      </Section>
-
-      <Section title="반경 × 실제 박스 높이 (알약이 되는 지점을 본다)">
-        <Stack gap="sm">
-          <Group gap="lg" style={{ paddingLeft: 132 }}>
-            {RADII.map((r) => <Text key={r} size="xs" c="dimmed" style={{ width: 72 }}>r {r}</Text>)}
-          </Group>
-          {BOXES.map((b) => (
-            <Group key={b.h} gap="lg" align="center">
-              <Text size="xs" c="dimmed" style={{ width: 116 }}>{b.label}</Text>
-              {RADII.map((r) => {
-                const pill = r >= b.h / 2;   // 세로 두 모서리 합이 높이를 넘으면 브라우저가 클램프 → 알약
-                return (
-                  <Stack key={r} gap={2} align="center" style={{ width: 72 }}>
-                    <Box className={`cl-${r}-${b.h}`}
-                      style={{ background: pill ? 'var(--mantine-color-danger-4)' : 'var(--mantine-color-primary-6)', width: 72, height: b.h }} />
-                    {pill && <Text size="xs" c="dimmed">알약</Text>}
-                  </Stack>
-                );
-              })}
-            </Group>
-          ))}
-          <UiText variant="caption" color="secondary">
-            곡률은 <b>{CURVE}</b>(애플) 고정. 붉은 칸 = <b>r ≥ 높이/2</b>라 브라우저가 클램프해 알약이 된 것 —
-            라벨한 반경이 실제로 안 걸린 칸이다. <b>알약은 Chip의 어휘</b>라 버튼이 그리 가면 두 부품이 형태로 안 갈린다.
-          </UiText>
-        </Stack>
-      </Section>
-    </Stack>
-  );
-}
+//  ⚠ 이 미리보기 박스는 raw div라 `squircle.css` 화이트리스트 밖이다 — 곡률을 직접 걸어줘야
+//    실물과 같아진다. 그리고 `corner-shape`는 React가 아는 style 속성이 아니라 인라인 객체로
+//    넣으면 조용히 떨어지므로, 클래스로 낸다.
+const RADIUS_BANDS = [
+  { key: 'xs', label: '작은 내부 요소', note: '스와치·마커·툴바 항목 (16~30px)', h: 24 },
+  { key: 'sm', label: '컨트롤', note: 'Button·TextInput·Select (28~44px) · defaultRadius', h: 32 },
+  { key: 'md', label: '면', note: 'Card·Modal·Popover·Drawer', h: 72 },
+  { key: 'full', label: '알약·원', note: 'Chip·Avatar·Switch', h: 32 },
+] as const;
 
 export function DevTokenPreview() {
   const theme = useMantineTheme();
@@ -206,19 +137,51 @@ export function DevTokenPreview() {
         </Stack>
       </Section>
 
-      {/* 곡률 실험대는 아래 CornerLab — radius 스케일 자체를 정하는 자리라 이 절과 짝이다. */}
-      <Section title="radius · 그림자">
-        <Group gap="lg">
-          {(['sm', 'md', 'full'] as const).map((r) => (
-            <Box key={r} style={{ background: theme.colors.primary[6], width: 72, height: 56, borderRadius: theme.radius[r] }} />
-          ))}
-          {(['sm', 'md'] as const).map((sh) => (
-            <Box key={sh} style={{ background: 'var(--bg-primary)', width: 72, height: 56, boxShadow: theme.shadows[sh], borderRadius: theme.radius.md }} />
+      <Section title="radius — 단 이름이 곧 크기 대역이다">
+        <Stack gap="sm">
+          <style>{RADIUS_BANDS.map((b) =>
+            `.rb-${b.key}{border-radius:${theme.radius[b.key]};corner-shape:var(--corner-shape)}`).join('')}</style>
+          <Group gap="xl" align="flex-end">
+            {RADIUS_BANDS.map((b) => (
+              <Stack key={b.key} gap="xxs" align="center" style={{ width: 128 }}>
+                <Box className={`rb-${b.key}`} style={{ background: 'var(--mantine-color-primary-6)', width: 112, height: b.h }} />
+                <Text size="xs" fw={700}>{b.key} · {theme.radius[b.key]}</Text>
+                <Text size="xs" c="dimmed" ta="center">{b.label}</Text>
+              </Stack>
+            ))}
+          </Group>
+          <UiText variant="caption" color="secondary">
+            곡률은 <b>corner-shape: {String(theme.other.cornerShape)}</b> — 애플 quintic(수학 k5).
+            CSS의 <code>superellipse(s)</code>에서 s는 수학 지수가 아니라 <b>k = 2<sup>s</sup></b>다(s1=원호 · s2=표준 스쿼클 · s2.32=애플).
+            Chromium만 그린다 — Safari·FF는 평범한 둥근 모서리로 graceful fallback.
+          </UiText>
+          <UiText variant="caption" color="secondary">
+            {RADIUS_BANDS.map((b) => `${b.key}=${b.note}`).join('  ·  ')}
+          </UiText>
+        </Stack>
+      </Section>
+
+      {/* 그림자는 **두 벌**이다 — Mantine 스케일(shadows.sm/md)과 우리 elevation(raised/overlay).
+          전 프리뷰는 앞의 것만 그려서 «2축»(surface containment × elevation lift)이 화면에 없었다.
+          둘은 짝이 정해져 있다: raised = 페이지 위에 뜬 위젯 / overlay = 모달·드롭다운. */}
+      <Section title="그림자 — Mantine 스케일 · elevation 2축">
+        <Group gap="xl" align="flex-end">
+          {[
+            { label: 'shadows.sm', box: theme.shadows.sm },
+            { label: 'shadows.md', box: theme.shadows.md },
+            { label: 'elevation-raised (위젯)', box: 'var(--elevation-raised)', surface: 'var(--surface-raised)' },
+            { label: 'elevation-overlay (모달·드롭다운)', box: 'var(--elevation-overlay)', surface: 'var(--surface-overlay)' },
+          ].map((e) => (
+            <Stack key={e.label} gap="xxs" align="center" style={{ width: 168 }}>
+              <Box style={{
+                background: e.surface ?? 'var(--bg-primary)', width: 112, height: 72,
+                boxShadow: e.box, borderRadius: theme.radius.md,
+              }} />
+              <Text size="xs" c="dimmed" ta="center">{e.label}</Text>
+            </Stack>
           ))}
         </Group>
       </Section>
-
-      <CornerLab />
 
       <Section title="Button 원자 (variant 5 × 밀도 3 + 상태)">
         <Group gap="md">

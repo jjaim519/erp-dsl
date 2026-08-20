@@ -138,6 +138,8 @@ export function ButtonBase({
           '--button-padding-x': SIZE[size].paddingX,
           // 글자는 size와 무관하게 본문과 같은 단(14px). 크기는 높이·패딩이 말한다.
           '--button-fz': 'var(--mantine-font-size-sm)',
+          //  ※ 굵기는 여기서 못 준다 — Mantine은 `--button-fw` 같은 변수를 안 두고 root에
+          //    `font-weight: 600`을 **하드코딩**한다(styles.css:3301). 그래서 아래 styles로 간다.
         },
       })}
       radius="sm"        // radius는 정책으로 고정. 바깥에서 못 바꾼다.
@@ -150,7 +152,21 @@ export function ButtonBase({
       type={type}
       onClick={onClick}
       px={iconOnly ? 0 : undefined}
-      styles={iconOnly ? { root: { aspectRatio: '1 / 1', paddingInline: 0 }, label: { display: 'inline-flex' } } : undefined}
+      /* 굵기 — **값을 바꾸는 게 아니라 주인을 준다.** 여기 오기 전까지 버튼 굵기는 Mantine root의
+         `font-weight: 600`이 새어 들어온 것이었다(우리가 정한 적 없음 — 「01 공간의 완전한 장부」가
+         말하는 «기본값 누수»의 타이포판). 같은 값을 우리 타이포 토큰으로 다시 선언해 통로를 잇는다:
+         버튼 라벨 = **강조된 본문**이라는 선언이고, 굵기를 손보고 싶어지면 그건 «버튼 굵기»가 아니라
+         «body-strong 단»의 문제가 된다(폼 라벨과 같은 단을 공유한다).
+         ⚠ 500을 쓰지 않는다 — 우리 타이포 스케일은 400/600/700 셋이고 500은 그 안에 없다.
+         ⚠ 여기만 `styles`인 이유: Mantine이 변수를 안 두고 하드코딩해서 «같은 변수를 둘이 적는»
+           문제가 애초에 없다. 스타일시트 선언 vs 인라인이라 인라인이 결정적으로 이긴다. */
+      styles={{
+        root: {
+          fontWeight: 'var(--typo-body-strong-weight)',
+          ...(iconOnly ? { aspectRatio: '1 / 1', paddingInline: 0 } : null),
+        },
+        ...(iconOnly ? { label: { display: 'inline-flex' } } : null),
+      }}
     >
       {children}
     </MantineButton>
