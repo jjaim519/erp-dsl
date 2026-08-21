@@ -702,10 +702,6 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'PaperDoc', layer: '유기체', role: '서식(PaperSpec)에 값을 먹여 A4 여러 장을 그린다.',
     props: [
       { name: 'spec', kind: '기능', values: 'PaperSpec (엑셀에서 변환한 서식)' },
-      { name: '트리 배열(깊이)', kind: '값', values: '줄마다 깊이가 다른 표(내역서·BOM — 「주방 › 상부장 › 옵션1」). 축은 둘이다: 배열이 깊이 열을 가지면(`PaperArray.level` — 엑셀 「필드」 시트에서 종류를 깊이로) 그 배열은 트리가 되고, 칸에 `indent`를 주면(`{{들여:품목.품명}}`) 그 줄의 깊이만큼 글자가 밀린다. 격자는 안 움직인다 — 칸을 옮기면 열이 어긋나 테두리가 계단이 되고 병합 폭이 깊이마다 달라져 표가 목록으로 읽힌다. 그래서 보통 품명 칸 하나에만 붙인다(수량·단가는 제 열에 서야 세로로 읽힌다). 한 계단은 `--paper-indent`(한 행 = 24px)로 부품이 정한다 — 0.5행(12px)으로 시작했다가 화면에서 레벨 구분이 어렵다가 나와 올렸다(본문 14px보다 좁은 계단은 계단으로 안 읽힌다). 계단 수의 기준선은 실제로 그려지는 줄 중 가장 얕은 깊이다 — 구획 제목이 깊이 1을 가져가면 깊이 2가 기준선이 되어 표가 통째로 밀려 들어가지 않는다 — px를 열면 같은 회사 문서 둘이 다른 계단을 갖는다. 중첩(children)이 아니라 평탄 배열 + 깊이 열인 이유: 엑셀이 이미 그 모양이고(왼쪽 칸에 레벨), `buildHierarchyFromRows` 선례가 같고, 쪽 나눔이 평평한 흐름 위에서 돌기 때문' },
-      { name: '트리의 묶음(atLevel·구획 제목)', kind: '기능', values: '트리에선 묶음 기준이 열이 아니라 구조다 — 「주방」에 무엇이 딸렸는지 말해 주는 열이 없고, 깊이 1인 줄이 다시 나오는 것이 곧 앞 묶음의 끝이다. 그래서 `groupHeader`·`groupFooter`가 `by`(값이 같은 줄끼리) 대신 `atLevel`(깊이 ≤ N에서 자름)을 쓴다. `by`와 달리 재배열이 없다 — 트리는 적힌 순서가 곧 의미라, 같은 이름의 「옵션」이 딴 공사 밑에 또 있어도 뭉치면 안 된다. `groupHeader`를 두면 묶음을 여는 줄이 구획 제목이 되어 반복에서 빠진다(안 빼면 같은 이름이 두 번 나온다) — 내역서의 표준형이 이것이다: 전 폭 제목 「1. 주방」 + 그 아래 열머리 + 항목(깊이 2·3) + 소계. ⚠ 묶음을 여는 줄은 자기 금액을 가지면 안 된다 — 소계가 딸린 줄을 다 더하므로 같은 수가 두 번 더해진다(구획 제목은 값 칸을 안 둔다). 머리가 없으면 그 줄은 항목으로 남는다(줄마다 자기 금액을 갖는 표). 깊이별 소계는 아직 안 연다: 반복 하나에 그룹꼬리 하나가 `findClusters`의 전제다' },
-      { name: '밴드 순서 = 발화 순서', kind: '기능', values: '시트에 적힌 순서가 곧 발화 순서다. 열머리가 그룹머리 위면 표 전체에 한 번 나고(산출내역서), 아래면 구획 안의 줄이라 묶음마다 다시 난다(내역서 — 「1. 주방」 밑에 공사·단위·수량…이 다시 온다). 쪽을 넘길 때는 둘 다 재출력되므로 다음 쪽 머리에 구획 제목 + 열머리가 함께 붙는다' },
-      { name: '번호(number)', kind: '값', values: '묶음을 여는 줄 앞에 「1. 」을 붙인다(`{{번호:품목.품명}}`). 번호의 주인은 몇 번째 묶음인가지 몇 번째 줄인가가 아니라 딸린 줄은 안 받는다. 데이터로 안 받는다 — 소비처가 번호를 열로 들면 줄을 지울 때마다 다시 매겨야 하고 종이의 번호와 데이터의 번호가 갈린다. 번호는 그 표에서 그 줄이 있는 자리의 성질이다. `mode:edit`의 입력 칸에는 안 붙는다(고치는 건 품명이지 「1. 」이 아니다)' },
       { name: 'values', kind: '콘텐츠', values: 'Record<string, unknown> (반복은 배열 — { 부속: [{...}] })' },
       { name: 'scale', kind: '스타일', values: 'number (화면 축소 배율. 인쇄는 항상 물리 A4 1:1)' },
       { name: 'mode', kind: '기능', values: "'view'(기본) | 'edit'" },
@@ -807,18 +803,13 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'DataSheet', layer: '유기체', role: 'DataTable의 쓰기 형제.',
     props: [
       { name: 'columns', kind: '기능', values: 'SheetColumn[] = { key, label, read?(CellType 16종 — DataTable과 같은 어휘), edit?(text·number·currency·date·select), editable?(row)=>boolean, options?, badgeColors?, placeholder?, dateFormat?(edit:date 표기 — 표현은 소비처 것, 기본 \'YYYY-MM-DD\'), grow?, sortable? }' },
-      { name: 'read × edit 2축', kind: '값', values: '표시와 편집은 별개 축이다. kind 하나로 묶으면 "배지로 보이지만 select로 고친다"(상태 열의 가장 흔한 형태)를 표현할 수 없다. `edit`이 없으면 파생 칸(읽기 전용 — Enter 순회에서도 빠지고 상자를 안 그린다). 저장된 줄의 파생값은 소비처가 `rows`에 넣고, 초안 줄의 파생값은 `draft.derive`가 준다 — 둘 다 있어야 같은 열이 줄에 따라 차고 비는 일이 없다' },
       { name: 'editable(row)', kind: '기능', values: '같은 열이라도 줄마다 열리고 닫힌다(전기된 줄·계정 성격에 따라). 그래서 boolean이 아니라 (row)=>boolean' },
       { name: 'rows / onCommitRow', kind: '기능', values: 'SheetRow[] (id 필수) / (rowId, values) => Promise<{error?,key?}|void>. 줄 단위 확정. 거절하면 값을 지키고 그 줄을 연 채 오류를 붙인다(MUI processRowUpdate 거절 계약과 동형). 정규화된 값을 돌려주는 통로는 안 연다 — controlled니까 소비처가 rows를 갱신한다(값의 주인이 둘이 되는 걸 막는다)' },
       { name: 'draft', kind: '기능', values: '{ seed?, ready(values)=>boolean, onCreate(values), derive? } — 없으면 초안 줄을 안 그린다(읽기 표로도 쓸 수 있다). 「행 추가」 버튼을 두지 않는다: 맨 아래 빈 줄에 바로 친다. 초안은 1줄 상시(확정되면 rows로 편입되고 새 초안이 깔린다) — 미저장 줄을 N개 쌓으면 값의 주인이 rows와 둘이 된다. `seed`는 최초 1회만 읽힌다 — 보고 있는 달·현장이 바뀌어 초안의 출발값이 달라져야 하면 `key={ym}`으로 리마운트한다(resetKey prop을 열지 않는 이유: seed를 좇는 두 번째 진실이 생긴다)' },
       { name: 'draft.derive', kind: '기능', values: '(values)=>Record<string,unknown> — 초안 줄의 파생 칸 값. 장부의 "거래 후 잔고", 발주의 "금액=수량×단가"처럼 치는 중에 눈으로 대조하는 확인용 숫자가 사는 자리다(통장내역은 그 회색 숫자로 은행 통장과 대조해 그 자리에서 오타를 잡는다 — 없으면 한 달을 다 친 뒤 월잔액 불일치로 발견한다). 당기는 쪽이다: 렌더 중에 부품이 호출하므로 순수·저렴해야 하고, 비동기는 안 연다(서버가 필요한 파생값은 이 통로의 일이 아니다). 반환값은 표시에만 쓰여 `ready`·`onCreate`로 안 넘어간다 — 소비처가 계산한 값이 부품을 한 바퀴 돌아 저장 payload로 되돌아오면 값의 주인이 흐려진다. `edit` 있는 열의 key는 조용히 무시한다(덮을 수 있게 열면 그게 곧 두 주인). 콜백(onDraftChange)으로 안 푼 이유도 같다 — 밀면 소비처가 그 값을 state에 담게 된다' },
-      { name: '초안 줄의 신호', kind: '스타일', values: '셋이고 전부 구조에서 나온다 — ① 칸마다 입력 상자 ② 늘 맨 아래(합계 바로 위) ③ placeholder. 면(sunken)은 안 깐다(네 번째로 같은 말을 하는 장식). 업계 기본값도 면이 아니다: AG Grid는 고정 행을 bold+pinnedRowBorder(경계선)로, Airtable은 맨 아래 빈 행 그대로, SAP는 "입력 필드로 되어 있음" 자체로 가른다' },
       { name: 'enterOrder', kind: '기능', values: 'string[] — Enter가 훑는 순서(없으면 edit 있는 열 순서). 여기 없는 칸과 그 줄에서 못 고치는 칸은 건너뛴다(Dynamics BC의 Quick Entry)' },
       { name: 'rowActions / expand', kind: '기능', values: '(row)=>Action[] — ⋮ 메뉴에 덧붙일 소비처 액션. 「수정」은 부품이 앞에 넣는다(편집 진입은 부품의 계약이다). expand={icon?,count?(row),render(row)} + expandedId/onExpandChange — 그 줄 아래에서 열리는 패널. 열로 못 올리는 것(첨부·메모)만 산다. count가 0이면 글리프를 안 그린다(조용한 표)' },
       { name: 'sort / onSortChange / totals / totalsLabel', kind: '기능', values: 'controlled 정렬(수행은 소비처) / 하단 sticky 합계 — 열 key로 값을 주면 그 열의 read 타입으로 그린다(ReactNode 슬롯이 아니다)' },
-      { name: '키 조작', kind: '기능', values: '↑↓=행 이동 · Enter=그 행을 수정 상태로 · (수정 중) Enter=다음 enterOrder / Shift+Enter=이전 / Tab=좌우 / Esc=그 줄 되돌림 / ⌘Ctrl+Enter=확정 / 마지막 칸 Enter=확정(초안이면 생성+새 초안)' },
-      { name: 'IME 가드', kind: '기능', values: '계약이다. 조합 중(isComposing || keyCode 229)의 Enter는 삼킨다 — 안 그러면 한글/한자 변환 확정 Enter가 커밋으로 새어 덜 만들어진 글자로 저장된다. 원자의 `onCommit`(_commitKeys)이 이 가드를 감춘다' },
-      { name: '입력칸 조립', kind: '스타일', values: 'Mantine 입력 프리미티브를 직접 쓴다(TextInput·NumberInput·Select·DatePickerInput). 우리 입력 원자는 높이가 sm(36)로 닫혀 있어 행(36) 안에 상자(30)로 못 앉기 때문 — 01 §4-D의 선결질문 ②대로 손으로 그리지 않고 프리미티브로 내려간다(달력·목록·키보드·낭독이 전부 따라온다). 치수만 `datasheet.css`가 맞추고 테두리는 `fieldBorder` 역할 변수를 그대로 탄다. 상자를 그리는 것 자체는 무테 지향의 명시적 예외(01 — "윤곽은 최후: 구조적 구분선·입력 필드에만")이고, 밑줄로 하면 옆 칸과 맞붙어 한 줄의 긴 괘선으로 읽힌다(화면에서 확인)' },
     ],
     composition: {
       토큰: ['행 36 고정(표시↔편집 전환에 출렁이면 안 된다 — 옵션이 아니라 계약)', '글자 x = 헤더/읽기 12 = 편집(셀4+테두리1+상자7) 12', '값 열 최소폭은 **서식**이 정한다(date 10.5ch·currency 12ch — 임의 px 아님)', '--field-border(오류 시 danger 덮기 — 역할 변수 통로)'],
@@ -833,14 +824,10 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'RegisterWidget', layer: '위젯', role: '원장 표 — 이월·부호 있는 증감·행별 누계·기말잔액.',
     props: [
       { name: 'entries', kind: '기능', values: 'RegisterEntry[] = { id, date, label, sublabel?, ref?, kind?{label,tone}, kindSub?, out?, in?, balance?, reconciled? }. out/in은 부호 없는 크기 — 방향은 어느 열에 담기느냐가 말한다' },
-      { name: '스코프 존은 위젯이 하나뿐인 페이지에서만', kind: '값', values: '`actions`와 같은 규율, 더 강하게. 액션은 표 하나를 건드리지만 스코프(계좌·기간)는 페이지 전체의 숫자를 바꾼다 — KPI 카드와 원장이 같은 스코프를 공유하는 화면에서 스코프를 원장 안에 넣었더니 "기준이 아래 표 안에 들어 있는" 화면이 나왔다(kk 통장내역, 오너 표현 "배치가 괴상하다"). 위젯이 둘 이상이면 `accounts`·`period`·`closing`을 안 주고 페이지가 그린다(기말잔액은 KPI 한 칸으로). 새 prop이 필요 없다 — A층이 이미 그 일을 한다' },
-      { name: '입력행 확정은 글자다', kind: '값', values: '「기록」/「취소」 텍스트 버튼(`onAdd.submitLabel`). Enter만 열어 뒀더니 확정 통로가 발견되지 않았고, ✓ 아이콘을 붙였더니 "체크가 저장이라고 안 읽힌다", 배경을 갈랐더니 액션 없는 줄이 빈 구멍으로 보였다(kk 실사용자 3연속 검증). 손타기 전엔 자리만 있고 버튼이 없다. 잔액 칸도 「자동」이 아니라 현재 기말잔액을 회색으로 깔아 둔다 — 「자동」은 동작을 말하지 값을 말하지 않는다("자동이 뭔데"). 금액을 치면 그 자리에서 줄어들어 "이 칸은 결과다"가 설명 없이 전달된다' },
-      { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '입력행=`onAdd` · 이월행=`carryOver`(안 주면 행 없음. ⚠ 누계 시작점이기도 해서 없으면 0부터 쌓인다 = 잔액 열이 *실제 잔액*이 아니라 기간 내 누계. 이월 없이 실제 잔액을 그리려면 각 행에 `balance`를 직접 준다) · 기말잔액=`closing`(value 없으면 누계에서 파생. `accounts`도 `closing`도 없으면 헤더 띠 자체를 안 그린다 — 모달처럼 제목이 따로 있고 이력이 짧은 자리에서는 같은 수가 네 번 나온다: 모달 제목·목록 행·이 헤더·표 마지막 행) · ✓열=entry.reconciled가 한 줄이라도 있으면 · ✓클릭=`onReconcile` · 대사뱃지=`reconciledThrough` · 기간네비=`period`+`onPeriodChange` · 계좌셀렉트=`accounts` 2개 이상(1개면 텍스트) · 두 줄 행=ref/sublabel/kindSub · 구분알약=entry.kind' },
       { name: 'sides', kind: '기능', values: "'both'(기본) | 'out' | 'in' — 증감 방향. 수납 원장처럼 **한 방향만 존재하는 장부**가 있다(계약금액이 바뀌는 건 줄을 넣는 일이 아니라 계약금액 자체를 고치는 일이다). both로 강제하면 죽은 열 하나 + 죽은 푸터 항목(청구·증액 ₩0)이 남는다. 푸터 기간합계도 따라간다" },
       { name: 'entry.memo / onAdd.memoPlaceholder', kind: '기능', values: '비고 열 — 국내 거래내역서의 기재내용·전표의 비고란. `sublabel`(적요 옆 흐린 글자)과 다르다: 저건 적요의 부속이고 이건 독립 열이라 정렬·편집 대상이 된다. 통장내역은 이 칸에 실제로 타이핑한다' },
       { name: 'status / skeletonRows', kind: '기능', values: "'loading'이면 **표만** 자리표시로 바뀐다 — 스코프 존·툴바는 남는다(사라지면 지금 뭘 보고 있었는지를 놓친다)" },
       { name: 'evidence', kind: '기능', values: '{ of(entry), onOpen?, onAttach?, draftCount?, draftLabel?, onDraftClear? } — 주면 증빙 열이 열린다. 행 하나 = 거래 한 건 = 증빙 한 묶음(수납 한 건에 세금계산서·입금증이 붙는 실무 단위). v1 목업에 있다가 QuickBooks 열 순서를 따라가며 빠졌던 열이다 — 국내 원장에서 증빙은 선택 사항이 아니다. 뷰어도 파일 선택기도 부품이 안 든다: `onOpen`/`onAttach`로 신호만 보낸다(Calendar 모달 비소유 선례). 0건은 ＋(붙여라) · 있으면 클립+개수(붙어 있다) — 전엔 0건을 흐린 클립으로 뒀는데 클립은 「파일이 있다」는 표시지 「붙여라」가 아니라, 흐리게만 하면 뜻이 안 바뀌고 약해지기만 했다(kk 실사용자). 입력행은 `draftLabel`로 무엇이 붙었는지 보이고 `onDraftClear`로 무른다 — 개수만으로는 고른 걸 확인할 수도 무를 수도 없었다' },
-      { name: 'B층 — actions', kind: '기능', values: '표 툴바 우측. 위젯이 둘 이상인 페이지에서만 쓴다 — Fiori가 표 툴바에 액션을 두는 건 한 페이지에 표가 여럿일 때 "어느 표의 액션인가"를 가려야 해서다. 위젯 하나짜리 페이지면 그 구분이 사용자에게 안 보이고 액션 존만 40px 간격으로 두 개 쌓인다(화면에서 확인) → `PageHeader`로 보낸다. 안 주면 툴바 존 자체가 없다 — 건수만으로는 행을 만들지 않는다' },
       { name: 'labels', kind: '콘텐츠', values: '{ out?, in?, balance? } — 기본 출금/입금/잔액. 수불부면 출고/입고/현재고' },
       { name: 'unit', kind: '콘텐츠', values: 'string. 주면 금액이 아니라 수량으로 그린다(₩ 없음) — 수불부 모드' },
       { name: 'periodTotals', kind: '기능', values: 'boolean — 하단 기간 합계줄. 파생값이라 데이터 유무로 못 가르는 유일한 자리' },
@@ -855,10 +842,6 @@ export const CATALOG: CatalogEntry[] = [
   { name: 'OpenItemListWidget', layer: '위젯', role: '미결 항목 목록(SAP open item management).',
     props: [
       { name: 'items', kind: '기능', values: 'OpenItem[] = { id, label, sublabel?, owner?, gross, received, due?, age?{label,tone} }. 잔액은 안 받는다 — 원금액 − 수납을 부품이 뺀다(소비처가 매번 다시 계산하다 목록마다 다른 수가 나오던 자리). 상단 총계도 여기서 나온다' },
-      { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '행 전체 클릭=`onSelect`(DataTable·ListWidget과 같은 규율) · 선택 표시=`selectedId` · 담당 열=item.owner · 만기·연령 열=item.due/age · 로딩=`status`' },
-      { name: '행에 경로는 하나', kind: '값', values: '행 액션 열이 없다. 처음엔 chevron·첫 셀 링크·「수금」 버튼을 같이 뒀는데, 첫 셀에 링크를 건 순간 액션 열이 갈 곳을 잃었다(같은 행에서 두 경로가 같은 곳을 가리킨다) — 실제로 `stopPropagation` 해킹도 필요했다. `DataTable`이 이미 주석으로 못박아 둔 규칙이다: "행 클릭 이동(범용). actions 셀과 경쟁 안 하도록 보기 액션은 두지 않음." 행 단위 액션이 꼭 필요한 화면이면 행 클릭을 포기하고 `DataTable`을 쓴다' },
-      { name: '헤더를 안 갖는다', kind: '값', values: '제목·설명·헤더 액션 prop이 없다 — 그건 `PageHeader`가 소유한 자리이고, 부품이 페이지 헤더를 한 벌 더 들면 같은 자리를 둘이 다툰다. 첫 판에 소비처 화면의 헤더 행(제목·엑셀·총계)을 그대로 옮겼다가 회수했다. 총계는 하단 합계행(AgingReportWidget tfoot과 같은 규율)' },
-      { name: '상세를 담는 표면', kind: '값', values: '상세는 `Modal size=\'full\'`(95vw). 좁은 Drawer(잔액 열이 화면 밖)와 5:7 2-pane(좌측 대상명·우측 적요 잘림)을 둘 다 만들어 보고 되돌렸고, 별도 페이지도 검토했으나 상세가 표 하나뿐이라 라우트를 파는 값이 안 나온다는 오너 판단으로 모달로 굳혔다. md/lg 폭에서는 7열 원장이 잘리므로 열 수로 고른다: 7열 이상(통장내역)은 `full`, 5열 안팎(수납 원장)은 `lg` — full에 5열을 넣으면 적요 칸이 텅 빈다. (전엔 잔액 열을 sticky로 붙여 뒀는데, 그건 폐기한 2-pane 실험용이었고 열이 늘자 ✓ 열을 덮어서 걷어냈다)' },
       { name: 'labels', kind: '콘텐츠', values: '{ subject?, gross?, received?, balance?, total? } — 기본 대상/계약금액/수납/잔액/총 잔액. 매입채무면 청구액/지급/미지급' },
     ],
     composition: {
@@ -871,8 +854,6 @@ export const CATALOG: CatalogEntry[] = [
     props: [
       { name: 'buckets', kind: '기능', values: 'AgingBucket[] = { key, label, tone? } — 필수 주입. 30/60/90은 관행이지 표준이 아니다(Xero 90+, Odoo 120+, 국내 여신 규정마다 다름). 구간을 부품이 정하면 그 회사 회계와 숫자가 안 맞는다. tone 생략 시 순서대로 neutral→danger 자동' },
       { name: 'rows', kind: '기능', values: 'AgingRow[] = { id, label, sublabel?, amounts: Record<bucketKey, number>, children? }' },
-      { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '트위스티=row.children · 드릴=`onRowClick`(모달 비소유, 신호만) · 펼침=`expandedIds`+`onExpandChange`(controlled) · 기준일 캡션=`asOf` · 총액=`total`(없으면 열 합계에서 파생)' },
-      { name: 'B층 — actions', kind: '기능', values: '툴바 우측. 위젯이 둘 이상인 페이지에서만(그 외엔 PageHeader). 툴바 존은 액션이 없어도 그려진다 — 좌측의 기준 캡션(기준일·만기/발행일)이 없으면 숫자를 못 읽기 때문. `basis`가 바뀌면 표 전체가 다른 수가 된다' },
       { name: 'basis', kind: '기능', values: "'due'(기본, 만기 기준) | 'issue'(발행일 기준). 숫자가 통째로 달라지므로 화면 캡션에 *표기*한다" },
       { name: 'showRatio', kind: '기능', values: 'boolean — 하단 구성비 행' },
     ],
@@ -886,12 +867,9 @@ export const CATALOG: CatalogEntry[] = [
     props: [
       { name: 'sources', kind: '기능', values: 'ApplySource[] = { key, label, lines: ApplyLine[] }. 하나면 탭을 안 그린다 — 탭 하나짜리 탭바는 크롬만 늘린다. ApplyLine = { id, label, sublabel?, date?, age?{label,tone}, gross, open }' },
       { name: 'amount / applied / onApplyChange', kind: '기능', values: 'controlled — 값의 주인은 소비처. applied = { lineId: 금액 }' },
-      { name: 'A층 — 데이터·콜백 유무', kind: '기능', values: '수납정보 폼=`header`(ReactNode 슬롯 — 수단·계좌는 소비처마다 달라 슬롯이다) · 조정(±)열=`onAdjust` · 체크박스열=`onToggleLine` · 만기·연령열=line.date/age' },
-      { name: 'B층 — bulkActions', kind: '기능', values: 'Action[] — 전액 배분 / 오래된 것부터 / 해제. 안 주면 줄 자체가 없다(배분 규칙은 소비처 정책이지 부품 기능이 아니다)' },
       { name: 'autoApply', kind: '기능', values: '{ checked, onChange, label? } — 자동배분 체크박스. 안 주면 안 보인다(기본 꺼짐). 켜짐 상태·동작은 소비처' },
       { name: 'unapplied', kind: '기능', values: "'warn'(기본 — 경고만. 선수금으로 남기는 건 실무에서 정상) | 'allow' | 'block'(전액 배분해야 기록 가능)" },
       { name: 'overApply', kind: '기능', values: 'boolean — 행 잔액 초과 적용 허용(기본 false, 초과 줄은 danger 면 + 하단 오류행)' },
-      { name: '조정(±) 한 열', kind: '값', values: '실물을 의도적으로 안 따른 자리. NetSuite엔 조기결제 할인 두 열(DISC. AVAIL / DISC. TAKEN)이 있는데 국내 상거래엔 그 관행이 거의 없고 대신 에누리·단수조정이 실재한다 — 두 열을 부호 있는 한 열로 접었다' },
     ],
     composition: {
       토큰: ['surface-default', 'bg-secondary', 'border-default', 'primary-0/6', 'success-6', 'warning-6', 'danger-0/6', 'typo-* 역할변수'],
@@ -1376,7 +1354,6 @@ export const CATALOG: CatalogEntry[] = [
     } },
   { name: 'MobileAttachmentViewer', layer: '유기체', role: '폰 첨부 뷰어 — 불투명 전체 화면 커버.',
     props: [
-      { name: '(AttachmentViewer와 동일)', kind: '기능', values: '_attachment의 AttachmentViewerContract 한 벌. 추가로 onShare를 그린다(데스크탑엔 OS 공유 관습이 없다)' },
     ],
     composition: {
       토큰: ['safe-area-inset(상하)', 'min-height 52px(상단 바)', '--erp-touch-target'],

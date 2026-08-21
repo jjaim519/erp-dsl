@@ -23,6 +23,29 @@
 // ── 닫아 둔 것 ─────────────────────────────────────────────────────────────
 //  셀 병합 · 수식 · 열 리사이즈 · 가상 스크롤 · 다중 셀 선택/복붙 · "편집 모드" 토글 prop ·
 //  자유 render 슬롯(`_cells`의 닫힌 CellType 어휘를 그대로 쓴다 — 헌법 4).
+//
+//  ── 카탈로그에서 옮겨온 설명(2026-08-21) ─────────────────────────────────────────
+//   `_catalog`의 props 배열에 **산문이 prop인 척** 들어가 있었다 — 박물관이 배지 달린 prop처럼
+//   그려서 「고를 수 있는 선택지」와 「왜 그런가」가 한 줄에 섞였다. 근거는 여기가 받는다.
+//   · read × edit 2축
+//     표시와 편집은 별개 축이다. kind 하나로 묶으면 "배지로 보이지만 select로 고친다"(상태 열의 가장 흔한 형태)를 표현할 수 없다. `edit`이 없으면 파생 칸(읽기 전용 —
+//     Enter 순회에서도 빠지고 상자를 안 그린다). 저장된 줄의 파생값은 소비처가 `rows`에 넣고, 초안 줄의 파생값은 `draft.derive`가 준다 — 둘 다 있어야 같은 열이
+//     줄에 따라 차고 비는 일이 없다
+//   · 초안 줄의 신호
+//     셋이고 전부 구조에서 나온다 — ① 칸마다 입력 상자 ② 늘 맨 아래(합계 바로 위) ③ placeholder. 면(sunken)은 안 깐다(네 번째로 같은 말을 하는 장식). 업계
+//     기본값도 면이 아니다: AG Grid는 고정 행을 bold+pinnedRowBorder(경계선)로, Airtable은 맨 아래 빈 행 그대로, SAP는 "입력 필드로 되어 있음" 자체로
+//     가른다
+//   · 키 조작
+//     ↑↓=행 이동 · Enter=그 행을 수정 상태로 · (수정 중) Enter=다음 enterOrder / Shift+Enter=이전 / Tab=좌우 / Esc=그 줄 되돌림 /
+//     ⌘Ctrl+Enter=확정 / 마지막 칸 Enter=확정(초안이면 생성+새 초안)
+//   · IME 가드
+//     계약이다. 조합 중(isComposing || keyCode 229)의 Enter는 삼킨다 — 안 그러면 한글/한자 변환 확정 Enter가 커밋으로 새어 덜 만들어진 글자로 저장된다.
+//     원자의 `onCommit`(_commitKeys)이 이 가드를 감춘다
+//   · 입력칸 조립
+//     Mantine 입력 프리미티브를 직접 쓴다(TextInput·NumberInput·Select·DatePickerInput). 우리 입력 원자는 높이가 sm(36)로 닫혀 있어 행(36)
+//     안에 상자(30)로 못 앉기 때문 — 01 §4-D의 선결질문 ②대로 손으로 그리지 않고 프리미티브로 내려간다(달력·목록·키보드·낭독이 전부 따라온다). 치수만
+//     `datasheet.css`가 맞추고 테두리는 `fieldBorder` 역할 변수를 그대로 탄다. 상자를 그리는 것 자체는 무테 지향의 명시적 예외(01 — "윤곽은 최후: 구조적
+//     구분선·입력 필드에만")이고, 밑줄로 하면 옆 칸과 맞붙어 한 줄의 긴 괘선으로 읽힌다(화면에서 확인)
 import { useState, type ReactNode, type CSSProperties } from 'react';
 import { TextInput as MTextInput, NumberInput as MNumberInput, Select as MSelect } from '@mantine/core';
 import { DatePickerInput as MDatePicker } from '@mantine/dates';

@@ -50,6 +50,24 @@ for (const m of read('_catalog.ts').matchAll(/\{\s*name:\s*'([^']+)'\s*,\s*layer
   if (/\*\*|«|»|`/.test(role)) roleProblems.push(`role에 마크다운·기호 — ${name}: 평문으로 렌더된다`);
 }
 
+//  props도 같은 병을 앓았다 — 배열에 **산문이 prop인 척** 들어가 있었다(「A층 — 데이터·콜백 유무」·
+//  「키 조작」·「상세를 담는 표면」…). 박물관이 배지 달린 prop처럼 그려서 「고를 수 있는 선택지」와
+//  「왜 그런가」가 한 줄에 섞였다. 21개를 소스 헤더로 옮겼고, 다시 못 들어오게 둘을 막는다:
+//   · prop 이름은 **식별자**여야 한다(문장 금지). `a / b`·`x?`·`sections[].items`·`Grid.Col span`은 허용.
+//   · values에 마크다운 금지 — role과 같은 이유(평문 렌더라 `**`가 글자로 찍힌다).
+//  ⚠ values의 **길이는 안 막는다**: 타입 모양(`QueueItem[] = { … }`)은 길어도 「선택지」라 정당하고,
+//   산문인지 타입인지는 기계가 못 가린다. 그 판정은 사람이 훑을 때 한다.
+//  판별은 「식별자냐」가 아니라 **「한글이 뭉쳐 있냐」**로 한다. prop 이름은 코드 식별자라 ASCII이고
+//  (`a? / b?`·`Grid.Col span`·`notice / mustRead (+onChange)`도 전부 ASCII), 산문만 한글이 이어진다.
+//  식별자 규칙으로 재 봤더니 정당한 이름 13개가 걸렸다 — 자를 바꾼 이유다. `type(셀)`처럼 한 글자가
+//  섞이는 건 통과시킨다(그건 값의 단위지 문장이 아니다).
+const PROSE_NAME = /\s—\s|[가-힣]{2,}/;
+for (const m of read('_catalog.ts').matchAll(/name:\s*'([^']+)'\s*,\s*kind:\s*'[^']*'\s*,\s*values:\s*'((?:[^'\\]|\\.)*)'/g)) {
+  const [, pname, values] = m;
+  if (PROSE_NAME.test(pname)) roleProblems.push(`prop 이름이 문장이다 — "${pname}": 설명은 소스 헤더 주석으로`);
+  if (/\*\*|«|»/.test(values)) roleProblems.push(`values에 마크다운 — "${pname}": 평문으로 렌더된다`);
+}
+
 const problems = [...roleProblems];
 
 // 1. 카탈로그가 없는 부품을 가리킨다

@@ -49,8 +49,26 @@ export default function PartCanvas() {
   //  높이를 부모에게 보고한다 — iframe은 자기 내용 높이를 밖에 안 알려주므로 부모가 알 길이 이것뿐이다.
   //  안 하면 무대가 임의 높이로 잘리고, 그건 «부품이 잘린 것»과 화면에서 구분이 안 된다.
   useEffect(() => {
+    //  «고정 배치로 뜨는 것»(모달·드로어·시트)은 `position: fixed`라 scrollHeight를 안 늘린다 —
+    //   내용 높이만 보고하면 열어도 무대가 안 커져서 안 보인다. 그래서 **뜬 것이 있는지**를 본다.
+    //   남의 클래스 이름을 겨누지 않는다(그건 우리가 그은 금지선이다) — body의 자식·손자만 훑어
+    //   `position: fixed`를 찾는다. 포털이 `body > 공유노드 > 뜬 것` 두 겹이라 이 깊이면 닿는다.
+    const floating = () => {
+      for (const el of Array.from(document.body.children)) {
+        if (getComputedStyle(el).position === 'fixed') return true;
+        for (const c of Array.from(el.children)) if (getComputedStyle(c).position === 'fixed') return true;
+      }
+      return false;
+    };
     const send = () => window.parent?.postMessage(
-      { type: 'erp-stage-height', name, h: document.documentElement.scrollHeight },
+      {
+        type: 'erp-stage-height',
+        name,
+        //  뜬 것이 있으면 뷰포트만 한 판을 달라고 한다(720 = 무대 「자동」의 상한).
+        h: floating()
+          ? Math.max(document.documentElement.scrollHeight, 720)
+          : document.documentElement.scrollHeight,
+      },
       window.location.origin,
     );
     //  ⚠ ResizeObserver만으론 **열리는 것**을 못 잡는다. 드롭다운·팝오버·달력은 Mantine이

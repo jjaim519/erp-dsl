@@ -20,6 +20,18 @@
 // ── 조정(±) 열: 실물을 의도적으로 안 따른 자리 ────────────────────────────────
 //  NetSuite엔 조기결제 할인 두 열(DISC. AVAIL / DISC. TAKEN)이 있다. 국내 상거래엔 그 관행이 거의 없고
 //  대신 에누리·단수조정이 실재한다 — 두 열을 부호 있는 한 열로 접었다. `onAdjust`를 안 주면 열이 없다.
+//
+//  ── 카탈로그에서 옮겨온 설명(2026-08-21) ─────────────────────────────────────────
+//   `_catalog`의 props 배열에 **산문이 prop인 척** 들어가 있었다 — 박물관이 배지 달린 prop처럼
+//   그려서 「고를 수 있는 선택지」와 「왜 그런가」가 한 줄에 섞였다. 근거는 여기가 받는다.
+//   · A층 — 데이터·콜백 유무
+//     수납정보 폼=`header`(ReactNode 슬롯 — 수단·계좌는 소비처마다 달라 슬롯이다) · 조정(±)열=`onAdjust` · 체크박스열=`onToggleLine` ·
+//     만기·연령열=line.date/age
+//   · B층 — bulkActions
+//     Action[] — 전액 배분 / 오래된 것부터 / 해제. 안 주면 줄 자체가 없다(배분 규칙은 소비처 정책이지 부품 기능이 아니다)
+//   · 조정(±) 한 열
+//     실물을 의도적으로 안 따른 자리. NetSuite엔 조기결제 할인 두 열(DISC. AVAIL / DISC. TAKEN)이 있는데 국내 상거래엔 그 관행이 거의 없고 대신
+//     에누리·단수조정이 실재한다 — 두 열을 부호 있는 한 열로 접었다
 import { useMemo } from 'react';
 import { HEAD_CELL, renderAction, type Action, type BadgeColor } from './_cells';
 import { Money } from './Money';

@@ -16,6 +16,12 @@
 //     둘 다 SC 1.4.4 실패다(ACT b4f0c3). 확대는 부품 안의 닫힌 단계로 준다.
 //     1.4.10 Reflow는 "2차원 레이아웃이 본질인 콘텐츠"를 예외로 두므로 **본체는 예외이고 크롬에 걸린다**
 //     → 크롬 텍스트는 전부 rem 기반 토큰이다.
+//
+//  ── 카탈로그에서 옮겨온 설명(2026-08-21) ─────────────────────────────────────────
+//   `_catalog`의 props 배열에 **산문이 prop인 척** 들어가 있었다 — 박물관이 배지 달린 prop처럼
+//   그려서 「고를 수 있는 선택지」와 「왜 그런가」가 한 줄에 섞였다. 근거는 여기가 받는다.
+//   · (AttachmentViewer와 동일)
+//     _attachment의 AttachmentViewerContract 한 벌. 추가로 onShare를 그린다(데스크탑엔 OS 공유 관습이 없다)
 import { useEffect, useState } from 'react';
 import { IconButton } from './IconButton';
 import { Icon } from './Icon';
