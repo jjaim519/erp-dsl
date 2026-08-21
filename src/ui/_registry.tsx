@@ -223,25 +223,6 @@ function Box({ children }: { children?: ReactNode }) {
   );
 }
 
-// 비포/애프터 — 부품 정형화 시 '기존 ↔ 수정안'을 같은 탭에서 나란히 본다(삭제 전 검증용).
-//  좌: 현행(땜빵/직접 조립) · 우: 신규 부품 적용. dev 전용 비교 슬롯.
-function BeforeAfter({ before, after }: { before: ReactNode; after: ReactNode }) {
-  const col = (tag: string, tone: 'neutral' | 'success', node: ReactNode) => (
-    <div style={{ flex: 1, minWidth: 280 }}>
-      <Stack gap="xs">
-        <Group gap="xs" align="center"><Badge color={tone}>{tag}</Badge></Group>
-        <Card variant="outlined" padding="md">{node}</Card>
-      </Stack>
-    </div>
-  );
-  return (
-    <Group gap="lg" align="start" wrap>
-      {col('기존', 'neutral', before)}
-      {col('수정안', 'success', after)}
-    </Group>
-  );
-}
-
 // kk ERP 도메인(철물/부자재) — 캡쳐의 '경첩'처럼 최하위 분류에 제품을 등록한다. 더미 양 늘려 폴더 타일(4분할)·목록 스크롤 확인용.
 const SAMPLE_TREE: TreeNodeData[] = [
   { id: 'd1', label: '부자재', children: [
@@ -1875,24 +1856,17 @@ export function Demo({ name }: { name: string }) {
       </div>
     ),
     Skeleton: (
-      // 정형화 비교 — 기존: 로딩 시 점 하나(Spinner)로 레이아웃 붕괴. 수정안: 실제 행 구조를 흉내낸 Skeleton(레이아웃 유지).
-      <BeforeAfter
-        before={
-          <div style={{ height: 140, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Spinner />
-          </div>
-        }
-        after={
-          <Stack gap="sm">
-            {[0, 1, 2].map((i) => (
-              <Group key={i} gap="sm" align="center" wrap={false}>
-                <Skeleton variant="circle" size="sm" />
-                <div style={{ flex: 1 }}><Skeleton variant="text" lines={2} /></div>
-              </Group>
-            ))}
-          </Stack>
-        }
-      />
+      // 형태를 보존하는 자리표시 — 실제 행 구조(아바타+2줄)를 흉내내야 로드 후 레이아웃이 안 튄다.
+      <div style={{ maxWidth: 360 }}>
+        <Stack gap="sm">
+          {[0, 1, 2].map((i) => (
+            <Group key={i} gap="sm" align="center" wrap={false}>
+              <Skeleton variant="circle" size="sm" />
+              <div style={{ flex: 1 }}><Skeleton variant="text" lines={2} /></div>
+            </Group>
+          ))}
+        </Stack>
+      </div>
     ),
     LineItemList: (
       <div style={{ maxWidth: 360 }}>
@@ -2014,10 +1988,17 @@ export function Demo({ name }: { name: string }) {
     ListPage: <Anchor href="/customers">→ /customers 에서 라이브 (스키마 구동 목록)</Anchor>,
     DetailPage: <Anchor href="/customers">→ /customers/[id] 에서 라이브 (정보+폼 2분할)</Anchor>,
     Combobox: (
-      <BeforeAfter
-        before={<Select options={opts} value={cbo} onChange={setCbo} placeholder="Select (검색 불가)" />}
-        after={<Combobox options={opts} value={cbo} onChange={setCbo} placeholder="Combobox (타이핑 검색)" />}
-      />
+      // 검색이 존재 이유라 목록이 짧으면 아무것도 안 보인다 — 타이핑으로 걸러질 만큼 준다.
+      <div style={{ maxWidth: 320 }}>
+        <Combobox
+          options={[
+            { label: '㈜대한철물', value: 'v1' }, { label: '세양하드웨어', value: 'v2' },
+            { label: '한샘하드웨어', value: 'v3' }, { label: '목재유통', value: 'v4' },
+            { label: '동방합판', value: 'v5' }, { label: '삼우목재', value: 'v6' },
+            { label: '대성패널', value: 'v7' }, { label: '유진판넬', value: 'v8' },
+          ]}
+          value={cbo} onChange={setCbo} placeholder="거래처 검색" />
+      </div>
     ),
     Progress: (
       // 단독(신규) — 결정형(%) 진행. 끝 모르는 로딩은 Spinner(대체 아님, 별개 축).
