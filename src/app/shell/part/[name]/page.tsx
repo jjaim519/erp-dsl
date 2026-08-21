@@ -40,10 +40,24 @@ export default function PartCanvas() {
     const s = new URLSearchParams(window.location.search);
     setQ(s);
     const root = document.documentElement;
-    root.setAttribute('data-mantine-color-scheme', s.get('scheme') === 'dark' ? 'dark' : 'light');
+    const scheme = s.get('scheme') === 'dark' ? 'dark' : 'light';
+    root.setAttribute('data-mantine-color-scheme', scheme);
     const fs = s.get('fs');
     if (fs && fs !== 'default') root.dataset.fontScale = fs;
     else delete root.dataset.fontScale;
+
+    //  ⚠ **한 번 걸어선 안 남는다.** MantineProvider가 `defaultColorScheme="light"`를 마운트 때
+    //   자기 effect에서 속성에 «다시» 쓴다. React는 자식 effect를 먼저 돌리므로 우리가 먼저 걸고
+    //   부모가 덮는다 — `?scheme=dark`가 통째로 무시되고 병치가 라이트 둘이 된다(2026-08-21 발견:
+    //   무대를 만든 뒤로 줄곧 안 먹고 있었다. 화면이 안 바뀌니 「다크에선 어떤가」를 아무도 못 봤다).
+    //   되받아친다 — 우리가 건 값과 다르면 되돌린다. 지역 저장소(`mantine-color-scheme-value`)를
+    //   쓰는 길은 안 골랐다: 원점 공유라 **병치의 두 캔버스가 같은 칸을 놓고 싸운다.**
+    const keep = new MutationObserver(() => {
+      if (root.getAttribute('data-mantine-color-scheme') !== scheme)
+        root.setAttribute('data-mantine-color-scheme', scheme);
+    });
+    keep.observe(root, { attributes: true, attributeFilter: ['data-mantine-color-scheme'] });
+    return () => keep.disconnect();
   }, []);
 
   //  높이를 부모에게 보고한다 — iframe은 자기 내용 높이를 밖에 안 알려주므로 부모가 알 길이 이것뿐이다.
