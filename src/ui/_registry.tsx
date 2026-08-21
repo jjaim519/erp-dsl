@@ -1270,6 +1270,7 @@ export function Demo({ name }: { name: string }) {
   const [docValues, setDocValues] = useState(PAPER_DEMO_VALUES);
   const [cbo, setCbo] = useState<string | null>(null);
   const [time, setTime] = useState('');
+  const [timeStep, setTimeStep] = useState('09:30');
   const [stp, setStp] = useState(1);
   const [xfer, setXfer] = useState<string[]>(['mdf']);
   const [tsel, setTsel] = useState<string | null>(null);
@@ -2008,10 +2009,20 @@ export function Demo({ name }: { name: string }) {
       </Stack>
     ),
     TimePicker: (
-      // 단독(신규) — 시각 입력 축(날짜=DatePicker와 별개).
-      <Stack gap="xxs">
-        <Text variant="caption" color="secondary">시각 입력(HH:MM).</Text>
-        <TimePicker value={time} onChange={setTime} />
+      // 단독(신규) — 시각 입력 축(날짜=DatePicker와 별개). 축 둘을 나란히 세운다.
+      <Stack gap="sm">
+        {/* 기본 — 1분 자유 입력. 정확한 시각을 적는 자리(도착·검침·통화 기록). */}
+        <Group gap="xs" align="center">
+          <Text variant="caption" color="secondary">기본</Text>
+          <div style={{ width: 150 }}><TimePicker value={time} onChange={setTime} /></div>
+        </Group>
+        {/* minutesStep이 드롭다운을 «함께» 켠다(축 하나). min/max로 업무 시간만 남긴다. */}
+        <Group gap="xs" align="center">
+          <Text variant="caption" color="secondary">minutesStep</Text>
+          <div style={{ width: 150 }}>
+            <TimePicker value={timeStep} onChange={setTimeStep} minutesStep={30} min="09:00" max="18:00" />
+          </div>
+        </Group>
       </Stack>
     ),
     Stat: (

@@ -191,9 +191,11 @@ export const CATALOG: CatalogEntry[] = [
       { name: 'tone', kind: '스타일', values: "'primary' | 'success' | 'warning' | 'danger'" },
       { name: 'size', kind: '스타일', values: SIZE3 },
     ] },
-  { name: 'TimePicker', layer: '의미 원자', role: '시각 입력(HH:MM). 날짜=DatePicker와 별개 축.',
+  { name: 'TimePicker', layer: '의미 원자', role: '시각 하나. 24시간제 분절 필드(네이티브 아님). 날짜=DatePicker와 별개 축.',
     props: [
-      { name: 'value / onChange', kind: '기능', values: 'controlled, "HH:MM"' },
+      { name: 'value / onChange', kind: '기능', values: 'controlled, "HH:MM"(빈 값은 "")' },
+      { name: 'minutesStep', kind: '기능', values: 'number — 주면 그 눈금의 완성된 시각 목록이 드롭다운으로 열린다(30 → 09:00·09:30·10:00). 안 주면 1분 자유 입력, 드롭다운 없음' },
+      { name: 'min / max', kind: '기능', values: '"HH:MM" — 고를 수 있는 범위(업무 시작·종료). 목록도 이 범위만 만든다' },
       { name: 'size', kind: '스타일', values: SIZE2 },
       { name: 'disabled', kind: '스타일', values: 'boolean' },
     ] },
