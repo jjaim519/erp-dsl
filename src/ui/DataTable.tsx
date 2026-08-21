@@ -128,8 +128,10 @@ export function DataTable({
                     <Text variant="body-strong">{c.label}</Text>
                     {c.sortable && (
                       // 정렬 가능 열엔 항상 꺽쇠(비활성=opacity 0.35로 옅게). 라벨 옆 — 텍스트 정렬은 데이터 타입대로(우측밀착 강제 X).
-                      // flex 안에선 Icon vertical-align 보정이 죽으므로 같은 토큰을 transform으로 복원(헤더 한정).
-                      <span style={{ display: 'inline-flex', transform: 'translateY(calc(-1 * var(--icon-baseline-shift)))', opacity: active ? 1 : 0.35 }}>
+                      // flex(align:center)가 이미 상자 중심을 맞춘다 — 예전엔 여기에 translateY로 «보정을 복원»했는데
+                      // 그건 오진이었다: baseline 정렬이 아니라 중심 정렬이라 되살릴 것이 없고, 그 나머지가
+                      // 순수한 여분이라 쐐기가 글자보다 1.7px 아래로 내려가 있었다(실측 교정, 2026-08-21).
+                      <span style={{ display: 'inline-flex', opacity: active ? 1 : 0.35 }}>
                         <Icon name={active ? arrow : 'chevron-down'} size="sm" color="secondary" />
                       </span>
                     )}

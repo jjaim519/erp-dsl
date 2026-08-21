@@ -216,8 +216,9 @@ export function ListWidget({
                         onClick={c.sortable ? header.column.getToggleSortingHandler() : undefined}>
                         <MGroup gap={4} align="center" justify={alignToFlex(align)} wrap="nowrap">
                           <Text variant="body-strong">{c.label}</Text>
+                          {/* flex(center)가 이미 상자 중심을 맞춘다 — 옛 translateY 「보정 복원」은 오진이라 걷었다(2026-08-21 실측). */}
                           {c.sortable && (
-                            <span style={{ display: 'inline-flex', transform: 'translateY(calc(-1 * var(--icon-baseline-shift)))', opacity: sorted ? 1 : 0.35 }}>
+                            <span style={{ display: 'inline-flex', opacity: sorted ? 1 : 0.35 }}>
                               <Icon name={sorted === 'desc' ? 'chevron-down' : 'chevron-up'} size="sm" color="secondary" />
                             </span>
                           )}

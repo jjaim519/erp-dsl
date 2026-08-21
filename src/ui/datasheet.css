@@ -41,7 +41,8 @@
 .erpDsTable th.is-num { text-align: right; }
 .erpDsTable th.is-sortable { cursor: pointer; }
 .erpDsTable th.is-act { padding: 0; width: 1px; }
-.erpDsSortMark { display: inline-flex; margin-left: 4px; opacity: .35; transform: translateY(calc(-1 * var(--icon-baseline-shift))); }
+/* flex(center)가 이미 상자 중심을 맞춘다 — 옛 translateY 「보정 복원」은 오진이라 걷었다(2026-08-21 실측). */
+.erpDsSortMark { display: inline-flex; margin-left: 4px; opacity: .35; }
 .erpDsTable th.is-sorted .erpDsSortMark { opacity: 1; }
 
 .erpDsTable td {
