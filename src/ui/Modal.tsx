@@ -25,13 +25,19 @@ type Props = {
   // 폭. sm/md/lg/xl=Mantine 네이티브 폭 토큰 / full='거의 꽉 찬 wide'(95vw·90vh — 풀스크린 아님, radius·여백 유지).
   size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   closeOnOverlayClick?: boolean;
+  /** 닫기(X)를 그릴지. 기본 true.
+   *  ★★[2026-09-14] **끝내야만 지나갈 수 있는 모달**을 위해 열었다(첫 로그인 온보딩).
+   *   ★없을 때는 `onClose` 에 빈 함수를 넘겨 막았는데, 그러면 **눌러도 아무 일이 없는 X**가
+   *    남는다. 사람은 그걸 고장으로 읽는다 — 못 닫는 것과 안 닫히는 것은 다른 일이다.
+   *   ★막는 쪽을 고르면 `closeOnOverlayClick={false}` 도 함께 줘야 뜻이 온전하다. */
+  withCloseButton?: boolean;
   children: ReactNode;
 };
 
 const isPrimaryEnd = (v?: string) => v === 'primary' || v === 'danger';
 
 export function Modal({
-  opened, onClose, title, actions, size = 'md', closeOnOverlayClick = true, children,
+  opened, onClose, title, actions, size = 'md', closeOnOverlayClick = true, withCloseButton = true, children,
 }: Props) {
   const ordered = actions
     ? [...actions].sort((a, b) => Number(isPrimaryEnd(a.variant)) - Number(isPrimaryEnd(b.variant)))
@@ -58,9 +64,11 @@ export function Modal({
         <div style={{ flex: 'none', padding: 'var(--mantine-spacing-md)', borderBottom: `var(--border-width) solid var(--border-default)` }}>
           <Group justify="between" align="center">
             <Title variant="heading">{title}</Title>
-            <span role="button" aria-label="닫기" onClick={onClose} style={{ display: 'inline-flex', cursor: 'pointer' }}>
-              <Icon name="x" color="secondary" />
-            </span>
+            {withCloseButton && (
+              <span role="button" aria-label="닫기" onClick={onClose} style={{ display: 'inline-flex', cursor: 'pointer' }}>
+                <Icon name="x" color="secondary" />
+              </span>
+            )}
           </Group>
         </div>
 
