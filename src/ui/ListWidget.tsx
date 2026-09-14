@@ -52,6 +52,16 @@ type Props = {
   bulkActions?: Action[];
   pageSize?: number;                      // 기본 25
   onRowClick?: (row: ListRow) => void;
+  /** 이 행을 **굵게** 그릴지 — 「아직 안 본 것」을 열 하나 쓰지 않고 행 자체로 말한다.
+   *  ★왜 열이 아닌가(2026-09-14 대표): 「안 읽은 것에 대한 표시를 굳이 상태라는 콜럼으로
+   *   할 필요가 있나? 그냥 행색이나 뭔가 다른 방식이 있지 않을까?」 — 열 하나가 폭을
+   *   온전히 먹으면서 말하는 것은 예/아니오 하나뿐이었고, 읽은 행에서는 **빈 칸**이라
+   *   「값이 빠졌다」로 읽혔다.
+   *  ★굵기다(배경색이 아니다). 목록 절반이 안 읽은 상태인 일이 흔한데 배경을 칠하면
+   *   그 절반이 통째로 시끄러워진다. 메일함이 오래 쓰는 표기를 그대로 쓴다.
+   *  ★행마다 부른다 — 값이 아니라 함수로 받는 이유는 판정이 소비처의 몫이기 때문이다
+   *   (안읽음·마감임박·내 담당… 무엇을 굵게 볼지는 목록마다 다르다). */
+  rowStrong?: (row: ListRow) => boolean;
   emptyState?: { icon?: IconName; title: string; description?: string };
   status?: 'loading' | 'ready';
 };
@@ -64,7 +74,7 @@ const HEADER_ROW_H = 40;
 
 export function ListWidget({
   columns, data, title, primaryAction, search, selectable, bulkActions,
-  pageSize = 25, onRowClick, emptyState, status = 'ready',
+  pageSize = 25, onRowClick, rowStrong, emptyState, status = 'ready',
 }: Props) {
   const colByKey = useMemo(() => new Map(columns.map((c) => [c.key, c])), [columns]);
 
@@ -232,7 +242,11 @@ export function ListWidget({
             <Table.Tbody>
               {table.getRowModel().rows.map((row) => (
                 <Table.Tr key={row.id} onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                  style={{ cursor: onRowClick ? 'pointer' : 'default' }}>
+                  style={{
+                    cursor: onRowClick ? 'pointer' : 'default',
+                    // 굵기만 얹는다 — 셀 안의 Text 들이 상속받는다(각 셀을 고치지 않는다).
+                    ...(rowStrong?.(row.original as ListRow) ? { fontWeight: 600 } : null),
+                  }}>
                   {selectable && (
                     <Table.Td style={{ width: 44, verticalAlign: 'middle' }} onClick={(e) => e.stopPropagation()}>
                       <Checkbox checked={row.getIsSelected()} onChange={() => row.toggleSelected()} />

@@ -96,6 +96,13 @@ export function renderCell(
       return <Text variant="body">{fmtDate(value)}</Text>;
     case 'badge': {
       const v = String(value ?? '');
+      // ★★빈 값이면 **아무것도 안 그린다**(2026-09-14). 종전엔 글자 없는 알약이 떠서
+      //  목록에 회색 동그라미가 깔렸고, 보는 사람은 「값이 빠졌다」로 읽었다.
+      //  ★소비처 두 곳이 이미 「빈 문자열이면 안 그려진다」고 주석에 적어 두고 있었다 —
+      //   그렇게 **믿고 쓰고 있었지만 사실이 아니었다.** 믿음 쪽에 맞춘다.
+      //  ★'—' 로 채우지 않는다: 배지 칸의 빈 값은 「모르는 값」이 아니라 **「해당 없음」**이다
+      //   (읽은 글에는 '안읽음' 이 안 붙는다). 대시는 없는 사실을 있는 것처럼 말한다.
+      if (!v) return null;
       const color = opts?.badgeColors?.[v] ?? 'neutral';
       return <Badge color={color}>{v}</Badge>;
     }
