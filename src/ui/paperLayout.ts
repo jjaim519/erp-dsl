@@ -20,7 +20,7 @@ export type OutCell = { spec: PaperCell; text: string; at?: number; depth?: numb
  * `group`은 이 행이 어느 묶음에 속하는지 — 걸침 칸(`scope: 'group'`)을 쪽 나눔 **뒤에** 붙이려고 남긴다.
  * `repeat`는 어느 반복 밴드에서 나온 줄인지 — 표의 **마감선**을 쪽 나눔 뒤에 다시 잡으려고 남긴다.
  */
-export type OutRow = { h: number; cells: OutCell[]; group?: number; repeat?: number };
+export type OutRow = { h: number; cells: OutCell[]; group?: number; run?: number; repeat?: number };
 export type OutPage = { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pad: number };
 
 type Scope = {
@@ -184,6 +184,10 @@ function buildCell(
 
 /** 묶음에 걸치는 칸은 항목마다 그리지 않는다 — 쪽을 나눈 뒤에 묶음 단위로 한 번 붙인다. */
 const spansGroup = (c: PaperCell) => c.scope === 'group';
+/** 연달아 같은 값인 줄끼리 걸치는 칸 — 묶음(`group`)보다 **잔 축**이다.
+ *  묶음 기준은 반복마다 하나뿐이고 `groupHeader.by`가 먼저 가져간다. 그 축을 빼앗지 않고
+ *  하나 더 놓는다(2026-09-14 발주서: 종류가 발주 건 전체에 걸쳐 「서랍 레일」이 경첩 줄까지 덮었다). */
+const spansRun = (c: PaperCell) => c.scope === 'run';
 
 function buildRow(
   spec: PaperSpec, r: number, values: Record<string, unknown>, scope: Scope,
@@ -259,6 +263,8 @@ export function layoutPaper(
   const flow: { row: OutRow; keep?: 'columnHeader' | 'groupHeader'; reset?: boolean }[] = [];
   // 걸침 칸은 여기 모아 두고 쪽 나눔이 끝난 뒤에 붙인다(묶음이 쪽을 넘어가면 쪽마다 갈라야 하므로).
   const groupSpans = new Map<number, OutCell[]>();
+  const runSpans = new Map<number, OutCell[]>();
+  let runSeq = 0;
   let groupSeq = 0;
 
   for (let r = 0; r <= maxRow; r++) {
@@ -312,6 +318,11 @@ export function layoutPaper(
       //  (「경첩」 칸이 곧 «종류로 묶는다»는 선언이라, 그룹 머리 밴드 없이도 묶임이 성립한다).
       const spanSpecs = range(cluster.repeat.r1, cluster.repeat.r2)
         .flatMap((rr) => spec.cells.filter((c) => c.r === rr && spansGroup(c)));
+      // `run` 칸 — 묶음 축과 **따로** 돈다. 첫 칸의 자리(field)가 곧 「같은 값」의 기준이다.
+      const runSpecs = range(cluster.repeat.r1, cluster.repeat.r2)
+        .flatMap((rr) => spec.cells.filter((c) => c.r === rr && spansRun(c)));
+      const runField = runSpecs[0]?.field;
+      const runKey = runField ? runField.slice(runField.indexOf('.') + 1) : null;
 
       // 이 반복의 원본이 **트리인가** — 깊이 열을 가진 배열이면 줄마다 깊이가 있다.
       const levelKey = spec.arrays?.find((a) => a.name === cluster.repeat.source)?.level;
@@ -367,6 +378,8 @@ export function layoutPaper(
           gid = ++groupSeq;
           groupSpans.set(gid, spanSpecs.map((c) => buildCell(c, values, scope, pin)));
         }
+        let rid: number | undefined;
+        let prevRun: unknown = Symbol('처음');   // 첫 줄은 반드시 새 구간이 되게
         items.forEach((item, ii) => {
           // 원본 순번을 실어 보낸다 — 묶음으로 재배열돼도 편집이 되쓸 자리는 «원본의 그 항목»이다.
           const at = allItems.indexOf(item);
@@ -375,11 +388,22 @@ export function layoutPaper(
             depth: depthOf(item) - baseDepth + 1,
             ...(!cluster.groupHeader && ii === 0 ? { ordinal: gi + 1 } : {}),
           };
+          if (runSpecs.length && runKey) {
+            const v = item[runKey];
+            // ★값이 같아도 **연달아야** 합친다 — 떨어져 있으면 각자 걸친다.
+            //  재배열하지 않는 이유: 적힌 순서가 곧 저장 순서(sort_order)다.
+            if (v !== prevRun) {
+              rid = ++runSeq;
+              runSpans.set(rid, runSpecs.map((c) => buildCell(c, values, rowScope, pin)));
+              prevRun = v;
+            }
+          }
           range(cluster.repeat.r1, cluster.repeat.r2).forEach((dr) =>
             flow.push({
               row: {
-                ...buildRow(spec, dr, values, rowScope, pin, (c) => !spansGroup(c)),
+                ...buildRow(spec, dr, values, rowScope, pin, (c) => !spansGroup(c) && !spansRun(c)),
                 group: gid,
+                ...(rid != null ? { run: rid } : {}),
                 repeat: cluster.repeat.r1,
               },
             }));
@@ -446,21 +470,27 @@ export function layoutPaper(
   //  그 구간의 첫 행에 걸고, 걸치는 길이는 그 쪽에 남은 줄 수다. 묶음이 쪽을 넘어가면 구간이 둘로
   //  나뉘어 각 쪽이 자기 몫만큼만 걸친다 — 인쇄 표에서 「경첩」이 다음 장에 다시 적히는 그 모양.
   //  (나누기 *전에* rs를 박으면 쪽 경계를 뚫고 나가 종이 밖에 그려진다.)
-  if (groupSpans.size) {
+  //  ★`group`과 `run` 은 **같은 규칙, 다른 축**이다. 한 함수로 돌려 둘이 갈리지 않게 한다 —
+  //   갈리면 한쪽만 쪽 나눔을 따라가고 다른 쪽이 종이 밖으로 나간다.
+  const stitch = (
+    key: 'group' | 'run', store: Map<number, OutCell[]>,
+  ) => {
+    if (!store.size) return;
     pages.forEach((rows) => {
       for (let i = 0; i < rows.length;) {
-        const gid = rows[i].group;
-        if (gid == null) { i++; continue; }
+        const id = rows[i][key];
+        if (id == null) { i++; continue; }
         let j = i;
-        while (j + 1 < rows.length && rows[j + 1].group === gid) j++;
+        while (j + 1 < rows.length && rows[j + 1][key] === id) j++;
         const rs = j - i + 1;
-        const spans = (groupSpans.get(gid) ?? [])
-          .map((c) => ({ ...c, spec: { ...c.spec, rs } }));
+        const spans = (store.get(id) ?? []).map((c) => ({ ...c, spec: { ...c.spec, rs } }));
         rows[i] = { ...rows[i], cells: [...rows[i].cells, ...spans] };
         i = j + 1;
       }
     });
-  }
+  };
+  stitch('group', groupSpans);
+  stitch('run', runSpans);
 
   // ④ 표의 마감선 — **반복 밴드에 그은 «아래» 변은 그 줄이 아니라 표 전체의 바닥**을 뜻한다.
   //  한 줄짜리 밴드를 N번 복제하면 그 굵은 선도 N번 복제돼 **행 사이마다 굵은 선이 깔린다**

@@ -151,7 +151,9 @@ export function PaperDoc({
   const editableAt = (cell: PaperCell, at?: number): FieldSpec | undefined => {
     if (mode !== 'edit' || !onChange) return undefined;
     if (!cell.field || cell.field.startsWith('@')) return undefined;
-    if (cell.scope === 'group' || lockedAt(cell.field, at)) return undefined;
+    // ★`run`도 같이 뺀다 — 걸침 칸은 **여러 줄을 대신해** 찍힌 값이라 되쓸 한 줄이 없다.
+    //  (`group`과 이유가 같다. 다만 `run`은 묶는 기준이 아니라 «같은 값이 이어진다»는 표시일 뿐이다.)
+    if (cell.scope === 'group' || cell.scope === 'run' || lockedAt(cell.field, at)) return undefined;
     if (cell.field.includes('.') && at == null) return undefined;
     return fieldOf.get(cell.field);
   };

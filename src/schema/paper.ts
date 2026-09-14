@@ -122,8 +122,22 @@ export type PaperCell = {
    * `groupHeader`와 다르다: groupHeader는 묶음이 바뀔 때 **자기 행을 하나 먹고**,
    * 이건 반복 행들 **옆에 걸친다**. 한국 장표에서 표준이라 리포트 엔진 3사에 없어도 연다.
    * 쪽이 묶음 중간에서 갈리면 걸침도 같이 갈린다(각 쪽이 자기 몫만큼 걸친다).
+   *
+   * `run`이면 **연달아 같은 값인 줄끼리** 한 칸으로 걸친다 — 묶음보다 **잔 축**이다.
+   *
+   * ★왜 `group`으로는 안 되는가(2026-09-14, 실제로 틀린 발주서가 나갔다).
+   *  묶음 기준은 반복 덩어리마다 **하나뿐**이고, 그 축은 `groupHeader.by`가 먼저 가져간다:
+   *    `const byKey = groupHeader?.by ?? groupFooter?.by ?? spanSpecs[0]?.field`
+   *  발주서는 그 축을 이미 **발주 건**(「발주1」 머리 + 배송요청일·발주일)에 쓰고 있어서,
+   *  종류 칸에 `group`을 주면 **한 발주의 첫 줄 종류 하나가 전체에 걸쳤다** —
+   *  「서랍 레일」이 경첩 줄까지 덮었고, 거래처가 그 종이를 받았다. 오발주가 날 자리다.
+   *  ★축을 빼앗지 않고 **하나 더 놓는다.** `group`은 묶음, `run`은 그 안의 같은 값 구간이다.
+   *
+   * 값이 같아도 **연달아야** 합친다 — 떨어져 있으면 각자 걸친다. 배열을 재배열하지 않는다:
+   * 적힌 순서가 곧 저장 순서(sort_order)이고, 종이가 순서를 바꾸면 사람이 대조를 못 한다.
+   * 쪽이 구간 중간에서 갈리면 걸침도 같이 갈린다(`group`과 같다).
    */
-  scope?: 'item' | 'group';
+  scope?: 'item' | 'group' | 'run';
   /**
    * 이 칸은 그 줄의 **깊이만큼 밀린다**(트리 배열 — `PaperArray.level`).
    *
@@ -375,11 +389,13 @@ export function validatePaper(spec: PaperSpec): PaperIssue[] {
   // ⑥ 걸침 칸 — 반복 구간 밖에는 «묶음»이라는 게 없어서 걸칠 대상이 없다(조용히 안 그려진다).
   const repeats = bands.filter((b) => b.kind === 'repeat');
   spec.cells.forEach((cell, i) => {
-    if (cell.scope !== 'group') return;
+    // ★`run`도 같은 조건이다 — 걸칠 대상(반복)과 볼 값(field)이 있어야 한다.
+    if (cell.scope !== 'group' && cell.scope !== 'run') return;
     const at = `cells[${i}]`;
-    if (!cell.field) push(at, '묶음에 걸치는 칸은 묶는 기준이 될 데이터 자리가 필요합니다');
+    const 이름 = cell.scope === 'run' ? '같은 값끼리 걸치는 칸' : '묶음에 걸치는 칸';
+    if (!cell.field) push(at, `${이름}은 걸칠 기준이 될 데이터 자리가 필요합니다`);
     if (!repeats.some((b) => cell.r >= b.r1 && cell.r <= b.r2)) {
-      push(at, '묶음에 걸치는 칸은 반복 구간 안에 있어야 합니다');
+      push(at, `${이름}은 반복 구간 안에 있어야 합니다`);
     }
   });
 
