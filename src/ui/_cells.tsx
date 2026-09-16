@@ -6,6 +6,7 @@ import 'dayjs/locale/ko';
 import { Text } from './Text';
 import { Badge } from './Badge';
 import { Button } from './Button';
+import { CountBadge } from './CountBadge';
 import { Group } from './Group';
 import { Stack } from './Stack';
 import { Avatar } from './Avatar';
@@ -34,6 +35,13 @@ export type Action = {
   onClick: () => void;
   icon?: IconName;
   iconOnly?: boolean;        // true면 IconButton(aria-label=label). icon 필수.
+  /** 액션에 딸린 **수** — 빨간 카운트로 그린다(0·undefined면 안 그린다).
+   *
+   *  ★왜 label 에 못 섞나: 「알림 4」처럼 문자열로 이으면 **숫자만 색을 줄 수 없다.**
+   *   같은 굵기·같은 색이라 멀리서는 글자 뭉치로만 보인다 — 수가 신호인데 신호가 죽는다.
+   *  ★탭바가 이미 같은 일을 한다(MobileShell 의 `MobileTab.count` → CountBadge).
+   *   헤더 액션만 그 자리가 없어 소비처가 label 에 숫자를 이어 붙이고 있었다. */
+  badge?: number;
 };
 export type BadgeColor = 'neutral' | 'success' | 'warning' | 'danger' | 'info';
 
@@ -54,12 +62,26 @@ export const CELL_CLIP = { overflow: 'hidden', textOverflow: 'ellipsis', whiteSp
 // 액션 1개 렌더 — 모든 호출처(표·PageHeader·Modal·EmptyState·DetailPage) 공유.
 //  iconOnly+icon → IconButton / icon+label → Button leftIcon / 그 외 → 텍스트 Button.
 export function renderAction(a: Action, key: number | string, size: 'sm' | 'md' = 'md') {
+  // ★수가 있으면 **오른쪽에 카운트**를 단다 — label 에 이어 붙이면 숫자만 색을 줄 수 없다.
+  //  0 이면 안 그린다: 「0」을 띄우는 것은 없다는 사실을 굳이 말하는 것이고, 늘 떠 있으면 신호가 아니다.
+  const badge = a.badge != null && a.badge > 0
+    ? <CountBadge count={a.badge} size={size === 'sm' ? 'sm' : 'md'} />
+    : undefined;
   if (a.iconOnly && a.icon) {
-    return <IconButton key={key} icon={a.icon} label={a.label} variant={a.variant ?? 'ghost'} size={size} onClick={a.onClick} />;
+    // 아이콘 전용은 버튼 안에 글자가 없다 — 카운트를 오른쪽에 **나란히** 둔다.
+    return badge
+      ? (
+        <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <IconButton icon={a.icon} label={a.label} variant={a.variant ?? 'ghost'} size={size} onClick={a.onClick} />
+          {badge}
+        </span>
+      )
+      : <IconButton key={key} icon={a.icon} label={a.label} variant={a.variant ?? 'ghost'} size={size} onClick={a.onClick} />;
   }
   return (
     <Button key={key} variant={a.variant ?? 'secondary'} size={size}
-      leftIcon={a.icon ? <Icon name={a.icon} size={size} /> : undefined} onClick={a.onClick}>
+      leftIcon={a.icon ? <Icon name={a.icon} size={size} /> : undefined}
+      rightIcon={badge} onClick={a.onClick}>
       {a.label}
     </Button>
   );
