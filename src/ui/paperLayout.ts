@@ -182,7 +182,14 @@ function buildCell(
   //  줄을 하나 지울 때마다 데이터의 번호와 종이의 번호가 갈린다.
   if (c.number && scope.ordinal && text) text = `${scope.ordinal}. ${text}`;
   // 줄 표시 — 값이 말한다(`@mark`). 클래스 이름이 되므로 **안전한 낱말만** 통과시킨다.
-  const raw = scope.item?.['@mark'];
+  //
+  // ★★걸침 칸(`group`·`run`)에는 **안 싣는다.** 그 칸은 여러 줄을 대표하는데 값은 묶음의
+  //  **첫 줄**에서 읽힌다 — 실으면 첫 줄 하나가 지워졌다는 이유로 「발주1」·「배송요청일」·
+  //  종류 칸까지 통째로 그어진다(2026-09-17 실측). 줄의 상태는 **줄의 칸**만 말한다.
+  //  ★그룹머리는 `scope.at` 이 없다(`item: group[0]` 만 들고 온다) — 그것이 「줄의 칸인가」의 표다.
+  //   걸침 칸은 `at` 을 들고 오므로 `c.scope` 로 따로 걸러야 한다. 둘 다 필요하다.
+  const onRow = scope.at != null && c.scope !== 'group' && c.scope !== 'run';
+  const raw = onRow ? scope.item?.['@mark'] : undefined;
   const mark = typeof raw === 'string' && /^[a-z][a-z0-9-]*$/.test(raw) ? raw : undefined;
   return {
     spec: c, text,
