@@ -72,7 +72,7 @@ type Props = {
   readonlyFields?: string[];
 };
 
-type Placed = { cell: PaperCell; text: string; at?: number; depth?: number; r: number };
+type Placed = { cell: PaperCell; text: string; at?: number; depth?: number; mark?: string; r: number };
 
 // 한 장 = [머리말 … 본문 … 여백 … 꼬리말]. 여백이 꼬리말을 바닥으로 민다.
 function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pad: number }) {
@@ -80,7 +80,7 @@ function assemble(page: { header: OutRow[]; body: OutRow[]; footer: OutRow[]; pa
   const placed: Placed[] = [];
   const push = (list: OutRow[]) => {
     list.forEach((row) => {
-      row.cells.forEach((c) => placed.push({ cell: c.spec, text: c.text, at: c.at, depth: c.depth, r: rows.length }));
+      row.cells.forEach((c) => placed.push({ cell: c.spec, text: c.text, at: c.at, depth: c.depth, mark: c.mark, r: rows.length }));
       rows.push(row);
     });
   };
@@ -273,7 +273,7 @@ export function PaperDoc({
                 gridTemplateRows: rows.map((r) => `${r.h * rowUnit}px`).join(' '),
               }}
             >
-              {placed.map(({ cell, text, at, depth, r }, i) => {
+              {placed.map(({ cell, text, at, depth, mark, r }, i) => {
                 const cs = cell.cs ?? 1;
                 const rs = cell.rs ?? 1;
                 const field = editableAt(cell, at);
@@ -296,6 +296,8 @@ export function PaperDoc({
                   field && hasValue(value) ? 'is-filled' : '',
                   isLocked(cell, at) ? 'is-locked' : '',
                   isWritten(cell, at) ? 'is-written' : '',
+                  // 줄 표시(`@mark`) — **이름만** 옮긴다. 색도 취소선도 소비처 CSS 몫이다.
+                  mark ? `mk-${mark}` : '',
                 ].filter(Boolean).join(' ');
                 return (
                   <div

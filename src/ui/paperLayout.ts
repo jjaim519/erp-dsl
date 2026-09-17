@@ -14,8 +14,16 @@ import { fmtNumber, fmtCurrency } from './_money';
 /**
  * `at`은 반복 몇 번째 항목의 칸인가 — 편집 모드가 값을 되쓸 때 필요하다(보기에선 안 쓴다).
  * `depth`는 들여쓸 계단 수(트리 배열의 깊이 − 1). `indent` 칸에만 실린다.
+ *
+ * `mark`는 **그 줄의 상태 이름**이다 — 반복 항목이 `@mark` 키를 들고 있으면 그 줄의 칸 전부에
+ *  실린다(렌더가 `mk-<이름>` 클래스를 붙인다).
+ *
+ * ★서식이 아니라 **값**에서 온다: 어떤 줄이 지워졌는지·고쳐졌는지는 저작 시점에 알 수 없고
+ *  값이 와야 안다. 그래서 `@page`·`@today` 와 같은 **예약 이름** 자리에 둔다.
+ * ★DSL 은 **이름만 옮긴다.** 무슨 색인지·줄을 긋는지는 소비처 CSS 가 정한다 —
+ *  「삭제는 빨강」은 도메인의 말이라 부품이 알면 안 된다.
  */
-export type OutCell = { spec: PaperCell; text: string; at?: number; depth?: number };
+export type OutCell = { spec: PaperCell; text: string; at?: number; depth?: number; mark?: string };
 /**
  * `group`은 이 행이 어느 묶음에 속하는지 — 걸침 칸(`scope: 'group'`)을 쪽 나눔 **뒤에** 붙이려고 남긴다.
  * `repeat`는 어느 반복 밴드에서 나온 줄인지 — 표의 **마감선**을 쪽 나눔 뒤에 다시 잡으려고 남긴다.
@@ -173,8 +181,12 @@ function buildCell(
   // 묶음 번호 — 「1. 주방」. **표시에만 붙는다**: 값에 섞으면 편집 모드에서 번호까지 고치게 되고,
   //  줄을 하나 지울 때마다 데이터의 번호와 종이의 번호가 갈린다.
   if (c.number && scope.ordinal && text) text = `${scope.ordinal}. ${text}`;
+  // 줄 표시 — 값이 말한다(`@mark`). 클래스 이름이 되므로 **안전한 낱말만** 통과시킨다.
+  const raw = scope.item?.['@mark'];
+  const mark = typeof raw === 'string' && /^[a-z][a-z0-9-]*$/.test(raw) ? raw : undefined;
   return {
     spec: c, text,
+    ...(mark ? { mark } : {}),
     ...(scope.at != null ? { at: scope.at } : {}),
     // 밀 계단 수. 깊이 1이 기준선이라 «깊이 − 1»이다(맨 얕은 줄은 안 밀린다).
     //  여기서 수로 굳혀 내보낸다 — 렌더가 값을 다시 읽으면 깊이 열이 어디 있는지 알아야 한다.
