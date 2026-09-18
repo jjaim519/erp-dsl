@@ -189,7 +189,15 @@ function buildCell(
   //  ★그룹머리는 `scope.at` 이 없다(`item: group[0]` 만 들고 온다) — 그것이 「줄의 칸인가」의 표다.
   //   걸침 칸은 `at` 을 들고 오므로 `c.scope` 로 따로 걸러야 한다. 둘 다 필요하다.
   const onRow = scope.at != null && c.scope !== 'group' && c.scope !== 'run';
-  const raw = onRow ? scope.item?.['@mark'] : undefined;
+  // ★**칸 하나만** 가리키는 표시 — `@mark.<필드이름>`. 걸침 칸·그룹머리에도 실린다.
+  //  줄 표시(`@mark`)는 「이 줄이 바뀌었다」이고 이쪽은 「이 칸이 바뀌었다」다. 둘은 다른 말이라
+  //  자리도 다르다 — 머리의 배송요청일만 고쳤는데 줄이 다 물들면 거짓말이 된다.
+  //  ★칸이 제 이름을 알 때만 본다(`c.field`). 이름이 없는 칸은 가리킬 방법이 없다.
+  //  ★이름은 **끝 마디**로 본다 — 칸은 `부속.배송요청일` 이라 적지만 항목이 든 키는
+  //   `배송요청일` 이다(`readField` 와 같은 규칙). 두 규칙이 갈리면 소비처가 못 맞힌다.
+  const leaf = c.field ? c.field.slice(c.field.indexOf('.') + 1) : '';
+  const raw = (leaf ? scope.item?.[`@mark.${leaf}`] : undefined)
+    ?? (onRow ? scope.item?.['@mark'] : undefined);
   const mark = typeof raw === 'string' && /^[a-z][a-z0-9-]*$/.test(raw) ? raw : undefined;
   return {
     spec: c, text,
